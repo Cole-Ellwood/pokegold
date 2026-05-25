@@ -173,6 +173,36 @@ def main() -> int:
         )
         return 1
     print("selected_stat_stage_only_moves: PASS growl_attack_down screech_miss")
+    heal_payload = scenario_template()
+    heal_payload["state"]["player"]["hp"] = 10
+    heal_payload["state"]["player"]["max_hp"] = 40
+    heal_payload["state"]["player"]["moves"] = [{"name": "RECOVER"}]
+    heal_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    heal_event = simulate_payload(heal_payload)["outcomes"][0]["events"][0]
+    if (
+        heal_event.get("type") != "self_heal"
+        or heal_event.get("move") != "RECOVER"
+        or heal_event.get("heal") != 20
+        or heal_event.get("hp_after") != 30
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: self-heal move mismatch: {heal_event}",
+            file=sys.stderr,
+        )
+        return 1
+    rest_payload = scenario_template()
+    rest_payload["state"]["player"]["hp"] = 10
+    rest_payload["state"]["player"]["max_hp"] = 40
+    rest_payload["state"]["player"]["moves"] = [{"name": "REST"}]
+    rest_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    rest_event = simulate_payload(rest_payload)["outcomes"][0]["events"][0]
+    if rest_event.get("type") != "unsupported_noop" or rest_event.get("move") != "REST":
+        print(
+            f"Headless battle simulator audit FAILED: Rest should remain out of scope: {rest_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_self_heal_moves: PASS recover_half_hp rest_out_of_scope")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

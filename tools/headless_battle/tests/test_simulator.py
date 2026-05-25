@@ -946,6 +946,93 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["blocked_changes"][0]["stage_before"], 6)
         self.assertEqual(report["outcomes"][0]["state"]["player"]["stat_stages"]["attack"], 6)
 
+    def test_self_heal_move_restores_half_max_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 10
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "RECOVER"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "self_heal")
+        self.assertEqual(event["move"], "RECOVER")
+        self.assertEqual(event["raw_heal"], 20)
+        self.assertEqual(event["heal"], 20)
+        self.assertEqual(event["hp_before"], 10)
+        self.assertEqual(event["hp_after"], 30)
+        self.assertEqual(event["pp_before"], 20)
+        self.assertEqual(event["pp_after"], 19)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 30)
+
+    def test_self_heal_move_caps_at_max_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 35
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "MILK_DRINK"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "self_heal")
+        self.assertEqual(event["move"], "MILK_DRINK")
+        self.assertEqual(event["raw_heal"], 20)
+        self.assertEqual(event["heal"], 5)
+        self.assertEqual(event["hp_after"], 40)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 40)
+
+    def test_self_heal_move_reports_no_effect_at_full_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 40
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "SOFTBOILED"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "self_heal_no_effect")
+        self.assertEqual(event["move"], "SOFTBOILED")
+        self.assertEqual(event["blocked_reason"], "hp_full")
+        self.assertEqual(event["heal"], 0)
+        self.assertEqual(event["pp_before"], 10)
+        self.assertEqual(event["pp_after"], 9)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 40)
+
+    def test_self_heal_move_applies_actor_residual_after_turn(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 10
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["status"] = "poison"
+        payload["state"]["player"]["moves"] = [{"name": "RECOVER"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual([event["type"] for event in events[:2]], ["self_heal", "residual_damage"])
+        self.assertEqual(events[0]["hp_after"], 30)
+        self.assertEqual(events[1]["damage"], 5)
+        self.assertEqual(events[1]["hp_after"], 25)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 25)
+
+    def test_rest_stays_out_of_scope_until_sleep_is_modeled(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 10
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "REST"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "unsupported_noop")
+        self.assertEqual(event["move"], "REST")
+        self.assertEqual(event["proof_status"], "out_of_scope")
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 10)
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -962,6 +1049,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)
+        self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)

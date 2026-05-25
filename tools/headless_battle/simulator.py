@@ -88,6 +88,7 @@ OPPONENT_STAT_STAGE_EFFECTS = {
     "EFFECT_SP_ATK_DOWN_2": (("sp_attack", -2),),
     "EFFECT_SP_DEF_DOWN_2": (("sp_defense", -2),),
 }
+SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
     "NOT_VERY_EFFECTIVE": 5,
@@ -558,6 +559,9 @@ def apply_move(
     target_side = "enemy" if side == "player" else "player"
     target = get_side(state, target_side)
     if move.bp <= 0:
+        self_heal_branch = apply_self_heal_move(branch, side, move, pp_before, pp_after)
+        if self_heal_branch is not None:
+            return [self_heal_branch]
         stat_stage_branches = apply_stat_stage_only_move(
             branch,
             side,
@@ -662,6 +666,43 @@ def apply_move(
                 )
                 branches.append(updated)
     return branches
+
+
+def apply_self_heal_move(
+    branch: dict[str, Any],
+    side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any] | None:
+    if move.effect != "EFFECT_HEAL" or move.name not in SELF_HEALING_MOVE_NAMES:
+        return None
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    raw_heal = fraction_max_hp(actor.max_hp, 2)
+    hp_after = min(actor.max_hp, actor.hp + raw_heal)
+    actual_heal = hp_after - actor.hp
+    updated = clone_branch(branch)
+    if actual_heal > 0:
+        updated["state"] = replace_side(state, side, replace_hp(actor, hp_after))
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "move": move.name,
+            "type": "self_heal" if actual_heal > 0 else "self_heal_no_effect",
+            "raw_heal": raw_heal,
+            "heal": actual_heal,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "blocked_reason": None if actual_heal > 0 else "hp_full",
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": "source_mirrored_selected_self_heal_move",
+        }
+    )
+    return updated
 
 
 def apply_stat_stage_only_move(
@@ -2423,6 +2464,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected BP=0 single-stat stage moves for attack/defense/speed/sp_attack/sp_defense consume PP, run checkhit for opponent-lowering moves, mutate stages by one or two with -6..+6 caps, and report no-effect cap/floor cases. Accuracy/evasion stage moves, damaging secondary stat effects, multi-stat chain moves, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
             },
             {
+                "id": "selected_self_heal_moves",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Recover, Softboiled, and Milk Drink consume PP, restore half max HP with max-HP cap, report full-HP no-effect cases, and preserve post-action residual. Rest branches through the same command but adds full HP restoration, sleep/status handling, and stat recalculation, so Rest remains out of scope until sleep/status move effects are modeled.",
+            },
+            {
                 "id": "multi_turn_selected_action_progression",
                 "source": "tools.headless_battle.simulator.simulate_battle",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -2470,7 +2517,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "status application, sleep, freeze, paralysis, volatile effects, weather, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "status application, sleep, freeze, paralysis, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -2544,6 +2591,11 @@ def format_text(report: dict[str, Any]) -> str:
             elif event["type"] == "item_restore":
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['item']} -> "
+                    f"+{event['heal']} hp"
+                )
+            elif event["type"] == "self_heal":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"+{event['heal']} hp"
                 )
             elif event["type"] == "stat_stage_change":
