@@ -26,12 +26,19 @@ CRITICAL_HIT_THRESHOLDS = (256 // 15, 256 // 8, 256 // 4, 256 // 3, 256 // 2, 25
 ITEM_LUCKY_PUNCH = tables.resolve_item("LUCKY_PUNCH")
 ITEM_STICK = tables.resolve_item("STICK")
 ITEM_SCOPE_LENS = tables.resolve_item("SCOPE_LENS")
+ITEM_LIFE_ORB = tables.resolve_item("LIFE_ORB")
+ITEM_ROCKY_HELMET = tables.resolve_item("ROCKY_HELMET")
+ITEM_SHELL_BELL = tables.resolve_item("SHELL_BELL")
+LIFE_ORB_RECOIL_DENOMINATOR = 10
+ROCKY_HELMET_DENOMINATOR = 6
+SHELL_BELL_DENOMINATOR = 8
 HIGH_CRIT_MOVES = {
     line.strip().removeprefix("db ").strip()
     for line in (tables.ROOT / "data/moves/critical_hit_moves.asm").read_text(encoding="utf-8").splitlines()
     if line.strip().startswith("db ") and "-1" not in line
 }
 _MOVE_IDS_BY_NAME: dict[str, int] | None = None
+_CONTACT_FLAGS_BY_MOVE_ID: dict[int, bool] | None = None
 
 
 class SimulationInputError(Exception):
@@ -48,6 +55,7 @@ class MoveState:
     priority: int = 1
     accuracy: int = 255
     pp: int = 0
+    contact: bool = False
     move_id: int | None = None
 
 
@@ -510,8 +518,119 @@ def apply_move(
                         "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
                     }
                 )
+                updated = apply_after_hit_effects(
+                    updated,
+                    side,
+                    target_side,
+                    move,
+                    damage,
+                )
                 branches.append(updated)
     return branches
+
+
+def apply_after_hit_effects(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    damage: int,
+) -> dict[str, Any]:
+    if damage <= 0:
+        return branch
+    updated = clone_branch(branch)
+    updated = apply_rocky_helmet(updated, side, target_side, move)
+    if get_side(updated["state"], side).hp <= 0:
+        return updated
+    updated = apply_shell_bell(updated, side, damage)
+    if get_side(updated["state"], side).hp <= 0:
+        return updated
+    return apply_life_orb_recoil(updated, side)
+
+
+def apply_rocky_helmet(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    if target.item != ITEM_ROCKY_HELMET or not move.contact:
+        return branch
+    actor = get_side(state, side)
+    damage = fraction_max_hp(actor.max_hp, ROCKY_HELMET_DENOMINATOR)
+    hp_after = max(0, actor.hp - damage)
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, replace_hp(actor, hp_after))
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "type": "after_hit_recoil",
+            "source_item": "ROCKY_HELMET",
+            "holder": target_side,
+            "damage": damage,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "proof_status": "byte_smoke_supported_after_hit_item_effect",
+        }
+    )
+    return updated
+
+
+def apply_shell_bell(branch: dict[str, Any], side: str, damage_done: int) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    if actor.item != ITEM_SHELL_BELL or actor.hp <= 0:
+        return branch
+    heal = max(1, damage_done // SHELL_BELL_DENOMINATOR)
+    hp_after = min(actor.max_hp, actor.hp + heal)
+    actual_heal = hp_after - actor.hp
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, replace_hp(actor, hp_after))
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "type": "after_hit_heal",
+            "source_item": "SHELL_BELL",
+            "heal": actual_heal,
+            "raw_heal": heal,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "proof_status": "byte_smoke_supported_after_hit_item_effect",
+        }
+    )
+    return updated
+
+
+def apply_life_orb_recoil(branch: dict[str, Any], side: str) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    if actor.item != ITEM_LIFE_ORB or actor.hp <= 0:
+        return branch
+    damage = fraction_max_hp(actor.max_hp, LIFE_ORB_RECOIL_DENOMINATOR)
+    hp_after = max(0, actor.hp - damage)
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, replace_hp(actor, hp_after))
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "type": "after_hit_recoil",
+            "source_item": "LIFE_ORB",
+            "holder": side,
+            "damage": damage,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "proof_status": "byte_smoke_supported_after_hit_item_effect",
+        }
+    )
+    return updated
 
 
 def apply_forced_replacements(branch: dict[str, Any], actions: dict[str, ActionState]) -> dict[str, Any]:
@@ -1191,6 +1310,7 @@ def parse_move(raw: Any, path: str) -> MoveState:
     except tables.InputError:
         row = None
     default_move_id = move_id_for_name(row.name) if row is not None else None
+    move_id = parse_optional_byte(raw.get("move_id", default_move_id), f"{path}.move_id")
     type_name = raw.get("type", row.type_name if row is not None else "NORMAL")
     move_type_name, move_type = parse_type(type_name, f"{path}.type")
     return MoveState(
@@ -1202,7 +1322,8 @@ def parse_move(raw: Any, path: str) -> MoveState:
         priority=parse_int(raw.get("priority", 1), f"{path}.priority"),
         accuracy=parse_accuracy(raw, row, f"{path}.accuracy"),
         pp=parse_byte(raw.get("pp", row.pp if row is not None else 35), f"{path}.pp"),
-        move_id=parse_optional_byte(raw.get("move_id", default_move_id), f"{path}.move_id"),
+        contact=parse_bool(raw.get("contact", is_contact_move_id(move_id)), f"{path}.contact"),
+        move_id=move_id,
     )
 
 
@@ -1211,6 +1332,30 @@ def move_id_for_name(name: str) -> int | None:
     if _MOVE_IDS_BY_NAME is None:
         _MOVE_IDS_BY_NAME = tables.parse_const_values(tables.ROOT / "constants/move_constants.asm")
     return _MOVE_IDS_BY_NAME.get(name)
+
+
+def is_contact_move_id(move_id: int | None) -> bool:
+    if move_id is None:
+        return False
+    return contact_flags_by_move_id().get(move_id, False)
+
+
+def contact_flags_by_move_id() -> dict[int, bool]:
+    global _CONTACT_FLAGS_BY_MOVE_ID
+    if _CONTACT_FLAGS_BY_MOVE_ID is not None:
+        return _CONTACT_FLAGS_BY_MOVE_ID
+    flags: dict[int, bool] = {}
+    move_id = 1
+    for raw in (tables.ROOT / "data/moves/contact_flags.asm").read_text(encoding="utf-8").splitlines():
+        code = raw.split(";", 1)[0].strip()
+        if code == "db TRUE":
+            flags[move_id] = True
+            move_id += 1
+        elif code == "db FALSE":
+            flags[move_id] = False
+            move_id += 1
+    _CONTACT_FLAGS_BY_MOVE_ID = flags
+    return flags
 
 
 def parse_accuracy(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -> int:
@@ -1446,6 +1591,7 @@ def replace_move_pp(move: MoveState, pp: int) -> MoveState:
         priority=move.priority,
         accuracy=move.accuracy,
         pp=pp,
+        contact=move.contact,
         move_id=move.move_id,
     )
 
@@ -1525,6 +1671,7 @@ def move_to_json(move: MoveState) -> dict[str, Any]:
         "priority": move.priority,
         "accuracy": move.accuracy,
         "pp": move.pp,
+        "contact": move.contact,
         "move_id": move.move_id,
     }
 
@@ -1571,6 +1718,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected and executable-selector moves decrement PP once before their supported effect handling. Zero-PP selected moves are rejected because Struggle and full move-legality selection are not implemented.",
             },
             {
+                "id": "supported_after_hit_item_effects",
+                "source": "engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far + tools.damage_debugger.clobber_smoke",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Rocky Helmet contact recoil, Shell Bell healing, and Life Orb recoil are mirrored after successful damaging hits. The damage debugger smoke byte-proves these isolated handler effects; the headless path applies the same HP fractions and item order for the supported subset.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -1612,7 +1765,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
-            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, after-hit effects, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -1672,6 +1825,16 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} wild_random_move -> "
                     f"{event['selected_move']} slot={event['selected_slot_index']}"
+                )
+            elif event["type"] == "after_hit_recoil":
+                lines.append(
+                    f"  turn {event['turn']} {event['source_item']} recoil -> "
+                    f"{event['target']} {event['damage']} damage"
+                )
+            elif event["type"] == "after_hit_heal":
+                lines.append(
+                    f"  turn {event['turn']} {event['source_item']} heal -> "
+                    f"{event['actor']} {event['heal']} hp"
                 )
             else:
                 lines.append(f"  turn {event.get('turn')} {event.get('actor', '')} {event['type']}")
@@ -1872,6 +2035,12 @@ def parse_optional_byte(raw: Any, path: str) -> int | None:
     if raw is None:
         return None
     return parse_byte(raw, path)
+
+
+def parse_bool(raw: Any, path: str) -> bool:
+    if not isinstance(raw, bool):
+        raise SimulationInputError(f"{path} must be a boolean")
+    return raw
 
 
 def rng_to_json(rng: RngConfig) -> dict[str, Any]:

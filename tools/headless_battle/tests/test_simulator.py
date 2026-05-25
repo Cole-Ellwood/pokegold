@@ -49,6 +49,69 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         with self.assertRaisesRegex(SimulationInputError, "has no PP; Struggle is out of scope"):
             simulate_payload(payload)
 
+    def test_rocky_helmet_recoils_contact_attacker(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["max_hp"] = 30
+        payload["state"]["player"]["hp"] = 30
+        payload["state"]["enemy"]["item"] = "ROCKY_HELMET"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        recoil = next(event for event in events if event.get("source_item") == "ROCKY_HELMET")
+        self.assertEqual(recoil["type"], "after_hit_recoil")
+        self.assertEqual(recoil["damage"], 5)
+        self.assertEqual(recoil["hp_before"], 30)
+        self.assertEqual(recoil["hp_after"], 25)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 25)
+
+    def test_rocky_helmet_ignores_noncontact_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0] = {"name": "EMBER", "type": "FIRE", "bp": 40}
+        payload["state"]["enemy"]["item"] = "ROCKY_HELMET"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        self.assertFalse(
+            any(event.get("source_item") == "ROCKY_HELMET" for event in report["outcomes"][0]["events"])
+        )
+
+    def test_shell_bell_heals_from_damage_done(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["item"] = "SHELL_BELL"
+        payload["state"]["player"]["hp"] = 10
+        payload["state"]["player"]["max_hp"] = 30
+        payload["state"]["enemy"]["hp"] = 30
+        payload["state"]["enemy"]["max_hp"] = 30
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        heal = next(event for event in report["outcomes"][0]["events"] if event.get("source_item") == "SHELL_BELL")
+        damage = report["outcomes"][0]["events"][0]["damage"]
+        self.assertEqual(heal["type"], "after_hit_heal")
+        self.assertEqual(heal["raw_heal"], max(1, damage // 8))
+        self.assertEqual(heal["hp_after"], 10 + heal["heal"])
+
+    def test_life_orb_recoils_after_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["item"] = "LIFE_ORB"
+        payload["state"]["player"]["hp"] = 30
+        payload["state"]["player"]["max_hp"] = 30
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        recoil = next(event for event in report["outcomes"][0]["events"] if event.get("source_item") == "LIFE_ORB")
+        self.assertEqual(recoil["type"], "after_hit_recoil")
+        self.assertEqual(recoil["damage"], 3)
+        self.assertEqual(recoil["hp_before"], 30)
+        self.assertEqual(recoil["hp_after"], 27)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 27)
+
     def test_priority_changes_turn_order(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["priority"] = 2
@@ -465,6 +528,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_critical_hit_rng", mirrored)
         self.assertIn("basic_status_residual", mirrored)
         self.assertIn("basic_pp_decrement", mirrored)
+        self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)

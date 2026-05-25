@@ -30,6 +30,54 @@ def main() -> int:
         print(f"Headless battle simulator audit FAILED: PP decrement mismatch: {pp_outcome}", file=sys.stderr)
         return 1
     print("basic_pp_decrement: PASS pp=35->34")
+    after_hit_payload = scenario_template()
+    after_hit_payload["state"]["player"]["max_hp"] = 30
+    after_hit_payload["state"]["player"]["hp"] = 30
+    after_hit_payload["state"]["enemy"]["item"] = "ROCKY_HELMET"
+    after_hit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    after_hit_report = simulate_payload(after_hit_payload)
+    after_hit_events = after_hit_report["outcomes"][0]["events"]
+    rocky_events = [event for event in after_hit_events if event.get("source_item") == "ROCKY_HELMET"]
+    if len(rocky_events) != 1 or rocky_events[0].get("damage") != 5:
+        print(
+            f"Headless battle simulator audit FAILED: Rocky Helmet mismatch: {after_hit_events}",
+            file=sys.stderr,
+        )
+        return 1
+    shell_payload = scenario_template()
+    shell_payload["state"]["player"]["item"] = "SHELL_BELL"
+    shell_payload["state"]["player"]["hp"] = 10
+    shell_payload["state"]["player"]["max_hp"] = 30
+    shell_payload["state"]["enemy"]["hp"] = 30
+    shell_payload["state"]["enemy"]["max_hp"] = 30
+    shell_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    shell_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    shell_events = simulate_payload(shell_payload)["outcomes"][0]["events"]
+    shell_items = [event for event in shell_events if event.get("source_item") == "SHELL_BELL"]
+    if (
+        len(shell_items) != 1
+        or shell_items[0].get("type") != "after_hit_heal"
+        or shell_items[0].get("heal", 0) <= 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Shell Bell mismatch: {shell_events}",
+            file=sys.stderr,
+        )
+        return 1
+    life_payload = scenario_template()
+    life_payload["state"]["player"]["item"] = "LIFE_ORB"
+    life_payload["state"]["player"]["max_hp"] = 30
+    life_payload["state"]["player"]["hp"] = 30
+    life_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    life_events = simulate_payload(life_payload)["outcomes"][0]["events"]
+    life_items = [event for event in life_events if event.get("source_item") == "LIFE_ORB"]
+    if len(life_items) != 1 or life_items[0].get("damage") != 3:
+        print(
+            f"Headless battle simulator audit FAILED: Life Orb mismatch: {life_events}",
+            file=sys.stderr,
+        )
+        return 1
+    print("supported_after_hit_items: PASS rocky=5 shell_heal>0 life=3")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",
