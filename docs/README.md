@@ -108,18 +108,20 @@ action maps with `max_turns`, `auto_replace_or` for simple KO/send-out loops,
 ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
 replacement after KO, explicit enemy `auto_replace` using the basic source type
 chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
-actions, explicit stats or species shorthand, PP decrement, supported Rocky
-Helmet/Shell Bell/Life Orb after-hit HP effects, equal-speed tie RNG, basic
-critical-hit checks, basic move accuracy with fixed/sample/exhaustive hit/miss
-branching, damage variation with fixed/sample/exhaustive RNG, selected-action
-`turns[]` progression with HP/RNG carryover, initial poison/burn/toxic residual
-damage after selected moves and supported item actions, pre-variation HP damage
-delegated to the existing ROM-backed damage oracle, and post-score Boss AI
-selector replay/execution from known score bytes. Reports label byte-proven,
-source-mirrored, and out-of-scope surfaces; do not claim strategic full battle
-action choice, automatic trainer item usage, player trainer-battle Pack
-availability, item inventory accounting, implicit replacement without
-`auto_replace_or` or `auto_replace`, accuracy/evasion modifiers, status
+actions, explicit stats/species/stat-stage state, PP decrement, supported Rocky
+Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
+equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
+fixed/sample/exhaustive hit/miss branching, damage variation with
+fixed/sample/exhaustive RNG, selected-action `turns[]` progression with HP/RNG
+carryover, initial poison/burn/toxic residual damage after selected moves and
+supported item actions, pre-variation HP damage delegated to the existing
+ROM-backed damage oracle, and post-score Boss AI selector replay/execution from
+known score bytes. Reports label byte-proven, source-mirrored, and out-of-scope
+surfaces; do not claim strategic full battle action choice, automatic trainer
+item usage, player trainer-battle Pack availability, item inventory accounting,
+implicit replacement without `auto_replace_or` or `auto_replace`,
+stage-changing move effects, accuracy/evasion modifiers, Baton Pass/Psych Up,
+badge boosts, status speed, passive stat/speed/accuracy bonuses, status
 application, sleep/freeze/paralysis, RNG-consuming mechanics outside the listed
 branch points, live Boss AI scoring, or scripts until the simulator report and
 audit say that surface exists.

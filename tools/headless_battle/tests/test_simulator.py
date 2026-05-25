@@ -801,6 +801,82 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         with self.assertRaisesRegex(SimulationInputError, "has no effect"):
             simulate_payload(payload)
 
+    def test_attack_stage_changes_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        baseline = simulate_payload(payload)["outcomes"][0]["events"][0]["pre_variation_damage"]
+        payload["state"]["player"]["stat_stages"] = {"attack": 2}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertGreater(event["pre_variation_damage"], baseline)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["stat_stages"]["attack"], 2)
+
+    def test_critical_uses_unmodified_damage_stats_when_defense_stage_is_higher(self) -> None:
+        baseline = scenario_template()
+        baseline["state"]["enemy"]["moves"][0]["bp"] = 0
+        baseline["rng"] = {"mode": "fixed", "values": [0, 255, 0]}
+        baseline_damage = simulate_payload(baseline)["outcomes"][0]["events"][0]["pre_variation_damage"]
+        staged = scenario_template()
+        staged["state"]["enemy"]["moves"][0]["bp"] = 0
+        staged["state"]["player"]["stat_stages"] = {"attack": -6}
+        staged["state"]["enemy"]["stat_stages"] = {"defense": 6}
+        staged["rng"] = {"mode": "fixed", "values": [0, 255, 0]}
+
+        report = simulate_payload(staged)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertTrue(event["critical_check"]["critical"])
+        self.assertEqual(event["pre_variation_damage"], baseline_damage)
+
+    def test_speed_stage_changes_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 10
+        payload["state"]["enemy"]["stats"]["speed"] = 12
+        payload["state"]["player"]["stat_stages"] = {"speed": 1}
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["turn_order"], ["player", "enemy"])
+        check = outcome["turn_orders"][0]["turn_order_check"]
+        self.assertEqual(check["reason"], "modified_speed")
+        self.assertEqual(check["effective_speeds"], {"player": 15, "enemy": 12})
+
+    def test_switch_resets_stat_stages(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stat_stages"] = {"attack": 2}
+        payload["state"]["player"]["bench"] = [
+            {
+                "name": "RESERVE",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["NORMAL", "NORMAL"],
+                "stat_stages": {"speed": 6},
+                "stats": {"attack": 10, "defense": 10, "speed": 9, "sp_attack": 10, "sp_defense": 10},
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            }
+        ]
+        payload["actions"]["player"] = {"type": "switch", "bench_index": 0}
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["state"]["player"]["name"], "RESERVE")
+        self.assertEqual(outcome["state"]["player"]["stat_stages"]["speed"], 0)
+        self.assertEqual(outcome["state"]["player_bench"][0]["stat_stages"]["attack"], 0)
+
+    def test_accuracy_and_evasion_stages_are_out_of_scope(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stat_stages"] = {"accuracy": 1}
+
+        with self.assertRaisesRegex(SimulationInputError, "accuracy/evasion stages"):
+            simulate_payload(payload)
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -815,6 +891,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("explicit_active_hp_restore_items", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
+        self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)

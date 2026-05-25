@@ -115,6 +115,37 @@ def main() -> int:
         )
         return 1
     print("explicit_active_hp_restore_items: PASS potion_then_residual full_restore_cures")
+    stage_payload = scenario_template()
+    stage_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    stage_baseline_damage = simulate_payload(stage_payload)["outcomes"][0]["events"][0]["pre_variation_damage"]
+    stage_payload["state"]["player"]["stat_stages"] = {"attack": 2}
+    stage_report = simulate_payload(stage_payload)
+    stage_damage = stage_report["outcomes"][0]["events"][0]["pre_variation_damage"]
+    if stage_damage <= stage_baseline_damage:
+        print(
+            f"Headless battle simulator audit FAILED: attack stage did not raise damage: {stage_report}",
+            file=sys.stderr,
+        )
+        return 1
+    speed_stage_payload = scenario_template()
+    speed_stage_payload["state"]["player"]["stats"]["speed"] = 10
+    speed_stage_payload["state"]["enemy"]["stats"]["speed"] = 12
+    speed_stage_payload["state"]["player"]["stat_stages"] = {"speed": 1}
+    speed_stage_payload["state"]["player"]["moves"][0]["bp"] = 0
+    speed_stage_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    speed_stage_report = simulate_payload(speed_stage_payload)
+    speed_stage_outcome = speed_stage_report["outcomes"][0]
+    speed_stage_check = speed_stage_outcome["turn_orders"][0].get("turn_order_check", {})
+    if (
+        speed_stage_outcome.get("turn_order") != ["player", "enemy"]
+        or speed_stage_check.get("effective_speeds") != {"player": 15, "enemy": 12}
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: speed stage mismatch: {speed_stage_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("explicit_stat_stage_state: PASS attack_stage_damage speed_stage_order")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

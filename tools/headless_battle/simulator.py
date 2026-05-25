@@ -25,6 +25,44 @@ DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
 WILD_RANDOM_MOVE_SLOT_COUNT = 4
 PARTY_LENGTH = 6
 EFFECTIVE_FACTOR = 10
+STAT_STAGE_MIN = -6
+STAT_STAGE_MAX = 6
+MAX_MODIFIED_BATTLE_STAT = 999
+STAT_STAGE_KEYS = ("attack", "defense", "speed", "sp_attack", "sp_defense")
+STAT_STAGE_ALIASES = {
+    "attack": "attack",
+    "atk": "attack",
+    "defense": "defense",
+    "def": "defense",
+    "speed": "speed",
+    "spd": "speed",
+    "spe": "speed",
+    "sp_attack": "sp_attack",
+    "special_attack": "sp_attack",
+    "spatk": "sp_attack",
+    "spa": "sp_attack",
+    "s_atk": "sp_attack",
+    "sp_defense": "sp_defense",
+    "special_defense": "sp_defense",
+    "spdef": "sp_defense",
+    "spd_def": "sp_defense",
+    "s_def": "sp_defense",
+}
+STAT_STAGE_MULTIPLIERS = {
+    -6: (25, 100),
+    -5: (28, 100),
+    -4: (33, 100),
+    -3: (40, 100),
+    -2: (50, 100),
+    -1: (66, 100),
+    0: (1, 1),
+    1: (15, 10),
+    2: (2, 1),
+    3: (25, 10),
+    4: (3, 1),
+    5: (35, 10),
+    6: (4, 1),
+}
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
     "NOT_VERY_EFFECTIVE": 5,
@@ -95,6 +133,11 @@ class PokemonState:
     speed: int
     sp_attack: int
     sp_defense: int
+    attack_stage: int = 0
+    defense_stage: int = 0
+    speed_stage: int = 0
+    sp_attack_stage: int = 0
+    sp_defense_stage: int = 0
     item: int = oracle.HELD_NONE
     can_evolve: bool = False
     focus_energy: bool = False
@@ -260,7 +303,7 @@ def simulate_turn(
             order = order_result["order"]
             working["turn_order"] = order
             row = {"turn": state.turn, "order": order}
-            if order_result["reason"] == "speed_tie":
+            if order_result["reason"] in {"speed_tie", "modified_speed"}:
                 row["turn_order_check"] = order_result
             working["turn_orders"].append(row)
             working["rng_consumed"].extend(order_result["raw_values"])
@@ -410,9 +453,13 @@ def turn_order_results(
             raise SimulationInputError(
                 f"{pokemon.side} item {tables.display_item(pokemon.item)} modifies turn order and is out of scope"
             )
-    if state.player.speed != state.enemy.speed:
-        order = ["player", "enemy"] if state.player.speed > state.enemy.speed else ["enemy", "player"]
-        return [turn_order_result(order, reason="raw_speed")]
+    player_speed = effective_speed(state.player)
+    enemy_speed = effective_speed(state.enemy)
+    if player_speed != enemy_speed:
+        order = ["player", "enemy"] if player_speed > enemy_speed else ["enemy", "player"]
+        result = turn_order_result(order, reason="modified_speed")
+        result["effective_speeds"] = {"player": player_speed, "enemy": enemy_speed}
+        return [result]
     return speed_tie_results(rng, stream=stream)
 
 
@@ -458,6 +505,10 @@ def speed_tie_results(rng: RngConfig, *, stream: RuntimeRng | None) -> list[dict
             "raw_range": None,
         }
     ]
+
+
+def effective_speed(pokemon: PokemonState) -> int:
+    return apply_stat_stage(pokemon.speed, pokemon.speed_stage)
 
 
 def apply_move(
@@ -900,11 +951,12 @@ def apply_switch_action(
     bench = get_bench(state, side)
     if action.switch_index >= len(bench):
         raise SimulationInputError(f"{side} bench_index out of range")
-    incoming = bench[action.switch_index]
+    incoming = reset_stat_stages(bench[action.switch_index])
     if incoming.hp <= 0:
         raise SimulationInputError(f"{side} cannot switch to fainted bench Pokemon {incoming.name}")
+    outgoing = reset_stat_stages(active)
     updated_bench = tuple(
-        active if index == action.switch_index else pokemon
+        outgoing if index == action.switch_index else pokemon
         for index, pokemon in enumerate(bench)
     )
     updated_state = replace_side_and_bench(state, side, incoming, updated_bench)
@@ -1240,13 +1292,28 @@ def predict_pre_variation_damage(
     is_critical: bool = False,
 ) -> int:
     is_physical = tables.is_physical_type(move.move_type)
+    attacker_stage_key = "attack" if is_physical else "sp_attack"
+    target_stage_key = "defense" if is_physical else "sp_defense"
+    attacker_base_stat = attacker.attack if is_physical else attacker.sp_attack
+    target_base_stat = target.defense if is_physical else target.sp_defense
+    attacker_stage = stat_stage(attacker, attacker_stage_key)
+    target_stage = stat_stage(target, target_stage_key)
+    use_modified_stats = not is_critical or attacker_stage > target_stage
     inputs = oracle.BattleInputs(
         attacker_level=attacker.level,
         move_bp=move.bp,
         move_type=move.move_type,
         is_physical=is_physical,
-        attacker_atk=attacker.attack if is_physical else attacker.sp_attack,
-        defender_def=target.defense if is_physical else target.sp_defense,
+        attacker_atk=(
+            apply_stat_stage(attacker_base_stat, attacker_stage)
+            if use_modified_stats
+            else attacker_base_stat
+        ),
+        defender_def=(
+            apply_stat_stage(target_base_stat, target_stage)
+            if use_modified_stats
+            else target_base_stat
+        ),
         attacker_types=attacker.types,
         defender_types=target.types,
         user_item=attacker.item,
@@ -1258,6 +1325,29 @@ def predict_pre_variation_damage(
         battle_turn=0 if attacker.side == "player" else 1,
     )
     return oracle.predict_damage(inputs)
+
+
+def stat_stage(pokemon: PokemonState, key: str) -> int:
+    if key == "attack":
+        return pokemon.attack_stage
+    if key == "defense":
+        return pokemon.defense_stage
+    if key == "speed":
+        return pokemon.speed_stage
+    if key == "sp_attack":
+        return pokemon.sp_attack_stage
+    if key == "sp_defense":
+        return pokemon.sp_defense_stage
+    raise AssertionError(f"unknown stat stage key {key!r}")
+
+
+def stat_stages_to_json(pokemon: PokemonState) -> dict[str, int]:
+    return {key: stat_stage(pokemon, key) for key in STAT_STAGE_KEYS}
+
+
+def apply_stat_stage(value: int, stage: int) -> int:
+    numerator, denominator = STAT_STAGE_MULTIPLIERS[stage]
+    return max(1, min(MAX_MODIFIED_BATTLE_STAT, value * numerator // denominator))
 
 
 def run_boss_ai_selector(state: BattleState, side: str, action: ActionState) -> dict[str, Any]:
@@ -1576,6 +1666,7 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
     moves_raw = raw.get("moves", [])
     if not isinstance(moves_raw, list) or not moves_raw:
         raise SimulationInputError(f"state.{side}.moves must be a non-empty list")
+    stat_stages = parse_stat_stages(raw.get("stat_stages", raw.get("stages", {})), f"state.{side}.stat_stages")
     return PokemonState(
         side=side,
         name=name,
@@ -1595,6 +1686,11 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
             stats.get("sp_defense", stats.get("special_defense", defaults["sp_defense"])),
             f"state.{side}.stats.sp_defense",
         ),
+        attack_stage=stat_stages["attack"],
+        defense_stage=stat_stages["defense"],
+        speed_stage=stat_stages["speed"],
+        sp_attack_stage=stat_stages["sp_attack"],
+        sp_defense_stage=stat_stages["sp_defense"],
         item=parse_item(raw.get("item", 0)),
         can_evolve=bool(raw.get("can_evolve", can_evolve)),
         focus_energy=bool(raw.get("focus_energy", False)),
@@ -1817,6 +1913,32 @@ def parse_rng(raw: Any) -> RngConfig:
     )
 
 
+def parse_stat_stages(raw: Any, path: str) -> dict[str, int]:
+    stages = {key: 0 for key in STAT_STAGE_KEYS}
+    if raw in (None, ""):
+        return stages
+    if not isinstance(raw, dict):
+        raise SimulationInputError(f"{path} must be an object")
+    for raw_name, raw_stage in raw.items():
+        key = str(raw_name).strip().lower()
+        if key in {"accuracy", "acc", "evasion", "eva", "evade"}:
+            raise SimulationInputError(f"{path}.{raw_name} is out of scope; accuracy/evasion stages use a separate ROM table")
+        try:
+            canonical = STAT_STAGE_ALIASES[key]
+        except KeyError as exc:
+            known = ", ".join(STAT_STAGE_KEYS)
+            raise SimulationInputError(f"{path}.{raw_name} is unknown; supported stat stages: {known}") from exc
+        stages[canonical] = parse_stat_stage(raw_stage, f"{path}.{raw_name}")
+    return stages
+
+
+def parse_stat_stage(raw: Any, path: str) -> int:
+    stage = parse_int(raw, path)
+    if stage < STAT_STAGE_MIN or stage > STAT_STAGE_MAX:
+        raise SimulationInputError(f"{path} must be between -6 and +6")
+    return stage
+
+
 def selected_move(pokemon: PokemonState, action: ActionState) -> MoveState:
     if action.move_index is None or action.move_index >= len(pokemon.moves):
         raise SimulationInputError(f"{pokemon.side} move index out of range")
@@ -1922,11 +2044,39 @@ def replace_hp(
         speed=pokemon.speed,
         sp_attack=pokemon.sp_attack,
         sp_defense=pokemon.sp_defense,
+        attack_stage=pokemon.attack_stage,
+        defense_stage=pokemon.defense_stage,
+        speed_stage=pokemon.speed_stage,
+        sp_attack_stage=pokemon.sp_attack_stage,
+        sp_defense_stage=pokemon.sp_defense_stage,
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
         focus_energy=pokemon.focus_energy,
         status=pokemon.status if status is None else status,
         toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
+        moves=pokemon.moves,
+    )
+
+
+def reset_stat_stages(pokemon: PokemonState) -> PokemonState:
+    return PokemonState(
+        side=pokemon.side,
+        name=pokemon.name,
+        level=pokemon.level,
+        hp=pokemon.hp,
+        max_hp=pokemon.max_hp,
+        types=pokemon.types,
+        type_names=pokemon.type_names,
+        attack=pokemon.attack,
+        defense=pokemon.defense,
+        speed=pokemon.speed,
+        sp_attack=pokemon.sp_attack,
+        sp_defense=pokemon.sp_defense,
+        item=pokemon.item,
+        can_evolve=pokemon.can_evolve,
+        focus_energy=pokemon.focus_energy,
+        status=pokemon.status,
+        toxic_count=pokemon.toxic_count,
         moves=pokemon.moves,
     )
 
@@ -1946,6 +2096,11 @@ def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> Pok
         speed=pokemon.speed,
         sp_attack=pokemon.sp_attack,
         sp_defense=pokemon.sp_defense,
+        attack_stage=pokemon.attack_stage,
+        defense_stage=pokemon.defense_stage,
+        speed_stage=pokemon.speed_stage,
+        sp_attack_stage=pokemon.sp_attack_stage,
+        sp_defense_stage=pokemon.sp_defense_stage,
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
         focus_energy=pokemon.focus_energy,
@@ -2032,6 +2187,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
             "sp_attack": pokemon.sp_attack,
             "sp_defense": pokemon.sp_defense,
         },
+        "stat_stages": stat_stages_to_json(pokemon),
         "moves": [move_to_json(move) for move in pokemon.moves],
     }
 
@@ -2107,7 +2263,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Priority, unequal raw-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Quick Claw, Choice Scarf, link-battle inversion, and status speed are not in this slice.",
+                "notes": "Priority, unequal modified-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Speed stages use data/battle/stat_multipliers.asm. Quick Claw, Choice Scarf, link-battle inversion, status speed, and passive speed modifiers are not in this slice.",
+            },
+            {
+                "id": "explicit_stat_stage_state",
+                "source": "data/battle/stat_multipliers.asm + engine/battle/effect_commands.asm:CalcBattleStats + engine/battle/core.asm:DetermineMoveOrder",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Scenario-supplied active attack/defense/speed/sp_attack/sp_defense stages in the -6..+6 user-facing range use the ROM percentage table for damage stats and turn-order speed; switch/replacement resets stages. Critical-hit stat handling mirrors CheckDamageStatsCritical's rule: use modified stats only when the attacker's offensive stage is higher than the defender's matching defensive stage. Stage-changing move effects, accuracy/evasion stages, Baton Pass/Psych Up, badge boosts, status speed, and passive stat modifiers remain out of scope.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -2125,7 +2287,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_switch_and_replacement",
                 "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, and replace actions can continue a planned battle after a KO. Pursuit, Spikes, switch-in effects, and forced prompts remain out of scope.",
+                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, replace actions can continue a planned battle after a KO, and both entry paths reset stat stages. Pursuit, Spikes, switch-in effects, and forced prompts remain out of scope.",
             },
             {
                 "id": "auto_replacement_choice_basic_type_chart",
@@ -2156,7 +2318,7 @@ def coverage_report() -> dict[str, Any]:
             "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
-            "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
+            "stage-changing move effects, accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
