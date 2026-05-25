@@ -197,66 +197,9 @@ def rank_findings(
 
 def findings_from_report(report: dict[str, Any], *, source: str) -> list[dict[str, Any]]:
     kind = report.get("kind", "")
-    if kind == "unified_debugger_ingest_manifest":
-        return ingest_findings(report, source=source)
-    if kind == "unified_debugger_capability_report":
-        return capability_findings(report, source=source)
-    if kind == "unified_debugger_watch_report":
-        return watch_findings(report, source=source)
-    if kind == "unified_debugger_runtime_state_report":
-        return runtime_state_findings(report, source=source)
-    if kind == "unified_debugger_save_state_inspection":
-        return save_state_inspection_findings(report, source=source)
-    if kind == "unified_debugger_replay_plan":
-        return replay_findings(report, source=source)
-    if kind == "unified_debugger_setup_plan":
-        return setup_findings(report, source=source)
-    if kind == "unified_debugger_gate_plan":
-        return gate_findings(report, source=source)
-    if kind == "unified_debugger_compare_plan":
-        return compare_findings(report, source=source)
-    if kind == "unified_debugger_content_mirror":
-        return content_mirror_findings(report, source=source)
-    if kind == "unified_debugger_content_scenarios":
-        return content_scenario_findings(report, source=source)
-    if kind == "unified_debugger_content_state_materialization":
-        return content_state_findings(report, source=source)
-    if kind == "unified_debugger_state_space":
-        return state_space_findings(report, source=source)
-    if kind == "unified_debugger_expectation_report":
-        return expectation_findings(report, source=source)
-    if kind == "unified_debugger_test_suggestions":
-        return test_suggestion_findings(report, source=source)
-    if kind == "unified_debugger_provenance_report":
-        return provenance_findings(report, source=source)
-    if kind == "unified_debugger_causal_slice":
-        return slice_findings(report, source=source)
-    if kind in {"unified_debugger_taint_report", "unified_debugger_dynamic_taint_report"}:
-        return taint_findings(report, source=source)
-    if kind == "unified_debugger_causal_explanation":
-        return explanation_findings(report, source=source)
-    if kind == "unified_debugger_localization_plan":
-        return localization_findings(report, source=source)
-    if kind == "unified_debugger_coverage_report":
-        return coverage_findings(report, source=source)
-    if kind == "unified_debugger_trace_index":
-        return trace_index_findings(report, source=source)
-    if kind == "unified_debugger_instruction_trace":
-        return instruction_trace_findings(report, source=source)
-    if kind == "unified_debugger_next_step":
-        return next_step_findings(report, source=source)
-    if kind == "unified_debugger_minimization_plan":
-        return minimization_findings(report, source=source)
-    if kind == "unified_debugger_generation_plan":
-        return generation_findings(report, source=source)
-    if kind == "unified_debugger_fuzz_plan":
-        return fuzz_findings(report, source=source)
-    if kind == "unified_debugger_impact_report":
-        return impact_findings(report, source=source)
-    if kind == "unified_debugger_visualization":
-        return visualization_findings(report, source=source)
-    if kind == "unified_debugger_investigation_run":
-        return investigation_findings(report, source=source)
+    builder = _FINDINGS_BUILDERS.get(kind)
+    if builder is not None:
+        return builder(report, source=source)
     return [
         finding(
             finding_type="unknown_report",
@@ -2135,3 +2078,38 @@ def display_path(path: Path, *, root: Path) -> str:
         return str(path.resolve().relative_to(root.resolve())).replace("\\", "/")
     except ValueError:
         return str(path.resolve())
+
+
+_FINDINGS_BUILDERS = {
+    "unified_debugger_ingest_manifest": ingest_findings,
+    "unified_debugger_capability_report": capability_findings,
+    "unified_debugger_watch_report": watch_findings,
+    "unified_debugger_runtime_state_report": runtime_state_findings,
+    "unified_debugger_save_state_inspection": save_state_inspection_findings,
+    "unified_debugger_replay_plan": replay_findings,
+    "unified_debugger_setup_plan": setup_findings,
+    "unified_debugger_gate_plan": gate_findings,
+    "unified_debugger_compare_plan": compare_findings,
+    "unified_debugger_content_mirror": content_mirror_findings,
+    "unified_debugger_content_scenarios": content_scenario_findings,
+    "unified_debugger_content_state_materialization": content_state_findings,
+    "unified_debugger_state_space": state_space_findings,
+    "unified_debugger_expectation_report": expectation_findings,
+    "unified_debugger_test_suggestions": test_suggestion_findings,
+    "unified_debugger_provenance_report": provenance_findings,
+    "unified_debugger_causal_slice": slice_findings,
+    "unified_debugger_taint_report": taint_findings,
+    "unified_debugger_dynamic_taint_report": taint_findings,
+    "unified_debugger_causal_explanation": explanation_findings,
+    "unified_debugger_localization_plan": localization_findings,
+    "unified_debugger_coverage_report": coverage_findings,
+    "unified_debugger_trace_index": trace_index_findings,
+    "unified_debugger_instruction_trace": instruction_trace_findings,
+    "unified_debugger_next_step": next_step_findings,
+    "unified_debugger_minimization_plan": minimization_findings,
+    "unified_debugger_generation_plan": generation_findings,
+    "unified_debugger_fuzz_plan": fuzz_findings,
+    "unified_debugger_impact_report": impact_findings,
+    "unified_debugger_visualization": visualization_findings,
+    "unified_debugger_investigation_run": investigation_findings,
+}
