@@ -1569,6 +1569,88 @@ def main() -> int:
         "headless_batch_switch_expectations: PASS "
         "schema_load pass_fail_error_counts missing_scenarios violation_report end_to_end"
     )
+    # Phase 3 from docs/headless_batch_validation_implementation.md §5: the
+    # board sweep generator. Parses Jasmine's live roster, sweeps a small
+    # cartesian product, and asserts the scenario shape so downstream batch
+    # validation can iterate (trainer x player x hp x status x weather).
+    from tools.headless_battle.scenario_sweep import (
+        SweepOptions,
+        parse_trainer_roster,
+        sweep_against_trainer,
+    )
+    sweep_roster = parse_trainer_roster("JASMINE")
+    if sweep_roster.mons[0].species != "MAGNETON":
+        print(
+            "Headless battle simulator audit FAILED: trainer parser sees "
+            f"unexpected Jasmine lead {sweep_roster.mons[0].species}",
+            file=sys.stderr,
+        )
+        return 1
+    if sweep_roster.trainer_type != "TRAINERTYPE_ITEM_MOVES":
+        print(
+            "Headless battle simulator audit FAILED: trainer parser misread "
+            f"Jasmine trainer type {sweep_roster.trainer_type}",
+            file=sys.stderr,
+        )
+        return 1
+    sweep_opts = SweepOptions(
+        trainer_class="JASMINE",
+        player_species=("CYNDAQUIL",),
+        player_hp_fractions=(1.0, 0.5),
+        enemy_hp_fractions=(1.0,),
+        player_statuses=("none", "paralyze"),
+        enemy_statuses=("none",),
+        weathers=("none", "rain"),
+    )
+    sweep_scenarios = sweep_against_trainer(sweep_opts)
+    # 1 player x 2 player_hp x 1 enemy_hp x 2 player_status x 1 enemy_status
+    # x 1 active x 1 bench x 1 player_item x 1 enemy_item x 2 weather = 8
+    if len(sweep_scenarios) != 8:
+        print(
+            "Headless battle simulator audit FAILED: scenario sweep emitted "
+            f"{len(sweep_scenarios)} scenarios, expected 8 from 1*2*1*2*1*2 product",
+            file=sys.stderr,
+        )
+        return 1
+    sweep_first = sweep_scenarios[0]
+    sweep_overrides = sweep_first.get("overrides") or {}
+    if (
+        sweep_first.get("family") != "switch_sack"
+        or not sweep_first.get("id", "").startswith("sweep_jasmine")
+        or sweep_overrides.get("enemy_species", 0) == 0
+        or sweep_overrides.get("enemy_bench_species", 0) == 0
+        or sweep_overrides.get("enemy_species") == sweep_overrides.get("enemy_bench_species")
+    ):
+        print(
+            "Headless battle simulator audit FAILED: sweep scenario shape "
+            f"mismatch; first={sweep_first}",
+            file=sys.stderr,
+        )
+        return 1
+    # Confirm a paralyze + rain combo lands in the sweep with the override-
+    # status byte (paralyze = 1<<PAR = 64) AND weather override emitted.
+    sweep_paralyze_rain = next(
+        (
+            s
+            for s in sweep_scenarios
+            if s.get("overrides", {}).get("player_status") == 64
+            and s.get("overrides", {}).get("weather", 0) != 0
+        ),
+        None,
+    )
+    if sweep_paralyze_rain is None:
+        print(
+            "Headless battle simulator audit FAILED: scenario sweep missing "
+            "expected paralyze+rain combo; got ids=" + ", ".join(
+                str(s.get("id")) for s in sweep_scenarios
+            ),
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "headless_battle_scenario_sweep: PASS "
+        "trainer_parse cartesian_product status_dimension weather_dimension"
+    )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
     wild_payload["state"]["enemy"]["moves"] = [
