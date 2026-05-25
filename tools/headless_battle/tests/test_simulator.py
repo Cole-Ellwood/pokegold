@@ -705,6 +705,102 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         }
         self.assertEqual(selected_slots, {0, 1})
 
+    def test_item_action_potion_heals_before_enemy_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 30
+        payload["actions"]["player"] = {"type": "item", "item": "POTION"}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["turn_order"], ["player", "enemy"])
+        self.assertEqual(outcome["events"][0]["type"], "item_restore")
+        self.assertEqual(outcome["events"][0]["actor"], "player")
+        self.assertEqual(outcome["events"][0]["heal"], 20)
+        self.assertEqual(outcome["events"][0]["hp_after"], 25)
+        self.assertEqual(outcome["events"][1]["type"], "damage")
+        self.assertLess(outcome["state"]["player"]["hp"], 25)
+        self.assertGreater(outcome["state"]["player"]["hp"], 5)
+
+    def test_item_action_hyper_potion_caps_at_max_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 90
+        payload["state"]["player"]["max_hp"] = 100
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["actions"]["player"] = {"type": "item", "item": "HYPER_POTION"}
+
+        report = simulate_payload(payload)
+
+        item_event = report["outcomes"][0]["events"][0]
+        self.assertEqual(item_event["type"], "item_restore")
+        self.assertEqual(item_event["hp_restore_amount"], 200)
+        self.assertEqual(item_event["heal"], 10)
+        self.assertEqual(item_event["hp_after"], 100)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 100)
+
+    def test_full_restore_heals_hp_and_cures_status(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 10
+        payload["state"]["player"]["max_hp"] = 30
+        payload["state"]["player"]["status"] = "toxic"
+        payload["state"]["player"]["toxic_count"] = 3
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["actions"]["player"] = {"type": "item", "item": "FULL_RESTORE"}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        item_event = outcome["events"][0]
+        self.assertEqual(item_event["type"], "item_restore")
+        self.assertEqual(item_event["heal"], 20)
+        self.assertEqual(item_event["status_before"], "toxic")
+        self.assertEqual(item_event["status_after"], "none")
+        self.assertEqual(item_event["toxic_count_after"], 0)
+        self.assertFalse(any(event["type"] == "residual_damage" for event in outcome["events"]))
+        self.assertEqual(outcome["state"]["player"]["hp"], 30)
+        self.assertEqual(outcome["state"]["player"]["status"], "none")
+        self.assertEqual(outcome["state"]["player"]["toxic_count"], 0)
+
+    def test_item_action_applies_actor_residual_after_item(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 32
+        payload["state"]["player"]["status"] = "poison"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["actions"]["player"] = {"type": "item", "item": "POTION"}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual([event["type"] for event in events[:2]], ["item_restore", "residual_damage"])
+        self.assertEqual(events[1]["actor"], "player")
+        self.assertEqual(events[1]["damage"], 4)
+        self.assertEqual(events[1]["hp_after"], 21)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 21)
+
+    def test_enemy_item_action_runs_before_player_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["hp"] = 1
+        payload["state"]["enemy"]["max_hp"] = 30
+        payload["actions"]["enemy"] = {"type": "item", "item": "POTION"}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["turn_order"], ["enemy", "player"])
+        self.assertEqual(outcome["events"][0]["type"], "item_restore")
+        self.assertEqual(outcome["events"][0]["actor"], "enemy")
+        self.assertEqual(outcome["events"][0]["hp_after"], 21)
+        self.assertEqual(outcome["events"][1]["type"], "damage")
+
+    def test_item_action_rejects_no_effect_restore(self) -> None:
+        payload = scenario_template()
+        payload["actions"]["player"] = {"type": "item", "item": "MAX_POTION"}
+
+        with self.assertRaisesRegex(SimulationInputError, "has no effect"):
+            simulate_payload(payload)
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -717,6 +813,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("basic_status_residual", mirrored)
         self.assertIn("basic_pp_decrement", mirrored)
         self.assertIn("supported_after_hit_item_effects", mirrored)
+        self.assertIn("explicit_active_hp_restore_items", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)

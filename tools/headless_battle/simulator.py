@@ -39,9 +39,20 @@ ITEM_SCOPE_LENS = tables.resolve_item("SCOPE_LENS")
 ITEM_LIFE_ORB = tables.resolve_item("LIFE_ORB")
 ITEM_ROCKY_HELMET = tables.resolve_item("ROCKY_HELMET")
 ITEM_SHELL_BELL = tables.resolve_item("SHELL_BELL")
+ITEM_POTION = tables.resolve_item("POTION")
+ITEM_SUPER_POTION = tables.resolve_item("SUPER_POTION")
+ITEM_HYPER_POTION = tables.resolve_item("HYPER_POTION")
+ITEM_MAX_POTION = tables.resolve_item("MAX_POTION")
+ITEM_FULL_RESTORE = tables.resolve_item("FULL_RESTORE")
 LIFE_ORB_RECOIL_DENOMINATOR = 10
 ROCKY_HELMET_DENOMINATOR = 6
 SHELL_BELL_DENOMINATOR = 8
+ACTIVE_HP_RESTORE_ITEMS = {
+    ITEM_POTION: 20,
+    ITEM_SUPER_POTION: 50,
+    ITEM_HYPER_POTION: 200,
+}
+FULL_HP_RESTORE_ITEMS = frozenset({ITEM_MAX_POTION, ITEM_FULL_RESTORE})
 HIGH_CRIT_MOVES = {
     line.strip().removeprefix("db ").strip()
     for line in (tables.ROOT / "data/moves/critical_hit_moves.asm").read_text(encoding="utf-8").splitlines()
@@ -107,6 +118,7 @@ class ActionState:
     kind: str
     move_index: int | None = None
     switch_index: int | None = None
+    item: int | None = None
     selector: dict[str, Any] | None = None
     fallback: ActionState | None = None
 
@@ -280,6 +292,10 @@ def simulate_turn(
             if action.kind == "replace":
                 next_branches.append(apply_switch_action(branch, side, action, event_type="replacement"))
                 continue
+            if action.kind == "item":
+                item_branch = apply_item_action(branch, side, action)
+                next_branches.append(apply_post_action_residual(item_branch, side))
+                continue
             if action.kind == "auto_replace":
                 raise SimulationInputError(f"{side} auto_replace action requires a fainted active Pokemon")
             if action.kind != "move":
@@ -375,10 +391,13 @@ def turn_order_results(
 ) -> list[dict[str, Any]]:
     player_action = actions["player"]
     enemy_action = actions["enemy"]
-    if player_action.kind in {"switch", "replace"} or enemy_action.kind in {"switch", "replace"}:
-        if player_action.kind in {"switch", "replace"}:
-            return [turn_order_result(["player", "enemy"], reason="selected_switch")]
-        return [turn_order_result(["enemy", "player"], reason="selected_switch")]
+    if player_action.kind == "item" and enemy_action.kind == "item":
+        raise SimulationInputError("simultaneous explicit item actions are out of scope")
+    non_move_first_actions = {"switch", "replace", "item"}
+    if player_action.kind in non_move_first_actions or enemy_action.kind in non_move_first_actions:
+        if player_action.kind in non_move_first_actions:
+            return [turn_order_result(["player", "enemy"], reason=f"selected_{player_action.kind}")]
+        return [turn_order_result(["enemy", "player"], reason=f"selected_{enemy_action.kind}")]
     if player_action.kind != "move" or enemy_action.kind != "move":
         return [turn_order_result(["player", "enemy"], reason="non_move_action")]
     player_move = selected_move(state.player, player_action)
@@ -904,6 +923,69 @@ def apply_switch_action(
                 if event_type == "switch"
                 else "source_mirrored_selected_replacement_no_entry_effects"
             ),
+        }
+    )
+    return updated
+
+
+def apply_item_action(branch: dict[str, Any], side: str, action: ActionState) -> dict[str, Any]:
+    if action.item is None:
+        raise SimulationInputError(f"{side} item action requires item")
+    item = action.item
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    if actor.hp <= 0:
+        raise SimulationInputError(f"{side} cannot use {tables.display_item(item)} on a fainted active Pokemon")
+    if item in ACTIVE_HP_RESTORE_ITEMS:
+        hp_restore = ACTIVE_HP_RESTORE_ITEMS[item]
+        hp_after = min(actor.max_hp, actor.hp + hp_restore)
+        status_after = actor.status
+        toxic_count_after = actor.toxic_count
+    elif item in FULL_HP_RESTORE_ITEMS:
+        hp_restore = actor.max_hp
+        hp_after = actor.max_hp
+        status_after = "none" if item == ITEM_FULL_RESTORE else actor.status
+        toxic_count_after = 0 if item == ITEM_FULL_RESTORE else actor.toxic_count
+    else:
+        supported = ", ".join(
+            tables.display_item(supported_item)
+            for supported_item in (
+                ITEM_POTION,
+                ITEM_SUPER_POTION,
+                ITEM_HYPER_POTION,
+                ITEM_MAX_POTION,
+                ITEM_FULL_RESTORE,
+            )
+        )
+        raise SimulationInputError(
+            f"{side} item {tables.display_item(item)} is out of scope; supported active HP items: {supported}"
+        )
+    if hp_after == actor.hp and status_after == actor.status and toxic_count_after == actor.toxic_count:
+        raise SimulationInputError(f"{side} item {tables.display_item(item)} has no effect")
+    updated_actor = replace_hp(
+        actor,
+        hp_after,
+        status=status_after,
+        toxic_count=toxic_count_after,
+    )
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, updated_actor)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "type": "item_restore",
+            "item": tables.display_item(item),
+            "item_id": item,
+            "hp_restore_amount": hp_restore,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "heal": hp_after - actor.hp,
+            "status_before": actor.status,
+            "status_after": status_after,
+            "toxic_count_before": actor.toxic_count,
+            "toxic_count_after": toxic_count_after,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
         }
     )
     return updated
@@ -1687,6 +1769,13 @@ def parse_action(raw: Any, path: str) -> ActionState:
         if switch_index is None:
             raise SimulationInputError(f"{path}.bench_index is required for {kind} actions")
         return ActionState(kind=kind, switch_index=parse_non_negative_int(switch_index, f"{path}.bench_index"))
+    if kind == "item":
+        if str(raw.get("target", "active")).lower() not in {"active", "self"}:
+            raise SimulationInputError(f"{path}.target only supports active item targets")
+        item = raw.get("item", raw.get("name"))
+        if item is None:
+            raise SimulationInputError(f"{path}.item is required for item actions")
+        return ActionState(kind=kind, item=parse_item(item))
     if kind == "auto_replace":
         return ActionState(kind=kind)
     if kind == "auto_replace_or":
@@ -1813,7 +1902,13 @@ def replace_side_and_bench(
     )
 
 
-def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None) -> PokemonState:
+def replace_hp(
+    pokemon: PokemonState,
+    hp: int,
+    *,
+    status: str | None = None,
+    toxic_count: int | None = None,
+) -> PokemonState:
     return PokemonState(
         side=pokemon.side,
         name=pokemon.name,
@@ -1830,7 +1925,7 @@ def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
         focus_energy=pokemon.focus_energy,
-        status=pokemon.status,
+        status=pokemon.status if status is None else status,
         toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
         moves=pokemon.moves,
     )
@@ -1988,7 +2083,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "basic_status_residual",
                 "source": "engine/battle/core.asm:ResidualDamage",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application, sleep, freeze, paralysis, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures remain out of scope.",
+                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application, sleep, freeze, paralysis, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures outside the explicit active Full Restore subset remain out of scope.",
             },
             {
                 "id": "basic_pp_decrement",
@@ -2003,10 +2098,16 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Rocky Helmet contact recoil, Shell Bell healing, and Life Orb recoil are mirrored after successful damaging hits. The damage debugger smoke byte-proves these isolated handler effects; the headless path applies the same HP fractions and item order for the supported subset.",
             },
             {
+                "id": "explicit_active_hp_restore_items",
+                "source": "engine/items/item_effects.asm:RestoreHPEffect + FullRestoreEffect; data/items/heal_hp.asm",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Explicit item actions for active Potion, Super Potion, Hyper Potion, Max Potion, and Full Restore mirror source HP amounts, max-HP caps, Full Restore's supported status/toxic cure, turn consumption, and actor residual after the item. Bag inventory, bench targeting, revives, PP restore, X items, player trainer-battle Pack availability, and automatic trainer item dispatch remain out of scope.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Priority, unequal raw-speed ordering, and the non-link equal-speed tie RNG threshold are mirrored for move-vs-move selected turns. Quick Claw, Choice Scarf, switches, link-battle inversion, and status speed are not in this slice.",
+                "notes": "Priority, unequal raw-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Quick Claw, Choice Scarf, link-battle inversion, and status speed are not in this slice.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -2052,11 +2153,11 @@ def coverage_report() -> dict[str, Any]:
             },
         ],
         "out_of_scope": [
-            "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, items as actions, and trainer item turns",
+            "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
-            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "status application, sleep, freeze, paralysis, volatile effects, weather, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -2126,6 +2227,11 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['source_item']} heal -> "
                     f"{event['actor']} {event['heal']} hp"
+                )
+            elif event["type"] == "item_restore":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} {event['item']} -> "
+                    f"+{event['heal']} hp"
                 )
             elif event["type"] == "auto_replacement_choice":
                 lines.append(

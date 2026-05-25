@@ -78,6 +78,43 @@ def main() -> int:
         )
         return 1
     print("supported_after_hit_items: PASS rocky=5 shell_heal>0 life=3")
+    item_payload = scenario_template()
+    item_payload["state"]["player"]["hp"] = 5
+    item_payload["state"]["player"]["max_hp"] = 32
+    item_payload["state"]["player"]["status"] = "poison"
+    item_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    item_payload["actions"]["player"] = {"type": "item", "item": "POTION"}
+    item_events = simulate_payload(item_payload)["outcomes"][0]["events"]
+    if (
+        [event.get("type") for event in item_events[:2]] != ["item_restore", "residual_damage"]
+        or item_events[0].get("heal") != 20
+        or item_events[1].get("damage") != 4
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: explicit item restore mismatch: {item_events}",
+            file=sys.stderr,
+        )
+        return 1
+    full_restore_payload = scenario_template()
+    full_restore_payload["state"]["player"]["hp"] = 10
+    full_restore_payload["state"]["player"]["max_hp"] = 30
+    full_restore_payload["state"]["player"]["status"] = "toxic"
+    full_restore_payload["state"]["player"]["toxic_count"] = 3
+    full_restore_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    full_restore_payload["actions"]["player"] = {"type": "item", "item": "FULL_RESTORE"}
+    full_restore_outcome = simulate_payload(full_restore_payload)["outcomes"][0]
+    if (
+        full_restore_outcome["events"][0].get("type") != "item_restore"
+        or full_restore_outcome["events"][0].get("status_after") != "none"
+        or full_restore_outcome["state"]["player"].get("status") != "none"
+        or full_restore_outcome["state"]["player"].get("toxic_count") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: full restore mismatch: {full_restore_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("explicit_active_hp_restore_items: PASS potion_then_residual full_restore_cures")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",
