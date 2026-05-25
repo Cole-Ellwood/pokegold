@@ -325,22 +325,43 @@ surrounding logic.
   (the 96-line if/elif chain in the original `__main__.py` is now
   a `FORMATTERS.get(kind)` lookup against the new `formatters.py`
   registry).
+- Item 4 (`content_mirror.py` package split) — shipped after
+  `808ec11b`. Old single-file `tools/debugger/content_mirror.py`
+  (3,665 lines) deleted; new `tools/debugger/content_mirror/`
+  package replaces it with 14 files / 3,976 lines: one per content
+  type (`maps.py`=451, `audio.py`=250, `incbin.py`=201,
+  `asset_tables.py`=153, `scripts.py`=598, `scripts_data.py`=219,
+  `text.py`=332, `movement.py`=337, `labeled_data.py`=247) plus
+  `helpers.py`=241 (shared regexes/parsers/factories),
+  `rom_context.py`=347 (ROM + symbol + charmap loaders),
+  `charmap.py`=64 (charmap string encoding shared between text and
+  labeled_data), `invariants.py`=496 (the top-level
+  `build_content_mirror_report` orchestrator + `analyze_source_file`
+  per-source dispatcher + `parse_rgbds_source` shared tokenizer), and
+  a 40-line `__init__.py` that re-exports the public surface so the
+  five downstream importers (`tools/debugger/__init__.py`,
+  `tests/test_catalog.py`, `runtime_state.py`, `investigate.py`,
+  `content_scenarios.py`, `commands.py`) stay unbroken.
+  `scripts_data.py` was split out from `scripts.py` after the
+  file-shape gate flagged the 798-line draft; the
+  `SCRIPT_COMMAND_SPECS` dict is pure declarative data (1:1 mirror of
+  `macros/scripts/scripts.asm`) so the split fits CLAUDE.md's
+  declarative-data exemption.
 
 **Tests passing post-refactor:**
-`tools.debugger.tests.test_catalog` → 230/230;
+`tools.debugger.tests.test_catalog` → 230/230 (re-verified after the
+content_mirror split — every `test_content_mirror_compares_*`
+integration test still passes against the package);
 `tools.boss_ai_debugger.tests` → 211/212 (1 skip; 1 pre-existing
 failure on `test_current_roadmap_audit_keeps_goal_incomplete` —
 A/B-verified pre-existing via `git stash` against the pre-refactor
 tree, concerns `audit/boss_ai_debugger/rule_map.json` data state, not
 source structure). `check_no_solo_commits_omni_debugger.py` passes
-for both new commits.
+for all four shipped phases.
 
 **Remaining items, ranked by leverage:**
 
-1. **Item 4 — split `content_mirror.py` (3,665 lines) into a
-   `content_mirror/` package by content type.** Target shape is in §3.
-   Biggest single-file readability win remaining.
-2. **`ranking.py` split (2,115 lines, added during execution).** The
+1. **`ranking.py` split (2,115 lines, added during execution).** The
    file-shape hook flagged this during slice 2; the split was deferred
    to keep the registry-dict change bounded. Same "homogeneous registry
    of similar functions" justification as the new `formatters.py`.
@@ -348,10 +369,10 @@ for both new commits.
    ROM_SURFACE_SEVERITY_HINTS, calibrate_finding_severity),
    `ranking/builders.py` (the 30 `*_findings` functions),
    `ranking/__init__.py` (rank_findings + dispatcher + helpers).
-3. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
+2. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
    Mechanical; one `test_<module>.py` per `<module>.py` to mirror the
    src layout.
-4. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
+3. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
    (real test-writing, not structural refactor); may warrant its own
    session. Priority modules are the four that other debugger trees
    import: `disasm`, `taint`, `state`, `tables`, `battle_calc`.
