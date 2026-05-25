@@ -139,6 +139,9 @@ HOOK_TARGETS: list[tuple[str, str]] = [
     ("HandleLateGenAfterHitEffects_Far.MaybeApplyShellBellHeal", "AfterHit_shell"),
     ("HandleLateGenAfterHitEffects_Far.MaybeApplyLifeOrbRecoil", "AfterHit_life"),
     ("HandleLateGenAfterHitEffects_Far.done", "AfterHit_done"),
+    ("BattleCommand_Recoil", "Recoil_entry"),
+    ("BattleCommand_Recoil.min_damage", "Recoil_post_adjust"),
+    ("BattleCommand_Recoil.dont_ko", "Recoil_dont_ko"),
 ]
 
 
@@ -489,6 +492,58 @@ def seed_afterhit_life_orb(pyboy, syms):
     write_byte(pyboy, "wBattleMonItem", syms, LIFE_ORB_ID)
 
 
+def _seed_player_pinsir_double_edge_recoil(
+    pyboy, syms, *, hp: int = 20, max_hp: int = 30, cur_damage: int = 16
+):
+    """Player Pinsir uses Double Edge; only the recoil step matters here.
+
+    BattleCommand_Recoil expects hl = user MaxHP after `_GetSidedHL`,
+    then `farcall`s `TypePassive_AdjustRecoilBCForSteel_Far` and resumes
+    using hl for the HP subtract. If the farcall clobbers hl without the
+    push/pop guard (the bug shipped in commit 80c2d5c6 and fixed here),
+    the writes hit unrelated memory and wBattleMonHP stays unchanged.
+
+    Pinsir is pure BUG, so STEEL contribution is 0 and the farcall target
+    returns immediately without touching bc. That isolates this scenario
+    to the hl-clobber question — the Steel-half / Steel-full branches
+    are covered by `recoil_steel_half_reduced` / `recoil_steel_full_immune`.
+    """
+    _seed_cyndaquil_attacks_pidgey_with_ember(pyboy, syms)  # gives us a clean baseline
+    # Override the player mon to a generic BUG attacker (Pinsir = 0x7F).
+    write_byte(pyboy, "wBattleMonSpecies", syms, 0x7F)
+    write_byte(pyboy, "wBattleMonType1", syms, BUG_TYPE)
+    write_byte(pyboy, "wBattleMonType2", syms, BUG_TYPE)
+    write_byte(pyboy, "wBattleMonItem", syms, 0)
+    # Double Edge: id=0x26, effect=0x32 (RECOIL_HIT), bp=130, type=NORMAL.
+    pm = syms["wPlayerMoveStruct"]
+    for offset, val in [(0, 0x26), (1, 0x32), (2, 130), (3, NORMAL_TYPE), (4, 0xFF), (5, 15), (6, 0)]:
+        write_byte_banked(pyboy, pm[1] + offset, val, pm[0])
+    write_byte(pyboy, "wCurPlayerMove", syms, 0x26)
+    write_byte(pyboy, "hBattleTurn", syms, 0)  # Player turn
+    write_be_u16(pyboy, "wCurDamage", syms, cur_damage)
+    write_be_u16(pyboy, "wBattleMonHP", syms, hp)
+    write_be_u16(pyboy, "wBattleMonMaxHP", syms, max_hp)
+
+
+def seed_recoil_basic_no_steel(pyboy, syms):
+    """Pinsir Double Edge: HP 20/30, dealt 16 dmg → 4 recoil → HP 16/30.
+
+    Pre-fix (farcall hl-clobber): wBattleMonHP stays at 20 because the
+    HP-subtract writes land at whatever address the farcall left hl at.
+    Post-fix: wBattleMonHP = 16.
+    """
+    _seed_player_pinsir_double_edge_recoil(pyboy, syms, hp=20, max_hp=30, cur_damage=16)
+
+
+def seed_recoil_ko_clamp(pyboy, syms):
+    """Pinsir Double Edge at HP 2: recoil 4 > HP 2 → clamp to 0 (KO).
+
+    Exercises the `.dont_ko` branch's HP=0 clamp and the wHPBuffer3=0
+    mirror. Pre-fix the clamp targets a garbage address; HP stays at 2.
+    """
+    _seed_player_pinsir_double_edge_recoil(pyboy, syms, hp=2, max_hp=30, cur_damage=16)
+
+
 # Ranges are loose enough to absorb DamageVariation-free integer noise but
 # tight enough that a 4-10x clobber-class regression always trips them.
 #
@@ -616,6 +671,24 @@ SCENARIOS = [
         chain=("HandleLateGenAfterHitEffects_Far",),
         post_check=_expect_u16s({"wBattleMonHP": 27, "wEnemyMonHP": 30}),
         call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "recoil_basic_no_steel", seed_recoil_basic_no_steel, 16, 16,
+        "BattleCommand_Recoil: Pinsir Double Edge 16 dmg → 4 recoil → HP 20-4=16. "
+        "Catches the farcall hl-clobber that lands the HP-subtract writes at a "
+        "garbage address (effect_commands.asm:5562, fixed via push/pop hl).",
+        chain=("BattleCommand_Recoil",),
+        post_check=_expect_u16s({"wBattleMonHP": 16, "wBattleMonMaxHP": 30}),
+        call_budget=2000,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "recoil_ko_clamp", seed_recoil_ko_clamp, 16, 16,
+        "BattleCommand_Recoil at HP 2: recoil 4 > HP → .dont_ko clamps HP to 0.",
+        chain=("BattleCommand_Recoil",),
+        post_check=_expect_u16s({"wBattleMonHP": 0, "wBattleMonMaxHP": 30}),
+        call_budget=2000,
         allow_nonreturn=True,
     ),
 ]
