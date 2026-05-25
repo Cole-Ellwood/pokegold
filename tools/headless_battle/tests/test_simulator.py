@@ -1080,11 +1080,95 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(status["effect_chance_check"]["success"], True)
         self.assertEqual(outcome["state"]["enemy"]["status"], "none")
 
-    def test_damaging_move_into_substitute_is_out_of_scope(self) -> None:
+    def test_damaging_move_routes_damage_to_substitute_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["substitute_hp"] = 40
+
+        report = simulate_payload(payload)
+
+        damage = report["outcomes"][0]["events"][0]
+        enemy = report["outcomes"][0]["state"]["enemy"]
+        self.assertEqual(damage["type"], "damage")
+        self.assertEqual(damage["damage_target"], "substitute")
+        self.assertGreater(damage["substitute_damage"], 0)
+        self.assertEqual(damage["actual_damage"], 0)
+        self.assertEqual(damage["target_hp_before"], damage["target_hp_after"])
+        self.assertEqual(enemy["hp"], payload["state"]["enemy"]["hp"])
+        self.assertTrue(enemy["substitute"])
+        self.assertEqual(enemy["substitute_hp"], 40 - damage["substitute_damage"])
+
+    def test_damaging_move_breaks_substitute_without_hp_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["substitute_hp"] = 1
+
+        report = simulate_payload(payload)
+
+        damage = report["outcomes"][0]["events"][0]
+        enemy = report["outcomes"][0]["state"]["enemy"]
+        self.assertEqual(damage["damage_target"], "substitute")
+        self.assertTrue(damage["substitute_broke"])
+        self.assertEqual(damage["substitute_hp_before"], 1)
+        self.assertEqual(damage["substitute_hp_after"], 0)
+        self.assertEqual(damage["target_hp_before"], damage["target_hp_after"])
+        self.assertFalse(enemy["substitute"])
+        self.assertEqual(enemy["substitute_hp"], 0)
+
+    def test_damaging_secondary_substitute_blocks_effect_chance_before_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["substitute_hp"] = 1
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        damage, status = outcome["events"][0], outcome["events"][1]
+        self.assertEqual(damage["type"], "damage")
+        self.assertEqual(damage["damage_target"], "substitute")
+        self.assertTrue(damage["substitute_broke"])
+        self.assertEqual(status["type"], "status_no_effect")
+        self.assertEqual(status["blocked_reason"], "substitute")
+        self.assertEqual(status["effect_chance_check"]["raw_values"], [])
+        self.assertEqual(status["effect_chance_check"]["reason"], "substitute_pre_effectchance")
+        self.assertEqual(outcome["rng_consumed"], [255, 255])
+        self.assertEqual(outcome["state"]["enemy"]["status"], "none")
+
+    def test_drain_move_into_substitute_is_checkhit_miss(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}]
+        payload["state"]["enemy"]["substitute"] = True
+        payload["state"]["enemy"]["substitute_hp"] = 10
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        miss = outcome["events"][0]
+        self.assertEqual(miss["type"], "miss")
+        self.assertEqual(miss["accuracy_check"]["reason"], "drain_blocked_by_substitute")
+        self.assertEqual(miss["accuracy_check"]["raw_values"], [])
+        self.assertEqual(outcome["rng_consumed"], [255])
+        self.assertEqual(outcome["state"]["player"]["hp"], 5)
+        self.assertEqual(outcome["state"]["enemy"]["hp"], 40)
+        self.assertEqual(outcome["state"]["enemy"]["substitute_hp"], 10)
+
+    def test_damaging_move_into_substitute_without_hp_is_rejected(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["substitute"] = True
 
-        with self.assertRaisesRegex(SimulationInputError, "Substitute is out of scope"):
+        with self.assertRaisesRegex(SimulationInputError, "substitute_hp"):
             simulate_payload(payload)
 
     def test_damaging_secondary_poison_applies_and_residual_ticks(self) -> None:

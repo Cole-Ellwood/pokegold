@@ -214,6 +214,7 @@ class PokemonState:
     toxic_count: int = 0
     sleep_turns: int = 0
     substitute: bool = False
+    substitute_hp: int = 0
     moves: tuple[MoveState, ...] = ()
 
 
@@ -842,10 +843,6 @@ def apply_move_after_action_check(
             }
         )
         return [updated]
-    if target.substitute:
-        raise SimulationInputError(
-            f"{side} damaging move into active Substitute is out of scope; substitute HP routing is not implemented"
-        )
     branches = []
     for critical_check in critical_results(attacker, move, rng, stream=stream):
         pre_variation_damage = predict_pre_variation_damage(
@@ -856,6 +853,38 @@ def apply_move_after_action_check(
             is_critical=critical_check["critical"],
         )
         for variation in damage_variation_results(pre_variation_damage, rng, stream=stream):
+            if target.substitute and move.effect == DRAIN_MOVE_EFFECT:
+                updated = clone_branch(branch)
+                updated["rng_consumed"].extend(critical_check["raw_values"])
+                updated["rng_consumed"].extend(variation["raw_values"])
+                updated["events"].append(
+                    {
+                        "turn": state.turn,
+                        "actor": side,
+                        "target": target_side,
+                        "move": move.name,
+                        "type": "miss",
+                        "critical_check": critical_check,
+                        "pre_variation_damage": pre_variation_damage,
+                        "damage_variation": {
+                            "applied": variation["applied"],
+                            "multiplier": variation["multiplier"],
+                            "raw_values": variation["raw_values"],
+                        },
+                        "accuracy_check": {
+                            "hit": False,
+                            "threshold": None,
+                            "raw_values": [],
+                            "raw_range": None,
+                            "reason": "drain_blocked_by_substitute",
+                        },
+                        "pp_before": pp_before,
+                        "pp_after": pp_after,
+                        "proof_status": "source_mirrored_drain_substitute_checkhit_miss",
+                    }
+                )
+                branches.append(updated)
+                continue
             for hit_check in accuracy_results(state, move, rng, stream=stream):
                 if not hit_check["hit"]:
                     updated = clone_branch(branch)
@@ -881,20 +910,22 @@ def apply_move_after_action_check(
                             "pp_after": pp_after,
                             "proof_status": "source_mirrored_basic_critical_variation_accuracy",
                         }
-                    )
+                        )
                     branches.append(updated)
                     continue
                 secondary_status = DAMAGING_SECONDARY_STATUS_EFFECTS.get(move.effect)
                 secondary_checks = (
-                    effect_chance_results(move, rng, stream=stream)
+                    [substitute_blocked_effect_chance(move)]
+                    if secondary_status is not None and target.substitute
+                    else effect_chance_results(move, rng, stream=stream)
                     if secondary_status is not None
                     else [None]
                 )
                 for secondary_check in secondary_checks:
                     damage = variation["damage"]
-                    hp_after = max(0, target.hp - damage)
-                    actual_damage = target.hp - hp_after
-                    updated_target = replace_hp(target, hp_after)
+                    damage_result = apply_hp_or_substitute_damage(target, damage)
+                    actual_damage = damage_result["actual_damage"]
+                    updated_target = damage_result["target"]
                     updated_state = replace_side(state, target_side, updated_target)
                     updated = clone_branch(branch)
                     updated["state"] = updated_state
@@ -914,7 +945,7 @@ def apply_move_after_action_check(
                             "actual_damage": actual_damage,
                             "pre_variation_damage": pre_variation_damage,
                             "target_hp_before": target.hp,
-                            "target_hp_after": hp_after,
+                            "target_hp_after": updated_target.hp,
                             "critical_check": critical_check,
                             "accuracy_check": hit_check,
                             "pp_before": pp_before,
@@ -925,6 +956,7 @@ def apply_move_after_action_check(
                                 "raw_values": variation["raw_values"],
                             },
                             "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+                            **damage_result["event_fields"],
                         }
                     )
                     if move.effect == DRAIN_MOVE_EFFECT:
@@ -1505,6 +1537,8 @@ def damaging_secondary_status_blocked_reason(
     effect_chance_check: dict[str, Any],
 ) -> str | None:
     if not effect_chance_check["success"]:
+        if effect_chance_check.get("reason") == "substitute_pre_effectchance":
+            return "substitute"
         return "effect_chance_failed"
     if target.hp <= 0:
         return "target_fainted"
@@ -2443,6 +2477,49 @@ def effect_chance_results(
     ]
 
 
+def substitute_blocked_effect_chance(move: MoveState) -> dict[str, Any]:
+    return {
+        "success": False,
+        "threshold": move.effect_chance,
+        "raw_values": [],
+        "raw_range": None,
+        "reason": "substitute_pre_effectchance",
+    }
+
+
+def apply_hp_or_substitute_damage(target: PokemonState, damage: int) -> dict[str, Any]:
+    if not target.substitute or damage <= 0:
+        hp_after = max(0, target.hp - damage)
+        return {
+            "target": replace_hp(target, hp_after),
+            "actual_damage": target.hp - hp_after,
+            "event_fields": {"damage_target": "hp"},
+        }
+    if target.substitute_hp <= 0:
+        raise SimulationInputError(
+            f"state.{target.side}.substitute_hp must be a positive byte when damaging an active Substitute"
+        )
+    substitute_damage = min(damage, target.substitute_hp)
+    substitute_hp_after = max(0, target.substitute_hp - damage)
+    substitute_broke = substitute_hp_after == 0
+    return {
+        "target": replace_substitute(
+            target,
+            substitute=not substitute_broke,
+            substitute_hp=0 if substitute_broke else substitute_hp_after,
+        ),
+        "actual_damage": 0,
+        "event_fields": {
+            "damage_target": "substitute",
+            "substitute_damage": substitute_damage,
+            "substitute_hp_before": target.substitute_hp,
+            "substitute_hp_after": 0 if substitute_broke else substitute_hp_after,
+            "substitute_broke": substitute_broke,
+            "proof_status": "source_mirrored_substitute_hp_damage_routing",
+        },
+    }
+
+
 def damage_variation_results(
     damage: int,
     rng: RngConfig,
@@ -2888,6 +2965,14 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
     stat_stages = parse_stat_stages(raw.get("stat_stages", raw.get("stages", {})), f"state.{side}.stat_stages")
     status = parse_status(raw.get("status", "none"), f"state.{side}.status")
     sleep_turns = parse_sleep_turns(raw, status, f"state.{side}.sleep_turns")
+    substitute_hp = parse_byte(raw.get("substitute_hp", 0), f"state.{side}.substitute_hp")
+    substitute = (
+        parse_bool(raw["substitute"], f"state.{side}.substitute")
+        if "substitute" in raw
+        else substitute_hp > 0
+    )
+    if not substitute and substitute_hp:
+        raise SimulationInputError(f"state.{side}.substitute_hp requires state.{side}.substitute=true")
     return PokemonState(
         side=side,
         name=name,
@@ -2918,7 +3003,8 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
         status=status,
         toxic_count=parse_non_negative_int(raw.get("toxic_count", 0), f"state.{side}.toxic_count"),
         sleep_turns=sleep_turns,
-        substitute=parse_bool(raw.get("substitute", False), f"state.{side}.substitute"),
+        substitute=substitute,
+        substitute_hp=substitute_hp,
         moves=tuple(parse_move(move, f"state.{side}.moves[{index}]") for index, move in enumerate(moves_raw)),
     )
 
@@ -3306,6 +3392,7 @@ def replace_hp(
         toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
         sleep_turns=sleep_turns_after,
         substitute=pokemon.substitute,
+        substitute_hp=pokemon.substitute_hp,
         moves=pokemon.moves,
     )
 
@@ -3322,7 +3409,11 @@ def reset_stat_stages(pokemon: PokemonState) -> PokemonState:
 
 
 def reset_switch_state(pokemon: PokemonState) -> PokemonState:
-    return dataclass_replace(reset_stat_stages(pokemon), substitute=False)
+    return dataclass_replace(reset_stat_stages(pokemon), substitute=False, substitute_hp=0)
+
+
+def replace_substitute(pokemon: PokemonState, *, substitute: bool, substitute_hp: int) -> PokemonState:
+    return dataclass_replace(pokemon, substitute=substitute, substitute_hp=substitute_hp)
 
 
 def replace_stat_stage(pokemon: PokemonState, key: str, stage: int) -> PokemonState:
@@ -3359,6 +3450,7 @@ def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> Pok
         toxic_count=pokemon.toxic_count,
         sleep_turns=pokemon.sleep_turns,
         substitute=pokemon.substitute,
+        substitute_hp=pokemon.substitute_hp,
         moves=moves,
     )
 
@@ -3438,6 +3530,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
         "toxic_count": pokemon.toxic_count,
         "sleep_turns": pokemon.sleep_turns,
         "substitute": pokemon.substitute,
+        "substitute_hp": pokemon.substitute_hp,
         "stats": {
             "attack": pokemon.attack,
             "defense": pokemon.defense,
@@ -3546,13 +3639,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_damaging_status_secondaries",
                 "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, active Substitute damage routing, and text/animation side effects remain out of scope.",
+                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_drain_moves",
                 "source": "data/moves/effects.asm:LeechHit + engine/battle/effect_commands.asm:BattleCommand_DrainTarget/SapHealth",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. Dream Eater, Leech Seed, Substitute interactions, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
+                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful active HP damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. Into active Substitute, these moves follow CheckHit's drain-substitute miss path after damage variation and before accuracy RNG. Dream Eater, Leech Seed, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
             },
             {
                 "id": "selected_sleep_status_moves",
@@ -3576,7 +3669,13 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_safeguard_substitute_blockers",
                 "source": "data/moves/effects.asm:DoSleep/DoPoison/DoParalyze/BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:SafeCheckSafeguard/CheckSubstituteOpp",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves; Safeguard wins when both are active. Damaging moves into active Substitute are rejected as out of scope because Substitute HP routing is not implemented.",
+                "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves and blocks selected damaging secondary effect-chance before secondary RNG; Safeguard wins when both are active for BP=0 status moves.",
+            },
+            {
+                "id": "selected_substitute_hp_routing",
+                "source": "engine/battle/effect_commands.asm:DoEnemyDamage/DoPlayerDamage/DoSubstituteDamage + engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Caller-supplied active Substitute HP routes selected non-drain damaging hits into the one-byte Substitute HP buffer, leaves active HP unchanged, clears Substitute when damage meets or exceeds remaining Substitute HP, skips after-hit item effects because DoSubstituteDamage resets wCurDamage, and preserves source ordering where Substitute blocks selected damaging secondary effect-chance before damage. Selected drain moves into Substitute are treated as CheckHit misses before accuracy RNG. Substitute move creation, Baton Pass, multi-hit continuation details, Focus Punch/contact side effects, and text/animations remain out of scope.",
             },
             {
                 "id": "selected_self_heal_moves",
@@ -3644,7 +3743,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute creation and expiration, Substitute HP routing for damaging moves, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute creation and expiration, Substitute move creation/Baton Pass/multi-hit continuation details, held status prevent items, freeze/confusion held cures, Sleep Clause clearing from held sleep cures, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -3691,6 +3790,14 @@ def format_text(report: dict[str, Any]) -> str:
                     suffix = f" (pre={event['pre_variation_damage']} mult={variation['multiplier']})"
                 if event.get("critical_check", {}).get("critical"):
                     suffix += " critical"
+                if event.get("damage_target") == "substitute":
+                    broke = " broke" if event.get("substitute_broke") else ""
+                    lines.append(
+                        f"  turn {event['turn']} {event['actor']} {event['move']} -> "
+                        f"{event['target']} Substitute {event['substitute_damage']} damage"
+                        f" ({event['substitute_hp_before']}->{event['substitute_hp_after']}){broke}{suffix}"
+                    )
+                    continue
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"{event['target']} {event['damage']} damage{suffix}"

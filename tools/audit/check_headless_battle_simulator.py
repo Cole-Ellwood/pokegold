@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
-from tools.headless_battle.simulator import SimulationInputError, scenario_template, simulate_payload, run_self_test
+from tools.headless_battle.simulator import scenario_template, simulate_payload, run_self_test
 
 
 def main() -> int:
@@ -490,24 +490,73 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    print("selected_safeguard_substitute_blockers: PASS sleep_safeguard poison_substitute burn_safeguard")
     damaging_substitute_payload = scenario_template()
     damaging_substitute_payload["state"]["enemy"]["substitute"] = True
-    try:
-        simulate_payload(damaging_substitute_payload)
-    except SimulationInputError as exc:
-        if "Substitute is out of scope" not in str(exc):
-            print(
-                f"Headless battle simulator audit FAILED: damaging substitute error mismatch: {exc}",
-                file=sys.stderr,
-            )
-            return 1
-    else:
+    damaging_substitute_payload["state"]["enemy"]["substitute_hp"] = 40
+    damaging_substitute_outcome = simulate_payload(damaging_substitute_payload)["outcomes"][0]
+    damaging_substitute_event = damaging_substitute_outcome["events"][0]
+    if (
+        damaging_substitute_event.get("type") != "damage"
+        or damaging_substitute_event.get("damage_target") != "substitute"
+        or damaging_substitute_event.get("actual_damage") != 0
+        or damaging_substitute_event.get("target_hp_before") != damaging_substitute_event.get("target_hp_after")
+        or damaging_substitute_outcome["state"]["enemy"].get("substitute_hp") >= 40
+    ):
         print(
-            "Headless battle simulator audit FAILED: damaging substitute should be out of scope",
+            f"Headless battle simulator audit FAILED: damaging substitute routing mismatch: {damaging_substitute_outcome}",
             file=sys.stderr,
         )
         return 1
-    print("selected_safeguard_substitute_blockers: PASS sleep_safeguard poison_substitute burn_safeguard damaging_substitute_boundary")
+    secondary_substitute_payload = scenario_template()
+    secondary_substitute_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+    secondary_substitute_payload["state"]["enemy"]["substitute"] = True
+    secondary_substitute_payload["state"]["enemy"]["substitute_hp"] = 1
+    secondary_substitute_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+    secondary_substitute_payload["state"]["enemy"]["hp"] = 40
+    secondary_substitute_payload["state"]["enemy"]["max_hp"] = 40
+    secondary_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    secondary_substitute_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    secondary_substitute_outcome = simulate_payload(secondary_substitute_payload)["outcomes"][0]
+    secondary_substitute_events = secondary_substitute_outcome["events"]
+    if (
+        secondary_substitute_events[0].get("damage_target") != "substitute"
+        or secondary_substitute_events[0].get("substitute_broke") is not True
+        or secondary_substitute_events[1].get("type") != "status_no_effect"
+        or secondary_substitute_events[1].get("blocked_reason") != "substitute"
+        or secondary_substitute_events[1].get("effect_chance_check", {}).get("raw_values") != []
+        or secondary_substitute_outcome.get("rng_consumed") != [255, 255]
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: damaging secondary substitute ordering mismatch: {secondary_substitute_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    drain_substitute_payload = scenario_template()
+    drain_substitute_payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}]
+    drain_substitute_payload["state"]["player"]["hp"] = 5
+    drain_substitute_payload["state"]["player"]["max_hp"] = 40
+    drain_substitute_payload["state"]["enemy"]["substitute"] = True
+    drain_substitute_payload["state"]["enemy"]["substitute_hp"] = 10
+    drain_substitute_payload["state"]["enemy"]["hp"] = 40
+    drain_substitute_payload["state"]["enemy"]["max_hp"] = 40
+    drain_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    drain_substitute_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    drain_substitute_outcome = simulate_payload(drain_substitute_payload)["outcomes"][0]
+    drain_substitute_event = drain_substitute_outcome["events"][0]
+    if (
+        drain_substitute_event.get("type") != "miss"
+        or drain_substitute_event.get("accuracy_check", {}).get("reason") != "drain_blocked_by_substitute"
+        or drain_substitute_event.get("accuracy_check", {}).get("raw_values") != []
+        or drain_substitute_outcome.get("rng_consumed") != [255]
+        or drain_substitute_outcome["state"]["enemy"].get("substitute_hp") != 10
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: drain substitute miss mismatch: {drain_substitute_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_substitute_hp_routing: PASS hp_buffer break secondary_no_effectchance_rng drain_checkhit_miss")
     rest_payload = scenario_template()
     rest_payload["state"]["player"]["hp"] = 10
     rest_payload["state"]["player"]["max_hp"] = 40
