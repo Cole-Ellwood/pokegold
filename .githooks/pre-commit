@@ -1,0 +1,32 @@
+#!/bin/sh
+# Claude CLAUDE.md pre-commit gate.
+# Enforces:
+#   1. No whitespace errors in staged changes (git diff --check).
+#   2. No banned staged-work markers in staged additions.
+# Bypass markers (only when user explicitly asked for staged work):
+#   CLAUDE_MD_ALLOW_MARKERS=1 git commit ...
+
+set -e
+
+# 1. Whitespace check on staged content.
+if ! git diff --cached --check; then
+    echo "pre-commit: git diff --check failed on staged changes." >&2
+    exit 1
+fi
+
+# 2. Banned-marker scan on staged additions.
+# Exclude the hook file itself, which contains pattern literals.
+if [ "${CLAUDE_MD_ALLOW_MARKERS:-0}" != "1" ]; then
+    added=$(git diff --cached -U0 -- ':(exclude).githooks/*' | grep -E '^\+[^+]' || true)
+    if [ -n "$added" ]; then
+        match=$(printf "%s\n" "$added" | grep -inE '\bTODO\b|\bFIXME\b|\bXXX\b|Phase[[:space:]]+[0-9]+|\btemporary\b|\blater\b|will be completed later' || true)
+        if [ -n "$match" ]; then
+            echo "pre-commit: banned staged-work marker(s) in staged additions:" >&2
+            printf "%s\n" "$match" >&2
+            echo "Remove them, or set CLAUDE_MD_ALLOW_MARKERS=1 if user requested staged work." >&2
+            exit 1
+        fi
+    fi
+fi
+
+exit 0
