@@ -329,7 +329,7 @@ layer.
 | Apply to confidence | `BossAI_ApplyPlausibleRiskToSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:1362`) |
 | Plan bias on switch | `BossAI_ApplyPlanSwitchBias` (`engine/battle/ai/boss_policy_switch.asm:1593`) |
 | Sack-instead-of-switch | `BossAI_ShouldSackInsteadOfSwitch` (`engine/battle/ai/boss_policy_switch.asm:1657`) |
-| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk` (`engine/battle/ai/boss_policy_switch.asm:1919`) |
+| Wincon protection | `BossAI_IsSwitchingIntoWinconRisk` (`engine/battle/ai/boss_policy_switch.asm:2228`) |
 | Mark scout pivot | `BossAI_MaybeMarkScoutPivot` (`engine/battle/ai/boss_policy_move.asm:6314`) |
 | Public bench threat score | `BossAI_SeenBenchThreatScore` (`engine/battle/ai/boss_policy_move.asm:3860`) |
 

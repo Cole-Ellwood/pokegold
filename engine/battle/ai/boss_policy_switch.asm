@@ -1673,16 +1673,30 @@ BossAI_ShouldSackInsteadOfSwitch:
 
 ; ai-layer: POLICY
 BossAI_PickFaintReplacement::
-; Bug C: pre-faint-replacement hook. When the boss's active mon faints and
-; wEnemySwitchMonIndex is 0 (vanilla scoring would otherwise pick), scan the
-; party for the first ALIVE, NOT-ACTIVE, ABOVE-QUARTER-HP candidate and set
-; wEnemySwitchMonIndex so the predetermined-switch path uses it. This stops
-; the vanilla type-only scorer from picking a candidate (Misdreavus in the
-; observed Morty chain) that the voluntary switch logic would immediately
-; try to switch back out. If no healthy candidate exists, leave the index
-; unset so vanilla picks among the only options available.
+; Pre-faint-replacement hook. When the boss's active mon faints and
+; wEnemySwitchMonIndex is 0, score each healthy bench candidate and pick the
+; best by (priority, hp%). This bypasses both the vanilla type-only scorer
+; (which doesn't consider candidate HP or offensive coverage) and the prior
+; "first alive above ¼ HP" hack (which picked by party-order accident, e.g.
+; Morty's Misdreavus over Haunter 2 even though Haunter 2 has Ice Punch).
 ;
-; Tier-gated: returns immediately for non-boss trainers.
+; Per-candidate priority:
+;   2 = has real coverage AND resists at least one of active player's types
+;   1 = has real coverage (any move where SE × BP >= 60 × relevant base stat >= 60)
+;   0 = no real coverage
+; "Real coverage" = a move with effectiveness >= 2x vs active player, BP >= 60,
+; and candidate's base Atk (physical type) / SpA (special type) >= 60. The two
+; >=60 thresholds filter tickle moves (Acid 40 BP) and weak attackers respectively.
+;
+; Hard skip (excluded entirely) if candidate is 2x-or-worse weak to either of
+; the active player's types: don't suicide a bench mon into a STAB counter.
+;
+; Tiebreak within priority: highest HP% (computed inline 0..100).
+;
+; If all candidates are filtered out by the 2x-weakness gate, leave
+; wEnemySwitchMonIndex at 0 — vanilla's type-only scorer handles "all my bench
+; is bad" rather than us forcing a synthetic answer. Tier-gated: returns
+; immediately for non-boss trainers.
 	ld a, [wBossAITier]
 	and a
 	ret z
@@ -1692,63 +1706,358 @@ BossAI_PickFaintReplacement::
 	push bc
 	push de
 	push hl
+	xor a
+	ld [wBossAITemp], a   ; best priority so far
+	ld [wBossAITemp2], a  ; best hp% so far
+	ld [wBossAITemp3], a  ; best idx+1 so far (0 = none found)
 	ld a, [wOTPartyCount]
 	ld b, a
 	ld c, 0
-	ld hl, wOTPartyMon1HP
 .scan
 	ld a, b
 	and a
 	jr z, .done
-	ld a, [wCurOTMon]
-	cp c
-	jr z, .scan_next
-	push hl
-	ld a, [hli]
-	or [hl]
-	pop hl
-	jr z, .scan_next
-	push hl
-	push bc
-	ld a, [hli]
-	ld b, a
-	ld a, [hl]
-	ld c, a
-	sla c
-	rl b
-	sla c
-	rl b
-	inc hl
-	ld a, [hli]
-	cp b
-	jr c, .above_q
-	jr nz, .at_q
-	ld a, [hl]
-	cp c
-	jr c, .above_q
-.at_q
-	pop bc
-	pop hl
-	jr .scan_next
-.above_q
-	pop bc
-	pop hl
+	call BossAI_FaintRepl_EvalCandidate
+	jr nc, .next
+	; carry set: d = priority, e = hp%. Compare against running best.
+	ld a, [wBossAITemp]
+	cp d
+	jr c, .update
+	jr nz, .next
+	ld a, [wBossAITemp2]
+	cp e
+	jr nc, .next
+.update
+	ld a, d
+	ld [wBossAITemp], a
+	ld a, e
+	ld [wBossAITemp2], a
 	ld a, c
 	inc a
-	ld [wEnemySwitchMonIndex], a
-	jr .done
-.scan_next
-	push bc
-	ld bc, PARTYMON_STRUCT_LENGTH
-	add hl, bc
-	pop bc
+	ld [wBossAITemp3], a
+.next
 	inc c
 	dec b
 	jr .scan
 .done
+	ld a, [wBossAITemp3]
+	and a
+	jr z, .nothing
+	ld [wEnemySwitchMonIndex], a
+.nothing
 	pop hl
 	pop de
 	pop bc
+	ret
+
+; ai-layer: POLICY
+BossAI_FaintRepl_EvalCandidate:
+; Score one candidate for faint-replacement selection.
+;
+; In:  c = candidate party idx (0-based)
+; Out: carry SET   → d = priority (0/1/2), e = hp% (0..100)
+;      carry CLEAR → exclude (active, fainted, ≤¼ HP, or 2x-weak to active STAB)
+; Preserves: bc (loop state)
+; Scratch: wBossAITemp4..5 (candidate types).
+;
+; Step order:
+;   1) Active-mon check + HP gate (alive, >¼ HP); compute hp% in e.
+;   2) Load candidate base data into wCurBaseData; stash types in temp4/5.
+;   3) Coverage scan while wCurBaseData is candidate's (reads BASE_ATK/SAT).
+;   4) Restore wCurSpecies + wCurBaseData to active mon.
+;   5) 2x-weak + resist check via wBossAITemp4/5.
+;   6) Compose priority from (has_cov, has_resist).
+;
+; Stack discipline: function prologue pushes bc + hl. Step 2 pushes hp%-de
+; then active-species-af. Step 4 pops both in reverse. After step 4 the
+; stack is back to the 2-push prologue state, so every exit path is
+; `pop hl; pop bc; ret`.
+	push bc
+	push hl
+
+	; (1a) Active-mon skip
+	ld a, [wCurOTMon]
+	cp c
+	jp z, .skip
+
+	; (1b) HP gate + hp%
+	call BossAI_FaintRepl_HPGateAndPct
+	jp nc, .skip
+	; e = hp%; bc still = caller's (loop count, idx)
+
+	; (2) Load candidate base data; stash types in temp4/5
+	push de                       ; save hp% (e); d junk
+	ld hl, wOTPartyMon1Species
+	ld a, c
+	call GetPartyLocation
+	ld a, [hl]
+	ld d, a                       ; candidate species
+	ld a, [wCurSpecies]
+	push af                       ; save active species
+	ld a, d
+	ld [wCurSpecies], a
+	call GetBaseData              ; wCurBaseData ← candidate
+	ld a, [wCurBaseData + BASE_TYPE_1]
+	ld [wBossAITemp4], a
+	ld a, [wCurBaseData + BASE_TYPE_2]
+	ld [wBossAITemp5], a
+
+	; (3) Coverage scan
+	call BossAI_FaintRepl_CandidateHasRealCoverage
+	; carry = has_cov. Convert to b = 0/1 (clobbers loop count, restored on exit).
+	ld a, 0
+	adc a
+	ld b, a                       ; b = has_cov
+
+	; (4) Restore active species; refresh wCurBaseData.
+	; GetBaseData preserves bc/de/hl (see home/pokemon.asm:215), so b (has_cov)
+	; and the pushed de (hp%) survive.
+	pop af                        ; active species
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	pop de                        ; restore hp% to e (d junk)
+
+	; (5) 2x-weak + resist check.
+	;   Inputs:  wBattleMonType1/2 (player), wBossAITemp4/5 (candidate)
+	;   Outputs: branch to .matchup_weak | .matchup_resists | .matchup_neutral
+	; BossAI_CheckTypeMatchupNoItem preserves bc, so b=has_cov survives both calls.
+	ld a, [wBattleMonType1]
+	ld hl, wBossAITemp4
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, [wTypeMatchup]
+	ld d, a                       ; d = eff vs type1
+	ld a, [wBattleMonType1]
+	ld c, a
+	ld a, [wBattleMonType2]
+	cp c
+	jr z, .single_type
+	; Distinct second type: run matchup again.
+	ld a, [wBattleMonType2]
+	ld hl, wBossAITemp4
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, [wTypeMatchup]
+	ld c, a                       ; c = eff vs type2 (clobbers idx; not needed past here)
+	; Weak if max(d, c) ≥ SUPER_EFFECTIVE.
+	cp SUPER_EFFECTIVE
+	jr nc, .matchup_weak
+	ld a, d
+	cp SUPER_EFFECTIVE
+	jr nc, .matchup_weak
+	; Resist if min(d, c) < EFFECTIVE.
+	cp EFFECTIVE
+	jr c, .matchup_resists
+	ld a, c
+	cp EFFECTIVE
+	jr c, .matchup_resists
+	jr .matchup_neutral
+.single_type
+	ld a, d
+	cp SUPER_EFFECTIVE
+	jr nc, .matchup_weak
+	cp EFFECTIVE
+	jr c, .matchup_resists
+	jr .matchup_neutral
+
+	; (6) Compose priority.
+.matchup_weak
+	jr .skip
+.matchup_resists
+	ld a, b                       ; has_cov
+	and a
+	jr z, .priority_zero
+	ld d, 2
+	jr .priority_done
+.matchup_neutral
+	ld a, b
+	and a
+	jr z, .priority_zero
+	ld d, 1
+	jr .priority_done
+.priority_zero
+	ld d, 0
+.priority_done
+	pop hl
+	pop bc
+	scf
+	ret
+
+.skip
+	pop hl
+	pop bc
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_FaintRepl_HPGateAndPct:
+; Read candidate's HP and maxHP from party WRAM, gate on alive + above ¼ HP,
+; compute hp% = HP * 100 / maxHP using the HRAM math UNION.
+;
+; In:  c = candidate party idx (0-based)
+; Out: carry SET  → e = hp% (0..100); HP gate passed
+;      carry CLEAR → fainted, ≤¼ HP, or zero HP
+; Preserves: bc; clobbers: a, d, e, hl, math UNION
+	push bc
+	ld hl, wOTPartyMon1HP
+	ld a, c
+	call GetPartyLocation
+	ld a, [hli]
+	ld b, a                       ; HP hi
+	ld a, [hli]
+	ld c, a                       ; HP lo (clobbers idx — restored via pop bc at exit)
+	or b
+	jr z, .fail
+	ld a, [hli]
+	ld d, a                       ; maxHP hi
+	ld a, [hl]
+	ld e, a                       ; maxHP lo
+	; HP*4 > maxHP?
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, hl                    ; hl = HP*4
+	ld a, h
+	cp d
+	jr c, .fail
+	jr nz, .pass_quarter
+	ld a, l
+	cp e
+	jr c, .fail
+	jr z, .fail                   ; equal counts as "at quarter" (≤ excluded)
+.pass_quarter
+	; hp% via HRAM math.
+	xor a
+	ldh [hMultiplicand + 0], a
+	ld a, b
+	ldh [hMultiplicand + 1], a
+	ld a, c
+	ldh [hMultiplicand + 2], a
+	ld a, 100
+	ldh [hMultiplier], a
+	push de                       ; preserve maxHP
+	call Multiply
+	pop de
+	; Scale maxHP (de) and hProduct in lockstep until maxHP fits in 1 byte.
+	ld a, d
+	and a
+	jr z, .div_ready
+.shift
+	srl d
+	rr e
+	ldh a, [hProduct + 1]
+	srl a
+	ldh [hProduct + 1], a
+	ldh a, [hProduct + 2]
+	rra
+	ldh [hProduct + 2], a
+	ldh a, [hProduct + 3]
+	rra
+	ldh [hProduct + 3], a
+	ld a, d
+	and a
+	jr nz, .shift
+.div_ready
+	ld a, e
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 3]
+	cp 101
+	jr c, .pct_ok
+	ld a, 100
+.pct_ok
+	ld e, a
+	pop bc
+	scf
+	ret
+.fail
+	pop bc
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_FaintRepl_CandidateHasRealCoverage:
+; Return carry if any of the candidate's 4 moves satisfies ALL of:
+;   - raw BP ≥ 60                                       (filters Acid/Karate Chop)
+;   - effectiveness vs active player's types ≥ 2×       (super effective)
+;   - candidate's base stat for move category ≥ 60      (filters weak attackers)
+;     PHYSICAL types → BASE_ATK; SPECIAL types → BASE_SAT.
+;
+; Preconditions:
+;   wCurBaseData = candidate's base data (caller's responsibility)
+;   wBattleMonType1/2 = active player's types
+;
+; In:  c = candidate party idx (0-based)
+; Out: carry set if has real coverage; clear otherwise
+; Preserves: bc
+	push bc
+	push de
+	push hl
+	ld hl, wOTPartyMon1Moves
+	ld a, c
+	call GetPartyLocation         ; hl = candidate's MON_MOVES (4 bytes)
+	ld b, 4                       ; counter
+.move_loop
+	ld a, [hli]
+	and a
+	jr z, .next_move              ; empty slot
+	push hl                       ; save hl across attribute lookups
+	push bc                       ; save (counter b, idx c)
+	dec a
+	ld c, a                       ; c = move_id - 1 (clobbers idx; saved on stack)
+
+	; BP gate (filters tickle moves)
+	ld a, c
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr       ; preserves bc; a = BP
+	cp 60
+	jr c, .move_fail
+
+	; Type lookup
+	ld a, c
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr       ; a = move type
+	ld d, a
+
+	; Effectiveness vs active player
+	ld a, d
+	ld hl, wBattleMonType1
+	call BossAI_CheckTypeMatchupNoItem  ; preserves bc
+	ld a, [wTypeMatchup]
+	cp SUPER_EFFECTIVE
+	jr c, .move_fail
+
+	; Stat floor (uses wCurBaseData = candidate)
+	ld a, d
+	cp SPECIAL
+	jr c, .use_atk
+	ld a, [wCurBaseData + BASE_SAT]
+	jr .check_stat
+.use_atk
+	ld a, [wCurBaseData + BASE_ATK]
+.check_stat
+	cp 60
+	jr c, .move_fail
+
+	; All gates pass: candidate has real coverage.
+	pop bc
+	pop hl
+	pop hl                        ; prologue hl
+	pop de                        ; prologue de
+	pop bc                        ; prologue bc (restores outer counter+idx)
+	scf
+	ret
+
+.move_fail
+	pop bc
+	pop hl
+.next_move
+	dec b
+	jr nz, .move_loop
+	pop hl
+	pop de
+	pop bc
+	and a
 	ret
 
 ; ai-layer: POLICY
