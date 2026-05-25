@@ -209,7 +209,26 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
     enemy_sub5 = _sub5_byte_for(battle_state.enemy)
     if enemy_sub5:
         overrides["enemy_sub5"] = enemy_sub5
+    # Slice C-stages: emit per-side stat stages [atk, def, spd, sat, sdf] only
+    # when any stage differs from +0 so default boards remain byte-stable
+    # against the trace ROM.
+    player_stages = _stat_stages_for(battle_state.player)
+    if any(player_stages):
+        overrides["player_stat_stages"] = list(player_stages)
+    enemy_stages = _stat_stages_for(battle_state.enemy)
+    if any(enemy_stages):
+        overrides["enemy_stat_stages"] = list(enemy_stages)
     return overrides
+
+
+def _stat_stages_for(mon: PokemonState) -> tuple[int, int, int, int, int]:
+    return (
+        mon.attack_stage,
+        mon.defense_stage,
+        mon.speed_stage,
+        mon.sp_attack_stage,
+        mon.sp_defense_stage,
+    )
 
 
 def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
@@ -220,18 +239,8 @@ def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
         )
     # mon.item is now patched in slice C-environment via overrides.player_item /
     # overrides.enemy_item, so non-zero held items are allowed in override mode.
-    stages = (
-        mon.attack_stage,
-        mon.defense_stage,
-        mon.speed_stage,
-        mon.sp_attack_stage,
-        mon.sp_defense_stage,
-    )
-    if stages != ALLOWED_STAT_STAGES:
-        raise SimulationInputError(
-            f"rom_switch_scenario_export: {side}.stat_stages={stages}; "
-            "slice B does not patch stat-stage WRAM fields"
-        )
+    # Stat stages are now patched in slice C-stages via overrides.player_stat_stages /
+    # overrides.enemy_stat_stages, so non-zero stages are allowed here.
     if mon.substitute or mon.substitute_hp:
         raise SimulationInputError(
             f"rom_switch_scenario_export: {side} has Substitute active; slice B does not model it"

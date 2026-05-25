@@ -179,6 +179,90 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wPlayerSubStatus5", 0)], 1)
         self.assertEqual(patches[("wEnemySubStatus5", 0)], 1)
 
+    def test_switch_materialization_stat_stages_override_applies(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                # +2 Atk, +0 Def, +1 Spd, +0 SAtk, +0 SDef (Dragon Dance look)
+                "player_stat_stages": [2, 0, 1, 0, 0],
+                # -1 Atk, +0, +0, -2 SAtk, +0 (intimidate + nasty plot drop look)
+                "enemy_stat_stages": [-1, 0, 0, -2, 0],
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        # base-7 encoding: user +0 -> byte 7, +2 -> 9, +1 -> 8, -1 -> 6, -2 -> 5
+        self.assertEqual(patches[("wPlayerAtkLevel", 0)], 9)
+        self.assertEqual(patches[("wPlayerDefLevel", 0)], 7)
+        self.assertEqual(patches[("wPlayerSpdLevel", 0)], 8)
+        self.assertEqual(patches[("wPlayerSAtkLevel", 0)], 7)
+        self.assertEqual(patches[("wPlayerSDefLevel", 0)], 7)
+        self.assertEqual(patches[("wEnemyAtkLevel", 0)], 6)
+        self.assertEqual(patches[("wEnemyDefLevel", 0)], 7)
+        self.assertEqual(patches[("wEnemySpdLevel", 0)], 7)
+        self.assertEqual(patches[("wEnemySAtkLevel", 0)], 5)
+        self.assertEqual(patches[("wEnemySDefLevel", 0)], 7)
+
+    def test_switch_materialization_skips_stat_stages_when_absent(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+        }
+        symbols = {
+            patch.symbol_name
+            for patch in switch_materialization_patches(scenario)
+        }
+        # No stat-stage override means no patch -- the base save state's
+        # existing wPlayer/EnemyStatLevels survive untouched.
+        for symbol in (
+            "wPlayerAtkLevel",
+            "wPlayerDefLevel",
+            "wPlayerSpdLevel",
+            "wPlayerSAtkLevel",
+            "wPlayerSDefLevel",
+            "wEnemyAtkLevel",
+            "wEnemyDefLevel",
+            "wEnemySpdLevel",
+            "wEnemySAtkLevel",
+            "wEnemySDefLevel",
+        ):
+            self.assertNotIn(symbol, symbols)
+
+    def test_switch_materialization_rejects_stat_stages_wrong_length(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_stat_stages": [1, 2, 3]},
+        }
+        with self.assertRaisesRegex(PreferenceDataError, "5-element list"):
+            switch_materialization_patches(scenario)
+
+    def test_switch_materialization_rejects_stat_stages_out_of_range(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_stat_stages": [0, 0, 7, 0, 0]},
+        }
+        with self.assertRaisesRegex(PreferenceDataError, "out of range"):
+            switch_materialization_patches(scenario)
+
+    def test_switch_materialization_rejects_stat_stages_non_int(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_stat_stages": [0, "two", 0, 0, 0]},
+        }
+        with self.assertRaisesRegex(PreferenceDataError, "must be an integer"):
+            switch_materialization_patches(scenario)
+
     def test_switch_materialization_skips_sub5_when_absent(self) -> None:
         scenario = {
             "family": "switch_sack",

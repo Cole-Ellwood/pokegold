@@ -35,6 +35,20 @@ AI_SWITCH_THRESHOLD_LATE = 60
 AI_SWITCH_ANTI_LOOP_PENALTY = 10
 AI_SWITCH_SACK_BIAS = 8
 AI_SWITCH_WINCON_BIAS = 10
+# Stat-stage encoding mirrors constants/battle_constants.asm: BASE_STAT_LEVEL = 7
+# means user-facing +0; user range [-6..+6] maps to WRAM byte [1..13]. The 5
+# patched stages are Atk / Def / Spd / SAtk / SDef in that order; Acc/Eva are
+# intentionally not patched (headless does not model them).
+BASE_STAT_LEVEL = 7
+STAT_STAGE_MIN = -6
+STAT_STAGE_MAX = 6
+STAT_STAGE_LEVEL_SYMBOLS = (
+    ("wPlayerAtkLevel", "wEnemyAtkLevel"),
+    ("wPlayerDefLevel", "wEnemyDefLevel"),
+    ("wPlayerSpdLevel", "wEnemySpdLevel"),
+    ("wPlayerSAtkLevel", "wEnemySAtkLevel"),
+    ("wPlayerSDefLevel", "wEnemySDefLevel"),
+)
 BASE_ROUTE_TRAINER_CLASS = {
     "shared_switch_loop": "JASMINE",
 }
@@ -276,6 +290,33 @@ def _resolve_int(value: Any, default: int) -> int:
     return int(value)
 
 
+def _resolve_stat_stage_patches(
+    value: Any, *, side: str
+) -> list[tuple[str, int]]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or len(value) != 5:
+        raise PreferenceDataError(
+            f"overrides.{side}_stat_stages must be a 5-element list of integers in "
+            f"[{STAT_STAGE_MIN}..{STAT_STAGE_MAX}]; got {value!r}"
+        )
+    side_index = 0 if side == "player" else 1
+    patches: list[tuple[str, int]] = []
+    for slot, raw in enumerate(value):
+        if isinstance(raw, bool) or not isinstance(raw, int):
+            raise PreferenceDataError(
+                f"overrides.{side}_stat_stages[{slot}] must be an integer; got {raw!r}"
+            )
+        if not STAT_STAGE_MIN <= raw <= STAT_STAGE_MAX:
+            raise PreferenceDataError(
+                f"overrides.{side}_stat_stages[{slot}] = {raw} out of range "
+                f"[{STAT_STAGE_MIN}..{STAT_STAGE_MAX}]"
+            )
+        symbol = STAT_STAGE_LEVEL_SYMBOLS[slot][side_index]
+        patches.append((symbol, raw + BASE_STAT_LEVEL))
+    return patches
+
+
 def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch]:
     tags = scenario_condition_tags(scenario)
     tier = normalize_tier(scenario.get("tier", "late"))
@@ -324,6 +365,20 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         optional_overrides.append(("wPlayerSubStatus5", "player_sub5", _resolve_int(overrides_raw["player_sub5"], 0)))
     if "enemy_sub5" in overrides_raw:
         optional_overrides.append(("wEnemySubStatus5", "enemy_sub5", _resolve_int(overrides_raw["enemy_sub5"], 0)))
+    # Slice C-stages: 5 stat stages per side, base-7 encoded. Like the other
+    # optional overrides, only emit when explicitly present so the base save
+    # state's existing wPlayer/EnemyStatLevels survive when callers don't ask
+    # for non-default stages.
+    player_stage_patches = _resolve_stat_stage_patches(
+        overrides_raw.get("player_stat_stages"), side="player"
+    )
+    enemy_stage_patches = _resolve_stat_stage_patches(
+        overrides_raw.get("enemy_stat_stages"), side="enemy"
+    )
+    for symbol, value in player_stage_patches:
+        optional_overrides.append((symbol, "player_stat_stages", value))
+    for symbol, value in enemy_stage_patches:
+        optional_overrides.append((symbol, "enemy_stat_stages", value))
 
     patches = [
         patch("wBossAITier", tier),

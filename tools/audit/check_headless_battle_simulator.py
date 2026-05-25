@@ -1268,10 +1268,86 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    # Slice C-stages: stat-stage round-trip into materialization patches.
+    stages_state = {
+        "weather": "none",
+        "weather_count": 0,
+        "turn": 1,
+        "player": {
+            "species": "STARMIE",
+            "level": 50,
+            "types": ["GROUND", "GROUND"],
+            "hp": 100,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 80, "speed": 100, "sp_attack": 90, "sp_defense": 80},
+            "moves": [{"name": "SURF"}],
+            "stat_stages": {"attack": 2, "speed": 1},  # Dragon-Dance look
+        },
+        "enemy": {
+            "species": "QWILFISH",
+            "level": 50,
+            "types": ["POISON", "WATER"],
+            "hp": 100,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 75, "speed": 85, "sp_attack": 55, "sp_defense": 55},
+            "moves": [{"name": "POISON_STING"}],
+            "stat_stages": {"sp_attack": -2},  # Nasty Plot drop
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    stages_scenario = headless_to_switch_sack_scenario(
+        stages_state,
+        scenario_id="audit_stat_stages",
+        tier="late",
+        accept_overrides=True,
+    )
+    if stages_scenario["overrides"].get("player_stat_stages") != [2, 0, 1, 0, 0]:
+        print(
+            "Headless battle simulator audit FAILED: stat-stage exporter "
+            f"emit mismatch: {stages_scenario['overrides'].get('player_stat_stages')}",
+            file=sys.stderr,
+        )
+        return 1
+    if stages_scenario["overrides"].get("enemy_stat_stages") != [0, 0, 0, -2, 0]:
+        print(
+            "Headless battle simulator audit FAILED: enemy stat-stage exporter "
+            f"emit mismatch: {stages_scenario['overrides'].get('enemy_stat_stages')}",
+            file=sys.stderr,
+        )
+        return 1
+    stages_patches = {
+        (p.symbol_name, p.offset): p.value
+        for p in switch_materialization_patches(stages_scenario)
+    }
+    # Expected base-7 encoding:
+    # Player +2 Atk -> 9, +0 Def -> 7, +1 Spe -> 8, +0 SpA -> 7, +0 SpD -> 7
+    if (
+        stages_patches.get(("wPlayerAtkLevel", 0)) != 9
+        or stages_patches.get(("wPlayerSpdLevel", 0)) != 8
+        or stages_patches.get(("wPlayerDefLevel", 0)) != 7
+        or stages_patches.get(("wEnemySAtkLevel", 0)) != 5
+        or stages_patches.get(("wEnemyAtkLevel", 0)) != 7
+    ):
+        print(
+            "Headless battle simulator audit FAILED: stat-stage materializer "
+            f"round-trip mismatch: {stages_patches}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
-        "environment_override toxic_sleep_override"
+        "environment_override toxic_sleep_override stat_stages_override"
     )
     # Phase 1 from docs/headless_batch_validation_implementation.md §5: batch
     # switch-materialize runner output shape. We synthesize a 3-scenario report

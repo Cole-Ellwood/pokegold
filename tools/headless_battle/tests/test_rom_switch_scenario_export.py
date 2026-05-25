@@ -265,6 +265,28 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertEqual(scenario["overrides"]["player_item"], 17)
         self.assertEqual(scenario["overrides"]["enemy_item"], 32)
 
+    def test_accept_overrides_now_accepts_nonzero_stat_stages(self) -> None:
+        state = fixture_state()
+        # Dragon-Dance-style player setup: +1 Atk, +1 Spe.
+        state["player"]["stat_stages"] = {"attack": 1, "speed": 1}
+        # Calm-Mind-style enemy: +2 SpA, +2 SpD.
+        state["enemy"]["stat_stages"] = {"sp_attack": 2, "sp_defense": 2}
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        self.assertEqual(
+            scenario["overrides"]["player_stat_stages"], [1, 0, 1, 0, 0]
+        )
+        self.assertEqual(
+            scenario["overrides"]["enemy_stat_stages"], [0, 0, 0, 2, 2]
+        )
+
+    def test_accept_overrides_skips_stat_stages_when_all_zero(self) -> None:
+        state = fixture_state()
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # All-zero stages must NOT emit the override key so the base save
+        # state's existing wPlayer/EnemyStatLevels survive untouched.
+        self.assertNotIn("player_stat_stages", scenario["overrides"])
+        self.assertNotIn("enemy_stat_stages", scenario["overrides"])
+
     def test_accept_overrides_emits_safeguard_screens_bit(self) -> None:
         state = fixture_state()
         state["player_safeguard"] = True
