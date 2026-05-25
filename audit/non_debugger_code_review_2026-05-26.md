@@ -538,10 +538,12 @@ Ordered by ratio of (reader-pain reduced) / (refactor risk):
    and `tools/boss_ai_preference/app.py`.** (§6) Mechanical move to
    sibling files. ~2,500 lines of Python shrink to ~1,000 with cleaner
    markup ownership.
-5. **Convert `check_headless_battle_simulator.py`'s 2,260-line `main()`
-   into a fixtures list + runner.** (§2) Each fixture becomes data;
-   the audit body shrinks dramatically. Same shape works for any future
-   parametrized audit.
+5. ~~**Convert `check_headless_battle_simulator.py`'s 2,260-line `main()`
+   into a fixtures list + runner.**~~ (§2) Shipped 2026-05-26 as
+   per-scenario `_audit_*` functions + a 46-entry `AUDITS` tuple + a
+   7-line runner. The "fixtures list" framing assumed uniform data
+   shape, which didn't fit; structural win lands the same intent. See
+   Execution Status.
 6. **Backfill `tools/trace/` tests** for at least `boss_ai_state_factory.py`
    and `boss_ai_trace_capture.py`. (§7) Different shape (real test
    writing, not refactoring); may warrant its own session like the
@@ -772,10 +774,36 @@ separate tasks.
   string-literal references to `check_boss_ai_trace_invariants.py`
   still point at the same entrypoint).
 
+- **Item 5 — `check_headless_battle_simulator.py` per-scenario functions
+  + runner.** (§2) The 2,260-line `main()` is now 46 `_audit_*` functions
+  (one per PASS-labeled scenario) plus a 46-entry `AUDITS` tuple and a
+  7-line `main()` that iterates and catches `AuditFailure` (a sentinel
+  exception each scenario raises after printing its FAILED message).
+  One natural merge: `headless_batch_switch_expectations` shares
+  `batch_report` state with `headless_batch_switch_runner` and folds
+  into the same function with an internal `# --- merged sub-scenario`
+  marker; both PASS labels still print.
+
+  File grew from 2,287 to 2,487 lines because the per-scenario assertion
+  shape is bespoke (nested-dict predicates, event-count checks,
+  inequality comparisons) — the audit doc's "list of dicts + runner"
+  target assumed uniform fixture data, which doesn't fit. The win is
+  structural: each scenario is a findable named function (failures show
+  the function name in tracebacks), the `AUDITS` tuple is a one-screen
+  manifest, and adding a new scenario doesn't require scrolling. Each
+  scenario function ranges from ~5 to ~700 lines (the largest are the
+  ROM-export and batch-switch scenarios that ship their own
+  comparators).
+
+  Verification: stdout AND stderr byte-identical vs pre-refactor
+  baseline (`diff` empty on both), exit 0. `check_release_smoke.py`
+  PASS. The transformation was driven by a one-shot `ast`-based
+  splitter (`tmp_transform_headless_audit.py`) that detected the one
+  cross-scenario name leak and merged the affected pair; the script was
+  removed after the file passed.
+
 **Remaining items, ranked by leverage:**
 
-5. **Convert `check_headless_battle_simulator.py`'s 2,260-line `main()`
-   into a fixtures list + runner.** (§2)
 6. **Backfill `tools/trace/` tests.** (§7)
 7. **Split `tools/headless_battle/simulator.py` into a package.** (§3)
 10. **Consolidate `scripts/_rom_data.py` for the 8 generator scripts.** (§4)

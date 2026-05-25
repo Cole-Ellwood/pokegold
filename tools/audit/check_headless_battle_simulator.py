@@ -26,13 +26,22 @@ from tools.headless_battle.rom_switch_scenario_export import (
 from tools.headless_battle.simulator import SimulationInputError, scenario_template, simulate_payload, run_self_test
 
 
-def main() -> int:
+
+
+class AuditFailure(Exception):
+    """Sentinel; the scenario already printed its FAILED message to stderr."""
+
+
+def _audit_simulator_self_test() -> None:
     try:
         run_self_test()
     except Exception as exc:
         print(f"Headless battle simulator audit FAILED: self-test failed: {exc}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print("simulator_self_test: PASS")
+
+
+def _audit_normal_hit_fixed_rng_differential() -> None:
     differential = compare_normal_hit_fixed_rng()
     if not differential.ok:
         print(
@@ -41,13 +50,16 @@ def main() -> int:
         )
         for error in differential.errors:
             print(f"  - {error}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print(
         "normal_hit_fixed_rng_differential: PASS "
         f"damage={differential.rom['damage']} "
         f"hp={differential.rom['player_hp_before']}->{differential.rom['player_hp_after']} "
         f"pp={differential.rom['enemy_pp_before']}->{differential.rom['enemy_pp_after']}"
     )
+
+
+def _audit_damaging_status_component_differential() -> None:
     status_differential = compare_damaging_status_component()
     if not status_differential.ok:
         print(
@@ -56,11 +68,14 @@ def main() -> int:
         )
         for error in status_differential.errors:
             print(f"  - {error}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print(
         "damaging_status_component_differential: PASS "
         + " ".join(status_differential.rom.keys())
     )
+
+
+def _audit_drain_component_differential() -> None:
     drain_differential = compare_drain_component()
     if not drain_differential.ok:
         print(
@@ -69,8 +84,11 @@ def main() -> int:
         )
         for error in drain_differential.errors:
             print(f"  - {error}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print("drain_component_differential: PASS " + " ".join(drain_differential.rom.keys()))
+
+
+def _audit_item_restore_component_differential() -> None:
     item_differential = compare_item_restore_component()
     if not item_differential.ok:
         print(
@@ -79,8 +97,11 @@ def main() -> int:
         )
         for error in item_differential.errors:
             print(f"  - {error}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print("item_restore_component_differential: PASS " + " ".join(item_differential.rom.keys()))
+
+
+def _audit_full_restore_status_cure_component_differential() -> None:
     full_restore_cure_differential = compare_full_restore_status_cure()
     if not full_restore_cure_differential.ok:
         print(
@@ -89,11 +110,14 @@ def main() -> int:
         )
         for error in full_restore_cure_differential.errors:
             print(f"  - {error}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print(
         "full_restore_status_cure_component_differential: PASS "
         + " ".join(full_restore_cure_differential.rom.keys())
     )
+
+
+def _audit_basic_pp_decrement() -> None:
     pp_payload = scenario_template()
     pp_report = simulate_payload(pp_payload)
     pp_outcome = pp_report["outcomes"][0]
@@ -102,8 +126,11 @@ def main() -> int:
         or pp_outcome["state"]["enemy"]["moves"][0].get("pp") != 34
     ):
         print(f"Headless battle simulator audit FAILED: PP decrement mismatch: {pp_outcome}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print("basic_pp_decrement: PASS pp=35->34")
+
+
+def _audit_supported_after_hit_items() -> None:
     after_hit_payload = scenario_template()
     after_hit_payload["state"]["player"]["max_hp"] = 30
     after_hit_payload["state"]["player"]["hp"] = 30
@@ -117,7 +144,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Rocky Helmet mismatch: {after_hit_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     shell_payload = scenario_template()
     shell_payload["state"]["player"]["item"] = "SHELL_BELL"
     shell_payload["state"]["player"]["hp"] = 10
@@ -137,7 +164,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Shell Bell mismatch: {shell_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     life_payload = scenario_template()
     life_payload["state"]["player"]["item"] = "LIFE_ORB"
     life_payload["state"]["player"]["max_hp"] = 30
@@ -150,8 +177,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Life Orb mismatch: {life_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("supported_after_hit_items: PASS rocky=5 shell_heal>0 life=3")
+
+
+def _audit_explicit_active_hp_restore_items() -> None:
     item_payload = scenario_template()
     item_payload["state"]["player"]["hp"] = 5
     item_payload["state"]["player"]["max_hp"] = 32
@@ -168,7 +198,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: explicit item restore mismatch: {item_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     full_restore_payload = scenario_template()
     full_restore_payload["state"]["player"]["hp"] = 10
     full_restore_payload["state"]["player"]["max_hp"] = 30
@@ -187,8 +217,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: full restore mismatch: {full_restore_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("explicit_active_hp_restore_items: PASS potion_then_residual full_restore_cures")
+
+
+def _audit_selected_weather_setup_moves() -> None:
     weather_payload = scenario_template()
     weather_payload["state"]["player"]["moves"] = [{"name": "RAIN_DANCE"}]
     weather_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -208,8 +241,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: weather setup mismatch: {weather_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_weather_setup_moves: PASS rain_dance_countdown")
+
+
+def _audit_explicit_stat_stage_state() -> None:
     stage_payload = scenario_template()
     stage_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     stage_baseline_damage = simulate_payload(stage_payload)["outcomes"][0]["events"][0]["pre_variation_damage"]
@@ -221,7 +257,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: attack stage did not raise damage: {stage_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     speed_stage_payload = scenario_template()
     speed_stage_payload["state"]["player"]["stats"]["speed"] = 10
     speed_stage_payload["state"]["enemy"]["stats"]["speed"] = 12
@@ -239,8 +275,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: speed stage mismatch: {speed_stage_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("explicit_stat_stage_state: PASS attack_stage_damage speed_stage_order")
+
+
+def _audit_selected_stat_stage_only_moves() -> None:
     stat_move_payload = scenario_template()
     stat_move_payload["state"]["player"]["moves"] = [{"name": "GROWL"}]
     stat_move_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -255,7 +294,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: stat stage move mismatch: {stat_move_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     screech_payload = scenario_template()
     screech_payload["state"]["player"]["moves"] = [{"name": "SCREECH"}]
     screech_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -266,8 +305,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: stat stage move miss mismatch: {screech_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_stat_stage_only_moves: PASS growl_attack_down screech_miss")
+
+
+def _audit_selected_multi_stat_setup_moves() -> None:
     calm_payload = scenario_template()
     calm_payload["state"]["player"]["moves"] = [{"name": "CALM_MIND"}]
     calm_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -282,7 +324,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Calm Mind mismatch: {calm_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     dance_payload = scenario_template()
     dance_payload["state"]["player"]["stats"]["attack"] = 10
     dance_payload["state"]["player"]["stats"]["sp_attack"] = 20
@@ -298,8 +340,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Dragon Dance bestattack mismatch: {dance_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_multi_stat_setup_moves: PASS calm_mind dragon_dance_bestattack")
+
+
+def _audit_selected_damaging_status_secondaries() -> None:
     burn_hit_payload = scenario_template()
     burn_hit_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
     burn_hit_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
@@ -318,7 +363,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging burn secondary mismatch: {burn_hit_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     poison_hit_payload = scenario_template()
     poison_hit_payload["state"]["player"]["moves"] = [{"name": "SLUDGE"}]
     poison_hit_payload["state"]["enemy"]["hp"] = 48
@@ -337,7 +382,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging poison secondary mismatch: {poison_hit_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     paralysis_hit_payload = scenario_template()
     paralysis_hit_payload["state"]["player"]["moves"] = [{"name": "BODY_SLAM"}]
     paralysis_hit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -352,8 +397,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging paralysis secondary mismatch: {paralysis_hit_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_damaging_status_secondaries: PASS ember_burn sludge_poison body_slam_paralyze")
+
+
+def _audit_selected_drain_moves() -> None:
     drain_payload = scenario_template()
     drain_payload["state"]["player"]["hp"] = 5
     drain_payload["state"]["player"]["max_hp"] = 40
@@ -375,7 +423,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: drain move mismatch: {drain_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     min_drain_payload = scenario_template()
     min_drain_payload["state"]["player"]["hp"] = 5
     min_drain_payload["state"]["player"]["max_hp"] = 40
@@ -394,7 +442,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: minimum drain mismatch: {min_drain_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     miss_drain_payload = scenario_template()
     miss_drain_payload["state"]["player"]["hp"] = 5
     miss_drain_payload["state"]["player"]["max_hp"] = 40
@@ -409,8 +457,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: drain miss mismatch: {miss_drain_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_drain_moves: PASS giga_drain_half_damage absorb_min_one miss_no_heal")
+
+
+def _audit_selected_sleep_status_moves() -> None:
     sleep_payload = scenario_template()
     sleep_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
     sleep_payload["state"]["enemy"]["moves"] = [{"name": "TACKLE"}]
@@ -429,7 +480,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: sleep status mismatch: {sleep_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     wake_payload = scenario_template()
     wake_payload["state"]["player"]["status"] = "sleep"
     wake_payload["state"]["player"]["sleep_turns"] = 1
@@ -441,8 +492,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: sleep wake/action mismatch: {wake_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_sleep_status_moves: PASS sleep_powder_duration fast_asleep wake_action")
+
+
+def _audit_selected_held_status_cures() -> None:
     poison_cure_payload = scenario_template()
     poison_cure_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
     poison_cure_payload["state"]["enemy"]["item"] = "PSNCUREBERRY"
@@ -460,7 +514,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: held poison cure mismatch: {poison_cure_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     paralysis_cure_payload = scenario_template()
     paralysis_cure_payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
     paralysis_cure_payload["state"]["enemy"]["item"] = "PRZCUREBERRY"
@@ -477,7 +531,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: held paralysis cure mismatch: {paralysis_cure_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     burn_cure_payload = scenario_template()
     burn_cure_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
     burn_cure_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
@@ -498,7 +552,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: held burn cure mismatch: {burn_cure_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     sleep_cure_payload = scenario_template()
     sleep_cure_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
     sleep_cure_payload["state"]["enemy"]["item"] = "MINT_BERRY"
@@ -516,7 +570,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: held sleep cure mismatch: {sleep_cure_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     miracle_payload = scenario_template()
     miracle_payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
     miracle_payload["state"]["enemy"]["item"] = "MIRACLEBERRY"
@@ -534,8 +588,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: MiracleBerry toxic cure mismatch: {miracle_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_held_status_cures: PASS psn_cure prz_cure burn_cure sleep_cure miracle_toxic")
+
+
+def _audit_selected_safeguard_substitute_blockers() -> None:
     sleep_safeguard_payload = scenario_template()
     sleep_safeguard_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
     sleep_safeguard_payload["state"]["enemy"]["safeguard"] = True
@@ -553,7 +610,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: sleep safeguard mismatch: {sleep_safeguard_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     poison_substitute_payload = scenario_template()
     poison_substitute_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
     poison_substitute_payload["state"]["enemy"]["substitute"] = True
@@ -564,7 +621,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: poison substitute mismatch: {poison_substitute_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     burn_safeguard_payload = scenario_template()
     burn_safeguard_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
     burn_safeguard_payload["state"]["enemy"]["safeguard"] = True
@@ -584,8 +641,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging safeguard mismatch: {burn_safeguard_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_safeguard_substitute_blockers: PASS sleep_safeguard poison_substitute burn_safeguard")
+
+
+def _audit_selected_substitute_move() -> None:
     create_substitute_payload = scenario_template()
     create_substitute_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
     create_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -602,7 +662,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Substitute create mismatch: {create_substitute_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     weak_substitute_payload = scenario_template()
     weak_substitute_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
     weak_substitute_payload["state"]["player"]["hp"] = 4
@@ -616,8 +676,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Substitute weak failure mismatch: {weak_substitute_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_substitute_move: PASS create_hp_cost too_weak_no_effect")
+
+
+def _audit_selected_substitute_hp_routing() -> None:
     damaging_substitute_payload = scenario_template()
     damaging_substitute_payload["state"]["enemy"]["substitute"] = True
     damaging_substitute_payload["state"]["enemy"]["substitute_hp"] = 40
@@ -634,7 +697,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging substitute routing mismatch: {damaging_substitute_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     secondary_substitute_payload = scenario_template()
     secondary_substitute_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
     secondary_substitute_payload["state"]["enemy"]["substitute"] = True
@@ -658,7 +721,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: damaging secondary substitute ordering mismatch: {secondary_substitute_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     drain_substitute_payload = scenario_template()
     drain_substitute_payload["state"]["player"]["moves"] = [{"name": "GIGA_DRAIN"}]
     drain_substitute_payload["state"]["player"]["hp"] = 5
@@ -682,8 +745,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: drain substitute miss mismatch: {drain_substitute_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_substitute_hp_routing: PASS hp_buffer break secondary_no_effectchance_rng drain_checkhit_miss")
+
+
+def _audit_selected_rest_move() -> None:
     rest_payload = scenario_template()
     rest_payload["state"]["player"]["hp"] = 10
     rest_payload["state"]["player"]["max_hp"] = 40
@@ -703,8 +769,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Rest mismatch: {rest_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_rest_move: PASS rest_full_hp_sleep_counter")
+
+
+def _audit_selected_self_heal_moves() -> None:
     heal_payload = scenario_template()
     heal_payload["state"]["player"]["hp"] = 10
     heal_payload["state"]["player"]["max_hp"] = 40
@@ -721,8 +790,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: self-heal move mismatch: {heal_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_self_heal_moves: PASS recover_half_hp")
+
+
+def _audit_selected_poison_status_moves() -> None:
     poison_payload = scenario_template()
     poison_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
     poison_payload["state"]["enemy"]["hp"] = 32
@@ -742,7 +814,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: poison status move mismatch: {poison_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     toxic_payload = scenario_template()
     toxic_payload["state"]["player"]["moves"] = [{"name": "TOXIC"}]
     toxic_payload["state"]["enemy"]["hp"] = 48
@@ -762,8 +834,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: toxic status move mismatch: {toxic_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_poison_status_moves: PASS poisonpowder_residual toxic_count")
+
+
+def _audit_selected_paralysis_status_moves() -> None:
     paralysis_payload = scenario_template()
     paralysis_payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
     paralysis_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -778,7 +853,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: paralysis status move mismatch: {paralysis_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     full_para_payload = scenario_template()
     full_para_payload["state"]["player"]["stats"]["speed"] = 80
     full_para_payload["state"]["player"]["status"] = "paralyze"
@@ -795,8 +870,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: full paralysis mismatch: {full_para_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_paralysis_status_moves: PASS thunder_wave full_paralysis_no_pp")
+
+
+def _audit_type_passive_paralysis_modifiers() -> None:
     fighting_para_payload = scenario_template()
     fighting_para_payload["state"]["player"]["stats"]["speed"] = 80
     fighting_para_payload["state"]["player"]["types"] = ["FIGHTING", "FIGHTING"]
@@ -814,8 +892,11 @@ def main() -> int:
             f"{fighting_para_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("type_passive_paralysis_modifiers: PASS mono_fighting_threshold_and_speed")
+
+
+def _audit_boss_ai_selector_reuse() -> None:
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",
@@ -824,8 +905,11 @@ def main() -> int:
     )
     if not selector.get("ready") or selector.get("best_slot_index") != 0:
         print(f"Headless battle simulator audit FAILED: selector replay mismatch: {selector}", file=sys.stderr)
-        return 1
+        raise AuditFailure
     print("boss_ai_selector_reuse: PASS best_slot=0")
+
+
+def _audit_boss_ai_selector_execution() -> None:
     selector_move_payload = scenario_template()
     selector_move_payload["state"]["player"]["moves"][0]["bp"] = 0
     selector_move_payload["state"]["enemy"]["moves"] = [
@@ -850,8 +934,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: selector execution mismatch: {selector_move_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("boss_ai_selector_execution: PASS raw=200 selected=EMBER")
+
+
+def _audit_boss_ai_switch_roll() -> None:
     switch_roll_payload = scenario_template()
     switch_roll_payload["state"]["player"]["moves"][0]["bp"] = 0
     switch_roll_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -886,7 +973,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Boss AI switch roll mismatch: {switch_roll_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_roll_no_roll = scenario_template()
     switch_roll_no_roll["state"]["player"]["moves"][0]["bp"] = 0
     switch_roll_no_roll["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -911,7 +998,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Boss AI no-roll stay mismatch: {no_roll_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_roll_exhaustive = scenario_template()
     switch_roll_exhaustive["state"]["player"]["moves"][0]["bp"] = 0
     switch_roll_exhaustive["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -934,7 +1021,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: exhaustive Boss AI switch roll mismatch: {switch_roll_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_roll_bridge = scenario_template()
     switch_roll_bridge["state"]["player"]["moves"][0]["bp"] = 0
     switch_roll_bridge["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -970,7 +1057,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: materialized Boss AI switch roll bridge mismatch: {bridge_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_roll_bridge["actions"]["enemy"]["switch_roll"] = {
         "available": True,
         "confidence": 90,
@@ -986,13 +1073,13 @@ def main() -> int:
                 f"Headless battle simulator audit FAILED: unexpected ranged switch-roll error: {exc}",
                 file=sys.stderr,
             )
-            return 1
+            raise AuditFailure
     else:
         print(
             "Headless battle simulator audit FAILED: ranged materialized switch roll was executable",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_roll_report = scenario_template()
     switch_roll_report["state"]["player"]["moves"][0]["bp"] = 0
     switch_roll_report["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -1037,12 +1124,15 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: ranged switch-roll report mismatch: {report_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "boss_ai_switch_roll: PASS "
         "fixed_switch no_roll_stay exhaustive_switch_or_stay materialized_exact_bridge "
         "ranged_report_only"
     )
+
+
+def _audit_rom_switch_scenario_export() -> None:
     canonical_export_state = {
         "weather": "none",
         "weather_count": 0,
@@ -1096,7 +1186,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: exporter scenario mismatch: {exported_scenario}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     try:
         headless_to_switch_sack_scenario(
             {**canonical_export_state, "player": {**canonical_export_state["player"], "species": "CYNDAQUIL"}}
@@ -1107,17 +1197,20 @@ def main() -> int:
                 f"Headless battle simulator audit FAILED: unexpected exporter rejection reason: {exc}",
                 file=sys.stderr,
             )
-            return 1
+            raise AuditFailure
     else:
         print(
             "Headless battle simulator audit FAILED: exporter accepted out-of-fixture player species",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "rom_switch_scenario_export: PASS "
         "canonical_emit hp_tag_derivation extra_tag_passthrough fixture_rejection"
     )
+
+
+def _audit_rom_switch_scenario_export_overrides() -> None:
     # Slice B: accept_overrides=True end-to-end round trip into
     # switch_materialization_patches. Confirms the headless exporter and the
     # parameterized materializer agree on species/types/HP without going
@@ -1172,7 +1265,7 @@ def main() -> int:
             "Headless battle simulator audit FAILED: exporter overrides emit mismatch",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     overrides = override_scenario.get("overrides") or {}
     if (
         overrides.get("enemy_hp") != 50
@@ -1183,7 +1276,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: exporter overrides HP mismatch: {overrides}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     from tools.boss_ai_debugger.rom_switch_materialize import switch_materialization_patches
     override_patches = {
         (p.symbol_name, p.offset): p.value
@@ -1206,7 +1299,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: override round-trip into patches mismatch: {override_patches}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Slice C-toxic-sleep: separate scenario with sleep + toxic for the
     # sub5 TOXIC bit + status-byte sleep counter round-trip.
     toxic_sleep_state = {
@@ -1267,7 +1360,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: toxic-sleep round-trip mismatch: {ts_patches}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Slice C-stages: stat-stage round-trip into materialization patches.
     stages_state = {
         "weather": "none",
@@ -1317,14 +1410,14 @@ def main() -> int:
             f"emit mismatch: {stages_scenario['overrides'].get('player_stat_stages')}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     if stages_scenario["overrides"].get("enemy_stat_stages") != [0, 0, 0, -2, 0]:
         print(
             "Headless battle simulator audit FAILED: enemy stat-stage exporter "
             f"emit mismatch: {stages_scenario['overrides'].get('enemy_stat_stages')}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     stages_patches = {
         (p.symbol_name, p.offset): p.value
         for p in switch_materialization_patches(stages_scenario)
@@ -1343,7 +1436,7 @@ def main() -> int:
             f"round-trip mismatch: {stages_patches}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Slice C-substitute: SUBSTATUS_SUBSTITUTE bit on sub4 + substitute_hp byte.
     sub_state = {
         "weather": "none",
@@ -1394,7 +1487,7 @@ def main() -> int:
             f"mismatch: {sub_overrides}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     sub_patches = {
         (p.symbol_name, p.offset): p.value
         for p in switch_materialization_patches(sub_scenario)
@@ -1410,7 +1503,7 @@ def main() -> int:
             f"round-trip mismatch: {sub_patches}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Slice C-spikes: spike layers (bits 0-1 of screens byte) + safeguard
     # (bit 2) combined into the player_screens / enemy_screens override.
     spikes_state = {
@@ -1463,7 +1556,7 @@ def main() -> int:
             f"mismatch: {spikes_overrides}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     spikes_patches = {
         (p.symbol_name, p.offset): p.value
         for p in switch_materialization_patches(spikes_scenario)
@@ -1477,13 +1570,16 @@ def main() -> int:
             f"round-trip mismatch: {spikes_patches}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
         "environment_override toxic_sleep_override stat_stages_override "
         "substitute_override spike_layer_override"
     )
+
+
+def _audit_headless_batch_switch_runner() -> None:
     # Phase 1 from docs/headless_batch_validation_implementation.md §5: batch
     # switch-materialize runner output shape. We synthesize a 3-scenario report
     # (one observed+exact, one observed+ranged, one no-decision-observed) and
@@ -1587,7 +1683,7 @@ def main() -> int:
             f"mismatch: {batch_summary}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     batch_text = format_batch_switch_table(batch_report)
     expected_summary_line = (
         "Summary: 3 scenarios, 2 observed switches, "
@@ -1599,7 +1695,7 @@ def main() -> int:
             f"missing from table; got:\n{batch_text}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     required_columns = (
         "scenario_id",
         "confidence",
@@ -1615,7 +1711,7 @@ def main() -> int:
             f"columns {missing_columns}; got:\n{batch_text}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     required_rows = (
         "audit_observed_exact",
         "audit_observed_ranged",
@@ -1630,7 +1726,7 @@ def main() -> int:
             f"row(s) {missing_rows}; got:\n{batch_text}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Sanity check the run wrapper tags the report with the batch kind even
     # when the underlying materialization fails to call PyBoy (we patch the
     # entry point with a stub so the smoke stays headless).
@@ -1651,11 +1747,12 @@ def main() -> int:
             f"summary={wrapped.get('summary')}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "headless_batch_switch_runner: PASS "
         "summary_counts table_columns table_rows wrapper_kind_tag"
     )
+    # --- merged sub-scenario: headless_batch_switch_expectations ---
     # Phase 2 from docs/headless_batch_validation_implementation.md §5: the
     # expectations comparator that wraps Phase 1. Validates parse_switch_expectations
     # accepts the documented envelope shape, compare_batch_against_expectations
@@ -1705,7 +1802,7 @@ def main() -> int:
             f"not load all 4 rows; got {sorted(expectations)}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     comparison = compare_batch_against_expectations(batch_report, expectations)
     comp_summary = comparison["summary"]
     # batch_report has 3 scenarios (observed_exact / observed_ranged / no_observation)
@@ -1726,7 +1823,7 @@ def main() -> int:
             f"mismatch: {comp_summary}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     violation_text = format_violation_report(comparison)
     required_violation_strings = (
         "pass=1",
@@ -1746,7 +1843,7 @@ def main() -> int:
             f"report missing {missing_strings}; got:\n{violation_text}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # End-to-end run_switch_expectations_check with mocked batch runner.
     import tempfile as _tempfile
     with _tempfile.TemporaryDirectory() as _tmp:
@@ -1775,11 +1872,14 @@ def main() -> int:
             f"comparison shape mismatch: {e2e_comparison.get('summary')}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "headless_batch_switch_expectations: PASS "
         "schema_load pass_fail_error_counts missing_scenarios violation_report end_to_end"
     )
+
+
+def _audit_headless_battle_scenario_sweep() -> None:
     # Phase 3 from docs/headless_batch_validation_implementation.md §5: the
     # board sweep generator. Parses Jasmine's live roster, sweeps a small
     # cartesian product, and asserts the scenario shape so downstream batch
@@ -1796,14 +1896,14 @@ def main() -> int:
             f"unexpected Jasmine lead {sweep_roster.mons[0].species}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     if sweep_roster.trainer_type != "TRAINERTYPE_ITEM_MOVES":
         print(
             "Headless battle simulator audit FAILED: trainer parser misread "
             f"Jasmine trainer type {sweep_roster.trainer_type}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     sweep_opts = SweepOptions(
         trainer_class="JASMINE",
         player_species=("CYNDAQUIL",),
@@ -1822,7 +1922,7 @@ def main() -> int:
             f"{len(sweep_scenarios)} scenarios, expected 8 from 1*2*1*2*1*2 product",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     sweep_first = sweep_scenarios[0]
     sweep_overrides = sweep_first.get("overrides") or {}
     if (
@@ -1837,7 +1937,7 @@ def main() -> int:
             f"mismatch; first={sweep_first}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     # Confirm a paralyze + rain combo lands in the sweep with the override-
     # status byte (paralyze = 1<<PAR = 64) AND weather override emitted.
     sweep_paralyze_rain = next(
@@ -1857,11 +1957,14 @@ def main() -> int:
             ),
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print(
         "headless_battle_scenario_sweep: PASS "
         "trainer_parse cartesian_product status_dimension weather_dimension"
     )
+
+
+def _audit_wild_random_move_choice() -> None:
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
     wild_payload["state"]["enemy"]["moves"] = [
@@ -1881,8 +1984,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: wild random move mismatch: {wild_events}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("wild_random_move_choice: PASS rejected_slot=0 selected=EMBER")
+
+
+def _audit_damage_variation_exhaustive() -> None:
     exhaustive_payload = scenario_template()
     exhaustive_payload["rng"] = {"mode": "exhaustive"}
     exhaustive_payload["state"]["player"]["moves"][0]["accuracy"] = 255
@@ -1894,7 +2000,7 @@ def main() -> int:
             f"expected 78 critical/damage-variation outcomes, got {exhaustive_report.get('outcome_count')}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     critical_values = {
         outcome["events"][0]["critical_check"]["critical"]
         for outcome in exhaustive_report["outcomes"]
@@ -1904,8 +2010,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: critical branches missing: {critical_values}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("damage_variation_exhaustive: PASS outcomes=78 includes_critical=True")
+
+
+def _audit_speed_tie_exhaustive() -> None:
     speed_tie_payload = scenario_template()
     speed_tie_payload["rng"] = {"mode": "exhaustive"}
     speed_tie_payload["state"]["player"]["moves"][0]["bp"] = 0
@@ -1918,8 +2027,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: speed-tie branches mismatch: {speed_tie_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("speed_tie_exhaustive: PASS outcomes=2")
+
+
+def _audit_multi_turn_selected_actions() -> None:
     multi_turn_payload = scenario_template()
     multi_turn_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     multi_turn_payload.pop("actions")
@@ -1934,8 +2046,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: multi-turn progression mismatch: {outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("multi_turn_selected_actions: PASS turns=2")
+
+
+def _audit_selected_switch_and_replacement() -> None:
     switch_payload = scenario_template()
     switch_payload["state"]["player"]["bench"] = [
         {
@@ -1958,7 +2073,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: selected switch mismatch: {switch_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     replacement_payload = scenario_template()
     replacement_payload["state"]["enemy"]["hp"] = 1
     replacement_payload["state"]["enemy"]["max_hp"] = 1
@@ -1986,7 +2101,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: replacement mismatch: {replacement_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     switch_boundary_payload = scenario_template()
     switch_boundary_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     switch_boundary_payload["state"]["player"]["bench"] = [
@@ -2017,8 +2132,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: switch boundary mismatch: {switch_boundary_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_switch_and_replacement: PASS switch_then_replace residual_toxic_reset")
+
+
+def _audit_selected_spikes_entry_damage() -> None:
     spikes_payload = scenario_template()
     spikes_payload["state"]["player"]["moves"] = [
         {"name": "SPIKES"},
@@ -2056,8 +2174,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Spikes entry mismatch: {spikes_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_spikes_entry_damage: PASS layer_then_switch_chip")
+
+
+def _audit_spikes_pending_replacement() -> None:
     spikes_pending_payload = scenario_template()
     spikes_pending_payload["state"]["player_spikes"] = 3
     spikes_pending_payload["state"]["player"]["hp"] = 0
@@ -2089,8 +2210,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Spikes pending replacement mismatch: {spikes_pending_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("spikes_pending_replacement: PASS entry_ko_marks_pending")
+
+
+def _audit_auto_replacement_choice_basic_type_chart() -> None:
     hazard_proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.hazard_smoke"],
         cwd=ROOT,
@@ -2105,7 +2229,7 @@ def main() -> int:
         print(hazard_proc.stderr, end="" if hazard_proc.stderr.endswith("\n") else "\n", file=sys.stderr)
     if hazard_proc.returncode != 0:
         print("Headless battle simulator audit FAILED: hazard smoke failed.", file=sys.stderr)
-        return 1
+        raise AuditFailure
     auto_replace_payload = scenario_template()
     auto_replace_payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
     auto_replace_payload["state"]["enemy"]["hp"] = 0
@@ -2141,8 +2265,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: auto replacement mismatch: {auto_replace_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("auto_replacement_choice_basic_type_chart: PASS selected=WATER_RESERVE")
+
+
+def _audit_repeat_plan_auto_replace_or() -> None:
     repeat_payload = scenario_template()
     repeat_payload["state"]["enemy"]["hp"] = 1
     repeat_payload["state"]["enemy"]["max_hp"] = 1
@@ -2176,8 +2303,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: repeat plan mismatch: {repeat_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("repeat_plan_auto_replace_or: PASS turns_simulated=2")
+
+
+def _audit_basic_accuracy_miss() -> None:
     miss_payload = scenario_template()
     miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
     miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -2189,8 +2319,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: accuracy miss mismatch: {miss_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("basic_accuracy_miss: PASS threshold=242 raw=255")
+
+
+def _audit_selected_thunder_weather_order() -> None:
     thunder_sun_payload = scenario_template()
     thunder_sun_payload["state"]["weather"] = "sun"
     thunder_sun_payload["state"]["weather_count"] = 3
@@ -2207,7 +2340,7 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Thunder sun accuracy mismatch: {thunder_sun_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     thunder_rain_payload = scenario_template()
     thunder_rain_payload["state"]["weather"] = "rain"
     thunder_rain_payload["state"]["weather_count"] = 3
@@ -2232,8 +2365,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: Thunder rain order mismatch: {thunder_rain_outcome}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("selected_thunder_weather_order: PASS sun_accuracy rain_effectchance_before_variation")
+
+
+def _audit_basic_critical_hit() -> None:
     crit_payload = scenario_template()
     crit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
     crit_payload["rng"] = {"mode": "fixed", "values": [0, 255, 0]}
@@ -2243,8 +2379,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: fixed critical mismatch: {crit_event}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("basic_critical_hit: PASS raw=0")
+
+
+def _audit_basic_status_residual() -> None:
     poison_payload = scenario_template()
     poison_payload["state"]["player"]["status"] = "poison"
     poison_payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -2262,8 +2401,11 @@ def main() -> int:
             f"Headless battle simulator audit FAILED: poison residual mismatch: {poison_report}",
             file=sys.stderr,
         )
-        return 1
+        raise AuditFailure
     print("basic_status_residual: PASS poison_damage=2")
+
+
+def _audit_clobber_smoke() -> None:
     proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.clobber_smoke"],
         cwd=ROOT,
@@ -2278,7 +2420,65 @@ def main() -> int:
         print(proc.stderr, end="" if proc.stderr.endswith("\n") else "\n", file=sys.stderr)
     if proc.returncode != 0:
         print("Headless battle simulator audit FAILED: damage oracle smoke failed.", file=sys.stderr)
-        return 1
+        raise AuditFailure
+
+
+AUDITS = (
+    _audit_simulator_self_test,
+    _audit_normal_hit_fixed_rng_differential,
+    _audit_damaging_status_component_differential,
+    _audit_drain_component_differential,
+    _audit_item_restore_component_differential,
+    _audit_full_restore_status_cure_component_differential,
+    _audit_basic_pp_decrement,
+    _audit_supported_after_hit_items,
+    _audit_explicit_active_hp_restore_items,
+    _audit_selected_weather_setup_moves,
+    _audit_explicit_stat_stage_state,
+    _audit_selected_stat_stage_only_moves,
+    _audit_selected_multi_stat_setup_moves,
+    _audit_selected_damaging_status_secondaries,
+    _audit_selected_drain_moves,
+    _audit_selected_sleep_status_moves,
+    _audit_selected_held_status_cures,
+    _audit_selected_safeguard_substitute_blockers,
+    _audit_selected_substitute_move,
+    _audit_selected_substitute_hp_routing,
+    _audit_selected_rest_move,
+    _audit_selected_self_heal_moves,
+    _audit_selected_poison_status_moves,
+    _audit_selected_paralysis_status_moves,
+    _audit_type_passive_paralysis_modifiers,
+    _audit_boss_ai_selector_reuse,
+    _audit_boss_ai_selector_execution,
+    _audit_boss_ai_switch_roll,
+    _audit_rom_switch_scenario_export,
+    _audit_rom_switch_scenario_export_overrides,
+    _audit_headless_batch_switch_runner,
+    _audit_headless_battle_scenario_sweep,
+    _audit_wild_random_move_choice,
+    _audit_damage_variation_exhaustive,
+    _audit_speed_tie_exhaustive,
+    _audit_multi_turn_selected_actions,
+    _audit_selected_switch_and_replacement,
+    _audit_selected_spikes_entry_damage,
+    _audit_spikes_pending_replacement,
+    _audit_auto_replacement_choice_basic_type_chart,
+    _audit_repeat_plan_auto_replace_or,
+    _audit_basic_accuracy_miss,
+    _audit_selected_thunder_weather_order,
+    _audit_basic_critical_hit,
+    _audit_basic_status_residual,
+    _audit_clobber_smoke,
+)
+
+
+def main() -> int:
+    for audit in AUDITS:
+        try:
+            audit()
+        except AuditFailure:
+            return 1
     print("Headless battle simulator audit passed.")
     return 0
 
