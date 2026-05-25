@@ -59,6 +59,7 @@ STATUS_STRING_TO_BYTE = {
     "paralyze": 1 << 6,
 }
 OVERRIDABLE_STATUSES = frozenset(STATUS_STRING_TO_BYTE)
+SCREENS_SAFEGUARD_BIT = 2  # matches constants/battle_constants.asm SCREENS_SAFEGUARD
 
 
 @lru_cache(maxsize=1)
@@ -113,11 +114,12 @@ def headless_to_switch_sack_scenario(
         _assert_fixture_active(battle_state.player, side="player")
         _assert_fixture_active(battle_state.enemy, side="enemy")
         _assert_fixture_enemy_bench(battle_state.enemy_bench)
+        _assert_no_field_state(battle_state)
     else:
         _assert_overridable_active(battle_state.player, side="player")
         _assert_overridable_active(battle_state.enemy, side="enemy")
         _assert_overridable_enemy_bench(battle_state.enemy_bench)
-    _assert_no_field_state(battle_state)
+        _assert_overridable_field_state(battle_state)
     tags = _derive_hp_tags(battle_state.player, battle_state.enemy)
     if extra_tags is not None:
         for tag in extra_tags:
@@ -151,23 +153,33 @@ def headless_to_switch_sack_scenario(
 
 def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
     bench_lead = battle_state.enemy_bench[0]
-    return {
+    overrides: dict[str, Any] = {
         "player_species": species_id_for(battle_state.player.name),
         "player_type1": battle_state.player.types[0],
         "player_type2": battle_state.player.types[1],
         "player_hp": battle_state.player.hp,
         "player_max_hp": battle_state.player.max_hp,
         "player_status": STATUS_STRING_TO_BYTE[battle_state.player.status],
+        "player_item": battle_state.player.item,
         "enemy_species": species_id_for(battle_state.enemy.name),
         "enemy_type1": battle_state.enemy.types[0],
         "enemy_type2": battle_state.enemy.types[1],
         "enemy_hp": battle_state.enemy.hp,
         "enemy_max_hp": battle_state.enemy.max_hp,
         "enemy_status": STATUS_STRING_TO_BYTE[battle_state.enemy.status],
+        "enemy_item": battle_state.enemy.item,
         "enemy_bench_species": species_id_for(bench_lead.name),
         "enemy_bench_hp": bench_lead.hp,
         "enemy_bench_max_hp": bench_lead.max_hp,
     }
+    if battle_state.weather or battle_state.weather_count:
+        overrides["weather"] = battle_state.weather
+        overrides["weather_count"] = battle_state.weather_count
+    if battle_state.player_safeguard:
+        overrides["player_screens"] = 1 << SCREENS_SAFEGUARD_BIT
+    if battle_state.enemy_safeguard:
+        overrides["enemy_screens"] = 1 << SCREENS_SAFEGUARD_BIT
+    return overrides
 
 
 def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
@@ -176,11 +188,8 @@ def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
             f"rom_switch_scenario_export: {side}.status={mon.status!r} not in "
             f"{sorted(OVERRIDABLE_STATUSES)}; sleep/toxic need slice C-sleep / C-toxic"
         )
-    if mon.item != ALLOWED_HELD_ITEM:
-        raise SimulationInputError(
-            f"rom_switch_scenario_export: {side}.item={mon.item}; "
-            "slice B does not patch held-item WRAM fields"
-        )
+    # mon.item is now patched in slice C-environment via overrides.player_item /
+    # overrides.enemy_item, so non-zero held items are allowed in override mode.
     stages = (
         mon.attack_stage,
         mon.defense_stage,
@@ -308,6 +317,18 @@ def _assert_no_field_state(state: BattleState) -> None:
         raise SimulationInputError(
             f"rom_switch_scenario_export: spikes player={state.player_spikes} "
             f"enemy={state.enemy_spikes}; fixture does not model hazards"
+        )
+
+
+def _assert_overridable_field_state(state: BattleState) -> None:
+    # Slice C-environment patches weather (wBattleWeather + wWeatherCount) and
+    # screens (wPlayerScreens / wEnemyScreens SAFEGUARD bit) via overrides, so
+    # those are allowed here. Spikes is still slice C-spikes future work.
+    if state.player_spikes or state.enemy_spikes:
+        raise SimulationInputError(
+            f"rom_switch_scenario_export: spikes player={state.player_spikes} "
+            f"enemy={state.enemy_spikes}; slice C-spikes is future work "
+            "(needs spike-layer encoding into wPlayerScreens / wEnemyScreens)"
         )
 
 

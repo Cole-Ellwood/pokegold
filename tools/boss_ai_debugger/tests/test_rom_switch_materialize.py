@@ -140,6 +140,52 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBattleMonStatus", 0)], 16)
         self.assertEqual(patches[("wEnemyMonStatus", 0)], 8)
 
+    def test_switch_materialization_environment_overrides_apply_when_present(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                "weather": 1,  # rain
+                "weather_count": 5,
+                "player_item": 17,
+                "enemy_item": 32,
+                "player_screens": 4,  # safeguard bit
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wBattleWeather", 0)], 1)
+        self.assertEqual(patches[("wWeatherCount", 0)], 5)
+        self.assertEqual(patches[("wBattleMonItem", 0)], 17)
+        # enemy_item override should win over the default NO_ITEM patch.
+        self.assertEqual(patches[("wEnemyMonItem", 0)], 32)
+        self.assertEqual(patches[("wPlayerScreens", 0)], 4)
+        # No override for enemy_screens; no patch should be emitted for it.
+
+    def test_switch_materialization_skips_environment_patches_when_absent(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+        }
+        symbols = {
+            patch.symbol_name
+            for patch in switch_materialization_patches(scenario)
+        }
+        # When no environment overrides are provided, slice C-environment must
+        # not emit those patches so the base save state's existing values are
+        # preserved (preserves backward-compat with trace ROM bytes).
+        self.assertNotIn("wBattleWeather", symbols)
+        self.assertNotIn("wWeatherCount", symbols)
+        self.assertNotIn("wBattleMonItem", symbols)
+        self.assertNotIn("wPlayerScreens", symbols)
+        self.assertNotIn("wEnemyScreens", symbols)
+        # wEnemyMonItem IS always patched (legacy default = NO_ITEM).
+        self.assertIn("wEnemyMonItem", symbols)
+
     def test_switch_materialization_rejects_non_object_overrides(self) -> None:
         scenario = {
             "family": "switch_sack",

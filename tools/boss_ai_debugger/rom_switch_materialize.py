@@ -305,6 +305,21 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
 
     player_status = _resolve_int(overrides_raw.get("player_status"), 0)
     enemy_status = _resolve_int(overrides_raw.get("enemy_status"), 0)
+    # Slice C-environment fields: only patch when explicitly overridden so the
+    # base save state's existing values are preserved for backward-compat.
+    optional_overrides: list[tuple[str, str, int]] = []
+    if "weather" in overrides_raw:
+        optional_overrides.append(("wBattleWeather", "weather", _resolve_int(overrides_raw["weather"], 0)))
+    if "weather_count" in overrides_raw:
+        optional_overrides.append(("wWeatherCount", "weather_count", _resolve_int(overrides_raw["weather_count"], 0)))
+    if "player_item" in overrides_raw:
+        optional_overrides.append(("wBattleMonItem", "player_item", _resolve_int(overrides_raw["player_item"], 0)))
+    if "enemy_item" in overrides_raw:
+        optional_overrides.append(("wEnemyMonItem", "enemy_item", _resolve_int(overrides_raw["enemy_item"], 0)))
+    if "player_screens" in overrides_raw:
+        optional_overrides.append(("wPlayerScreens", "player_screens", _resolve_int(overrides_raw["player_screens"], 0)))
+    if "enemy_screens" in overrides_raw:
+        optional_overrides.append(("wEnemyScreens", "enemy_screens", _resolve_int(overrides_raw["enemy_screens"], 0)))
 
     patches = [
         patch("wBossAITier", tier),
@@ -347,6 +362,10 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
     patches.extend(word_patches("wBattleMonMaxHP", player_max_hp))
     patches.extend(word_patches("wOTPartyMon2HP", enemy_bench_hp))
     patches.extend(word_patches("wOTPartyMon2MaxHP", enemy_bench_max_hp))
+    # Slice C-environment overrides applied last so they win over the
+    # existing wEnemyMonItem default (NO_ITEM) when explicitly provided.
+    for symbol, _key, value in optional_overrides:
+        patches.append(patch(symbol, value))
     return patches
 
 

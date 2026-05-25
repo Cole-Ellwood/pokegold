@@ -1121,9 +1121,10 @@ def main() -> int:
     # parameterized materializer agree on species/types/HP without going
     # through the hardcoded fixture defaults.
     override_state = {
-        "weather": "none",
-        "weather_count": 0,
+        "weather": "rain",
+        "weather_count": 4,
         "turn": 1,
+        "player_safeguard": True,
         "player": {
             "species": "CYNDAQUIL",
             "level": 50,
@@ -1133,6 +1134,7 @@ def main() -> int:
             "stats": {"attack": 60, "defense": 60, "speed": 60, "sp_attack": 60, "sp_defense": 60},
             "moves": [{"name": "EMBER"}],
             "status": "burn",
+            "item": 17,
         },
         "enemy": {
             "species": "HAUNTER",
@@ -1143,6 +1145,7 @@ def main() -> int:
             "stats": {"attack": 50, "defense": 45, "speed": 95, "sp_attack": 115, "sp_defense": 55},
             "moves": [{"name": "LICK"}],
             "status": "paralyze",
+            "item": 32,
             "bench": [
                 {
                     "name": "GENGAR",
@@ -1191,6 +1194,11 @@ def main() -> int:
         or override_patches.get(("wEnemyMonType1", 0)) != 0x08  # GHOST
         or override_patches.get(("wBattleMonStatus", 0)) != 16  # burn = 1<<BRN
         or override_patches.get(("wEnemyMonStatus", 0)) != 64  # paralyze = 1<<PAR
+        or override_patches.get(("wBattleWeather", 0)) is None  # weather override emitted
+        or override_patches.get(("wWeatherCount", 0)) != 4
+        or override_patches.get(("wBattleMonItem", 0)) != 17
+        or override_patches.get(("wEnemyMonItem", 0)) != 32
+        or override_patches.get(("wPlayerScreens", 0)) != 4  # safeguard bit
     ):
         print(
             f"Headless battle simulator audit FAILED: override round-trip into patches mismatch: {override_patches}",
@@ -1199,7 +1207,8 @@ def main() -> int:
         return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
-        "accept_overrides_emit override_round_trip status_override"
+        "accept_overrides_emit override_round_trip status_override "
+        "environment_override"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0

@@ -234,10 +234,34 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertEqual(scenario["overrides"]["player_status"], 1 << 6)
         self.assertEqual(scenario["overrides"]["enemy_status"], 1 << 3)
 
-    def test_accept_overrides_still_rejects_weather(self) -> None:
+    def test_accept_overrides_now_accepts_weather(self) -> None:
         state = fixture_state(weather="rain", weather_count=5)
-        with self.assertRaisesRegex(SimulationInputError, "weather"):
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        self.assertIn("weather", scenario["overrides"])
+        self.assertGreater(scenario["overrides"]["weather"], 0)
+        self.assertEqual(scenario["overrides"]["weather_count"], 5)
+
+    def test_accept_overrides_still_rejects_spikes(self) -> None:
+        state = fixture_state()
+        state["enemy_spikes"] = 2
+        with self.assertRaisesRegex(SimulationInputError, "slice C-spikes"):
             headless_to_switch_sack_scenario(state, accept_overrides=True)
+
+    def test_accept_overrides_now_accepts_held_items(self) -> None:
+        state = fixture_state()
+        state["player"]["item"] = 17  # arbitrary item id
+        state["enemy"]["item"] = 32
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        self.assertEqual(scenario["overrides"]["player_item"], 17)
+        self.assertEqual(scenario["overrides"]["enemy_item"], 32)
+
+    def test_accept_overrides_emits_safeguard_screens_bit(self) -> None:
+        state = fixture_state()
+        state["player_safeguard"] = True
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # SCREENS_SAFEGUARD is bit 2 -> 1<<2 = 4
+        self.assertEqual(scenario["overrides"]["player_screens"], 4)
+        self.assertNotIn("enemy_screens", scenario["overrides"])
 
     def test_accept_overrides_still_rejects_empty_enemy_bench(self) -> None:
         state = fixture_state()
