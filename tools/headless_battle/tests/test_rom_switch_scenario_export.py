@@ -208,15 +208,25 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         self.assertEqual(overrides["enemy_bench_hp"], 75)
         self.assertEqual(overrides["enemy_bench_max_hp"], 120)
 
-    def test_accept_overrides_still_rejects_sleep_status(self) -> None:
-        # Slice C-status covers burn/poison/paralyze/none; sleep needs
-        # slice C-sleep (status byte packs the sleep_turns counter) and
-        # toxic needs slice C-toxic (SUBSTATUS_TOXIC bit on sub5).
+    def test_accept_overrides_now_accepts_sleep_status_with_turns(self) -> None:
         state = fixture_state()
         state["player"]["status"] = "sleep"
         state["player"]["sleep_turns"] = 3
-        with self.assertRaisesRegex(SimulationInputError, "player.status='sleep'"):
-            headless_to_switch_sack_scenario(state, accept_overrides=True)
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # Sleep packs the counter into status byte bits 0-2.
+        self.assertEqual(scenario["overrides"]["player_status"], 3)
+
+    def test_accept_overrides_now_accepts_toxic_status_and_emits_sub5_bit(self) -> None:
+        state = fixture_state()
+        state["enemy"]["status"] = "toxic"
+        state["enemy"]["toxic_count"] = 2
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # Toxic shares the poison primary-status byte.
+        self.assertEqual(scenario["overrides"]["enemy_status"], 1 << 3)
+        # SUBSTATUS_TOXIC bit on sub5 distinguishes toxic from regular poison.
+        self.assertEqual(scenario["overrides"]["enemy_sub5"], 1)
+        # No player_sub5 should be emitted when not toxic.
+        self.assertNotIn("player_sub5", scenario["overrides"])
 
     def test_accept_overrides_now_accepts_burn_status(self) -> None:
         state = fixture_state()

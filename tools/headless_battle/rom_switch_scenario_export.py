@@ -57,9 +57,30 @@ STATUS_STRING_TO_BYTE = {
     "burn": 1 << 4,
     "poison": 1 << 3,
     "paralyze": 1 << 6,
+    "toxic": 1 << 3,  # same primary status byte as poison; sub5 TOXIC bit distinguishes
 }
-OVERRIDABLE_STATUSES = frozenset(STATUS_STRING_TO_BYTE)
+# Sleep packs the sleep_turns counter (1..7) into the status byte directly,
+# so it's handled by a dedicated branch in _status_byte_for and is not in
+# STATUS_STRING_TO_BYTE.
+OVERRIDABLE_STATUSES = frozenset({*STATUS_STRING_TO_BYTE, "sleep"})
 SCREENS_SAFEGUARD_BIT = 2  # matches constants/battle_constants.asm SCREENS_SAFEGUARD
+SUBSTATUS_TOXIC_BIT = 0  # matches constants/battle_constants.asm SUBSTATUS_TOXIC (first const in sub5)
+
+
+def _status_byte_for(mon: PokemonState) -> int:
+    if mon.status == "sleep":
+        # ROM packs the sleep counter into bits 0-2 of the status byte
+        # (SLP_MASK = %111). parse_state populates sleep_turns when
+        # status=sleep, so we trust it's in range and mask defensively.
+        return mon.sleep_turns & 0b111
+    return STATUS_STRING_TO_BYTE[mon.status]
+
+
+def _sub5_byte_for(mon: PokemonState) -> int:
+    byte = 0
+    if mon.status == "toxic" or mon.toxic_count > 0:
+        byte |= 1 << SUBSTATUS_TOXIC_BIT
+    return byte
 
 
 @lru_cache(maxsize=1)
@@ -159,14 +180,14 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
         "player_type2": battle_state.player.types[1],
         "player_hp": battle_state.player.hp,
         "player_max_hp": battle_state.player.max_hp,
-        "player_status": STATUS_STRING_TO_BYTE[battle_state.player.status],
+        "player_status": _status_byte_for(battle_state.player),
         "player_item": battle_state.player.item,
         "enemy_species": species_id_for(battle_state.enemy.name),
         "enemy_type1": battle_state.enemy.types[0],
         "enemy_type2": battle_state.enemy.types[1],
         "enemy_hp": battle_state.enemy.hp,
         "enemy_max_hp": battle_state.enemy.max_hp,
-        "enemy_status": STATUS_STRING_TO_BYTE[battle_state.enemy.status],
+        "enemy_status": _status_byte_for(battle_state.enemy),
         "enemy_item": battle_state.enemy.item,
         "enemy_bench_species": species_id_for(bench_lead.name),
         "enemy_bench_hp": bench_lead.hp,
@@ -179,6 +200,15 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
         overrides["player_screens"] = 1 << SCREENS_SAFEGUARD_BIT
     if battle_state.enemy_safeguard:
         overrides["enemy_screens"] = 1 << SCREENS_SAFEGUARD_BIT
+    # sub5 toxic bit only emitted when needed; emitting 0 would unconditionally
+    # patch wPlayerSubStatus5 / wEnemySubStatus5 which the base state may have
+    # used for other sub-status bits this slice doesn't model.
+    player_sub5 = _sub5_byte_for(battle_state.player)
+    if player_sub5:
+        overrides["player_sub5"] = player_sub5
+    enemy_sub5 = _sub5_byte_for(battle_state.enemy)
+    if enemy_sub5:
+        overrides["enemy_sub5"] = enemy_sub5
     return overrides
 
 
@@ -206,16 +236,8 @@ def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
         raise SimulationInputError(
             f"rom_switch_scenario_export: {side} has Substitute active; slice B does not model it"
         )
-    if mon.toxic_count:
-        raise SimulationInputError(
-            f"rom_switch_scenario_export: {side}.toxic_count={mon.toxic_count}; "
-            "slice B does not model toxic counters"
-        )
-    if mon.sleep_turns:
-        raise SimulationInputError(
-            f"rom_switch_scenario_export: {side}.sleep_turns={mon.sleep_turns}; "
-            "slice B does not model sleep counters"
-        )
+    # toxic_count and sleep_turns are now patched in slice C-toxic-sleep via
+    # the sub5 / status byte overrides, so they're allowed.
 
 
 def _assert_overridable_enemy_bench(bench: tuple[PokemonState, ...]) -> None:

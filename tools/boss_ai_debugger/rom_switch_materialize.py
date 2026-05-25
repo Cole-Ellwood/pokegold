@@ -320,6 +320,10 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         optional_overrides.append(("wPlayerScreens", "player_screens", _resolve_int(overrides_raw["player_screens"], 0)))
     if "enemy_screens" in overrides_raw:
         optional_overrides.append(("wEnemyScreens", "enemy_screens", _resolve_int(overrides_raw["enemy_screens"], 0)))
+    if "player_sub5" in overrides_raw:
+        optional_overrides.append(("wPlayerSubStatus5", "player_sub5", _resolve_int(overrides_raw["player_sub5"], 0)))
+    if "enemy_sub5" in overrides_raw:
+        optional_overrides.append(("wEnemySubStatus5", "enemy_sub5", _resolve_int(overrides_raw["enemy_sub5"], 0)))
 
     patches = [
         patch("wBossAITier", tier),

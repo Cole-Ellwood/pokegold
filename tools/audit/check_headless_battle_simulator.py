@@ -1205,10 +1205,71 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    # Slice C-toxic-sleep: separate scenario with sleep + toxic for the
+    # sub5 TOXIC bit + status-byte sleep counter round-trip.
+    toxic_sleep_state = {
+        "weather": "none",
+        "weather_count": 0,
+        "turn": 1,
+        "player": {
+            "species": "STARMIE",
+            "level": 50,
+            "types": ["GROUND", "GROUND"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 80, "speed": 100, "sp_attack": 90, "sp_defense": 80},
+            "moves": [{"name": "SURF"}],
+            "status": "sleep",
+            "sleep_turns": 2,
+        },
+        "enemy": {
+            "species": "QWILFISH",
+            "level": 50,
+            "types": ["POISON", "WATER"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 75, "speed": 85, "sp_attack": 55, "sp_defense": 55},
+            "moves": [{"name": "POISON_STING"}],
+            "status": "toxic",
+            "toxic_count": 3,
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    toxic_sleep_scenario = headless_to_switch_sack_scenario(
+        toxic_sleep_state,
+        scenario_id="audit_toxic_sleep",
+        tier="late",
+        accept_overrides=True,
+    )
+    ts_patches = {
+        (p.symbol_name, p.offset): p.value
+        for p in switch_materialization_patches(toxic_sleep_scenario)
+    }
+    if (
+        ts_patches.get(("wBattleMonStatus", 0)) != 2  # sleep_turns=2 packed into byte
+        or ts_patches.get(("wEnemyMonStatus", 0)) != 8  # toxic shares poison primary byte
+        or ts_patches.get(("wEnemySubStatus5", 0)) != 1  # SUBSTATUS_TOXIC bit
+        or ("wPlayerSubStatus5", 0) in ts_patches  # no override -> no patch
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: toxic-sleep round-trip mismatch: {ts_patches}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
-        "environment_override"
+        "environment_override toxic_sleep_override"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0

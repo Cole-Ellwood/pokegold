@@ -165,6 +165,33 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wPlayerScreens", 0)], 4)
         # No override for enemy_screens; no patch should be emitted for it.
 
+    def test_switch_materialization_sub5_overrides_apply_when_present(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {"player_sub5": 1, "enemy_sub5": 1},
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wPlayerSubStatus5", 0)], 1)
+        self.assertEqual(patches[("wEnemySubStatus5", 0)], 1)
+
+    def test_switch_materialization_skips_sub5_when_absent(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+        }
+        symbols = {
+            patch.symbol_name
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertNotIn("wPlayerSubStatus5", symbols)
+        self.assertNotIn("wEnemySubStatus5", symbols)
+
     def test_switch_materialization_skips_environment_patches_when_absent(self) -> None:
         scenario = {
             "family": "switch_sack",
