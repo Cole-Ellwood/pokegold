@@ -225,7 +225,7 @@ BossAI_ApplyDamageDominanceBias::
 	ld a, [wBossAITemp3]
 	cp c
 	jr z, .next
-	call .MoveIdMatchupSTABRank
+	call .MoveIdNeutralSTABRank
 	ld d, a
 	ld a, [wBossAITemp2]
 	add 32
@@ -264,7 +264,7 @@ BossAI_ApplyDamageDominanceBias::
 	call .ScalePowerByMatchup
 	jr .ApplySTABToRank
 
-.MoveIdMatchupSTABRank
+.MoveIdNeutralSTABRank
 	ld a, c
 	and a
 	ret z
@@ -289,23 +289,7 @@ BossAI_ApplyDamageDominanceBias::
 	call GetFarByte
 	pop bc
 	ld c, a
-	; Scale by type matchup vs the active player defender so the comparison
-	; ranks the same way .CurrentMoveDamageRank does for the current move.
-	; Prior "neutral STAB" comparison let a STAB-but-neutral move look tied
-	; with a no-STAB-but-SE alternative and dodge the dominance check.
-	push bc
-	ldh a, [hBattleTurn]
-	push af
-	ld a, 1
-	ldh [hBattleTurn], a
-	ld a, c
-	ld hl, wBattleMonType1
-	call BossAI_CheckTypeMatchupNoItem
-	pop af
-	ldh [hBattleTurn], a
-	pop bc
-	ld a, [wTypeMatchup]
-	call .ScalePowerByMatchup
+	ld a, b
 	jr .ApplySTABToRank
 
 .ScalePowerByMatchup

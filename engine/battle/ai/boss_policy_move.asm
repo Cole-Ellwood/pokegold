@@ -393,8 +393,6 @@ ENDC
 	farcall BossAI_ApplyDamageDominanceBias
 	pop hl
 
-	call .PureStatusHardBlockOnStrongDamage
-
 	call .HasKOLine
 	ret c
 
@@ -1052,120 +1050,6 @@ ENDC
 	ret nc
 	ld a, 5
 	jp BossAI_DiscourageScoreHL
-
-.PureStatusHardBlockOnStrongDamage
-; Backstop for the "AI picks Confuse Ray when Shadow Ball is 4x SE STAB"
-; failure class. The pressure-score path that drives BossAI_HasAnyKOMove
-; can miss on edge cases (Psychic-defender decrement, KO-band oracle
-; coverage gaps, etc.). This gate is independent: any other move in the
-; moveset with raw type matchup vs the active defender of 4x or higher
-; hard-blocks pure primary-status moves on this turn.
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret nz
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	ld hl, BossAIStatusEffects
-	ld de, 1
-	call IsInArray
-	ret nc
-	call .HasStrongMatchupDamagingMove
-	ret nc
-	ld a, 80
-	jp BossAI_SetScoreHL
-
-.HasStrongMatchupDamagingMove
-; Output: carry set if some OTHER move in our moveset is a damaging move
-; with raw type matchup vs the active player defender of at least 4x
-; (>= SUPER_EFFECTIVE * 2). Saves and restores wTypeMatchup so callers
-; that read it post-call still see the current move's value.
-	push bc
-	push de
-	push hl
-	ld a, [wTypeMatchup]
-	push af
-	ld a, [wEnemyMoveStruct + MOVE_ANIM]
-	ld d, a
-	ld hl, wEnemyMonMoves
-	ld c, NUM_MOVES
-.hsmdm_loop
-	ld a, [hli]
-	and a
-	jr z, .hsmdm_none
-	cp d
-	jr z, .hsmdm_skip
-	push hl
-	push bc
-	push de
-	call .ScanMoveForStrongMatchup
-	pop de
-	pop bc
-	pop hl
-	jr c, .hsmdm_yes
-.hsmdm_skip
-	dec c
-	jr nz, .hsmdm_loop
-.hsmdm_none
-	pop af
-	ld [wTypeMatchup], a
-	and a
-	pop hl
-	pop de
-	pop bc
-	ret
-.hsmdm_yes
-	pop af
-	ld [wTypeMatchup], a
-	scf
-	pop hl
-	pop de
-	pop bc
-	ret
-
-.ScanMoveForStrongMatchup
-; Input: a = move id (1-indexed). Output: carry if this move is damaging
-; (MOVE_POWER > 0) and has raw type matchup vs the active player defender
-; >= SUPER_EFFECTIVE * 2 (4x). Clobbers wTypeMatchup (caller restores).
-	push bc
-	push de
-	push hl
-	ld d, a
-	dec a
-	ld hl, Moves + MOVE_POWER
-	ld bc, MOVE_LENGTH
-	call AddNTimes
-	ld a, BANK(Moves)
-	call GetFarByte
-	and a
-	jr z, .smfsm_no
-	ld a, d
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	ld bc, MOVE_LENGTH
-	call AddNTimes
-	ld a, BANK(Moves)
-	call GetFarByte
-	ld e, a
-	ldh a, [hBattleTurn]
-	push af
-	ld a, 1
-	ldh [hBattleTurn], a
-	ld a, e
-	ld hl, wBattleMonType1
-	call BossAI_CheckTypeMatchupNoItem
-	pop af
-	ldh [hBattleTurn], a
-	ld a, [wTypeMatchup]
-	cp SUPER_EFFECTIVE * 2
-	jr c, .smfsm_no
-	scf
-	jr .smfsm_done
-.smfsm_no
-	and a
-.smfsm_done
-	pop hl
-	pop de
-	pop bc
-	ret
 
 .ApplySelfKOTradeDiscipline
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
