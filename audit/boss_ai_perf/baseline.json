@@ -1,0 +1,98 @@
+{
+  "rom": "pokegold",
+  "samples_per_scenario": 3,
+  "boot_frames": 240,
+  "scenarios": {
+    "mid_lead": {
+      "tier": 2,
+      "apply": {
+        "mean": 2855774,
+        "median": 2808968,
+        "max": 2949404,
+        "min": 2808952,
+        "count": 3
+      },
+      "select": {
+        "mean": 561793,
+        "median": 561792,
+        "max": 561800,
+        "min": 561788,
+        "count": 3
+      },
+      "total": {
+        "mean": 3417568,
+        "median": 3370760,
+        "max": 3511192,
+        "min": 3370752,
+        "count": 3
+      },
+      "all_returned": true,
+      "raw_total": [
+        3511192,
+        3370760,
+        3370752
+      ]
+    },
+    "late_lead": {
+      "tier": 3,
+      "apply": {
+        "mean": 3089857,
+        "median": 3089860,
+        "max": 3089860,
+        "min": 3089852,
+        "count": 3
+      },
+      "select": {
+        "mean": 1076766,
+        "median": 1123580,
+        "max": 1123584,
+        "min": 983136,
+        "count": 3
+      },
+      "total": {
+        "mean": 4166624,
+        "median": 4213440,
+        "max": 4213444,
+        "min": 4072988,
+        "count": 3
+      },
+      "all_returned": true,
+      "raw_total": [
+        4072988,
+        4213440,
+        4213444
+      ]
+    },
+    "late_lookahead_heavy": {
+      "tier": 3,
+      "apply": {
+        "mean": 3230302,
+        "median": 3230304,
+        "max": 3230304,
+        "min": 3230300,
+        "count": 3
+      },
+      "select": {
+        "mean": 1123584,
+        "median": 1123580,
+        "max": 1123592,
+        "min": 1123580,
+        "count": 3
+      },
+      "total": {
+        "mean": 4353886,
+        "median": 4353884,
+        "max": 4353896,
+        "min": 4353880,
+        "count": 3
+      },
+      "all_returned": true,
+      "raw_total": [
+        4353880,
+        4353896,
+        4353884
+      ]
+    }
+  },
+  "late_tier_total_mean": 4166624
+}

@@ -540,16 +540,21 @@ if DEF(BOSSAI_EMIT_PLATFORM_TURN_CACHE_RESET)
 BossAI_ResetTurnCaches:
 ; Clear the per-AI-tick memo caches consumed by the cached helpers
 ; (HasAnyKOMove / PlayerHasPublicThreatVsEnemy / PlayerHasRevealedPriorityThreat
-; / PredictPlayerSwitch / GetPrimaryThreatType). Inputs to each are stable
-; within one tick; first call computes, the rest read from cache. Saves
-; ~50 type-chart walks per LATE-tier move-pick. Sentinel is $ff for all
-; five — the GetPrimaryThreatType wrapper distinguishes "no threat" via a
-; separate $20+ band since real type ids cap at $1b.
+; / GetPrimaryThreatType / PublicEnemyFaster / GetProjectionDepth /
+; CheckEnemyMoveTypeMatchupVsPlayerNoItem / ShouldScout). Inputs to each
+; are stable within one tick; first call computes, the rest read from
+; cache. Sentinel is $ff for all — the GetPrimaryThreatType wrapper
+; distinguishes "no threat" via a separate $20+ band since real type ids
+; cap at $1b.
 	ld a, $ff
 	ld [wBossAIHasKOMoveCache], a
 	ld [wBossAIPublicThreatCache], a
 	ld [wBossAIRevealedPriorityCache], a
 	ld [wBossAIPrimaryThreatCache], a
+	ld [wBossAIPublicEnemyFasterCache], a
+	ld [wBossAILookaheadDepthCache], a
+	ld [wBossAILastMatchupType], a
+	ld [wBossAIShouldScoutPrereqCache], a
 	ret
 
 endc
@@ -595,6 +600,32 @@ BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem:
 
 ; ai-layer: PLATFORM
 BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem:
+; Per-tick last-MOVE_TYPE cache. Profiling (audit/boss_ai_perf/profile.json)
+; showed this is the single hottest helper at ~30% of total cycles, called
+; ~22 times per turn across .ScoreMove + the .Apply*Bias chain. Within one
+; move's processing the calls share a MOVE_TYPE, so a one-slot cache catches
+; the 2nd-Nth call per move. Cache key = MOVE_TYPE only (player types and
+; substatus are turn-stable; reset clears the key to $ff on every AI tick).
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	push hl
+	ld hl, wBossAILastMatchupType
+	cp [hl]
+	jr nz, .miss
+	ld hl, wBossAILastMatchupResult
+	ld a, [hl]
+	ld [wTypeMatchup], a
+	pop hl
+	ret
+.miss
+	ld [hl], a
+	pop hl
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemUncached
+	ld a, [wTypeMatchup]
+	ld [wBossAILastMatchupResult], a
+	ret
+
+; ai-layer: PLATFORM
+BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemUncached:
 	push bc
 	ldh a, [hBattleTurn]
 	push af

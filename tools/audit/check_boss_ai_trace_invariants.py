@@ -1795,7 +1795,11 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Fire passive low HP model",
     )
 
-    speed = top_block(boss, "BossAI_PublicEnemyFaster")
+    # BossAI_PublicEnemyFaster is now a thin per-tick cache wrapper around
+    # BossAI_PublicEnemyFasterUncached (same pattern as
+    # BossAI_PlayerHasPublicThreatVsEnemy / *Uncached at line 357). Inspect
+    # the Uncached body for the Choice Scarf model.
+    speed = top_block(boss, "BossAI_PublicEnemyFasterUncached")
     require_contains(speed, "HELD_CHOICE_SCARF", "Choice Scarf public speed model")
     require_contains(
         speed,

@@ -3707,6 +3707,26 @@ if DEF(BOSSAI_EMIT_MOVE_PUBLIC_FASTER)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_PublicEnemyFaster:
+; Per-tick cache wrapper. The uncached body does two GetBaseData calls
+; (heaviest single op in ScoreMove). Inputs (player species, enemy species,
+; enemy item) are stable within one AI tick; cached result is reused across
+; all moves and lookahead candidates in the same turn.
+	ld a, [wBossAIPublicEnemyFasterCache]
+	inc a
+	jr z, .miss
+	dec a
+	rrca
+	ret
+.miss
+	call BossAI_PublicEnemyFasterUncached
+	push af
+	sbc a, a
+	and 1
+	ld [wBossAIPublicEnemyFasterCache], a
+	pop af
+	ret
+
+BossAI_PublicEnemyFasterUncached:
 	push hl
 	push de
 	push bc
@@ -5741,15 +5761,27 @@ BossAI_ApplyMultiTurnProjection:
 	ret
 
 .GetProjectionDepth
+; Per-tick cached projection depth. Inputs (wBossAITier) are stable within
+; one AI tick; called 8x per ApplyMultiTurnProjection × up to 4 candidates
+; per turn. First call computes and stores; later calls in the same turn
+; (across all candidates) hit the cache.
+	ld a, [wBossAILookaheadDepthCache]
+	inc a
+	jr z, .compute_depth
+	dec a
+	ret
+.compute_depth
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
 	ld a, BOSS_AI_LOOKAHEAD_HORIZON_LATE - 1
-	ret z
+	jr z, .store_depth
 	ld a, [wBossAITier]
 	cp AI_TIER_MID
 	ld a, BOSS_AI_LOOKAHEAD_HORIZON_MID - 1
-	ret z
+	jr z, .store_depth
 	xor a
+.store_depth
+	ld [wBossAILookaheadDepthCache], a
 	ret
 
 .IsUnderPressure
@@ -6225,20 +6257,44 @@ endc
 
 if DEF(BOSSAI_EMIT_MOVE_SCOUT_DECISION)
 BossAI_ShouldScout:
-	call BossAI_IsActiveSpeciesScouted
-	jr c, .no
-	call BossAI_GetPrimaryThreatType
-	jr nc, .no
-	call BossAI_GetTypeThreatSeverityVsEnemyMon
-	cp 3
-	jr c, .no
-	call BossAI_HasAnyKOMove
-	jr c, .no
-	call BossAI_GetScoutRollThreshold
+; Per-tick cache for the prereq chain only. The five prereq helpers
+; (IsActiveSpeciesScouted / GetPrimaryThreatType /
+; GetTypeThreatSeverityVsEnemyMon / HasAnyKOMove / GetScoutRollThreshold)
+; have turn-stable outputs. The Random roll varies per call and stays
+; inside this function so RNG consumption is preserved.
+	ld a, [wBossAIShouldScoutPrereqCache]
+	inc a
+	jr z, .compute_prereqs
+	dec a
+	jr z, .no
+	; cached "prereqs passed" -- roll random against cached threshold
+	ld a, [wBossAIShouldScoutThresholdCache]
 	ld b, a
 	call Random
 	cp b
 	jr nc, .no
+	jr .yes
+
+.compute_prereqs
+	call BossAI_IsActiveSpeciesScouted
+	jr c, .prereqs_failed
+	call BossAI_GetPrimaryThreatType
+	jr nc, .prereqs_failed
+	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	cp 3
+	jr c, .prereqs_failed
+	call BossAI_HasAnyKOMove
+	jr c, .prereqs_failed
+	call BossAI_GetScoutRollThreshold
+	ld [wBossAIShouldScoutThresholdCache], a
+	ld b, a
+	ld a, 1
+	ld [wBossAIShouldScoutPrereqCache], a
+	call Random
+	cp b
+	jr nc, .no
+
+.yes
 IF DEF(BOSS_AI_TRACE)
 	ld a, [wBossAITraceRiskFlags]
 	or 1
@@ -6246,6 +6302,10 @@ IF DEF(BOSS_AI_TRACE)
 ENDC
 	scf
 	ret
+
+.prereqs_failed
+	xor a
+	ld [wBossAIShouldScoutPrereqCache], a
 .no
 	and a
 	ret

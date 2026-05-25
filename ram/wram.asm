@@ -2461,6 +2461,14 @@ wBossAIHasKOMoveCache:: db          ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIPublicThreatCache:: db       ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIRevealedPriorityCache:: db   ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else type id
+wBossAIPublicEnemyFasterCache:: db  ; $ff = uncomputed, 0 = not faster, 1 = enemy faster
+wBossAILookaheadDepthCache:: db     ; $ff = uncomputed, else projection depth (0 / mid-1 / late-1)
+wBossAILastMatchupType:: db         ; $ff = uncomputed, else last MOVE_TYPE queried via
+                                    ; BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMatchupType
+wBossAIShouldScoutPrereqCache:: db  ; $ff = uncomputed, 0 = prereqs failed (always nc),
+                                    ; 1 = prereqs passed (roll random against threshold)
+wBossAIShouldScoutThresholdCache:: db  ; cached GetScoutRollThreshold result (valid iff prereq=1)
 IF DEF(BOSS_AI_TRACE)
 wBossAITraceTopMoves:: ds 3
 wBossAITraceTopScores:: ds 3
