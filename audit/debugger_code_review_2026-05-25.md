@@ -376,29 +376,71 @@ surrounding logic.
   content, instruction_trace, state_space, ...) is the natural next
   step but not required by this slice.
 
+- Item 6 (`tests/test_catalog.py` split) — shipped after `f400112e`.
+  Old single-file `tools/debugger/tests/test_catalog.py` (10,295
+  lines, one `UnifiedDebuggerCatalogTests` class with 230 test
+  methods, no module-level helpers or shared fixtures) replaced by
+  38 per-source-module files / ~11,432 lines (the +1,137 line delta
+  is per-file `from __future__`/imports/class-header boilerplate ×
+  38 files). Test methods routed by name prefix to their primary
+  source module: `test_catalog.py`=173 (catalog inventory +
+  capability + triage), `test_catalog_cli.py`=36 (the two
+  catalog-CLI tests with no subsystem-specific module), then 36
+  src-mirror files (`test_content_mirror.py`=1,235,
+  `test_instruction_trace.py`=817, `test_minimize.py`=712,
+  `test_ranking.py`=691, `test_visualization.py`=526,
+  `test_runtime_watch.py`=516, `test_replay.py`=465,
+  `test_content_state.py`=406, `test_localize.py`=386,
+  `test_content_scenarios.py`=375, `test_setup_plan.py`=352,
+  `test_investigate.py`=328, `test_explain.py`=321,
+  `test_dynamic_taint.py`=298, `test_expect.py`=297,
+  `test_generate.py`=281, `test_trace_index.py`=265,
+  `test_fuzz.py`=228, `test_next_steps.py`=226,
+  `test_mirrors.py`=168, `test_script_resume_gate.py`=168,
+  `test_taint.py`=155, `test_reporting.py`=145,
+  `test_impact.py`=140, `test_coverage.py`=133,
+  `test_slicing.py`=131, `test_ingest.py`=130,
+  `test_state_space.py`=128, `test_proof_runner.py`=96,
+  `test_testgen.py`=93, `test_provenance.py`=68,
+  `test_wram_bank_hazards.py`=54, `test_workflow.py`=46,
+  `test_wram_ownership.py`=38, `test_pokemon_semantics.py`=28,
+  `test_repro_recipes.py`=28). Each file imports only the
+  modules its tests actually reference (computed by AST walk of
+  each method body's `ast.Name` references against the original 46
+  imports). Three files exceed the 700-line trigger
+  (`test_content_mirror.py`, `test_instruction_trace.py`,
+  `test_minimize.py`) — same homogeneous-test-registry
+  justification as `ranking/builders.py`: each is one
+  `TestCase` subclass of independent test methods mirroring one
+  src module's coverage, splitting further would scatter unit
+  coverage of one module across multiple files. CLI tests live
+  with their subsystem (e.g. `test_cli_localize_writes_json` is in
+  `test_localize.py`, not a separate `test_main_cli.py`) so the
+  per-module file is the complete coverage picture for that
+  module. Rank-cross-cutting integration tests
+  (`test_rank_*_consume_*`) live in `test_ranking.py` (the
+  producer being tested for integration).
+
 **Tests passing post-refactor:**
-`tools.debugger.tests.test_catalog` → 230/230 (re-verified after the
-content_mirror split — every `test_content_mirror_compares_*`
-integration test still passes against the package; re-verified again
-after the ranking package split — the suite exercises `rank_findings`
-via the public API);
+`python -m unittest discover tools.debugger.tests` → 245/245 OK
+(230 from the test_catalog split + 15 from the pre-existing
+`test_runtime_state.py`/`test_save_state_inspect.py`/`test_wram_lifetime.py`);
+the 230 count matches the pre-refactor baseline exactly.
+Re-verified after every shipped item.
 `tools.boss_ai_debugger.tests` → 211/212 (1 skip; 1 pre-existing
 failure on `test_current_roadmap_audit_keeps_goal_incomplete` —
 A/B-verified pre-existing via `git stash` against the pre-refactor
 tree, concerns `audit/boss_ai_debugger/rule_map.json` data state, not
 source structure). `check_no_solo_commits_omni_debugger.py` passes
-for all five shipped phases.
+for all six shipped phases.
 
 **Remaining items, ranked by leverage:**
 
-1. **Item 6 — split `tests/test_catalog.py` (10,295 lines).**
-   Mechanical; one `test_<module>.py` per `<module>.py` to mirror the
-   src layout.
-2. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
+1. **Item 5 — backfill `damage_debugger/tests/`.** Different shape
    (real test-writing, not structural refactor); may warrant its own
    session. Priority modules are the four that other debugger trees
    import: `disasm`, `taint`, `state`, `tables`, `battle_calc`.
-3. **Sub-split `ranking/builders.py` (1,772 lines) by builder family.**
+2. **Sub-split `ranking/builders.py` (1,772 lines) by builder family.**
    Same-shape 30-function registry; a follow-up split into
    `builders/capability.py`, `builders/content.py`,
    `builders/instruction_trace.py`, `builders/state_space.py`,
@@ -406,6 +448,12 @@ for all five shipped phases.
    under the 700-line bar without changing public surface (the
    `_FINDINGS_BUILDERS` dispatch dict in `__init__.py` already
    abstracts callers from where each builder lives).
+3. **Sub-split the three >700-line extracted test files**
+   (`test_content_mirror.py`=1,235, `test_instruction_trace.py`=817,
+   `test_minimize.py`=712). Same homogeneous-registry character as
+   `ranking/builders.py`; splitting would scatter src-module
+   coverage. Address only if the src module these tests cover gets
+   split first (in which case the test split mirrors it).
 
 ## What I did *not* check
 
