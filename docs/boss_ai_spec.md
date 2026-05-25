@@ -42,17 +42,24 @@ Hard rules:
   Falkner, Bugsy, and Whitney are intentionally absent via the tier
   condition — their Boss AI must stay legal and public-information-only
   so the early game teaches the rulebook before loopholes appear.
-- **One trigger, one fire, one outcome.** No "fires on hinge A *or* hinge
-  B" tuning. New trainer = new entry; no shared smart helpers.
+- **One trigger, one fire, one outcome.** The trigger is the eligible ace's
+  first committed-turn action opportunity. The same Oracle handles either
+  committed player action shape: selected move or public switch-in.
 
 ## The Single Haki Type: Oracle
 
 Every Haki leader uses the same Haki shape. On the first turn the leader's
-ace mon is active, the boss runs move scoring with the player's locked-in
-action as known input. The boss reads the player's selected move
-(post-`ParsePlayerAction`), scores the ace's moves with that information,
-picks the chosen move, sets the spent flag, and returns. Haki does not
-switch or use items.
+ace mon is due to act, the boss runs move scoring with the player's committed
+action as known input. If the player selected a move, Oracle reads
+`wCurPlayerMove` after `ParsePlayerAction`. If the player switched, Oracle
+waits until the switch-in is actually on the field, rebuilds scores against
+that public active mon, picks the chosen move, sets the spent flag, and
+returns. On the enemy-first move case, before picking a move Oracle also
+walks the bench for a defensive pivot: if a living bench mon is immune
+(`NO_EFFECT`) to the locked move's type and the active is not already
+immune, Oracle commits a switch instead. Haki does not use items, and it
+reserves the ace's first action from ordinary switch/item logic. (Switch
+behavior amended 2026-05-25 per Cole-approved defensive-pivot rule.)
 
 If the ace is never sent out (the player sweeps the rest of the team
 first), Haki goes unspent. This is correct — Haki is a specific moment,
@@ -101,21 +108,26 @@ future roster changes can preserve identity.
 
 ## Hook Site
 
-One hook covers Oracle Haki entirely.
+Two hook sites cover one Oracle behavior:
 
-**Haki dispatch** — top of `BossAI_SwitchOrTryItem`, after
-`ParsePlayerAction` has populated player intent and before normal
-KO-pressure early returns. The dispatch:
+- **Enemy-first dispatch** — top of `BossAI_SwitchOrTryItem`, after
+  `ParsePlayerAction` has populated player intent and before normal
+  KO-pressure early returns.
+- **Player-first dispatch** — `BossAI_OracleHakiAfterPlayerAction`, called in
+  `Battle_PlayerFirst` after the player's move or switch has resolved and
+  immediately before `EnemyTurn_EndOpponentProtectEndureDestinyBond`.
+
+The dispatch:
 
 1. Returns immediately if `wHakiSpent != 0`.
 2. Returns immediately if the active boss mon is not the trainer's ace
    (per the ace selection rule above).
-3. Returns immediately if this is not the ace's first turn active in the
-   battle.
-4. Reads the player's locked move via `wCurPlayerMove` (or equivalent
-   post-`ParsePlayerAction` slot).
-5. Calls Boss AI move scoring with the locked move available as known
-   input.
+3. Returns immediately if this is not the ace's first committed-turn action
+   opportunity in the battle.
+4. Reads the player's committed action: selected move via `wCurPlayerMove`,
+   or public switch-in via the current active battle mon.
+5. Calls Boss AI move scoring with that committed action available as known
+   input, rebuilding scores after a switch-in.
 6. Writes the chosen move via `wCurEnemyMove` / `wCurEnemyMoveNum`.
 7. Sets `wHakiSpent`, writes trace fields, returns nonzero with carry
    clear.
@@ -126,9 +138,8 @@ Implementation rules:
 - Never store the player's selected move, exact damage, hidden item,
   hidden party facts, or other private facts outside explicit trace
   fields.
-- The "first turn active" check needs a per-battle bit recording whether
-  the ace has been seen alive in a previous turn. Reuse existing
-  active-mon tracking if available; otherwise add 1 byte.
+- The "first committed-turn action opportunity" check needs battle-local bits
+  for spent, ace-seen, and current-turn eligibility.
 
 ## Trace Contract
 
@@ -156,19 +167,13 @@ own slot) to the existing Boss AI WRAM reserve:
   "first turn active" gate. May be omitted if existing active-mon turn
   counters already cover this.
 
-Current implementation note (2026-05-14): the Morty/Gengar prototype does not
-add WRAM. It packs spent / ace-seen / current-turn eligibility bits into
-`wBossAIRevealedMovesBitmapSpare` byte 1 and uses existing trace fields plus
-`wBossAITraceRiskFlags` bit 3. A generic all-leader rollout still needs a fresh
-memory review because priority-changing Oracle choices require a pre-order hook
-or an equal-priority-only contract.
-
-Current implementation note (2026-05-23): the Uniform Haki Oracle still avoids
+Current implementation note (2026-05-25): the Uniform Haki Oracle avoids
 new WRAM layout growth. Spent / ace-seen / eligibility remain in
 `wBossAIRevealedMovesBitmapSpare` byte 1, and the queued taunt id reuses byte 2
-of the same spare block. This keeps taunt state in the `ClearBossAIState`
-cleared battle-volatile range and avoids WRAMX bank switches immediately before
-the enemy action text path.
+of the same spare block. Enemy-first Haki fires through `BossAI_OracleHakiRead`;
+player-first move and switch-in Haki fires through
+`BossAI_OracleHakiAfterPlayerAction` immediately before the enemy action text
+path.
 
 For exact addresses and current free-byte counts, see the Runtime State
 Budget section below.
@@ -216,11 +221,12 @@ Allowed shape:
 - Return zero with carry clear for no Haki; return nonzero with carry clear
   after writing a chosen move. Never return carry, because carry means
   switch/item to battle flow.
-- Gate on player action already being locked, such as
-  `wBattlePlayerAction == BATTLEPLAYERACTION_USEMOVE`, and keep current-turn
-  reads inside the spent Haki branch only.
-- For Destiny Bond-style Oracle plays, require legal timing such as
-  `wEnemyGoesFirst != 0`; Haki may not make Destiny Bond retroactive.
+- Gate on player action already being committed. `BATTLEPLAYERACTION_USEMOVE`
+  reads `wCurPlayerMove`; `BATTLEPLAYERACTION_SWITCH` reads only the now-public
+  active switch-in. Keep current-turn reads inside explicit Haki labels only.
+- For Destiny Bond-style Oracle plays, never make a faint or damage event
+  retroactive. Player-first Haki only fires if the ace survived to its own
+  action.
 - On override, write `wCurEnemyMove` / `wCurEnemyMoveNum`, set `wHakiSpent`
   before returning, update trace fields, and keep chosen-move/repeat memory
   consistent with the actual move.

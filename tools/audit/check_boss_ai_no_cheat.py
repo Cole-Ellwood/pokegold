@@ -93,9 +93,27 @@ APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
     ),
     ApprovedForbiddenPatternException(
         path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input action read",
+        top_label="BossAI_OracleHakiAfterPlayerAction",
+        approval="uniform Haki oracle exception",
+    ),
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
         reason="player input read",
-        top_label="BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
-        approval="uniform Haki oracle exception helper",
+        top_label="BossAI_OracleHakiAfterPlayerAction",
+        approval="uniform Haki oracle exception",
+    ),
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input action read",
+        top_label="BossAI_HakiReserveAceAction",
+        approval="uniform Haki oracle action-reservation helper",
+    ),
+    ApprovedForbiddenPatternException(
+        path="engine/battle/ai/boss_policy_switch.asm",
+        reason="player input read",
+        top_label="BossAI_HakiFindImmunitySwitch",
+        approval="uniform Haki oracle defensive-pivot helper",
     ),
 ]
 

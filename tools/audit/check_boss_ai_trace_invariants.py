@@ -465,6 +465,48 @@ def audit_switch_loop(boss: str) -> None:
     ):
         require_contains(block, call, "switch loop emergency exceptions")
 
+    dispatch = top_block(boss, "BossAI_SwitchOrTryItem")
+    require_order(
+        dispatch,
+        [
+            "call BossAI_RefineSwitchCandidateForPlausibleRisk",
+            "call BossAI_GetPrimaryThreatType",
+            "jr nc, .candidate_answers_threat",
+            "call BossAI_IsImmunityPivotOpportunity",
+            "jr c, .candidate_answers_threat",
+            "xor a",
+            "ld [wEnemySwitchMonParam], a",
+            "jp AI_TryItem",
+            ".candidate_answers_threat",
+            "ld a, [wEnemySwitchMonParam]",
+            "and a",
+            "jp z, AI_TryItem",
+            "push af",
+            "call BossAI_ComputeSwitchConfidence",
+        ],
+        "switch target must answer public primary threat before confidence roll",
+    )
+
+    answer = top_block(boss, "BossAI_IsImmunityPivotOpportunity")
+    require_order(
+        answer,
+        [
+            "call BossAI_GetPrimaryThreatType",
+            "ret nc",
+            "ld [wBossAITemp], a",
+            "ld a, [wEnemySwitchMonParam]",
+            "and $f",
+            "ld hl, wOTPartySpecies",
+            "call GetBaseData",
+            "ld a, [wBossAITemp]",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem",
+            "ld a, [wTypeMatchup]",
+            "cp EFFECTIVE",
+            "jr nc, .not_immune",
+        ],
+        "switch target answer gate must require resistance/immunity to primary threat",
+    )
+
     perish = top_block(boss, "BossAI_EnemyPerishEscapeUrgent")
     require_order(
         perish,
@@ -564,14 +606,87 @@ def audit_haki_quarantine(boss: str) -> None:
     require_order(
         oracle,
         [
-            "ld hl, wBossAIRevealedMovesBitmapSpare + 1",
-            "bit BOSSAI_HAKI_SPENT_F, [hl]",
-            "bit BOSSAI_HAKI_ELIGIBLE_F, [hl]",
+            "call BossAI_HakiReadyCommon",
             "ld a, [wEnemyGoesFirst]",
             "ld a, [wBattlePlayerAction]",
             "ld a, [wCurPlayerMove]",
-            "call BossAI_ApplyKnownPlayerActionOracleBias",
+            "call BossAI_HakiFindImmunitySwitch",
+            "jp c, BossAI_CommitHakiOracleSwitch",
             "call BossAI_ChooseBestOracleMove",
+            "jp BossAI_CommitHakiOracleChoice",
+        ],
+        "Uniform Haki enemy-first oracle reads committed move, pivots on immunity or jumps to shared move commit",
+    )
+
+    after_player = top_block(boss, "BossAI_OracleHakiAfterPlayerAction")
+    require_order(
+        after_player,
+        [
+            "ld a, [wBossAITier]",
+            "ret z",
+            "call BossAI_HakiReadyCommon",
+            "ld a, [wBattlePlayerAction]",
+            "cp BATTLEPLAYERACTION_SWITCH",
+            "ld a, [wCurPlayerMove]",
+            "call BossAI_RebuildHakiMoveScores",
+            "call BossAI_ChooseBestOracleMove",
+            "jp BossAI_CommitHakiOracleChoice",
+        ],
+        "Uniform Haki player-first hook reads committed move or switch-in before enemy action",
+    )
+    for needle in (
+        ".switch_read",
+        "call BossAI_RebuildHakiMoveScores",
+    ):
+        require_contains(after_player, needle, "Uniform Haki switch-in oracle path")
+
+    reserve = top_block(boss, "BossAI_HakiReserveAceAction")
+    require_order(
+        reserve,
+        [
+            "ld a, [wEnemyGoesFirst]",
+            "call BossAI_HakiReadyCommon",
+            "ld a, [wBattlePlayerAction]",
+            "ld a, 1",
+            "ret",
+        ],
+        "Uniform Haki reserves the ace action from ordinary switch/item policy",
+    )
+
+    common = top_block(boss, "BossAI_HakiReadyCommon")
+    require_order(
+        common,
+        [
+            "ld a, [wBossAITier]",
+            "ld hl, wBossAIRevealedMovesBitmapSpare + 1",
+            "bit BOSSAI_HAKI_SPENT_F, [hl]",
+            "bit BOSSAI_HAKI_ELIGIBLE_F, [hl]",
+            "ld a, [wEnemySubStatus5]",
+            "callfar CheckEnemyLockedIn",
+            "scf",
+            "ret",
+        ],
+        "Uniform Haki shared ready gate is tier-gated, one-shot, and lock-safe",
+    )
+
+    rebuild = top_block(boss, "BossAI_RebuildHakiMoveScores")
+    require_order(
+        rebuild,
+        [
+            "ld a, 20",
+            "ld hl, wEnemyAIMoveScores",
+            "ld a, [wEnemyDisabledMove]",
+            "ld de, wEnemyMonPP",
+            "call BossAI_ApplyMoveModel",
+            "call BossAI_ApplyLookaheadToTopMoveCandidates",
+        ],
+        "Uniform Haki rebuilds move scores after a public switch-in/player action",
+    )
+
+    commit = top_block(boss, "BossAI_CommitHakiOracleChoice")
+    require_order(
+        commit,
+        [
             "callfar EnforceEnemyHeldMoveRestrictions_Far",
             "callfar UpdateMoveData",
             "call BossAI_UpdateRepeatTracker",
@@ -579,26 +694,47 @@ def audit_haki_quarantine(boss: str) -> None:
             "call BossAI_QueueHakiTaunt",
             "set BOSSAI_HAKI_SPENT_F, [hl]",
         ],
-        "Uniform Haki oracle is post-input, one-shot, queues taunt, and refreshes move data",
+        "Uniform Haki shared commit queues taunt, spends Haki, and refreshes move data",
     )
     for needle in (
         "ld a, [wCurPlayerMove]",
         "or 1 << BOSSAI_HAKI_TRACE_FIRED_F",
         "ld [wBossAITraceChosenMove], a",
     ):
-        require_contains(oracle, needle, "Uniform Haki quarantine trace/input boundary")
+        haystack = oracle + "\n" + after_player + "\n" + commit
+        require_contains(haystack, needle, "Uniform Haki quarantine trace/input boundary")
 
-    bias = top_block(boss, "BossAI_ApplyKnownPlayerActionOracleBias")
+    pivot = top_block(boss, "BossAI_HakiFindImmunitySwitch")
     require_order(
-        bias,
+        pivot,
         [
-            "call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
-            "cp EFFECT_DESTINY_BOND",
-            "cp EFFECT_PROTECT",
-            "cp EFFECT_ENDURE",
-            "ld [hl], a",
+            "ld a, [wCurPlayerMove]",
+            "ld hl, Moves + MOVE_TYPE",
+            "call BossAI_GetMoveAttr",
+            "ld a, [wEnemyMonSpecies]",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem",
+            "ld a, [wTypeMatchup]",
+            "jr z, .none",
+            "ld a, [wOTPartyCount]",
+            "ld hl, wOTPartyMon1HP",
+            "ld hl, wOTPartySpecies",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem",
+            "jr z, .found",
         ],
-        "Uniform Haki known-action bias is generic effect-based, not trainer-specific",
+        "Uniform Haki defensive pivot reads locked move type and walks the bench for an immunity",
+    )
+
+    switch_commit = top_block(boss, "BossAI_CommitHakiOracleSwitch")
+    require_order(
+        switch_commit,
+        [
+            "ld a, [wBossAITemp]",
+            "ld [wEnemySwitchMonIndex], a",
+            "call BossAI_QueueHakiTaunt",
+            "set BOSSAI_HAKI_SPENT_F, [hl]",
+            "jp AI_TrySwitch",
+        ],
+        "Uniform Haki switch commit queues taunt, spends Haki, and tail-calls AI_TrySwitch",
     )
 
 
@@ -1111,7 +1247,7 @@ def audit_spikes_and_status(boss: str) -> None:
             "active Rapid Spin prior excludes hidden or egg-move sources",
         )
 
-    species_spin = local_block(boss, ".SpeciesLevelUpHasRapidSpin", ".ApplyRoleBias")
+    species_spin = local_block(boss, ".SpeciesLevelUpHasRapidSpin", ".EncourageByTierWeight")
     require_order(
         species_spin,
         [
@@ -1198,6 +1334,21 @@ def audit_spikes_and_status(boss: str) -> None:
     require_order(
         move_model,
         [
+            "call .HeldItemMoveBlocked",
+            "ret c",
+            "call .DamagingMoveBlockedByTypeImmunity",
+            "ret c",
+            "call .GhostCurseBlockedPublicly",
+            "ret c",
+            "call .PainSplitBlockedPublicly",
+            "ret c",
+            "ld a, [wEnemyMoveStruct + MOVE_POWER]",
+        ],
+        "Ghost Curse and Pain Split hard-block before scoring biases",
+    )
+    require_order(
+        move_model,
+        [
             "call .UtilityMoveWouldFailPublicly",
             "jr nc, .skip_utility_fail",
             "ld a, 24",
@@ -1213,7 +1364,7 @@ def audit_spikes_and_status(boss: str) -> None:
         "public status fail blocking before generic encouragement",
     )
 
-    utility = local_block(boss, ".UtilityMoveWouldFailPublicly", ".check_primary_status")
+    utility = local_block(boss, ".UtilityMoveWouldFailPublicly", ".early_stat_drop_discipline")
     require_order(
         utility,
         [
@@ -1340,6 +1491,86 @@ def audit_spikes_and_status(boss: str) -> None:
             "jp nz, .status_fail",
         ],
         "Nightmare public Substitute, sleep, and duplicate fail gate",
+    )
+    curse = local_block(boss, ".GhostCurseBlockedPublicly", ".PainSplitBlockedPublicly")
+    require_order(
+        curse,
+        [
+            "ld a, [wEnemyMoveStruct + MOVE_EFFECT]",
+            "cp EFFECT_CURSE",
+            "jr nz, .ghost_curse_ok",
+            "call BossAI_EnemyIsGhostType",
+            "jr nc, .ghost_curse_ok",
+            "ld a, [wPlayerSubStatus4]",
+            "bit SUBSTATUS_SUBSTITUTE, a",
+            "jr nz, .ghost_curse_block",
+            "ld a, [wPlayerSubStatus1]",
+            "bit SUBSTATUS_CURSE, a",
+            "jr nz, .ghost_curse_block",
+            ".ghost_curse_check_self_ko",
+            "call AICheckEnemyHalfHP_HL",
+            "jr c, .ghost_curse_ok",
+            "call .PlayerCantActThisTurnPublicly",
+            "jr c, .ghost_curse_block",
+            "call .EnemyUnderPressure",
+            "jr c, .ghost_curse_ok",
+            ".ghost_curse_block",
+            "ld a, 80",
+            "call BossAI_SetScoreHL",
+            "scf",
+        ],
+        "Ghost Curse public duplicate and self-KO hard fail gate",
+    )
+    pain_split = local_block(boss, ".PainSplitBlockedPublicly", ".early_stat_drop_discipline")
+    require_order(
+        pain_split,
+        [
+            ".PainSplitBlockedPublicly",
+            "ld a, [wEnemyMoveStruct + MOVE_EFFECT]",
+            "cp EFFECT_PAIN_SPLIT",
+            "jr nz, .pain_split_ok",
+            "call BossAI_HasAnyKOMove",
+            "jr c, .pain_split_block",
+            "call .PainSplitHasLargePositiveGap",
+            "jr c, .pain_split_ok",
+            ".pain_split_block",
+            "ld a, 80",
+            "call BossAI_SetScoreHL",
+            "scf",
+        ],
+        "Pain Split public value hard gate",
+    )
+    pain_split_gap = local_block(boss, ".PainSplitHasLargePositiveGap", ".PlayerCantActThisTurnPublicly")
+    require_order(
+        pain_split_gap,
+        [
+            ".PainSplitHasLargePositiveGap",
+            "ld hl, wEnemyMonHP",
+            "sla c",
+            "rl b",
+            "ld hl, wBattleMonHP + 1",
+            "cp c",
+            "sbc b",
+            "jr c, .pain_split_gap_no",
+            "scf",
+        ],
+        "Pain Split requires player HP at least twice enemy HP",
+    )
+    player_cant_act = local_block(boss, ".PlayerCantActThisTurnPublicly", ".early_stat_drop_discipline")
+    require_order(
+        player_cant_act,
+        [
+            ".PlayerCantActThisTurnPublicly",
+            "ld a, [wBattleMonStatus]",
+            "and SLP_MASK",
+            "jr nz, .player_cant_act",
+            "ld a, [wBattleMonStatus]",
+            "bit FRZ, a",
+            "jr nz, .player_cant_act",
+            ".player_cant_act",
+            "scf",
+        ],
+        "Ghost Curse self-KO gate treats sleeping/frozen player as no immediate pressure",
     )
     for effect in (
         "EFFECT_DISABLE",
@@ -1598,22 +1829,6 @@ def audit_poison_contact_risk(boss: str) -> None:
     )
 
 
-def audit_champion_hyper_beam(boss: str) -> None:
-    champion = local_block(boss, ".champion", ".EncourageIfType")
-    require_order(
-        champion,
-        [
-            "cp EFFECT_HYPER_BEAM",
-            "ret nz",
-            "call .HasKOLine",
-            "ret c",
-            "ld c, 5",
-            "call .DiscourageByTierWeight",
-        ],
-        "Champion non-KO Hyper Beam discouragement",
-    )
-
-
 def audit_immunity_tiebreak(boss: str) -> None:
     refine = top_block(boss, "BossAI_RefineSwitchCandidateForPlausibleRisk")
     done = local_block(refine, ".done", "ld a, [wEnemySwitchMonParam]")
@@ -1651,6 +1866,8 @@ def audit_switch_candidate_state_restoration(boss: str) -> None:
     require_order(
         immunity,
         [
+            "call BossAI_GetPrimaryThreatType",
+            "ret nc",
             "ld a, [wCurSpecies]",
             "push af",
             "ld [wCurSpecies], a",
@@ -1667,7 +1884,6 @@ def audit_switch_candidate_state_restoration(boss: str) -> None:
             "and a",
             "ret",
             ".no",
-            "pop af",
             "pop af",
             "ld [wCurSpecies], a",
             "call nz, GetBaseData",
@@ -2181,6 +2397,23 @@ def audit_type_matchup_scan_preserves_table_cursor(boss: str) -> None:
 
 
 def audit_type_threat_severity_preserves_list_cursor(boss: str) -> None:
+    revealed = top_block(boss, "BossAI_GetRevealedMoveThreatTypeAndSeverity")
+    require_order(
+        revealed,
+        [
+            "ld hl, Moves + MOVE_TYPE",
+            "call BossAI_GetMoveAttr",
+            "ld b, a",
+            "push bc",
+            "call BossAI_GetTypeThreatSeverityVsEnemyMon",
+            "pop bc",
+            "and a",
+            "ret z",
+            "scf",
+        ],
+        "revealed primary-threat scan preserves move type across severity scoring",
+    )
+
     severity = top_block(boss, "BossAI_GetTypeThreatSeverityVsEnemyMon")
     require_order(
         severity,
@@ -2196,6 +2429,78 @@ def audit_type_threat_severity_preserves_list_cursor(boss: str) -> None:
             "ret",
         ],
         "Boss AI type-threat severity list cursor preservation",
+    )
+
+
+def audit_primary_threat_fallback_preserves_register_state(boss: str) -> None:
+    primary = top_block(boss, "BossAI_GetPrimaryThreatTypeUncached")
+    likely = local_block(primary, ".likely_loop", ".possible")
+    require_order(
+        likely,
+        [
+            "push hl",
+            "push de",
+            "call BossAI_TestLikelyMaskBit",
+            "pop de",
+            "pop hl",
+            "push bc",
+            "push de",
+            "call BossAI_GetTypeThreatSeverityVsEnemyMon",
+            "pop de",
+            "pop bc",
+            "cp d",
+        ],
+        "primary-threat likely fallback preserves best type/severity registers",
+    )
+
+    possible = local_block(primary, ".possible_loop", ".hp_fallback")
+    require_order(
+        possible,
+        [
+            "push hl",
+            "push de",
+            "call BossAI_TestPlausibleMaskBit",
+            "pop de",
+            "pop hl",
+            "push hl",
+            "push de",
+            "call BossAI_TestLikelyMaskBit",
+            "pop de",
+            "pop hl",
+            "push bc",
+            "push de",
+            "call BossAI_GetTypeThreatSeverityVsEnemyMon",
+            "pop de",
+            "pop bc",
+            "cp 3",
+            "cp d",
+        ],
+        "primary-threat possible fallback preserves best type/severity registers",
+    )
+
+    hp_fallback = local_block(primary, ".hp_fallback", ".done")
+    require_order(
+        hp_fallback,
+        [
+            "ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT",
+            "push de",
+            "call BossAI_TestLikelyMaskBit",
+            "pop de",
+            "ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT",
+            "push de",
+            "call BossAI_TestPlausibleMaskBit",
+            "pop de",
+            ".hp_loop",
+            "push hl",
+            "push bc",
+            "push de",
+            "call BossAI_GetTypeThreatSeverityVsEnemyMon",
+            "pop de",
+            "pop bc",
+            "pop hl",
+            "cp d",
+        ],
+        "primary-threat Hidden Power fallback preserves best type/severity registers",
     )
 
 
@@ -2264,6 +2569,75 @@ def audit_no_battle_core_boss_labels(core: str, boss: str) -> None:
             fail("Battle Core must not define BossAI labels")
 
 
+def audit_predetermined_switch_index_guard(core: str) -> None:
+    block = top_block(core, "CheckWhetherSwitchmonIsPredetermined")
+    require_order(
+        block,
+        [
+            "ld a, [wEnemySwitchMonIndex]",
+            "and a",
+            "jr z, .check_wBattleHasJustStarted",
+            "ld c, a",
+            "ld a, [wOTPartyCount]",
+            "cp c",
+            "jr c, .bad_predetermined_switch",
+            "ld a, c",
+            "dec a",
+            "ld d, a",
+            "ld a, [wCurOTMon]",
+            "cp d",
+            "jr z, .bad_predetermined_switch",
+            "ld hl, wOTPartyMon1HP",
+            "ld a, d",
+            "call GetPartyLocation",
+            "ld a, [hli]",
+            "or [hl]",
+            "jr z, .bad_predetermined_switch",
+            "ld b, d",
+            "jr .return_carry",
+            ".bad_predetermined_switch",
+            "xor a",
+            "ld [wEnemySwitchMonIndex], a",
+            "jr .check_wBattleHasJustStarted",
+        ],
+        "predetermined enemy switch index must be in-party, alive, and non-current",
+    )
+
+
+def audit_tier_only_switch_threshold(boss: str) -> None:
+    block = top_block(boss, "BossAI_GetSwitchThreshold")
+    require_order(
+        block,
+        [
+            "ld a, [wBossAITier]",
+            "cp AI_TIER_LATE",
+            "ld a, AI_SWITCH_THRESHOLD_LATE",
+            "jr z, .base_done",
+            "ld a, [wBossAITier]",
+            "cp AI_TIER_MID",
+            "ld a, AI_SWITCH_THRESHOLD_MID",
+            "jr z, .base_done",
+            "ld a, AI_SWITCH_THRESHOLD_EARLY",
+            ".base_done",
+            "ret",
+        ],
+        "switch threshold must depend only on boss tier",
+    )
+    for needle in ("wTrainerClass", "ApplyClassSwitchThresholdMod"):
+        require_not_contains(block, needle, "switch threshold must not use per-class bias")
+
+
+def audit_no_per_class_role_bias(boss: str) -> None:
+    for needle in (
+        "call .ApplyRoleBias",
+        ".ApplyRoleBias",
+        ".EncourageIfType",
+        ".EncourageIfEffectInArray",
+        "RoleEffects:",
+    ):
+        require_not_contains(boss, needle, "per-class role bias must be removed")
+
+
 def audit_priority_trainers(parties: str, tiers: str) -> None:
     for entry in (
         "db MORTY, MORTY1, AI_TIER_MID",
@@ -2319,7 +2693,6 @@ def main() -> int:
     audit_spikes_and_status(boss)
     audit_setup_and_phazing(boss)
     audit_poison_contact_risk(boss)
-    audit_champion_hyper_beam(boss)
     audit_immunity_tiebreak(boss)
     audit_switch_candidate_state_restoration(boss)
     audit_item_and_passive_reasoning(boss)
@@ -2332,8 +2705,12 @@ def main() -> int:
     audit_public_threat_scan_preserves_source_pointers(boss)
     audit_type_matchup_scan_preserves_table_cursor(boss)
     audit_type_threat_severity_preserves_list_cursor(boss)
+    audit_primary_threat_fallback_preserves_register_state(boss)
     audit_legacy_switch_state_restoration(items, switch)
     audit_no_battle_core_boss_labels(core, boss)
+    audit_predetermined_switch_index_guard(core)
+    audit_tier_only_switch_threshold(boss)
+    audit_no_per_class_role_bias(boss)
     audit_priority_trainers(parties, tiers)
     audit_constants(constants)
 
@@ -2366,6 +2743,8 @@ def main() -> int:
         "Mean Look public already-trapped fail gate",
         "Dream Eater public Substitute fail gate",
         "Nightmare public fail gates",
+        "Ghost Curse self-KO hard gate",
+        "Pain Split public value hard gate",
         "Imperial Scales pressure discount",
         "public +2 setup denial",
         "revealed anti-setup avoidance",
@@ -2374,7 +2753,7 @@ def main() -> int:
         "Spikes/setup projection overread floor",
         "Poison contact retaliation risk",
         "Spikes plus phazing pressure response",
-        "Champion non-KO Hyper Beam discouragement",
+        "per-class role bias removed",
         "primary-threat immunity pivot tie-break",
         "switch candidate base-data restoration",
         "Destiny Bond public trade-window bias",
@@ -2393,8 +2772,11 @@ def main() -> int:
         "public threat scan source pointer preservation",
         "type-matchup scan table cursor preservation",
         "type-threat severity list cursor preservation",
+        "primary-threat fallback register preservation",
         "legacy switch base-data restoration",
         "no Battle Core BossAI labels",
+        "predetermined enemy switch index guard",
+        "tier-only switch threshold",
     ):
         print(f"  - {name}")
     return 0

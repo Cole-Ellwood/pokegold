@@ -957,18 +957,54 @@ def _normalize_path(path: str) -> str:
     return path.replace("\\", "/").strip().lower()
 
 
+def _keyword_token_matches(keyword_token: str, text_token: str) -> bool:
+    if keyword_token == text_token:
+        return True
+    variants = (
+        f"{keyword_token}s",
+        f"{keyword_token}es",
+        f"{keyword_token}ed",
+        f"{keyword_token}ing",
+    )
+    return text_token in variants
+
+
+def _keyword_phrase_matches(keyword_tokens: list[str], text_tokens: list[str]) -> bool:
+    if not keyword_tokens or not text_tokens:
+        return False
+    for start, token in enumerate(text_tokens):
+        if not _keyword_token_matches(keyword_tokens[0], token):
+            continue
+        cursor = start + 1
+        matched = True
+        for keyword_token in keyword_tokens[1:]:
+            found_at = -1
+            # Allow one descriptive token between phrase words, e.g.
+            # "switches Misdreavus into" should match "switch into".
+            for index in range(cursor, min(len(text_tokens), cursor + 2)):
+                if _keyword_token_matches(keyword_token, text_tokens[index]):
+                    found_at = index
+                    break
+            if found_at == -1:
+                matched = False
+                break
+            cursor = found_at + 1
+        if matched:
+            return True
+    return False
+
+
 def keyword_matches(keyword: str, text: str) -> bool:
     keyword_tokens = re.findall(r"[a-z0-9]+", keyword.lower())
     text_tokens = re.findall(r"[a-z0-9]+", text.lower())
     if not keyword_tokens or not text_tokens:
         return False
     if len(keyword_tokens) == 1:
-        return keyword_tokens[0] in text_tokens
-    window_size = len(keyword_tokens)
-    return any(
-        text_tokens[index:index + window_size] == keyword_tokens
-        for index in range(0, len(text_tokens) - window_size + 1)
-    )
+        return any(
+            _keyword_token_matches(keyword_tokens[0], token)
+            for token in text_tokens
+        )
+    return _keyword_phrase_matches(keyword_tokens, text_tokens)
 
 
 def _matching_keywords(keywords: tuple[str, ...], text: str) -> list[str]:

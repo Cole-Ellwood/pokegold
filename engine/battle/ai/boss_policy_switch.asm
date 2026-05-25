@@ -23,6 +23,8 @@ BossAI_SwitchOrTryItem:
 	call BossAI_ComputePlayerPlausibleTypeMask
 	call BossAI_OracleHakiRead
 	ret nz
+	call BossAI_HakiReserveAceAction
+	ret nz
 
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .check_switch
@@ -43,7 +45,19 @@ BossAI_SwitchOrTryItem:
 	ld a, [wEnemySwitchMonParam]
 	and a
 	jp z, AI_TryItem
+	call BossAI_GetPrimaryThreatType
+	jr nc, .candidate_answers_threat
+	call BossAI_IsImmunityPivotOpportunity
+	jr c, .candidate_answers_threat
+	xor a
+	ld [wEnemySwitchMonParam], a
+	jp AI_TryItem
 
+.candidate_answers_threat
+
+	ld a, [wEnemySwitchMonParam]
+	and a
+	jp z, AI_TryItem
 	push af
 	call BossAI_ComputeSwitchConfidence
 	ld [wBossAISwitchConfidence], a
@@ -112,14 +126,12 @@ ENDC
 ; ai-layer: POLICY
 BossAI_OracleHakiRead:
 ; Uniform Haki exception: once per battle, on the ace's first active turn,
-; an eligible boss may re-score deterministically against the player's
-; already-locked move. This is the only normal Boss AI routine allowed to
-; read current-turn input.
-	ld hl, wBossAIRevealedMovesBitmapSpare + 1
-	bit BOSSAI_HAKI_SPENT_F, [hl]
-	jr nz, .no
-	bit BOSSAI_HAKI_ELIGIBLE_F, [hl]
-	jr z, .no
+; an eligible boss reads the player's already-locked move. If a bench mon
+; is immune to that move type while the active is not, pivot to it; else
+; pick the best move from normal scoring. This is the only normal Boss AI
+; routine allowed to read current-turn input.
+	call BossAI_HakiReadyCommon
+	jr nc, .no
 	ld a, [wEnemyGoesFirst]
 	and a
 	jr z, .no
@@ -132,9 +144,141 @@ BossAI_OracleHakiRead:
 	ld a, [wCurPlayerMove]
 	and a
 	jr z, .no
-	call BossAI_ApplyKnownPlayerActionOracleBias
+	call BossAI_HakiFindImmunitySwitch
+	jp c, BossAI_CommitHakiOracleSwitch
 	call BossAI_ChooseBestOracleMove
 	jr nc, .no
+	jp BossAI_CommitHakiOracleChoice
+
+.no
+	xor a
+	ret
+
+BossAI_OracleHakiAfterPlayerAction:
+; Player-first Haki fires immediately before the enemy action. At this point
+; a player move has resolved or a switch-in is already public on the field, so
+; rebuild scores against the true current target before choosing.
+	ld a, [wBossAITier]
+	and a
+	ret z
+	call BossAI_HakiReadyCommon
+	jr nc, .no
+	ld a, [wBattlePlayerAction]
+	cp BATTLEPLAYERACTION_SWITCH
+	jr z, .switch_read
+	and a ; BATTLEPLAYERACTION_USEMOVE?
+	jr nz, .no
+	ld a, [wCurPlayerMove]
+	and a
+	jr z, .no
+	call BossAI_RebuildHakiMoveScores
+	jr .choose
+
+.switch_read
+	call BossAI_RebuildHakiMoveScores
+
+.choose
+	call BossAI_ChooseBestOracleMove
+	jr nc, .no
+	jp BossAI_CommitHakiOracleChoice
+
+.no
+	xor a
+	ret
+
+BossAI_HakiReserveAceAction:
+; If the ace is due to Haki on a player-first move turn, do not let normal
+; switch/item logic consume the action before the post-player hook can fire.
+	ld a, [wEnemyGoesFirst]
+	and a
+	jr nz, .no
+	call BossAI_HakiReadyCommon
+	jr nc, .no
+	ld a, [wBattlePlayerAction]
+	and a ; BATTLEPLAYERACTION_USEMOVE?
+	jr nz, .no
+	ld a, 1
+	and a
+	ret
+
+.no
+	xor a
+	ret
+
+BossAI_HakiReadyCommon:
+	ld a, [wBossAITier]
+	and a
+	jr z, .no
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	bit BOSSAI_HAKI_SPENT_F, [hl]
+	jr nz, .no
+	bit BOSSAI_HAKI_ELIGIBLE_F, [hl]
+	jr z, .no
+	ld a, [wEnemySubStatus5]
+	bit SUBSTATUS_ENCORED, a
+	jr nz, .no
+	callfar CheckEnemyLockedIn
+	jr nz, .no
+	scf
+	ret
+
+.no
+	and a
+	ret
+
+BossAI_RebuildHakiMoveScores:
+	ld a, 20
+	ld hl, wEnemyAIMoveScores
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+
+	ld a, [wEnemyDisabledMove]
+	and a
+	jr z, .check_pp
+	ld b, a
+	ld hl, wEnemyMonMoves
+	ld c, 0
+.disabled_loop
+	ld a, [hli]
+	cp b
+	jr z, .score_disabled
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .disabled_loop
+	jr .check_pp
+
+.score_disabled
+	ld hl, wEnemyAIMoveScores
+	ld b, 0
+	add hl, bc
+	ld [hl], 80
+
+.check_pp
+	ld hl, wEnemyAIMoveScores
+	ld de, wEnemyMonPP
+	ld c, NUM_MOVES
+.pp_loop
+	ld a, [de]
+	and PP_MASK
+	jr nz, .pp_next
+	ld [hl], 80
+.pp_next
+	inc hl
+	inc de
+	dec c
+	jr nz, .pp_loop
+
+	call BossAI_ApplyMoveModel
+	call BossAI_ApplyLookaheadToTopMoveCandidates
+IF DEF(BOSS_AI_TRACE)
+	farcall BossAI_TraceTopMoves
+ENDC
+	ret
+
+BossAI_CommitHakiOracleChoice:
 	callfar EnforceEnemyHeldMoveRestrictions_Far
 	callfar UpdateMoveData
 	call BossAI_UpdateRepeatTracker
@@ -154,51 +298,131 @@ ENDC
 	and a
 	ret
 
-.no
-	xor a
-	ret
+BossAI_CommitHakiOracleSwitch:
+; Commit a Haki defensive switch. wBossAITemp holds the 0-based bench
+; slot picked by BossAI_HakiFindImmunitySwitch; convert to 1-based for
+; wEnemySwitchMonIndex, queue the per-leader taunt, mark Haki spent,
+; and tail-call AI_TrySwitch. AI_Switch ends with `scf; ret`, and the
+; carry survives through BossAI_SwitchOrTryItem's `ret nz` (the cp
+; LINK_COLOSSEUM right before scf leaves NZ in non-link battles), so
+; the core.asm caller sees `jr c, .switch_item` and routes through
+; the switch handler.
+	ld a, [wBossAITemp]
+	inc a
+	ld [wEnemySwitchMonIndex], a
+	call BossAI_QueueHakiTaunt
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	set BOSSAI_HAKI_SPENT_F, [hl]
+	res BOSSAI_HAKI_ELIGIBLE_F, [hl]
+IF DEF(BOSS_AI_TRACE)
+	ld a, [wBossAITraceRiskFlags]
+	or 1 << BOSSAI_HAKI_TRACE_FIRED_F
+	ld [wBossAITraceRiskFlags], a
+ENDC
+	jp AI_TrySwitch
 
-BossAI_ApplyKnownPlayerActionOracleBias:
-; Keep the base score model intact, then force only generic emergency
-; defensive effects when the locked player move is a strong public threat.
-	call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack
-	ret nc
-	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld c, NUM_MOVES
-.bias_loop
-	ld a, [de]
+BossAI_HakiFindImmunitySwitch:
+; Search the bench for a mon immune (NO_EFFECT) to the locked move's
+; type when the active is not already immune. Returns carry set with
+; wBossAITemp = bench slot (0-based) if found, else carry clear.
+;
+; Reads:    wCurPlayerMove (non-zero), wEnemyMonSpecies, wOTPartyCount,
+;           wCurOTMon, wOTPartySpecies, wOTPartyMon1HP.
+; Clobbers: bc, de, hl; wBossAITemp (slot on success), wBossAITemp2/3
+;           (scratch), wCurSpecies (restored), wBaseStats / wBaseType*
+;           (left at whichever mon was last looked up; callers needing
+;           active base data must reload via GetBaseData).
+	ld a, [wCurPlayerMove]
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld [wBossAITemp2], a
+
+	ld a, [wCurSpecies]
+	ld [wBossAITemp3], a
+
+	ld a, [wEnemyMonSpecies]
 	and a
-	ret z
+	jr z, .none
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBossAITemp2]
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .none ; active is already immune
+
+	ld a, [wOTPartyCount]
+	and a
+	jr z, .none
+	ld d, a
+	ld e, 0
+	ld hl, wOTPartyMon1HP
+
+.loop
+	ld a, [wCurOTMon]
+	cp e
+	jr z, .next
+
+	ld a, [hli]
+	ld b, a
 	ld a, [hl]
-	cp 80
-	jr nc, .bias_next
+	dec hl
+	or b
+	jr z, .next ; fainted
+
 	push hl
 	push de
-	push bc
-	ld a, [de]
-	dec a
-	ld hl, Moves + MOVE_EFFECT
-	call BossAI_GetMoveAttr
-	ld b, a
-	pop bc
+	ld hl, wOTPartySpecies
+	ld d, 0
+	add hl, de
+	ld a, [hl]
 	pop de
 	pop hl
-	ld a, b
-	cp EFFECT_DESTINY_BOND
-	jr z, .force_best
-	cp EFFECT_PROTECT
-	jr z, .force_best
-	cp EFFECT_ENDURE
-	jr nz, .bias_next
-.force_best
-	xor a
-	ld [hl], a
-.bias_next
-	inc hl
-	inc de
-	dec c
-	jr nz, .bias_loop
+	and a
+	jr z, .next
+	cp $ff
+	jr z, .next
+
+	push hl
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBossAITemp2]
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
+	pop hl
+	ld a, [wTypeMatchup]
+	and a
+	jr z, .found
+
+.next
+	push de
+	ld de, PARTYMON_STRUCT_LENGTH
+	add hl, de
+	pop de
+	inc e
+	dec d
+	jr nz, .loop
+
+.none
+	ld a, [wBossAITemp3]
+	ld [wCurSpecies], a
+	and a
+	jr z, .none_skip_base
+	call GetBaseData
+.none_skip_base
+	and a
+	ret
+
+.found
+	ld a, e
+	ld [wBossAITemp], a
+	ld a, [wBossAITemp3]
+	ld [wCurSpecies], a
+	and a
+	jr z, .found_skip_base
+	call GetBaseData
+.found_skip_base
+	scf
 	ret
 
 BossAI_ChooseBestOracleMove:
@@ -249,26 +473,6 @@ BossAI_ChooseBestOracleMove:
 	scf
 	ret
 .no_best
-	and a
-	ret
-
-BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack:
-	ld a, [wCurPlayerMove]
-	and a
-	jr z, .selected_no
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	cp 60
-	jr c, .selected_no
-	ld a, [wCurPlayerMove]
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	call BossAI_GetMoveAttr
-	ld c, a
-	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
-	ret
-.selected_no
 	and a
 	ret
 
@@ -356,7 +560,7 @@ BossAI_FindFirstAliveSwitchCandidate:
 endc
 if DEF(BOSSAI_EMIT_SWITCH_THRESHOLD_AND_LOOP)
 ; Region: Switch threshold + loop penalty
-; Concern: Tier threshold, per-class deltas, and loop-penalty gates
+; Concern: Tier threshold and loop-penalty gates
 ; Layer: POLICY
 ; Original lines: 117
 ; ============================================================
@@ -371,73 +575,8 @@ BossAI_GetSwitchThreshold:
 	ld a, AI_SWITCH_THRESHOLD_MID
 	jr z, .base_done
 	ld a, AI_SWITCH_THRESHOLD_EARLY
- 
+
 .base_done
-	call .ApplyClassSwitchThresholdMod
-	ret
-
-.ApplyClassSwitchThresholdMod
-	ld b, a
-	ld a, [wTrainerClass]
-	cp CHAMPION
-	jr z, .minus_10
-	cp KOGA
-	jr z, .minus_8
-	cp CLAIR
-	jr z, .minus_6
-	cp KAREN
-	jr z, .minus_4
-	cp BRUNO
-	jr z, .minus_4
-	cp JASMINE
-	jr z, .plus_4
-	cp CHUCK
-	jr z, .plus_2
-	ld a, b
-	ret
-
-.minus_10
-	ld a, b
-	sub 10
-	ret nc
-	xor a
-	ret
-
-.minus_8
-	ld a, b
-	sub 8
-	ret nc
-	xor a
-	ret
-
-.minus_6
-	ld a, b
-	sub 6
-	ret nc
-	xor a
-	ret
-
-.minus_4
-	ld a, b
-	sub 4
-	ret nc
-	xor a
-	ret
-
-.plus_4
-	ld a, b
-	add 4
-	cp 96
-	ret c
-	ld a, 95
-	ret
-
-.plus_2
-	ld a, b
-	add 2
-	cp 96
-	ret c
-	ld a, 95
 	ret
 
 ; ai-layer: POLICY
@@ -633,19 +772,11 @@ BossAI_IsSuspiciousSwitchIn:
 
 ; ai-layer: POLICY
 BossAI_IsImmunityPivotOpportunity:
-	ld a, [wLastPlayerCounterMove]
-	and a
-	ret z
-	ld b, a
+	call BossAI_GetPrimaryThreatType
+	ret nc
+	ld [wBossAITemp], a
 	ld a, [wCurSpecies]
 	push af
-	ld a, b
-	push af
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	and a
-	jr z, .no
 
 	ld a, [wEnemySwitchMonParam]
 	and $f
@@ -660,16 +791,11 @@ BossAI_IsImmunityPivotOpportunity:
 	jr z, .no
 	ld [wCurSpecies], a
 	call GetBaseData
-	pop af
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	inc hl
-	call BossAI_GetMoveByte
+	ld a, [wBossAITemp]
 	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
 	ld a, [wTypeMatchup]
-	and a
-	jr nz, .not_immune
+	cp EFFECTIVE
+	jr nc, .not_immune
 	pop af
 	ld [wCurSpecies], a
 	and a
@@ -686,7 +812,6 @@ BossAI_IsImmunityPivotOpportunity:
 	ret
 
 .no
-	pop af
 	pop af
 	ld [wCurSpecies], a
 	and a

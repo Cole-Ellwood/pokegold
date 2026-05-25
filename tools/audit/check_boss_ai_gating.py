@@ -36,6 +36,7 @@ GUARDED_ENTRYPOINTS = {
     "BossAI_ComputePlayerPlausibleTypeMask",
     "BossAI_EvaluateActionLookahead",
     "BossAI_FlushPendingHakiTaunt",
+    "BossAI_OracleHakiAfterPlayerAction",
 }
 
 LABEL_RE = re.compile(r"^([A-Za-z0-9_]+)::?\s*(?:;.*)?$")

@@ -31,9 +31,9 @@ Implemented behavior:
   themselves still count. Transform, Mimic, Metronome, Mirror Move, Sleep Talk,
   Sketch, Struggle, and any species previously tainted by those wrappers keep
   the older conservative learnset mask.
-- The second byte of `wBossAIRevealedMovesBitmapSpare` now packs the
-  quarantined Haki state for the Morty/Gengar prototype: spent, ace-seen, and
-  current-turn eligibility. No new WRAM bytes were added.
+- `wBossAIRevealedMovesBitmapSpare` byte 1 packs quarantined Haki state:
+  spent, ace-seen, and current-turn eligibility. Byte 2 queues the pending
+  leader taunt id. No new WRAM bytes were added.
 - Switch loop prevention now checks the proposed switch target against the last
   mon switched out, so immediate A->B->A reversals can be penalized unless an
   emergency exception applies.
@@ -169,17 +169,17 @@ Implemented behavior:
   they lack a KO line, reusing existing loop/candidate-risk gates.
 - True near-tie move choices stay more mixed: the best-vs-second selector no
   longer applies tier determinism bumps when the score gap is under 3.
-- Role-bias personality coverage now includes the remaining named leaders
-  through existing type/effect nudges. These are close-score identity biases,
-  not legality overrides.
-- Morty's Gengar has the first quarantined Haki prototype. On its ace-first
-  active turn only, after player input and turn order are locked, it may spend
-  Haki to choose Destiny Bond into a strong super-effective selected attack if
-  Gengar moves first. The input read is label-scoped to
-  `BossAI_TryMortyHakiOracle`, refreshed through `UpdateMoveData`, recorded in
-  trace risk bit 3, and explicitly allowlisted by the no-cheat audit.
-- Late-tier class role bias is restored, so late bosses keep identity bonuses
-  and Lance-style non-KO Hyper Beam discouragement.
+- Per-class role-bias personality nudges were removed. Boss personality should
+  come from roster, moves, items, tier, plans, and public battle state.
+- Uniform Haki now fires on the eligible ace's first committed-turn action
+  opportunity. Enemy-first Haki reads the selected move; player-first Haki
+  fires immediately before the enemy action and can react to either the move
+  that just resolved or the now-public switch-in. Switch-in Haki rebuilds move
+  scores against the actual active target, queues the leader taunt, refreshes
+  `UpdateMoveData`, records trace risk bit 3, and is explicitly allowlisted by
+  the no-cheat audit.
+- Switch thresholds are tier-only; trainer-class threshold modifiers were
+  removed with the role-bias cleanup.
 - Phase 2 heuristics were added without a simulator: Spikes plus phazing bias,
   +2 setup punishment via denial moves, and a small immunity-pivot tie-break.
 - Multi-turn projection now has a public stay-pressure floor before rewarding
@@ -239,7 +239,8 @@ Important anchors:
 - `.ApplyRecoveryTimingDiscipline`
 - `.ApplySelfKOTradeDiscipline`
 - `BossAI_ApplyPreservationSwitchBias`
-- `BossAI_TryMortyHakiOracle`
+- `BossAI_OracleHakiRead`
+- `BossAI_OracleHakiAfterPlayerAction`
 - `BossAI_UpdateHakiAceWindow`
 - `.ApplyChoiceFirstLockRegret`
 - `.SeenSpeciesChoiceLockRisk`

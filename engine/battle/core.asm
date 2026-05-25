@@ -1004,6 +1004,8 @@ Battle_PlayerFirst:
 	call LoadTilemapToTempTilemap
 	call TryEnemyFlee
 	jp c, WildFled_EnemyFled_LinkBattleCanceled
+	callfar BossAI_OracleHakiAfterPlayerAction
+	callfar BossAI_FlushPendingHakiTaunt
 	call EnemyTurn_EndOpponentProtectEndureDestinyBond
 	ld a, [wForcedSwitch]
 	and a
@@ -3121,9 +3123,29 @@ CheckWhetherSwitchmonIsPredetermined:
 	and a
 	jr z, .check_wBattleHasJustStarted
 
+	ld c, a
+	ld a, [wOTPartyCount]
+	cp c
+	jr c, .bad_predetermined_switch
+	ld a, c
 	dec a
-	ld b, a
+	ld d, a
+	ld a, [wCurOTMon]
+	cp d
+	jr z, .bad_predetermined_switch
+	ld hl, wOTPartyMon1HP
+	ld a, d
+	call GetPartyLocation
+	ld a, [hli]
+	or [hl]
+	jr z, .bad_predetermined_switch
+	ld b, d
 	jr .return_carry
+
+.bad_predetermined_switch
+	xor a
+	ld [wEnemySwitchMonIndex], a
+	jr .check_wBattleHasJustStarted
 
 .check_wBattleHasJustStarted
 	ld a, [wBattleHasJustStarted]

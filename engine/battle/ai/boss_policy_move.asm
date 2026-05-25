@@ -275,6 +275,10 @@ ENDC
 	ret c
 	call .DamagingMoveBlockedByTypeImmunity
 	ret c
+	call .GhostCurseBlockedPublicly
+	ret c
+	call .PainSplitBlockedPublicly
+	ret c
 
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
@@ -372,7 +376,6 @@ ENDC
 	call .ApplyBatonPassBias
 	call .ApplyRevealedAntiSetupAvoidance
 	call .ApplyRampMoveBias
-	call .ApplyRoleBias
 	call BossAI_ApplyPlanMoveBias
 	call .ApplyChargeMoveBias
 	call .ApplyPoisonContactRiskBias
@@ -522,7 +525,7 @@ ENDC
 	cp EFFECT_DISABLE
 	jr z, .check_disable
 	cp EFFECT_ENCORE
-	jr z, .check_encore
+	jp z, .check_encore
 	cp EFFECT_MEAN_LOOK
 	jp z, .check_mean_look
 	cp EFFECT_DREAM_EATER
@@ -869,6 +872,88 @@ ENDC
 	ret
 
 .status_fail
+	scf
+	ret
+
+.GhostCurseBlockedPublicly
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_CURSE
+	jr nz, .ghost_curse_ok
+	call BossAI_EnemyIsGhostType
+	jr nc, .ghost_curse_ok
+	ld a, [wPlayerSubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jr nz, .ghost_curse_block
+	ld a, [wPlayerSubStatus1]
+	bit SUBSTATUS_CURSE, a
+	jr nz, .ghost_curse_block
+.ghost_curse_check_self_ko
+	call AICheckEnemyHalfHP_HL
+	jr c, .ghost_curse_ok
+	call .PlayerCantActThisTurnPublicly
+	jr c, .ghost_curse_block
+	call .EnemyUnderPressure
+	jr c, .ghost_curse_ok
+.ghost_curse_block
+	ld a, 80
+	call BossAI_SetScoreHL
+	scf
+	ret
+.ghost_curse_ok
+	and a
+	ret
+
+.PainSplitBlockedPublicly
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_PAIN_SPLIT
+	jr nz, .pain_split_ok
+	call BossAI_HasAnyKOMove
+	jr c, .pain_split_block
+	call .PainSplitHasLargePositiveGap
+	jr c, .pain_split_ok
+.pain_split_block
+	ld a, 80
+	call BossAI_SetScoreHL
+	scf
+	ret
+.pain_split_ok
+	and a
+	ret
+
+.PainSplitHasLargePositiveGap
+; Return carry if player current HP is at least 2x enemy current HP.
+	push hl
+	push bc
+	ld hl, wEnemyMonHP
+	ld b, [hl]
+	inc hl
+	ld c, [hl]
+	sla c
+	rl b
+	ld hl, wBattleMonHP + 1
+	ld a, [hld]
+	cp c
+	ld a, [hl]
+	sbc b
+	pop bc
+	pop hl
+	jr c, .pain_split_gap_no
+	scf
+	ret
+.pain_split_gap_no
+	and a
+	ret
+
+.PlayerCantActThisTurnPublicly
+	ld a, [wBattleMonStatus]
+	and SLP_MASK
+	jr nz, .player_cant_act
+	ld a, [wBattleMonStatus]
+	bit FRZ, a
+	jr nz, .player_cant_act
+	and a
+	ret
+.player_cant_act
 	scf
 	ret
 
@@ -2392,274 +2477,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ret
 .species_spin_no
 	and a
-	ret
-
-.ApplyRoleBias
-	ld a, [wTrainerClass]
-	cp FALKNER
-	jp z, .falkner
-	cp RIVAL1
-	jp z, .rival
-	cp BUGSY
-	jp z, .bugsy
-	cp WHITNEY
-	jp z, .whitney
-	cp MORTY
-	jp z, .morty
-	cp CHUCK
-	jp z, .chuck
-	cp JASMINE
-	jp z, .jasmine
-	cp PRYCE
-	jp z, .pryce
-	cp CLAIR
-	jp z, .clair
-	cp WILL
-	jp z, .will
-	cp BRUNO
-	jp z, .bruno
-	cp KAREN
-	jp z, .karen
-	cp KOGA
-	jp z, .koga
-	cp CHAMPION
-	jp z, .champion
-	cp BROCK
-	jp z, .brock
-	cp MISTY
-	jp z, .misty
-	cp LT_SURGE
-	jp z, .lt_surge
-	cp ERIKA
-	jp z, .erika
-	cp JANINE
-	jp z, .janine
-	cp SABRINA
-	jp z, .sabrina
-	cp BLAINE
-	jp z, .blaine
-	cp BLUE
-	jp z, .blue
-	cp RED
-	jp z, .red
-	ret
-
-.rival
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	ret z
-	ld c, 5
-	call .EncourageByTierWeight
-	ret
-
-.falkner
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_SPEED_DOWN_HIT
-	jr z, .falkner_bias
-	cp EFFECT_ACCURACY_DOWN
-	jr z, .falkner_bias
-	ld a, [wEnemyMoveStruct + MOVE_TYPE]
-	cp FLYING
-	ret nz
-.falkner_bias
-	ld c, 5
-	call .EncourageByTierWeight
-	ret
-
-.bugsy
-	ld a, BUG
-	call .EncourageIfType
-	ld hl, BossAIBugsyRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.whitney
-	ld a, NORMAL
-	call .EncourageIfType
-	ld hl, BossAIWhitneyRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.morty
-	ld a, GHOST
-	call .EncourageIfType
-	ld hl, BossAIMortyRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.chuck
-	ld a, FIGHTING
-	call .EncourageIfType
-	ld hl, BossAIChuckRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.jasmine
-	ld a, STEEL
-	call .EncourageIfType
-	ld a, ELECTRIC
-	call .EncourageIfType
-	ld a, GROUND
-	call .EncourageIfType
-	ld hl, BossAIJasmineRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.pryce
-	ld a, ICE
-	call .EncourageIfType
-	ld a, GROUND
-	call .EncourageIfType
-	ld hl, BossAIPryceRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.clair
-	ld a, DRAGON
-	call .EncourageIfType
-	ld hl, BossAIClairRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.will
-	ld a, PSYCHIC_TYPE
-	call .EncourageIfType
-	ld hl, BossAIWillRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.bruno
-	ld a, FIGHTING
-	call .EncourageIfType
-	ld hl, BossAIBrunoRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.karen
-	ld a, DARK
-	call .EncourageIfType
-	ld hl, BossAIKarenRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.koga
-	ld a, POISON
-	call .EncourageIfType
-	ld a, BUG
-	call .EncourageIfType
-	ld hl, BossAIKogaRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.champion
-	ld a, DRAGON
-	call .EncourageIfType
-	ld a, FLYING
-	call .EncourageIfType
-	ld hl, BossAIChampionRoleEffects
-	call .EncourageIfEffectInArray
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_HYPER_BEAM
-	ret nz
-	call .HasKOLine
-	ret c
-	ld c, 5
-	call .DiscourageByTierWeight
-	ret
-
-.brock
-	ld a, ROCK
-	call .EncourageIfType
-	ld a, GROUND
-	call .EncourageIfType
-	ld hl, BossAIBrockRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.misty
-	ld a, WATER
-	call .EncourageIfType
-	ld hl, BossAIMistyRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.lt_surge
-	ld a, ELECTRIC
-	call .EncourageIfType
-	ld a, FIGHTING
-	call .EncourageIfType
-	ld hl, BossAISurgeRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.erika
-	ld a, GRASS
-	call .EncourageIfType
-	ld a, POISON
-	call .EncourageIfType
-	ld hl, BossAIErikaRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.janine
-	ld a, POISON
-	call .EncourageIfType
-	ld a, BUG
-	call .EncourageIfType
-	ld hl, BossAIJanineRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.sabrina
-	ld a, PSYCHIC_TYPE
-	call .EncourageIfType
-	ld hl, BossAISabrinaRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.blaine
-	ld a, FIRE
-	call .EncourageIfType
-	ld hl, BossAIBlaineRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.blue
-	ld a, FIRE
-	call .EncourageIfType
-	ld a, FLYING
-	call .EncourageIfType
-	ld a, DRAGON
-	call .EncourageIfType
-	ld hl, BossAIBlueRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.red
-	ld a, ELECTRIC
-	call .EncourageIfType
-	ld a, NORMAL
-	call .EncourageIfType
-	ld hl, BossAIRedRoleEffects
-	call .EncourageIfEffectInArray
-	ret
-
-.EncourageIfType
-	ld b, a
-	ld a, [wEnemyMoveStruct + MOVE_TYPE]
-	cp b
-	ret nz
-	ld c, 5
-	call .EncourageByTierWeight
-	ret
-
-.EncourageIfEffectInArray
-	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	ld de, 1
-	call IsInArray
-	ret nc
-	ld c, 5
-	call .EncourageByTierWeight
 	ret
 
 .EncourageByTierWeight
@@ -5933,12 +5750,18 @@ BossAI_GetPrimaryThreatTypeUncached:
 	jr z, .possible
 	ld b, a
 	push hl
+	push de
 	ld a, b
 	call BossAI_TestLikelyMaskBit
+	pop de
 	pop hl
 	jr nc, .likely_loop
+	push bc
+	push de
 	ld a, b
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	pop de
+	pop bc
 	cp d
 	jr c, .likely_loop
 	ld d, a
@@ -5954,17 +5777,25 @@ BossAI_GetPrimaryThreatTypeUncached:
 	jr z, .hp_fallback
 	ld b, a
 	push hl
+	push de
 	ld a, b
 	call BossAI_TestPlausibleMaskBit
+	pop de
 	pop hl
 	jr nc, .possible_loop
 	push hl
+	push de
 	ld a, b
 	call BossAI_TestLikelyMaskBit
+	pop de
 	pop hl
 	jr c, .possible_loop
+	push bc
+	push de
 	ld a, b
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	pop de
+	pop bc
 	cp 3
 	jr c, .possible_loop
 	cp d
@@ -5976,13 +5807,17 @@ BossAI_GetPrimaryThreatTypeUncached:
 
 .hp_fallback
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	push de
 	call BossAI_TestLikelyMaskBit
+	pop de
 	jr c, .scan_hidden_power
 	ld a, d
 	and a
 	jr nz, .done
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	push de
 	call BossAI_TestPlausibleMaskBit
+	pop de
 	jr nc, .none
 .scan_hidden_power
 	ld hl, BossAIHiddenPowerThreatTypes
@@ -5992,8 +5827,12 @@ BossAI_GetPrimaryThreatTypeUncached:
 	jr z, .done
 	ld b, a
 	push hl
+	push bc
+	push de
 	ld a, b
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	pop de
+	pop bc
 	pop hl
 	cp d
 	jr c, .hp_loop
@@ -6050,7 +5889,9 @@ BossAI_GetRevealedMoveThreatTypeAndSeverity:
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
 	ld b, a
+	push bc
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	pop bc
 	and a
 	ret z
 	scf
@@ -6404,172 +6245,6 @@ BossAIStatusEffects:
 	db EFFECT_POISON
 	db EFFECT_TOXIC
 	db EFFECT_LEECH_SEED
-	db -1
-
-; ai-layer: POLICY
-BossAIBugsyRoleEffects:
-	db EFFECT_ATTACK_UP_2
-	db EFFECT_SPEED_UP
-	db EFFECT_BATON_PASS
-	db -1
-
-; ai-layer: POLICY
-BossAIWhitneyRoleEffects:
-	db EFFECT_ATTRACT
-	db EFFECT_DEFENSE_CURL
-	db EFFECT_ROLLOUT
-	db EFFECT_HEAL_BELL
-	db -1
-
-; ai-layer: POLICY
-BossAIMortyRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_CONFUSE
-	db EFFECT_MEAN_LOOK
-	db EFFECT_CURSE
-	db EFFECT_DESTINY_BOND
-	db -1
-
-; ai-layer: POLICY
-BossAIChuckRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_LOCK_ON
-	db EFFECT_PRIORITY_HIT
-	db -1
-
-; ai-layer: POLICY
-BossAIJasmineRoleEffects:
-	db EFFECT_PARALYZE
-	db EFFECT_PROTECT
-	db EFFECT_RAIN_DANCE
-	db -1
-
-; ai-layer: POLICY
-BossAIPryceRoleEffects:
-	db EFFECT_SPEED_DOWN_HIT
-	db EFFECT_FORCE_SWITCH
-	db EFFECT_HEAL
-	db EFFECT_MORNING_SUN
-	db EFFECT_SYNTHESIS
-	db EFFECT_MOONLIGHT
-	db -1
-
-; ai-layer: POLICY
-BossAIClairRoleEffects:
-	db EFFECT_PARALYZE
-	db EFFECT_SPEED_UP
-	db EFFECT_SPEED_UP_2
-	db EFFECT_RESET_STATS
-	db EFFECT_RAIN_DANCE
-	db -1
-
-; ai-layer: POLICY
-BossAIWillRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_REFLECT
-	db EFFECT_LEECH_SEED
-	db EFFECT_FUTURE_SIGHT
-	db -1
-
-; ai-layer: POLICY
-BossAIBrunoRoleEffects:
-	db EFFECT_PRIORITY_HIT
-	db EFFECT_FORESIGHT
-	db EFFECT_PROTECT
-	db -1
-
-; ai-layer: POLICY
-BossAIKarenRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_CONFUSE
-	db EFFECT_TOXIC
-	db EFFECT_MEAN_LOOK
-	db EFFECT_DESTINY_BOND
-	db EFFECT_FORCE_SWITCH
-	db -1
-
-; ai-layer: POLICY
-BossAIKogaRoleEffects:
-	db EFFECT_TOXIC
-	db EFFECT_SPIKES
-	db EFFECT_PROTECT
-	db EFFECT_BATON_PASS
-	db EFFECT_CONFUSE
-	db -1
-
-; ai-layer: POLICY
-BossAIChampionRoleEffects:
-	db EFFECT_PARALYZE
-	db EFFECT_RAIN_DANCE
-	db EFFECT_SAFEGUARD
-	db EFFECT_FORCE_SWITCH
-	db -1
-
-; ai-layer: POLICY
-BossAIBrockRoleEffects:
-	db EFFECT_SANDSTORM
-	db EFFECT_FORCE_SWITCH
-	db EFFECT_PROTECT
-	db -1
-
-; ai-layer: POLICY
-BossAIMistyRoleEffects:
-	db EFFECT_HEAL
-	db EFFECT_RAIN_DANCE
-	db EFFECT_CONFUSE
-	db -1
-
-; ai-layer: POLICY
-BossAISurgeRoleEffects:
-	db EFFECT_PARALYZE
-	db EFFECT_LOCK_ON
-	db EFFECT_PRIORITY_HIT
-	db -1
-
-; ai-layer: POLICY
-BossAIErikaRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_LEECH_SEED
-	db EFFECT_SUNNY_DAY
-	db EFFECT_HEAL_BELL
-	db -1
-
-; ai-layer: POLICY
-BossAIJanineRoleEffects:
-	db EFFECT_SLEEP
-	db EFFECT_TOXIC
-	db EFFECT_SPIKES
-	db EFFECT_BATON_PASS
-	db EFFECT_CONFUSE
-	db -1
-
-; ai-layer: POLICY
-BossAISabrinaRoleEffects:
-	db EFFECT_REFLECT
-	db EFFECT_LIGHT_SCREEN
-	db EFFECT_HEAL
-	db EFFECT_FUTURE_SIGHT
-	db -1
-
-; ai-layer: POLICY
-BossAIBlaineRoleEffects:
-	db EFFECT_SUNNY_DAY
-	db EFFECT_BURN_HIT
-	db -1
-
-; ai-layer: POLICY
-BossAIBlueRoleEffects:
-	db EFFECT_RAIN_DANCE
-	db EFFECT_SUNNY_DAY
-	db EFFECT_SAFEGUARD
-	db EFFECT_FORCE_SWITCH
-	db -1
-
-; ai-layer: POLICY
-BossAIRedRoleEffects:
-	db EFFECT_PRIORITY_HIT
-	db EFFECT_LIGHT_SCREEN
-	db EFFECT_HEAL
 	db -1
 
 ; ai-layer: POLICY

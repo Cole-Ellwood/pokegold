@@ -155,6 +155,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertEqual(rec["symptom_class"], "wrong_switch")
         self.assertIn("rom-switch-materialize", rec["first_command"])
 
+    def test_next_step_routes_switches_into_bad_target_phrase(self) -> None:
+        report = build_next_step(
+            symptom=(
+                "Morty switches Misdreavus into Gengar against Haunter "
+                "before Haunter has attacked"
+            )
+        )
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "wrong_switch")
+        self.assertIn("rom-switch-materialize", rec["first_command"])
+
     def test_proof_card_executes_safe_fast_unified_command(self) -> None:
         report = build_proof_card(
             symptom="How much does grass regrowth heal at 300 hp?",
@@ -359,6 +371,10 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             "Silver early boss spammed Leer and never attacked": (
                 "early_boss_debuff_spam",
                 "damage-ai-report",
+            ),
+            "Morty Haunter is too eager to Curse below half HP after putting Quilava to sleep, and Misdreavus used Pain Split at full HP instead of attacking": (
+                "wrong_move_score",
+                "decision-trace",
             ),
         }
 

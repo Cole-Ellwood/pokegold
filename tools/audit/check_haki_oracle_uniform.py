@@ -130,19 +130,19 @@ def check_taunt_coverage() -> tuple[bool, str]:
 
 
 def check_flush_sequencing() -> tuple[bool, str]:
-    """(d) Flush call appears between AI_SwitchOrTryItem and the enemy-action dispatcher."""
+    """(d) Flush call appears before enemy action in both Haki hook paths."""
     if not CORE_PATH.exists():
         return False, f"(d) FAIL: {CORE_PATH} not found"
     text = CORE_PATH.read_text(encoding="utf-8")
-    # Find Battle_EnemyFirst body
-    m = re.search(
+    # Find Battle_EnemyFirst body.
+    enemy_first = re.search(
         r"^Battle_EnemyFirst:.*?(?=^\S+:)",
         text,
         flags=re.MULTILINE | re.DOTALL,
     )
-    if not m:
+    if not enemy_first:
         return False, "(d) FAIL: Battle_EnemyFirst: label not found in engine/battle/core.asm"
-    body = m.group(0)
+    body = enemy_first.group(0)
     # Find positions of the three load-bearing tokens.
     p_dispatch = body.find("AI_SwitchOrTryItem")
     p_flush = body.find("BossAI_FlushPendingHakiTaunt")
@@ -164,10 +164,37 @@ def check_flush_sequencing() -> tuple[bool, str]:
             f"EnemyTurn_EndOpponentProtectEndureDestinyBond={p_enemy_action}. "
             f"Expected dispatch < flush < enemy_action."
         )
+    player_first = re.search(
+        r"^Battle_PlayerFirst:.*?(?=^\S+:)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if not player_first:
+        return False, "(d) FAIL: Battle_PlayerFirst: label not found in engine/battle/core.asm"
+    body = player_first.group(0)
+    p_oracle = body.find("BossAI_OracleHakiAfterPlayerAction")
+    p_flush = body.find("BossAI_FlushPendingHakiTaunt")
+    p_enemy_action = body.find("EnemyTurn_EndOpponentProtectEndureDestinyBond")
+    if p_oracle < 0:
+        return False, "(d) FAIL: BossAI_OracleHakiAfterPlayerAction call site not found in Battle_PlayerFirst"
+    if p_flush < 0:
+        return False, "(d) FAIL: BossAI_FlushPendingHakiTaunt call site not found in Battle_PlayerFirst"
+    if p_enemy_action < 0:
+        return False, (
+            "(d) FAIL: EnemyTurn_EndOpponentProtectEndureDestinyBond call site not "
+            "found in Battle_PlayerFirst (anchor for ordering check)"
+        )
+    if not (p_oracle < p_flush < p_enemy_action):
+        return False, (
+            f"(d) FAIL: player-first flush ordering wrong. Positions: "
+            f"BossAI_OracleHakiAfterPlayerAction={p_oracle}, "
+            f"BossAI_FlushPendingHakiTaunt={p_flush}, "
+            f"EnemyTurn_EndOpponentProtectEndureDestinyBond={p_enemy_action}. "
+            f"Expected oracle < flush < enemy_action."
+        )
     return True, (
-        "(d) PASS: BossAI_FlushPendingHakiTaunt is sequenced between "
-        "AI_SwitchOrTryItem and EnemyTurn_EndOpponentProtectEndureDestinyBond "
-        "in Battle_EnemyFirst (taunt prints before enemy move animation)."
+        "(d) PASS: BossAI_FlushPendingHakiTaunt is sequenced before enemy action "
+        "in both enemy-first and player-first Haki paths."
     )
 
 

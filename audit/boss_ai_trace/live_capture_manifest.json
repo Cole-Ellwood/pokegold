@@ -280,8 +280,8 @@
       "stop_after_first_capture": true,
       "require_chosen_move": false,
       "switch_materialization_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
-      "switch_materialization_trace_rom_sha256": "A1F53033CBEE1C6A35A2792A8694829ADC7028CFC6AB65D3D2A28E81201AE006",
-      "switch_materialization_trace_symbols_sha256": "13BB688CFBA5802BE29B8C7553686E8B6C0850EF1C9D655DDAFA6A3C90E16E3F",
+      "switch_materialization_trace_rom_sha256": "DE77F9AF9B38EBECFE06006F3051103ACE9968F36411B01CD6FC686E4F0A3FEF",
+      "switch_materialization_trace_symbols_sha256": "843814849F25FC8D254AE9C61438F9A16BCE50B9ACE1EA5B4B376DC96A063FCD",
       "switch_materialization_base_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_4130.state"
     }
   ]
