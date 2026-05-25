@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_switch_materialize import (
+    PreferenceDataError,
+    format_rom_switch_materialization,
     scenario_expects_switch,
     source_base_switch_threshold,
     switch_materialization_patches,
     switch_observation_status,
     switch_roll_frequency,
     switch_verdict_from_report,
+    switch_materialization_state_field,
+    validate_manifest_hash,
+    validate_switch_materialization_base,
 )
 
 
@@ -143,6 +151,96 @@ class RomSwitchMaterializeTests(unittest.TestCase):
             ),
             "switch_proposal_observed",
         )
+
+    def test_manifest_prefers_switch_materialization_state_when_present(self) -> None:
+        self.assertEqual(
+            switch_materialization_state_field(
+                {
+                    "save_state": "post_dispatch.state",
+                    "switch_materialization_state": "pre_dispatch.state",
+                }
+            ),
+            "switch_materialization_state",
+        )
+        self.assertEqual(
+            switch_materialization_state_field({"save_state": "post_dispatch.state"}),
+            "save_state",
+        )
+
+    def test_switch_base_validation_rejects_post_dispatch_snapshot(self) -> None:
+        values = {
+            "wBossAITraceSwitchConfidence": [99],
+            "wEnemySwitchMonParam": [0x31],
+            "wEnemySwitchMonIndex": [2],
+            "wBossAITraceChosenMove": [0],
+        }
+
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "already inside or past BossAI_SwitchOrTryItem",
+        ):
+            validate_switch_materialization_base(values)
+
+    def test_manifest_hash_validation_rejects_mismatched_trace_basis(self) -> None:
+        with TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "pokegold_trace.gbc"
+            rom.write_bytes(b"current-rom")
+            data = {"trace_rom_sha256": "0" * 64}
+
+            with self.assertRaisesRegex(
+                PreferenceDataError,
+                "trace_rom hash mismatch",
+            ):
+                validate_manifest_hash(
+                    data,
+                    manifest_key="trace_rom_sha256",
+                    actual_path=rom,
+                    label="trace_rom",
+                )
+
+    def test_manifest_hash_validation_accepts_matching_trace_basis(self) -> None:
+        with TemporaryDirectory() as tmp:
+            rom = Path(tmp) / "pokegold_trace.gbc"
+            rom.write_bytes(b"current-rom")
+            with patch(
+                "tools.boss_ai_debugger.rom_switch_materialize.capture.sha256_file",
+                return_value="A" * 64,
+            ):
+                validate_manifest_hash(
+                    {"trace_rom_sha256": "a" * 64},
+                    manifest_key="trace_rom_sha256",
+                    actual_path=rom,
+                    label="trace_rom",
+                )
+
+    def test_format_switch_materialization_prints_error_reason(self) -> None:
+        report = {
+            "scenario_count": 1,
+            "checked_count": 0,
+            "skipped_count": 1,
+            "error_count": 1,
+            "policy_disagreement_count": 0,
+            "base_route": "shared_switch_loop",
+            "base_state": "post_dispatch.state",
+            "base_state_field": "save_state",
+            "materializations_per_minute": 0.0,
+            "known_limits": [],
+            "verdicts": [
+                {
+                    "scenario_id": "unit",
+                    "status": "error",
+                    "expected_switch": True,
+                    "reason": "stale post-dispatch state",
+                    "rom": {},
+                    "switch_roll": {"available": False, "reason": "no_switch_dispatch_observation"},
+                }
+            ],
+        }
+
+        text = format_rom_switch_materialization(report)
+
+        self.assertIn("status=error", text)
+        self.assertIn("reason=stale post-dispatch state", text)
 
 
 if __name__ == "__main__":

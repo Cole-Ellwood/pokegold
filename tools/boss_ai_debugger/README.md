@@ -450,13 +450,18 @@ the same scenarios and reports hook-equivalence mismatches explicitly. Fast mode
 can shard cases across `--workers` independent PyBoy sessions for the
 high-throughput ROM-backed replay gate.
 
-`rom-switch-materialize` loads the shared switch-loop trace state and patches
-generated `switch_sack` cases into public WRAM before the real
-`BossAI_SwitchOrTryItem` path reaches its switch confidence/proposal. It reports
-`rom_policy` verdicts for switch proposal disagreements separately from move
-score bytes, because switching is not a move-score selector decision. The report
-also attaches `switch_roll`: a source-mirrored final roll frequency from observed
-ROM `switch_confidence` plus either an explicit `--switch-threshold`/scenario
+`rom-switch-materialize` requires a current trace-ROM/symbol manifest basis and
+a base state before the real `BossAI_SwitchOrTryItem` path reaches switch
+confidence/proposal. When a manifest row provides `switch_materialization_state`,
+that pre-dispatch state is used; otherwise the legacy `save_state` is rejected
+if switch-confidence, switch-param, switch-index, or chosen-move outputs are
+already populated. Hash mismatches against `pokegold_trace.gbc` or
+`pokegold_trace.sym` are fatal because old save-states cannot prove current ROM
+behavior. On a valid pre-dispatch state, the report gives `rom_policy` verdicts
+for switch proposal disagreements separately from move score bytes, because
+switching is not a move-score selector decision. The report also attaches
+`switch_roll`: a source-mirrored final roll frequency from observed ROM
+`switch_confidence` plus either an explicit `--switch-threshold`/scenario
 `boss_ai_switch_threshold` byte or the source-derived base threshold. When the
 loop/sack/wincon threshold biases are not traced or supplied, the frequency is
 marked as a range so agents do not present it as exact. If the replay reaches

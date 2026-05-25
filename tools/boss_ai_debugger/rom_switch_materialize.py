@@ -50,8 +50,9 @@ CLASS_SWITCH_THRESHOLD_MODS = {
 
 KNOWN_LIMITS = [
     (
-        "Switch materialization replays the real BossAI_SwitchOrTryItem path from "
-        "the shared switch-loop trace state and observes switch confidence/param."
+        "Switch materialization requires a base state before the real "
+        "BossAI_SwitchOrTryItem path reaches switch confidence/param; stale "
+        "snapshot states with already-populated switch outputs are rejected."
     ),
     (
         "This proves switch-dispatch proposal behavior and reports the final "
@@ -106,6 +107,7 @@ class RomSwitchReplaySession:
         if not save_state.exists():
             raise PreferenceDataError(f"missing save-state: {save_state}")
         self.load_state(save_state)
+        validate_switch_materialization_base(capture.read_trace_values(self.pyboy, self.symbols))
         apply_memory_patches(
             self.pyboy,
             self.symbols,
@@ -180,9 +182,13 @@ def run_rom_switch_materialization(
         switch_threshold = parse_optional_byte(switch_threshold, "switch_threshold")
 
     manifest_entry = load_manifest_save_entry(manifest_path, base_route)
-    base_state = resolve_manifest_path(str(manifest_entry["save_state"]))
+    validate_manifest_trace_basis(manifest_path, rom=rom, symbols_path=symbols_path)
+    base_state_field = switch_materialization_state_field(manifest_entry)
+    base_state = resolve_manifest_path(str(manifest_entry[base_state_field]))
     if not base_state.exists():
-        raise PreferenceDataError(f"missing switch save-state: {base_state}")
+        raise PreferenceDataError(
+            f"missing switch {base_state_field}: {base_state}"
+        )
 
     started = time.perf_counter()
     verdicts: list[dict[str, Any]] = []
@@ -230,6 +236,7 @@ def run_rom_switch_materialization(
         "kind": "rom_switch_materialization",
         "base_route": base_route,
         "base_state": trace_runtime.display_path(base_state),
+        "base_state_field": base_state_field,
         "scenario_count": len(scenarios),
         "checked_count": len(checked),
         "skipped_count": len(verdicts) - len(checked),
@@ -376,6 +383,26 @@ def switch_observation_status(
     if chosen_move != 0:
         return "chosen_move_observed_without_switch_proposal"
     return "no_decision_observed"
+
+
+def validate_switch_materialization_base(values: dict[str, list[int]]) -> None:
+    problems: list[str] = []
+    stale_checks = (
+        ("wBossAITraceSwitchConfidence", "switch confidence is already set"),
+        ("wEnemySwitchMonParam", "switch proposal param is already set"),
+        ("wEnemySwitchMonIndex", "switch index is already set"),
+        ("wBossAITraceChosenMove", "chosen move is already set"),
+    )
+    for field, message in stale_checks:
+        if values[field][0] != 0:
+            problems.append(f"{message} ({field}={values[field][0]:02x})")
+    if problems:
+        raise PreferenceDataError(
+            "switch materialization base state is already inside or past "
+            "BossAI_SwitchOrTryItem; use a pre-dispatch "
+            "switch_materialization_state: "
+            + "; ".join(problems)
+        )
 
 
 def switch_verdict_from_report(
@@ -686,6 +713,56 @@ def load_manifest_save_entry(manifest_path: Path, route_id: str) -> dict[str, An
     raise PreferenceDataError(f"unknown manifest route {route_id!r}; known: {known}")
 
 
+def validate_manifest_trace_basis(
+    manifest_path: Path,
+    *,
+    rom: Path,
+    symbols_path: Path,
+) -> None:
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    validate_manifest_hash(
+        data,
+        manifest_key="trace_rom_sha256",
+        actual_path=rom,
+        label="trace_rom",
+    )
+    validate_manifest_hash(
+        data,
+        manifest_key="trace_symbols_sha256",
+        actual_path=symbols_path,
+        label="trace_symbols",
+    )
+
+
+def validate_manifest_hash(
+    data: dict[str, Any],
+    *,
+    manifest_key: str,
+    actual_path: Path,
+    label: str,
+) -> None:
+    expected = data.get(manifest_key)
+    if not isinstance(expected, str) or not expected:
+        raise PreferenceDataError(
+            f"live capture manifest missing {manifest_key}; cannot prove switch state basis"
+        )
+    if not actual_path.exists():
+        raise PreferenceDataError(f"{label} points to a missing file: {actual_path}")
+    actual = capture.sha256_file(actual_path)
+    if actual.upper() != expected.upper():
+        raise PreferenceDataError(
+            f"live capture manifest {label} hash mismatch for {actual_path}: "
+            f"expected {expected.upper()}, found {actual}; regenerate the switch "
+            "materialization state for the current trace ROM/symbols"
+        )
+
+
+def switch_materialization_state_field(manifest_entry: dict[str, Any]) -> str:
+    if manifest_entry.get("switch_materialization_state"):
+        return "switch_materialization_state"
+    return "save_state"
+
+
 def resolve_manifest_path(path_text: str) -> Path:
     path = Path(path_text)
     if path.is_absolute():
@@ -722,13 +799,15 @@ def format_rom_switch_materialization(
         (
             f"base_route={report['base_route']} "
             f"base_state={report['base_state']} "
+            f"base_state_field={report.get('base_state_field', 'save_state')} "
             f"rate={report['materializations_per_minute']:.0f}/min"
         ),
     ]
     review = [
         verdict
         for verdict in report["verdicts"]
-        if int(verdict.get("rom_policy", {}).get("severity", 0)) > 0
+        if verdict.get("status") == "error"
+        or int(verdict.get("rom_policy", {}).get("severity", 0)) > 0
     ]
     if review:
         lines.append("")
@@ -746,14 +825,19 @@ def format_rom_switch_materialization(
                     f"{probability:.1%}" if isinstance(probability, float) else "unknown"
                 )
                 exact_text = "exact" if roll.get("probability_exact") else "range"
+            reason_text = ""
+            if verdict.get("status") == "error":
+                reason_text = f" reason={verdict.get('reason', 'unknown')}"
             lines.append(
                 f"  {verdict['scenario_id']}: "
+                f"status={verdict.get('status', 'unknown')} "
                 f"policy={policy.get('verdict', 'unknown')} "
                 f"expected_switch={verdict.get('expected_switch')} "
                 f"proposed_switch={rom.get('proposed_switch')} "
                 f"confidence={rom.get('switch_confidence')} "
                 f"observation={rom.get('observation_status', 'unknown')} "
                 f"switch_rate={probability_text}({exact_text})"
+                f"{reason_text}"
             )
     lines.append("")
     lines.append("Known limits:")

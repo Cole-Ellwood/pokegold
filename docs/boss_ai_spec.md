@@ -775,10 +775,10 @@ Reserved block:
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
 - Current normal build: `wBossAITier = 01:d68e`,
-  `wBossAIStateEnd = 01:d6fc`, so normal state uses `110` bytes and leaves `30`
+  `wBossAIStateEnd = 01:d6fd`, so normal state uses `111` bytes and leaves `29`
   reserved bytes.
 - Current trace field set adds `27` bytes under `BOSS_AI_TRACE`, so trace state
-  would use `137` bytes and leave `3` reserved bytes.
+  would use `138` bytes and leave `2` reserved bytes.
 
 Adding 2-3 bytes to this block is acceptable in principle, but every change must
 still be build-verified because WRAMX overall has no free unreserved space.
