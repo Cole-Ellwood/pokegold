@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -1443,6 +1444,130 @@ def main() -> int:
     print(
         "headless_batch_switch_runner: PASS "
         "summary_counts table_columns table_rows wrapper_kind_tag"
+    )
+    # Phase 2 from docs/headless_batch_validation_implementation.md §5: the
+    # expectations comparator that wraps Phase 1. Validates parse_switch_expectations
+    # accepts the documented envelope shape, compare_batch_against_expectations
+    # marks per-scenario pass/fail/error/no_expectation, and format_violation_report
+    # surfaces violations with reasons + rationale. Live ROM materialization is
+    # mocked via the run_batch_switch_materialize entry point.
+    from tools.headless_battle.switch_expectations import (
+        compare_batch_against_expectations,
+        format_violation_report,
+        parse_switch_expectations,
+        run_switch_expectations_check,
+    )
+    expectations_envelope = {
+        "schema_version": 1,
+        "expectations": [
+            {
+                "scenario_id": "audit_observed_exact",
+                "expected": {"action": "switch", "switch_probability_max": 0.80},
+                "rationale": "Haunter must switch into Gengar once Shadow Ball is revealed",
+            },
+            {
+                "scenario_id": "audit_observed_ranged",
+                "expected": {"action": "stay", "switch_probability_max": 0.30},
+                "rationale": "Mid-tier confidence with ranged threshold should hold ground",
+            },
+            {
+                "scenario_id": "audit_no_observation",
+                "expected": {"action": "stay"},
+                "rationale": "Should not even reach switch dispatch",
+            },
+            {
+                "scenario_id": "audit_missing_scenario",
+                "expected": {"action": "switch"},
+                "rationale": "Verifies missing-scenario reporting",
+            },
+        ],
+    }
+    expectations = parse_switch_expectations(expectations_envelope)
+    if set(expectations) != {
+        "audit_observed_exact",
+        "audit_observed_ranged",
+        "audit_no_observation",
+        "audit_missing_scenario",
+    }:
+        print(
+            "Headless battle simulator audit FAILED: parse_switch_expectations did "
+            f"not load all 4 rows; got {sorted(expectations)}",
+            file=sys.stderr,
+        )
+        return 1
+    comparison = compare_batch_against_expectations(batch_report, expectations)
+    comp_summary = comparison["summary"]
+    # batch_report has 3 scenarios (observed_exact / observed_ranged / no_observation)
+    # against 4 expectations. Expected:
+    #  audit_observed_exact -> action=switch, observed=switch (proposed), prob=0.65 <= 0.80 -> pass
+    #  audit_observed_ranged -> action=stay, observed=stay (proposed_switch=False), prob=0.50 > 0.30 -> fail
+    #  audit_no_observation -> action=stay, status=error -> error
+    #  audit_missing_scenario -> no verdict ran -> missing_scenario_ids
+    if (
+        comp_summary["pass"] != 1
+        or comp_summary["fail"] != 1
+        or comp_summary["error"] != 1
+        or comp_summary["no_expectation"] != 0
+        or comp_summary["missing_scenario_ids"] != ["audit_missing_scenario"]
+    ):
+        print(
+            "Headless battle simulator audit FAILED: switch_expectations summary "
+            f"mismatch: {comp_summary}",
+            file=sys.stderr,
+        )
+        return 1
+    violation_text = format_violation_report(comparison)
+    required_violation_strings = (
+        "pass=1",
+        "fail=1",
+        "error=1",
+        "missing=1",
+        "audit_observed_ranged",
+        "audit_no_observation",
+        "audit_missing_scenario",
+        "switch_probability_max=0.3000",
+        "Mid-tier confidence",
+    )
+    missing_strings = [s for s in required_violation_strings if s not in violation_text]
+    if missing_strings:
+        print(
+            "Headless battle simulator audit FAILED: switch_expectations violation "
+            f"report missing {missing_strings}; got:\n{violation_text}",
+            file=sys.stderr,
+        )
+        return 1
+    # End-to-end run_switch_expectations_check with mocked batch runner.
+    import tempfile as _tempfile
+    with _tempfile.TemporaryDirectory() as _tmp:
+        _tmp_path = Path(_tmp)
+        _scenarios_path = _tmp_path / "scenarios.jsonl"
+        _scenarios_path.write_text("[]", encoding="utf-8")
+        _expectations_path = _tmp_path / "expectations.json"
+        _expectations_path.write_text(
+            json.dumps(expectations_envelope), encoding="utf-8"
+        )
+        with patch(
+            "tools.headless_battle.switch_expectations.run_batch_switch_materialize",
+            return_value={**batch_report, "summary": batch_report.get("summary") or {}},
+        ):
+            e2e_comparison = run_switch_expectations_check(
+                _scenarios_path, _expectations_path
+            )
+    if (
+        e2e_comparison.get("kind") != "headless_battle_switch_expectations_comparison"
+        or e2e_comparison["summary"]["pass"] != 1
+        or e2e_comparison["summary"]["fail"] != 1
+        or e2e_comparison["summary"]["error"] != 1
+    ):
+        print(
+            "Headless battle simulator audit FAILED: end-to-end switch_expectations "
+            f"comparison shape mismatch: {e2e_comparison.get('summary')}",
+            file=sys.stderr,
+        )
+        return 1
+    print(
+        "headless_batch_switch_expectations: PASS "
+        "schema_load pass_fail_error_counts missing_scenarios violation_report end_to_end"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0
