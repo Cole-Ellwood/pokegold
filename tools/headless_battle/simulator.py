@@ -4252,6 +4252,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "tools.headless_battle.rom_differential",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "One selected NormalHit turn is ROM-differential checked end to end for the supported fixed-RNG subset: enemy Pidgey Tackle into player Cyndaquil with link RNG bytes [255, 255] matches ROM PP decrement, no-critical result, damage variation, final damage, and active HP after BattleCommand_ApplyDamage writes HP. This proves that named golden only; other source-mirrored mechanics remain pending differential.",
+            },
+            {
+                "id": "damaging_status_component_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected damaging secondary status application is ROM-component checked for EffectChance plus BurnTarget, PoisonTarget, and ParalyzeTarget: Ember burn, Sludge poison, Body Slam paralysis, and a Body Slam effect-chance failure control match the headless status event and final target status. This proves the status/effect-chance component boundary only; full damaging-turn parity for those moves still relies on the separate damage oracle and NormalHit golden.",
             }
         ],
         "source_mirrored_pending_differential": [
@@ -4337,7 +4343,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_damaging_status_secondaries",
                 "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Safeguard blocks the secondary after a successful effect-chance check. Thunder has a separate selected path because its command order differs. Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
+                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. EffectChance plus the target status command is byte-proven for Ember, Sludge, Body Slam, and a Body Slam no-status control by damaging_status_component_differential; full damaging-turn parity for these moves remains pending. Safeguard blocks the secondary after a successful effect-chance check. Thunder has a separate selected path because its command order differs. Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
             },
             {
                 "id": "selected_thunder_weather_order",

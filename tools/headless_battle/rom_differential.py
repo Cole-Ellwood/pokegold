@@ -27,12 +27,20 @@ from tools.headless_battle.simulator import simulate_payload
 
 
 TACKLE_MOVE_ID = 0x21
+BODY_SLAM_MOVE_ID = 0x22
+EMBER_MOVE_ID = 0x34
+SLUDGE_MOVE_ID = 0x7C
 NORMAL_TYPE = 0x00
+POISON_TYPE = 0x03
 FLYING_TYPE = 0x02
 FIRE_TYPE = 0x14
 LINK_MODE = 1
 FIXED_RNG_VALUES = (255, 255)
 CALL_BUDGET = 50_000
+STATUS_TARGET_CALL_BUDGET = 100_000
+PSN_STATUS = 1 << 3
+BRN_STATUS = 1 << 4
+PAR_STATUS = 1 << 6
 NORMAL_HIT_CHAIN = (
     "BattleCommand_DoTurn",
     "BattleCommand_Critical",
@@ -42,6 +50,77 @@ NORMAL_HIT_CHAIN = (
     "BattleCommand_DamageVariation",
     "BattleCommand_CheckHit",
     "BattleCommand_ApplyDamage",
+)
+
+
+@dataclass(frozen=True)
+class StatusComponentScenario:
+    scenario_id: str
+    move_name: str
+    move_id: int
+    move_type: int
+    target_command: str
+    status_name: str
+    expected_status_byte: int
+    chance_threshold: int
+    effect_chance_rng: int
+    expect_success: bool
+    headless_rng_values: tuple[int, ...]
+
+
+STATUS_COMPONENT_SCENARIOS = (
+    StatusComponentScenario(
+        scenario_id="component_ember_burn_success",
+        move_name="EMBER",
+        move_id=EMBER_MOVE_ID,
+        move_type=FIRE_TYPE,
+        target_command="BattleCommand_BurnTarget",
+        status_name="burn",
+        expected_status_byte=BRN_STATUS,
+        chance_threshold=25,
+        effect_chance_rng=0,
+        expect_success=True,
+        headless_rng_values=(255, 255, 0),
+    ),
+    StatusComponentScenario(
+        scenario_id="component_sludge_poison_success",
+        move_name="SLUDGE",
+        move_id=SLUDGE_MOVE_ID,
+        move_type=POISON_TYPE,
+        target_command="BattleCommand_PoisonTarget",
+        status_name="poison",
+        expected_status_byte=PSN_STATUS,
+        chance_threshold=76,
+        effect_chance_rng=0,
+        expect_success=True,
+        headless_rng_values=(255, 255, 0),
+    ),
+    StatusComponentScenario(
+        scenario_id="component_body_slam_paralyze_success",
+        move_name="BODY_SLAM",
+        move_id=BODY_SLAM_MOVE_ID,
+        move_type=NORMAL_TYPE,
+        target_command="BattleCommand_ParalyzeTarget",
+        status_name="paralyze",
+        expected_status_byte=PAR_STATUS,
+        chance_threshold=76,
+        effect_chance_rng=0,
+        expect_success=True,
+        headless_rng_values=(255, 255, 0, 255),
+    ),
+    StatusComponentScenario(
+        scenario_id="component_body_slam_paralyze_effectchance_fail",
+        move_name="BODY_SLAM",
+        move_id=BODY_SLAM_MOVE_ID,
+        move_type=NORMAL_TYPE,
+        target_command="BattleCommand_ParalyzeTarget",
+        status_name="paralyze",
+        expected_status_byte=0,
+        chance_threshold=76,
+        effect_chance_rng=255,
+        expect_success=False,
+        headless_rng_values=(255, 255, 255),
+    ),
 )
 
 
@@ -58,6 +137,21 @@ class RomNormalHitResult:
     rng_values: tuple[int, ...]
     rng_consumed: int
     command_returns: dict[str, bool]
+
+
+@dataclass(frozen=True)
+class RomStatusComponentResult:
+    scenario_id: str
+    move_name: str
+    status_name: str
+    status_before: int
+    status_after: int
+    effect_failed: bool
+    effect_chance_rng: int
+    effect_chance_consumed: int
+    effect_chance_returned: bool
+    target_command_returned: bool
+    target_command_pc: int
 
 
 @dataclass(frozen=True)
@@ -190,6 +284,53 @@ def _seed_rom_normal_hit(pyboy: Any, syms: dict[str, tuple[int, int]]) -> None:
         _write_byte(pyboy, syms, "wLinkBattleRNs", value, index)
 
 
+def _seed_rom_status_component(
+    pyboy: Any,
+    syms: dict[str, tuple[int, int]],
+    scenario: StatusComponentScenario,
+) -> None:
+    _seed_common(pyboy, syms)
+
+    _write_byte(pyboy, syms, "wBattleMonSpecies", 155)
+    _write_byte(pyboy, syms, "wBattleMonLevel", 5)
+    _write_byte(pyboy, syms, "wBattleMonType1", FIRE_TYPE)
+    _write_byte(pyboy, syms, "wBattleMonType2", FIRE_TYPE)
+    _write_byte(pyboy, syms, "wBattleMonItem", 0)
+    _write_u16(pyboy, syms, "wBattleMonHP", 20)
+    _write_u16(pyboy, syms, "wBattleMonMaxHP", 20)
+    _write_u16(pyboy, syms, "wBattleMonSpeed", 11)
+
+    _write_byte(pyboy, syms, "wEnemyMonSpecies", 16)
+    _write_byte(pyboy, syms, "wEnemyMonLevel", 5)
+    _write_byte(pyboy, syms, "wEnemyMonType1", NORMAL_TYPE)
+    _write_byte(pyboy, syms, "wEnemyMonType2", NORMAL_TYPE)
+    _write_byte(pyboy, syms, "wEnemyMonItem", 0)
+    _write_u16(pyboy, syms, "wEnemyMonHP", 40)
+    _write_u16(pyboy, syms, "wEnemyMonMaxHP", 40)
+    _write_u16(pyboy, syms, "wEnemyMonSpeed", 7)
+
+    _write_byte(pyboy, syms, "wCurPlayerMove", scenario.move_id)
+    _write_byte(pyboy, syms, "wCurMoveNum", 0)
+    _write_byte(pyboy, syms, "hBattleTurn", 0)
+    _write_byte(pyboy, syms, "wBattleMode", 1)
+    _write_byte(pyboy, syms, "wTypeModifier", 0x10)
+
+    for offset, value in (
+        (0, scenario.move_id),
+        (1, 0),
+        (2, 40),
+        (3, scenario.move_type),
+        (4, 0xFF),
+        (5, 20),
+        (6, scenario.chance_threshold),
+    ):
+        _write_byte(pyboy, syms, "wPlayerMoveStruct", value, offset)
+
+    _write_byte(pyboy, syms, "wLinkMode", LINK_MODE)
+    _write_byte(pyboy, syms, "wLinkBattleRNCount", 0)
+    _write_byte(pyboy, syms, "wLinkBattleRNs", scenario.effect_chance_rng, 0)
+
+
 def run_rom_normal_hit() -> RomNormalHitResult:
     rom = find_rom("pokegold_debug")
     syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
@@ -217,6 +358,49 @@ def run_rom_normal_hit() -> RomNormalHitResult:
             rng_consumed=_read_byte(pyboy, syms, "wLinkBattleRNCount"),
             command_returns=command_returns,
         )
+    finally:
+        cache.stop()
+
+
+def run_rom_status_components() -> tuple[RomStatusComponentResult, ...]:
+    rom = find_rom("pokegold_debug")
+    syms = SymbolTable.load(find_sym("pokegold_debug")).as_legacy_dict()
+    cache = BootStateCache(rom)
+    pyboy = cache.prime()
+    results: list[RomStatusComponentResult] = []
+    try:
+        for scenario in STATUS_COMPONENT_SCENARIOS:
+            pyboy = cache.restore()
+            _seed_rom_status_component(pyboy, syms, scenario)
+            status_before = _read_byte(pyboy, syms, "wEnemyMonStatus")
+            _, effect_returned, _ = call_function_safe(
+                pyboy,
+                syms,
+                "BattleCommand_EffectChance",
+                budget=CALL_BUDGET,
+            )
+            _, target_returned, target_pc = call_function_safe(
+                pyboy,
+                syms,
+                scenario.target_command,
+                budget=STATUS_TARGET_CALL_BUDGET,
+            )
+            results.append(
+                RomStatusComponentResult(
+                    scenario_id=scenario.scenario_id,
+                    move_name=scenario.move_name,
+                    status_name=scenario.status_name,
+                    status_before=status_before,
+                    status_after=_read_byte(pyboy, syms, "wEnemyMonStatus"),
+                    effect_failed=bool(_read_byte(pyboy, syms, "wEffectFailed")),
+                    effect_chance_rng=scenario.effect_chance_rng,
+                    effect_chance_consumed=_read_byte(pyboy, syms, "wLinkBattleRNCount"),
+                    effect_chance_returned=effect_returned,
+                    target_command_returned=target_returned,
+                    target_command_pc=target_pc,
+                )
+            )
+        return tuple(results)
     finally:
         cache.stop()
 
@@ -262,6 +446,57 @@ def normal_hit_payload() -> dict[str, Any]:
                         "type": "NORMAL",
                         "bp": 40,
                         "priority": 1,
+                        "accuracy": 255,
+                        "pp": 35,
+                    }
+                ],
+            },
+        },
+        "actions": {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+    }
+
+
+def damaging_status_component_payload(scenario: StatusComponentScenario) -> dict[str, Any]:
+    return {
+        "rng": {"mode": "fixed", "values": list(scenario.headless_rng_values)},
+        "state": {
+            "weather": "none",
+            "weather_count": 0,
+            "turn": 1,
+            "player": {
+                "species": "CYNDAQUIL",
+                "level": 5,
+                "types": ["FIRE", "FIRE"],
+                "hp": 20,
+                "max_hp": 20,
+                "stats": {
+                    "attack": 10,
+                    "defense": 9,
+                    "speed": 11,
+                    "sp_attack": 11,
+                    "sp_defense": 10,
+                },
+                "moves": [{"name": scenario.move_name}],
+            },
+            "enemy": {
+                "species": "PIDGEY",
+                "level": 5,
+                "types": ["NORMAL", "NORMAL"],
+                "hp": 40,
+                "max_hp": 40,
+                "stats": {
+                    "attack": 6,
+                    "defense": 6,
+                    "speed": 7,
+                    "sp_attack": 5,
+                    "sp_defense": 5,
+                },
+                "moves": [
+                    {
+                        "name": "TACKLE",
+                        "type": "NORMAL",
+                        "bp": 0,
+                        "priority": 0,
                         "accuracy": 255,
                         "pp": 35,
                     }
@@ -347,19 +582,142 @@ def compare_normal_hit_fixed_rng() -> DifferentialResult:
     )
 
 
+def compare_damaging_status_component() -> DifferentialResult:
+    rom_results = {result.scenario_id: result for result in run_rom_status_components()}
+    errors: list[str] = []
+    headless_results: dict[str, Any] = {}
+    rom_report: dict[str, Any] = {}
+
+    for scenario in STATUS_COMPONENT_SCENARIOS:
+        rom = rom_results[scenario.scenario_id]
+        report = simulate_payload(damaging_status_component_payload(scenario))
+        outcome = report["outcomes"][0]
+        status_events = [
+            event
+            for event in outcome["events"]
+            if event.get("actor") == "player"
+            and event.get("move") == scenario.move_name
+            and event.get("status") == scenario.status_name
+            and event.get("type") in {"status_apply", "status_no_effect"}
+        ]
+        if len(status_events) != 1:
+            errors.append(f"{scenario.scenario_id}: expected one headless status event, got {len(status_events)}")
+            status_event: dict[str, Any] = {}
+        else:
+            status_event = status_events[0]
+
+        expected_event_type = "status_apply" if scenario.expect_success else "status_no_effect"
+        expected_status = scenario.status_name if scenario.expect_success else "none"
+        if status_event.get("type") != expected_event_type:
+            errors.append(
+                f"{scenario.scenario_id}: event type mismatch: "
+                f"headless={status_event.get('type')} expected={expected_event_type}"
+            )
+        if status_event.get("status_after") != expected_status:
+            errors.append(
+                f"{scenario.scenario_id}: status_after mismatch: "
+                f"headless={status_event.get('status_after')} expected={expected_status}"
+            )
+        effect_check = status_event.get("effect_chance_check", {})
+        if effect_check.get("threshold") != scenario.chance_threshold:
+            errors.append(
+                f"{scenario.scenario_id}: effect threshold mismatch: "
+                f"headless={effect_check.get('threshold')} rom_seed={scenario.chance_threshold}"
+            )
+        if effect_check.get("raw_values") != [scenario.effect_chance_rng]:
+            errors.append(
+                f"{scenario.scenario_id}: effect RNG mismatch: "
+                f"headless={effect_check.get('raw_values')} rom={[scenario.effect_chance_rng]}"
+            )
+        if bool(effect_check.get("success")) != scenario.expect_success:
+            errors.append(
+                f"{scenario.scenario_id}: effect success mismatch: "
+                f"headless={effect_check.get('success')} expected={scenario.expect_success}"
+            )
+        if outcome["state"]["enemy"].get("status") != expected_status:
+            errors.append(
+                f"{scenario.scenario_id}: final headless target status mismatch: "
+                f"headless={outcome['state']['enemy'].get('status')} expected={expected_status}"
+            )
+
+        if rom.status_before != 0:
+            errors.append(f"{scenario.scenario_id}: ROM status_before={rom.status_before}, expected 0")
+        if rom.status_after != scenario.expected_status_byte:
+            errors.append(
+                f"{scenario.scenario_id}: ROM status byte mismatch: "
+                f"rom=0x{rom.status_after:02x} expected=0x{scenario.expected_status_byte:02x}"
+            )
+        if rom.effect_failed == scenario.expect_success:
+            errors.append(
+                f"{scenario.scenario_id}: ROM wEffectFailed mismatch: "
+                f"rom={rom.effect_failed} expected={not scenario.expect_success}"
+            )
+        if rom.effect_chance_consumed != 1:
+            errors.append(
+                f"{scenario.scenario_id}: ROM effect chance RNG consumption mismatch: "
+                f"consumed={rom.effect_chance_consumed}"
+            )
+        if not rom.effect_chance_returned:
+            errors.append(f"{scenario.scenario_id}: BattleCommand_EffectChance did not return")
+        if scenario.expect_success and rom.target_command_returned:
+            errors.append(
+                f"{scenario.scenario_id}: {scenario.target_command} unexpectedly returned; "
+                "fixture expects animation/text non-return after status write"
+            )
+        if not scenario.expect_success and not rom.target_command_returned:
+            errors.append(f"{scenario.scenario_id}: {scenario.target_command} did not return on effect-failed early exit")
+
+        rom_report[scenario.scenario_id] = {
+            "move": rom.move_name,
+            "status": rom.status_name,
+            "status_before": rom.status_before,
+            "status_after": rom.status_after,
+            "effect_failed": rom.effect_failed,
+            "effect_chance_rng": rom.effect_chance_rng,
+            "effect_chance_consumed": rom.effect_chance_consumed,
+            "effect_chance_returned": rom.effect_chance_returned,
+            "target_command_returned": rom.target_command_returned,
+            "target_command_pc": rom.target_command_pc,
+        }
+        headless_results[scenario.scenario_id] = {
+            "final_enemy_status": outcome["state"]["enemy"].get("status"),
+            "rng_consumed": outcome.get("rng_consumed", []),
+            "status_event": status_event,
+        }
+
+    return DifferentialResult(
+        scenario_id="damaging_status_component_differential",
+        ok=not errors,
+        errors=tuple(errors),
+        rom=rom_report,
+        headless=headless_results,
+    )
+
+
 def main() -> int:
-    result = compare_normal_hit_fixed_rng()
-    if result.ok:
+    normal_result = compare_normal_hit_fixed_rng()
+    status_result = compare_damaging_status_component()
+    if normal_result.ok:
         print(
             "normal_hit_fixed_rng_differential: PASS "
-            f"damage={result.rom['damage']} hp={result.rom['player_hp_before']}->{result.rom['player_hp_after']} "
-            f"pp={result.rom['enemy_pp_before']}->{result.rom['enemy_pp_after']}"
+            f"damage={normal_result.rom['damage']} "
+            f"hp={normal_result.rom['player_hp_before']}->{normal_result.rom['player_hp_after']} "
+            f"pp={normal_result.rom['enemy_pp_before']}->{normal_result.rom['enemy_pp_after']}"
         )
-        return 0
-    print("normal_hit_fixed_rng_differential: FAIL")
-    for error in result.errors:
-        print(f"  - {error}")
-    return 1
+    else:
+        print("normal_hit_fixed_rng_differential: FAIL")
+        for error in normal_result.errors:
+            print(f"  - {error}")
+    if status_result.ok:
+        print(
+            "damaging_status_component_differential: PASS "
+            + " ".join(status_result.rom.keys())
+        )
+    else:
+        print("damaging_status_component_differential: FAIL")
+        for error in status_result.errors:
+            print(f"  - {error}")
+    return 0 if normal_result.ok and status_result.ok else 1
 
 
 if __name__ == "__main__":

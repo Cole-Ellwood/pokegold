@@ -10,7 +10,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
-from tools.headless_battle.rom_differential import compare_normal_hit_fixed_rng
+from tools.headless_battle.rom_differential import (
+    compare_damaging_status_component,
+    compare_normal_hit_fixed_rng,
+)
 from tools.headless_battle.simulator import scenario_template, simulate_payload, run_self_test
 
 
@@ -35,6 +38,19 @@ def main() -> int:
         f"damage={differential.rom['damage']} "
         f"hp={differential.rom['player_hp_before']}->{differential.rom['player_hp_after']} "
         f"pp={differential.rom['enemy_pp_before']}->{differential.rom['enemy_pp_after']}"
+    )
+    status_differential = compare_damaging_status_component()
+    if not status_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {status_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in status_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        return 1
+    print(
+        "damaging_status_component_differential: PASS "
+        + " ".join(status_differential.rom.keys())
     )
     pp_payload = scenario_template()
     pp_report = simulate_payload(pp_payload)
