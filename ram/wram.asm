@@ -2469,6 +2469,10 @@ wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMa
 wBossAIShouldScoutPrereqCache:: db  ; $ff = uncomputed, 0 = prereqs failed (always nc),
                                     ; 1 = prereqs passed (roll random against threshold)
 wBossAIShouldScoutThresholdCache:: db  ; cached GetScoutRollThreshold result (valid iff prereq=1)
+wBossAIShouldScoutMatchupValue:: db ; wTypeMatchup value captured at end of ShouldScout prereqs;
+                                    ; restored to wTypeMatchup on cache hit so the side-effect
+                                    ; write that GetTypeThreatSeverityVsEnemyMon makes is preserved
+                                    ; for any downstream reader (valid iff prereq=1)
 IF DEF(BOSS_AI_TRACE)
 wBossAITraceTopMoves:: ds 3
 wBossAITraceTopScores:: ds 3

@@ -6261,13 +6261,18 @@ BossAI_ShouldScout:
 ; (IsActiveSpeciesScouted / GetPrimaryThreatType /
 ; GetTypeThreatSeverityVsEnemyMon / HasAnyKOMove / GetScoutRollThreshold)
 ; have turn-stable outputs. The Random roll varies per call and stays
-; inside this function so RNG consumption is preserved.
+; inside this function so RNG consumption is preserved. We also capture
+; wTypeMatchup at end of prereqs and restore it on every cache hit so any
+; downstream reader sees the same byte the original chain would have left.
 	ld a, [wBossAIShouldScoutPrereqCache]
 	inc a
 	jr z, .compute_prereqs
 	dec a
 	jr z, .no
-	; cached "prereqs passed" -- roll random against cached threshold
+	; cached "prereqs passed" -- restore the side-effect wTypeMatchup write
+	; the original prereq chain would have left, then roll random.
+	ld a, [wBossAIShouldScoutMatchupValue]
+	ld [wTypeMatchup], a
 	ld a, [wBossAIShouldScoutThresholdCache]
 	ld b, a
 	call Random
@@ -6287,9 +6292,16 @@ BossAI_ShouldScout:
 	jr c, .prereqs_failed
 	call BossAI_GetScoutRollThreshold
 	ld [wBossAIShouldScoutThresholdCache], a
-	ld b, a
+	; capture wTypeMatchup as the original chain left it, so cached calls
+	; can restore it. Random and GetScoutRollThreshold don't touch
+	; wTypeMatchup; capturing here matches the byte the unwrapped function
+	; would have left at end of prereqs.
+	ld a, [wTypeMatchup]
+	ld [wBossAIShouldScoutMatchupValue], a
 	ld a, 1
 	ld [wBossAIShouldScoutPrereqCache], a
+	ld a, [wBossAIShouldScoutThresholdCache]
+	ld b, a
 	call Random
 	cp b
 	jr nc, .no
