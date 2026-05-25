@@ -1219,6 +1219,124 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         enemy_damage = [event for event in events if event.get("actor") == "enemy" and event["type"] == "damage"][0]
         self.assertEqual(enemy_damage["target_hp_before"], drain["hp_after"])
 
+    def test_sleep_status_move_applies_duration_and_denies_target_action(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+        payload["state"]["enemy"]["moves"] = [{"name": "TACKLE"}]
+        payload["rng"] = {"mode": "fixed", "values": [0, 0]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        sleep = events[0]
+        denied = events[1]
+        self.assertEqual(sleep["type"], "status_apply")
+        self.assertEqual(sleep["status"], "sleep")
+        self.assertEqual(sleep["sleep_turns_after"], 3)
+        self.assertEqual(sleep["sleep_duration"]["denied_actions"], 2)
+        self.assertEqual(denied["type"], "fast_asleep")
+        self.assertEqual(denied["sleep_turns_after"], 2)
+        self.assertEqual(denied["pp_before"], denied["pp_after"])
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "sleep")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["sleep_turns"], 2)
+
+    def test_sleep_status_exhaustive_branches_three_durations(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SPORE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "exhaustive"}
+
+        report = simulate_payload(payload)
+
+        self.assertEqual(report["outcome_count"], 3)
+        durations = {
+            outcome["events"][0]["sleep_duration"]["sleep_turns"]
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(durations, {3, 4, 5})
+
+    def test_sleep_wake_turn_continues_selected_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["status"] = "sleep"
+        payload["state"]["player"]["sleep_turns"] = 1
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual(events[0]["type"], "woke_up")
+        self.assertEqual(events[0]["status_after"], "none")
+        self.assertEqual(events[1]["type"], "damage")
+        self.assertEqual(events[1]["actor"], "player")
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["status"], "none")
+
+    def test_sleep_denial_does_not_decrement_pp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["status"] = "sleep"
+        payload["state"]["player"]["sleep_turns"] = 3
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "fast_asleep")
+        self.assertEqual(event["sleep_turns_after"], 2)
+        self.assertEqual(event["pp_before"], 35)
+        self.assertEqual(event["pp_after"], 35)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["moves"][0]["pp"], 35)
+
+    def test_sleep_status_healing_berry_stays_out_of_scope(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+        payload["state"]["enemy"]["item"] = "MINT_BERRY"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
+        self.assertEqual(event["proof_status"], "out_of_scope")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_rest_sets_sleep_counter_and_full_hp(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 40
+        payload["state"]["player"]["status"] = "toxic"
+        payload["state"]["player"]["toxic_count"] = 2
+        payload["state"]["player"]["moves"] = [{"name": "REST"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        state = report["outcomes"][0]["state"]["player"]
+        self.assertEqual(event["type"], "rest")
+        self.assertEqual(event["hp_after"], 40)
+        self.assertEqual(event["status_before"], "toxic")
+        self.assertEqual(event["status_after"], "sleep")
+        self.assertEqual(event["sleep_turns_after"], 3)
+        self.assertEqual(event["toxic_count_after"], 0)
+        self.assertEqual(state["hp"], 40)
+        self.assertEqual(state["status"], "sleep")
+        self.assertEqual(state["sleep_turns"], 3)
+        self.assertEqual(state["toxic_count"], 0)
+
+    def test_rest_at_full_hp_reports_no_effect(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "REST"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "rest_no_effect")
+        self.assertEqual(event["reason"], "hp_full")
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["status"], "none")
+
     def test_self_heal_move_restores_half_max_hp(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["hp"] = 10
@@ -1291,7 +1409,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(events[1]["hp_after"], 25)
         self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 25)
 
-    def test_rest_stays_out_of_scope_until_sleep_is_modeled(self) -> None:
+    def test_rest_is_supported_once_sleep_is_modeled(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["hp"] = 10
         payload["state"]["player"]["max_hp"] = 40
@@ -1301,10 +1419,11 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         report = simulate_payload(payload)
 
         event = report["outcomes"][0]["events"][0]
-        self.assertEqual(event["type"], "unsupported_noop")
+        self.assertEqual(event["type"], "rest")
         self.assertEqual(event["move"], "REST")
-        self.assertEqual(event["proof_status"], "out_of_scope")
-        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 10)
+        self.assertEqual(event["proof_status"], "source_mirrored_selected_rest_move")
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 40)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["status"], "sleep")
 
     def test_poison_status_move_applies_poison_and_residual(self) -> None:
         payload = scenario_template()
@@ -1616,6 +1735,8 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_multi_stat_setup_moves", mirrored)
         self.assertIn("selected_damaging_status_secondaries", mirrored)
         self.assertIn("selected_drain_moves", mirrored)
+        self.assertIn("selected_sleep_status_moves", mirrored)
+        self.assertIn("selected_rest_move", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

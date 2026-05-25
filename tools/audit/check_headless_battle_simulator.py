@@ -316,6 +316,59 @@ def main() -> int:
         )
         return 1
     print("selected_drain_moves: PASS giga_drain_half_damage absorb_min_one miss_no_heal")
+    sleep_payload = scenario_template()
+    sleep_payload["state"]["player"]["moves"] = [{"name": "SLEEP_POWDER"}]
+    sleep_payload["state"]["enemy"]["moves"] = [{"name": "TACKLE"}]
+    sleep_payload["rng"] = {"mode": "fixed", "values": [0, 0]}
+    sleep_outcome = simulate_payload(sleep_payload)["outcomes"][0]
+    sleep_event = sleep_outcome["events"][0]
+    sleep_denied = sleep_outcome["events"][1]
+    if (
+        sleep_event.get("type") != "status_apply"
+        or sleep_event.get("status") != "sleep"
+        or sleep_event.get("sleep_turns_after") != 3
+        or sleep_denied.get("type") != "fast_asleep"
+        or sleep_denied.get("sleep_turns_after") != 2
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: sleep status mismatch: {sleep_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    wake_payload = scenario_template()
+    wake_payload["state"]["player"]["status"] = "sleep"
+    wake_payload["state"]["player"]["sleep_turns"] = 1
+    wake_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    wake_payload["rng"] = {"mode": "fixed", "values": [255, 255]}
+    wake_events = simulate_payload(wake_payload)["outcomes"][0]["events"]
+    if wake_events[0].get("type") != "woke_up" or wake_events[1].get("type") != "damage":
+        print(
+            f"Headless battle simulator audit FAILED: sleep wake/action mismatch: {wake_events}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_sleep_status_moves: PASS sleep_powder_duration fast_asleep wake_action")
+    rest_payload = scenario_template()
+    rest_payload["state"]["player"]["hp"] = 10
+    rest_payload["state"]["player"]["max_hp"] = 40
+    rest_payload["state"]["player"]["status"] = "toxic"
+    rest_payload["state"]["player"]["toxic_count"] = 2
+    rest_payload["state"]["player"]["moves"] = [{"name": "REST"}]
+    rest_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    rest_event = simulate_payload(rest_payload)["outcomes"][0]["events"][0]
+    if (
+        rest_event.get("type") != "rest"
+        or rest_event.get("hp_after") != 40
+        or rest_event.get("status_after") != "sleep"
+        or rest_event.get("sleep_turns_after") != 3
+        or rest_event.get("toxic_count_after") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Rest mismatch: {rest_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_rest_move: PASS rest_full_hp_sleep_counter")
     heal_payload = scenario_template()
     heal_payload["state"]["player"]["hp"] = 10
     heal_payload["state"]["player"]["max_hp"] = 40
@@ -333,19 +386,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    rest_payload = scenario_template()
-    rest_payload["state"]["player"]["hp"] = 10
-    rest_payload["state"]["player"]["max_hp"] = 40
-    rest_payload["state"]["player"]["moves"] = [{"name": "REST"}]
-    rest_payload["state"]["enemy"]["moves"][0]["bp"] = 0
-    rest_event = simulate_payload(rest_payload)["outcomes"][0]["events"][0]
-    if rest_event.get("type") != "unsupported_noop" or rest_event.get("move") != "REST":
-        print(
-            f"Headless battle simulator audit FAILED: Rest should remain out of scope: {rest_event}",
-            file=sys.stderr,
-        )
-        return 1
-    print("selected_self_heal_moves: PASS recover_half_hp rest_out_of_scope")
+    print("selected_self_heal_moves: PASS recover_half_hp")
     poison_payload = scenario_template()
     poison_payload["state"]["player"]["moves"] = [{"name": "POISONPOWDER"}]
     poison_payload["state"]["enemy"]["hp"] = 32

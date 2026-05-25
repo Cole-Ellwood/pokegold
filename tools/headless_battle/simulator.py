@@ -97,6 +97,7 @@ POISON_STATUS_EFFECTS = {
     "EFFECT_TOXIC": "toxic",
 }
 PARALYSIS_STATUS_EFFECTS = {"EFFECT_PARALYZE": "paralyze"}
+SLEEP_STATUS_EFFECTS = {"EFFECT_SLEEP": "sleep"}
 DAMAGING_SECONDARY_STATUS_EFFECTS = {
     "EFFECT_BURN_HIT": "burn",
     "EFFECT_POISON_HIT": "poison",
@@ -104,6 +105,12 @@ DAMAGING_SECONDARY_STATUS_EFFECTS = {
 }
 DRAIN_MOVE_EFFECT = "EFFECT_LEECH_HIT"
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
+REST_MOVE_NAME = "REST"
+SLEEP_BYPASS_MOVE_NAMES = frozenset({"SNORE", "SLEEP_TALK"})
+SLEEP_MIN_DENIED_ACTIONS = 2
+SLEEP_DENIED_ACTION_RANGE = 3
+REST_SLEEP_COUNTER = 3
+MAX_SLEEP_COUNTER = 7
 FULL_PARALYSIS_THRESHOLD = 25 * 255 // 100
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
@@ -127,6 +134,7 @@ ITEM_FULL_RESTORE = tables.resolve_item("FULL_RESTORE")
 ITEM_PSNCUREBERRY = tables.resolve_item("PSNCUREBERRY")
 ITEM_PRZCUREBERRY = tables.resolve_item("PRZCUREBERRY")
 ITEM_ICE_BERRY = tables.resolve_item("ICE_BERRY")
+ITEM_MINT_BERRY = tables.resolve_item("MINT_BERRY")
 ITEM_MIRACLEBERRY = tables.resolve_item("MIRACLEBERRY")
 LIFE_ORB_RECOIL_DENOMINATOR = 10
 ROCKY_HELMET_DENOMINATOR = 6
@@ -190,6 +198,7 @@ class PokemonState:
     focus_energy: bool = False
     status: str = "none"
     toxic_count: int = 0
+    sleep_turns: int = 0
     moves: tuple[MoveState, ...] = ()
 
 
@@ -644,6 +653,41 @@ def apply_move(
     move = selected_move(attacker, action)
     if move.pp <= 0:
         raise SimulationInputError(f"{side} move {move.name} has no PP; Struggle is out of scope")
+    sleep_result = sleep_action_result(attacker, move)
+    if sleep_result is not None:
+        updated = clone_branch(branch)
+        updated_state = replace_side(
+            state,
+            side,
+            replace_hp(
+                attacker,
+                attacker.hp,
+                status=sleep_result["status_after"],
+                sleep_turns=sleep_result["sleep_turns_after"],
+            ),
+        )
+        updated["state"] = updated_state
+        updated["events"].append(
+            {
+                "turn": state.turn,
+                "actor": side,
+                "move": move.name,
+                "type": sleep_result["event_type"],
+                "status_before": attacker.status,
+                "status_after": sleep_result["status_after"],
+                "sleep_turns_before": attacker.sleep_turns,
+                "sleep_turns_after": sleep_result["sleep_turns_after"],
+                "pp_before": move.pp,
+                "pp_after": move.pp,
+                "proof_status": "source_mirrored_selected_sleep_action_check",
+            }
+        )
+        if sleep_result["denies_action"]:
+            return [updated]
+        branch = updated
+        state = branch["state"]
+        attacker = get_side(state, side)
+        move = selected_move(attacker, action)
     paralysis_checks = full_paralysis_results(attacker, rng, stream=stream)
     if paralysis_checks is not None:
         branches = []
@@ -671,6 +715,32 @@ def apply_move(
     return apply_move_after_action_check(branch, side, action, rng, stream=stream)
 
 
+def sleep_action_result(pokemon: PokemonState, move: MoveState) -> dict[str, Any] | None:
+    if pokemon.status != "sleep":
+        return None
+    sleep_turns_after = max(0, pokemon.sleep_turns - 1)
+    if sleep_turns_after == 0:
+        return {
+            "event_type": "woke_up",
+            "status_after": "none",
+            "sleep_turns_after": 0,
+            "denies_action": False,
+        }
+    if move.name in SLEEP_BYPASS_MOVE_NAMES:
+        return {
+            "event_type": "sleep_bypass",
+            "status_after": "sleep",
+            "sleep_turns_after": sleep_turns_after,
+            "denies_action": False,
+        }
+    return {
+        "event_type": "fast_asleep",
+        "status_after": "sleep",
+        "sleep_turns_after": sleep_turns_after,
+        "denies_action": True,
+    }
+
+
 def apply_move_after_action_check(
     branch: dict[str, Any],
     side: str,
@@ -691,6 +761,18 @@ def apply_move_after_action_check(
     target_side = "enemy" if side == "player" else "player"
     target = get_side(state, target_side)
     if move.bp <= 0:
+        sleep_status_branches = apply_sleep_status_move(
+            branch,
+            side,
+            target_side,
+            move,
+            pp_before,
+            pp_after,
+            rng,
+            stream=stream,
+        )
+        if sleep_status_branches is not None:
+            return sleep_status_branches
         poison_status_branches = apply_poison_status_move(
             branch,
             side,
@@ -850,6 +932,175 @@ def apply_move_after_action_check(
                     )
                     branches.append(updated)
     return branches
+
+
+def apply_sleep_status_move(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]] | None:
+    status = SLEEP_STATUS_EFFECTS.get(move.effect)
+    if status is None:
+        return None
+    out = []
+    for hit_check in accuracy_results(branch["state"], move, rng, stream=stream):
+        if not hit_check["hit"]:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": branch["state"].turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "miss",
+                    "accuracy_check": hit_check,
+                    "pp_before": pp_before,
+                    "pp_after": pp_after,
+                    "proof_status": "source_mirrored_sleep_status_move_accuracy",
+                }
+            )
+            out.append(updated)
+            continue
+        blocked_reason = sleep_status_blocked_reason(get_side(branch["state"], target_side), move)
+        if blocked_reason is not None:
+            out.append(
+                apply_sleep_status_change(
+                    branch,
+                    side,
+                    target_side,
+                    move,
+                    status,
+                    hit_check,
+                    None,
+                    blocked_reason,
+                    pp_before,
+                    pp_after,
+                )
+            )
+            continue
+        for duration in sleep_duration_results(rng, stream=stream):
+            out.append(
+                apply_sleep_status_change(
+                    branch,
+                    side,
+                    target_side,
+                    move,
+                    status,
+                    hit_check,
+                    duration,
+                    None,
+                    pp_before,
+                    pp_after,
+                )
+            )
+    return out
+
+
+def sleep_duration_results(
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    if rng.mode == "exhaustive":
+        return [
+            {
+                "sleep_turns": SLEEP_MIN_DENIED_ACTIONS + 1 + index,
+                "denied_actions": SLEEP_MIN_DENIED_ACTIONS + index,
+                "raw_values": [],
+                "raw_low_bits": index,
+                "reason": "exhaustive_low_two_bits",
+            }
+            for index in range(SLEEP_DENIED_ACTION_RANGE)
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample sleep duration requires an RNG stream")
+    raw_values = []
+    while True:
+        raw = stream.next_byte(purpose="sleep duration")
+        raw_values.append(raw)
+        low_bits = raw & 0b11
+        if low_bits < SLEEP_DENIED_ACTION_RANGE:
+            return [
+                {
+                    "sleep_turns": SLEEP_MIN_DENIED_ACTIONS + 1 + low_bits,
+                    "denied_actions": SLEEP_MIN_DENIED_ACTIONS + low_bits,
+                    "raw_values": raw_values,
+                    "raw_low_bits": low_bits,
+                    "reason": "accepted_low_two_bits",
+                }
+            ]
+
+
+def apply_sleep_status_change(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    status: str,
+    hit_check: dict[str, Any],
+    duration: dict[str, Any] | None,
+    blocked_reason: str | None,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    updated = clone_branch(branch)
+    updated["rng_consumed"].extend(hit_check["raw_values"])
+    if blocked_reason is None:
+        if duration is None:
+            raise AssertionError("sleep duration is required when sleep applies")
+        updated["rng_consumed"].extend(duration["raw_values"])
+        updated_target = replace_hp(target, target.hp, status=status, sleep_turns=duration["sleep_turns"])
+        updated["state"] = replace_side(state, target_side, updated_target)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": target_side,
+            "move": move.name,
+            "type": "status_apply" if blocked_reason is None else "status_no_effect",
+            "status": status,
+            "status_before": target.status,
+            "status_after": status if blocked_reason is None else target.status,
+            "sleep_turns_before": target.sleep_turns,
+            "sleep_turns_after": duration["sleep_turns"] if duration is not None else target.sleep_turns,
+            "sleep_duration": duration if blocked_reason is None else None,
+            "blocked_reason": blocked_reason,
+            "accuracy_check": hit_check,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": (
+                "source_mirrored_selected_sleep_status_move"
+                if blocked_reason is None
+                else (
+                    "out_of_scope"
+                    if blocked_reason == "held_status_healing_item_out_of_scope"
+                    else "source_mirrored_selected_sleep_status_no_effect"
+                )
+            ),
+        }
+    )
+    return updated
+
+
+def sleep_status_blocked_reason(target: PokemonState, move: MoveState) -> str | None:
+    if type_effectiveness_factor(move.move_type_name, target.type_names) == 0:
+        return "type_immunity"
+    if target.status == "sleep":
+        return "already_asleep"
+    if target.status != "none":
+        return "already_statused"
+    if target.item in {ITEM_MINT_BERRY, ITEM_MIRACLEBERRY}:
+        return "held_status_healing_item_out_of_scope"
+    return None
 
 
 def apply_poison_status_move(
@@ -1206,7 +1457,11 @@ def apply_self_heal_move(
     pp_before: int,
     pp_after: int,
 ) -> dict[str, Any] | None:
-    if move.effect != "EFFECT_HEAL" or move.name not in SELF_HEALING_MOVE_NAMES:
+    if move.effect != "EFFECT_HEAL":
+        return None
+    if move.name == REST_MOVE_NAME:
+        return apply_rest_move(branch, side, move, pp_before, pp_after)
+    if move.name not in SELF_HEALING_MOVE_NAMES:
         return None
     state: BattleState = branch["state"]
     actor = get_side(state, side)
@@ -1231,6 +1486,70 @@ def apply_self_heal_move(
             "pp_before": pp_before,
             "pp_after": pp_after,
             "proof_status": "source_mirrored_selected_self_heal_move",
+        }
+    )
+    return updated
+
+
+def apply_rest_move(
+    branch: dict[str, Any],
+    side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    updated = clone_branch(branch)
+    if actor.hp >= actor.max_hp:
+        updated["events"].append(
+            {
+                "turn": state.turn,
+                "actor": side,
+                "target": side,
+                "move": move.name,
+                "type": "rest_no_effect",
+                "reason": "hp_full",
+                "hp_before": actor.hp,
+                "hp_after": actor.hp,
+                "status_before": actor.status,
+                "status_after": actor.status,
+                "sleep_turns_before": actor.sleep_turns,
+                "sleep_turns_after": actor.sleep_turns,
+                "pp_before": pp_before,
+                "pp_after": pp_after,
+                "proof_status": "source_mirrored_selected_rest_no_effect",
+            }
+        )
+        return updated
+    updated_actor = replace_hp(
+        actor,
+        actor.max_hp,
+        status="sleep",
+        toxic_count=0,
+        sleep_turns=REST_SLEEP_COUNTER,
+    )
+    updated["state"] = replace_side(state, side, updated_actor)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": side,
+            "move": move.name,
+            "type": "rest",
+            "hp_before": actor.hp,
+            "hp_after": actor.max_hp,
+            "heal": actor.max_hp - actor.hp,
+            "status_before": actor.status,
+            "status_after": "sleep",
+            "toxic_count_before": actor.toxic_count,
+            "toxic_count_after": 0,
+            "sleep_turns_before": actor.sleep_turns,
+            "sleep_turns_after": REST_SLEEP_COUNTER,
+            "denied_actions": REST_SLEEP_COUNTER - 1,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": "source_mirrored_selected_rest_move",
         }
     )
     return updated
@@ -1727,11 +2046,13 @@ def apply_item_action(branch: dict[str, Any], side: str, action: ActionState) ->
         hp_after = min(actor.max_hp, actor.hp + hp_restore)
         status_after = actor.status
         toxic_count_after = actor.toxic_count
+        sleep_turns_after = actor.sleep_turns
     elif item in FULL_HP_RESTORE_ITEMS:
         hp_restore = actor.max_hp
         hp_after = actor.max_hp
         status_after = "none" if item == ITEM_FULL_RESTORE else actor.status
         toxic_count_after = 0 if item == ITEM_FULL_RESTORE else actor.toxic_count
+        sleep_turns_after = 0 if item == ITEM_FULL_RESTORE else actor.sleep_turns
     else:
         supported = ", ".join(
             tables.display_item(supported_item)
@@ -1746,13 +2067,19 @@ def apply_item_action(branch: dict[str, Any], side: str, action: ActionState) ->
         raise SimulationInputError(
             f"{side} item {tables.display_item(item)} is out of scope; supported active HP items: {supported}"
         )
-    if hp_after == actor.hp and status_after == actor.status and toxic_count_after == actor.toxic_count:
+    if (
+        hp_after == actor.hp
+        and status_after == actor.status
+        and toxic_count_after == actor.toxic_count
+        and sleep_turns_after == actor.sleep_turns
+    ):
         raise SimulationInputError(f"{side} item {tables.display_item(item)} has no effect")
     updated_actor = replace_hp(
         actor,
         hp_after,
         status=status_after,
         toxic_count=toxic_count_after,
+        sleep_turns=sleep_turns_after,
     )
     updated = clone_branch(branch)
     updated["state"] = replace_side(state, side, updated_actor)
@@ -1771,6 +2098,8 @@ def apply_item_action(branch: dict[str, Any], side: str, action: ActionState) ->
             "status_after": status_after,
             "toxic_count_before": actor.toxic_count,
             "toxic_count_after": toxic_count_after,
+            "sleep_turns_before": actor.sleep_turns,
+            "sleep_turns_after": sleep_turns_after,
             "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
         }
     )
@@ -2458,6 +2787,8 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
     if not isinstance(moves_raw, list) or not moves_raw:
         raise SimulationInputError(f"state.{side}.moves must be a non-empty list")
     stat_stages = parse_stat_stages(raw.get("stat_stages", raw.get("stages", {})), f"state.{side}.stat_stages")
+    status = parse_status(raw.get("status", "none"), f"state.{side}.status")
+    sleep_turns = parse_sleep_turns(raw, status, f"state.{side}.sleep_turns")
     return PokemonState(
         side=side,
         name=name,
@@ -2485,8 +2816,9 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
         item=parse_item(raw.get("item", 0)),
         can_evolve=bool(raw.get("can_evolve", can_evolve)),
         focus_energy=bool(raw.get("focus_energy", False)),
-        status=parse_status(raw.get("status", "none"), f"state.{side}.status"),
+        status=status,
         toxic_count=parse_non_negative_int(raw.get("toxic_count", 0), f"state.{side}.toxic_count"),
+        sleep_turns=sleep_turns,
         moves=tuple(parse_move(move, f"state.{side}.moves[{index}]") for index, move in enumerate(moves_raw)),
     )
 
@@ -2832,7 +3164,12 @@ def replace_hp(
     *,
     status: str | None = None,
     toxic_count: int | None = None,
+    sleep_turns: int | None = None,
 ) -> PokemonState:
+    status_after = pokemon.status if status is None else status
+    sleep_turns_after = pokemon.sleep_turns if sleep_turns is None else sleep_turns
+    if status_after != "sleep":
+        sleep_turns_after = 0
     return PokemonState(
         side=pokemon.side,
         name=pokemon.name,
@@ -2854,8 +3191,9 @@ def replace_hp(
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
         focus_energy=pokemon.focus_energy,
-        status=pokemon.status if status is None else status,
+        status=status_after,
         toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
+        sleep_turns=sleep_turns_after,
         moves=pokemon.moves,
     )
 
@@ -2903,6 +3241,7 @@ def replace_move(pokemon: PokemonState, move_index: int, move: MoveState) -> Pok
         focus_energy=pokemon.focus_energy,
         status=pokemon.status,
         toxic_count=pokemon.toxic_count,
+        sleep_turns=pokemon.sleep_turns,
         moves=moves,
     )
 
@@ -2978,6 +3317,7 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
         "focus_energy": pokemon.focus_energy,
         "status": pokemon.status,
         "toxic_count": pokemon.toxic_count,
+        "sleep_turns": pokemon.sleep_turns,
         "stats": {
             "attack": pokemon.attack,
             "defense": pokemon.defense,
@@ -3095,10 +3435,22 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. Dream Eater, Leech Seed, Substitute interactions, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
             },
             {
+                "id": "selected_sleep_status_moves",
+                "source": "data/moves/effects.asm:DoSleep + engine/battle/effect_commands.asm:BattleCommand_SleepTarget and sleep action checks",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected EFFECT_SLEEP moves consume PP, run the basic accuracy check, branch fixed/sample/exhaustive duration RNG over stored sleep counters 3..5, deny sleeping actions while decrementing the counter, and let the waking action continue. Sleep Clause state, held sleep prevent/cure items, Snore/Sleep Talk execution, Nightmare, Dream Eater, Substitute/Safeguard, tree-mon initial sleep, and text/animation side effects remain out of scope.",
+            },
+            {
+                "id": "selected_rest_move",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_Heal Rest branch + constants/battle_constants.asm:REST_SLEEP_TURNS",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Rest consumes PP through the selected move path, fails at full HP, otherwise restores full HP, clears supported toxic counter state, sets sleep with stored counter REST_SLEEP_TURNS+1, and preserves later sleep action denial/wake handling. Stat recalculation side effects, Sleep Clause, held cures, text/animation side effects, and Snore/Sleep Talk execution remain out of scope.",
+            },
+            {
                 "id": "selected_self_heal_moves",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Recover, Softboiled, and Milk Drink consume PP, restore half max HP with max-HP cap, report full-HP no-effect cases, and preserve post-action residual. Rest branches through the same command but adds full HP restoration, sleep/status handling, and stat recalculation, so Rest remains out of scope until sleep/status move effects are modeled.",
+                "notes": "Recover, Softboiled, and Milk Drink consume PP, restore half max HP with max-HP cap, report full-HP no-effect cases, and preserve post-action residual.",
             },
             {
                 "id": "selected_poison_status_moves",
@@ -3160,7 +3512,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "sleep, freeze, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "freeze, sleep mechanics outside selected sleep moves/Rest/action denial, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -3432,13 +3784,27 @@ def parse_status(raw: Any, path: str) -> str:
         "paralyze": "paralyze",
         "paralyzed": "paralyze",
         "paralysis": "paralyze",
+        "slp": "sleep",
+        "sleep": "sleep",
+        "asleep": "sleep",
     }
     try:
         return aliases[normalized]
     except KeyError as exc:
         raise SimulationInputError(
-            f"{path} must be none, poison, toxic, burn, or paralyze; other status mechanics are out of scope"
+            f"{path} must be none, poison, toxic, burn, paralyze, or sleep; other status mechanics are out of scope"
         ) from exc
+
+
+def parse_sleep_turns(raw: dict[str, Any], status: str, path: str) -> int:
+    value = parse_non_negative_int(raw.get("sleep_turns", raw.get("sleep_counter", 0)), path)
+    if status == "sleep" and value == 0:
+        value = REST_SLEEP_COUNTER
+    if status != "sleep" and value != 0:
+        raise SimulationInputError(f"{path} requires status sleep")
+    if value > MAX_SLEEP_COUNTER:
+        raise SimulationInputError(f"{path} must be in range 0..{MAX_SLEEP_COUNTER}")
+    return value
 
 
 def parse_int(raw: Any, path: str) -> int:

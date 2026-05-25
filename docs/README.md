@@ -111,6 +111,7 @@ Wave/Stun Spore/Glare paralysis-status moves with paralyzed speed/full-paralysis
 checks plus Fighting/Electric type-passive paralysis modifiers, selected
 EFFECT_BURN_HIT/EFFECT_POISON_HIT/EFFECT_PARALYZE_HIT damaging status
 secondaries, selected Absorb/Mega Drain/Leech Life/Giga Drain drain moves,
+selected EFFECT_SLEEP moves plus Rest and sleep action denial/wake handling,
 repeated action maps with `max_turns`, `auto_replace_or` for simple KO/send-out
 loops, ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
 replacement after KO, explicit enemy `auto_replace` using the basic source type
@@ -135,12 +136,13 @@ Dragon Dance/Calm Mind/Quiver Dance, Baton
 Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed, passive
 stat/speed/accuracy bonuses, status application outside selected
 poison/paralysis-status moves and selected damaging status secondaries,
-sleep/freeze, burn application outside selected damaging burn secondaries,
-Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed
-Electric speed passives, Rest, weather/time healing, drain effects outside
-selected EFFECT_LEECH_HIT moves, Heal Bell, RNG-consuming mechanics outside the
-listed branch points, live Boss AI scoring, or scripts until the simulator
-report and audit say that surface exists.
+sleep mechanics outside selected sleep moves/Rest/action denial, freeze, burn
+application outside selected damaging burn secondaries, Safeguard/Substitute,
+held status prevent/cure item consumption, non-paralyzed Electric speed
+passives, weather/time healing, drain effects outside selected EFFECT_LEECH_HIT
+moves, Heal Bell, RNG-consuming mechanics outside the listed branch points, live
+Boss AI scoring, or scripts until the simulator report and audit say that
+surface exists.
 
 ## Truth Precedence
 
