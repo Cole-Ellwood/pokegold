@@ -30,6 +30,32 @@ def main() -> int:
         print(f"Headless battle simulator audit FAILED: selector replay mismatch: {selector}", file=sys.stderr)
         return 1
     print("boss_ai_selector_reuse: PASS best_slot=0")
+    selector_move_payload = scenario_template()
+    selector_move_payload["state"]["player"]["moves"][0]["bp"] = 0
+    selector_move_payload["state"]["enemy"]["moves"] = [
+        {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+        {"name": "EMBER", "type": "FIRE", "bp": 40},
+    ]
+    selector_move_payload["actions"]["enemy"] = {
+        "type": "boss_ai_selector_move",
+        "scenario_id": "headless_audit_selector_execute",
+        "tier": "late",
+        "move_ids": [33, 52, 0, 0],
+        "scores": [20, 21, 80, 80],
+    }
+    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+    selector_move_report = simulate_payload(selector_move_payload)
+    selector_move_events = selector_move_report["outcomes"][0]["events"]
+    if (
+        selector_move_events[0].get("selected_slot_index") != 1
+        or selector_move_events[-1].get("move") != "EMBER"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: selector execution mismatch: {selector_move_events}",
+            file=sys.stderr,
+        )
+        return 1
+    print("boss_ai_selector_execution: PASS raw=200 selected=EMBER")
     exhaustive_payload = scenario_template()
     exhaustive_payload["rng"] = {"mode": "exhaustive"}
     exhaustive_payload["state"]["player"]["moves"][0]["accuracy"] = 255

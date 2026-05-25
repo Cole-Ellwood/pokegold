@@ -30,6 +30,7 @@ HIGH_CRIT_MOVES = {
     for line in (tables.ROOT / "data/moves/critical_hit_moves.asm").read_text(encoding="utf-8").splitlines()
     if line.strip().startswith("db ") and "-1" not in line
 }
+_MOVE_IDS_BY_NAME: dict[str, int] | None = None
 
 
 class SimulationInputError(Exception):
@@ -212,18 +213,23 @@ def simulate_turn(
     *,
     stream: RuntimeRng | None,
 ) -> list[dict[str, Any]]:
-    state: BattleState = branch["state"]
     branches: list[dict[str, Any]] = []
-    for order_result in turn_order_results(state, actions, rng, stream=stream):
-        working = clone_branch(branch)
-        order = order_result["order"]
-        working["turn_order"] = order
-        row = {"turn": state.turn, "order": order}
-        if order_result["reason"] == "speed_tie":
-            row["turn_order_check"] = order_result
-        working["turn_orders"].append(row)
-        working["rng_consumed"].extend(order_result["raw_values"])
-        branches.append(working)
+    for resolved_branch in resolve_pre_turn_actions(branch, actions, rng, stream=stream):
+        state: BattleState = resolved_branch["state"]
+        resolved_actions: dict[str, ActionState] = resolved_branch["actions"]
+        for order_result in turn_order_results(state, resolved_actions, rng, stream=stream):
+            working = clone_branch(resolved_branch)
+            working["actions"] = resolved_actions
+            order = order_result["order"]
+            working["turn_order"] = order
+            row = {"turn": state.turn, "order": order}
+            if order_result["reason"] == "speed_tie":
+                row["turn_order_check"] = order_result
+            working["turn_orders"].append(row)
+            working["rng_consumed"].extend(order_result["raw_values"])
+            branches.append(working)
+    if not branches:
+        return []
     max_order_len = max(len(item["turn_order"]) for item in branches)
     for order_index in range(max_order_len):
         next_branches: list[dict[str, Any]] = []
@@ -236,7 +242,8 @@ def simulate_turn(
             if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
                 next_branches.append(branch)
                 continue
-            action = actions[side]
+            branch_actions: dict[str, ActionState] = branch["actions"]
+            action = branch_actions[side]
             if action.kind == "boss_ai_selector":
                 updated = clone_branch(branch)
                 updated["events"].append(run_boss_ai_selector(branch_state, side, action))
@@ -272,11 +279,48 @@ def simulate_turn(
     completed = []
     for branch in branches:
         updated = clone_branch(branch)
+        updated.pop("actions", None)
         updated["turns_simulated"] += 1
         if updated["state"].player.hp > 0 and updated["state"].enemy.hp > 0:
             updated["state"] = advance_turn(updated["state"])
         completed.append(updated)
     return completed
+
+
+def resolve_pre_turn_actions(
+    branch: dict[str, Any],
+    actions: dict[str, ActionState],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    branches: list[tuple[dict[str, Any], dict[str, ActionState]]] = [
+        (clone_branch(branch), dict(actions))
+    ]
+    for side in ("player", "enemy"):
+        next_branches: list[tuple[dict[str, Any], dict[str, ActionState]]] = []
+        for working, action_map in branches:
+            action = action_map[side]
+            if action.kind != "boss_ai_selector_move":
+                next_branches.append((working, action_map))
+                continue
+            for selection in boss_ai_selector_move_results(working["state"], side, action, rng, stream=stream):
+                updated = clone_branch(working)
+                updated["events"].append(selection["event"])
+                updated["rng_consumed"].extend(selection["raw_values"])
+                updated_actions = dict(action_map)
+                updated_actions[side] = ActionState(kind="move", move_index=selection["move_index"])
+                next_branches.append((updated, updated_actions))
+        branches = next_branches
+        if len(branches) > rng.max_outcomes:
+            raise SimulationInputError(
+                f"rng.max_outcomes exceeded while resolving pre-turn actions ({len(branches)} > {rng.max_outcomes})"
+            )
+    resolved = []
+    for working, action_map in branches:
+        working["actions"] = action_map
+        resolved.append(working)
+    return resolved
 
 
 def turn_order_results(
@@ -772,17 +816,7 @@ def predict_pre_variation_damage(
 
 
 def run_boss_ai_selector(state: BattleState, side: str, action: ActionState) -> dict[str, Any]:
-    assert action.selector is not None
-    selector = action.selector
-    try:
-        result = rom_scenarios.select_from_score_bytes(
-            scenario_id=str(selector.get("scenario_id", "headless_boss_ai_selector")),
-            tier=selector.get("tier", "late"),
-            move_ids=[int(value) for value in selector["move_ids"]],
-            scores=[int(value) for value in selector["scores"]],
-        )
-    except (KeyError, PreferenceDataError, ValueError) as exc:
-        raise SimulationInputError(f"invalid boss_ai_selector action: {exc}") from exc
+    result = boss_ai_selector_result(state, side, action)
     return {
         "turn": state.turn,
         "actor": side,
@@ -790,6 +824,152 @@ def run_boss_ai_selector(state: BattleState, side: str, action: ActionState) -> 
         "selector": result,
         "proof_status": "source_mirrored_existing_selector_oracle",
     }
+
+
+def boss_ai_selector_move_results(
+    state: BattleState,
+    side: str,
+    action: ActionState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    result = boss_ai_selector_result(state, side, action)
+    if not result.get("ready"):
+        raise SimulationInputError(f"boss_ai_selector_move has no selectable move: {result.get('reason')}")
+    best_index = int(result["best_slot_index"])
+    second_index = result.get("second_slot_index")
+    threshold = result.get("best_roll_threshold")
+    if second_index is None or threshold is None:
+        return [
+            selector_choice_result(
+                state,
+                side,
+                result,
+                best_index,
+                {
+                    "threshold": None,
+                    "raw_values": [],
+                    "raw_range": None,
+                    "reason": "only_selectable_move",
+                },
+            )
+        ]
+    threshold = int(threshold)
+    if rng.mode == "exhaustive":
+        choices = []
+        if threshold > 0:
+            choices.append(
+                selector_choice_result(
+                    state,
+                    side,
+                    result,
+                    best_index,
+                    {
+                        "threshold": threshold,
+                        "raw_values": [],
+                        "raw_range": [0, threshold - 1],
+                        "reason": "raw_below_threshold_choose_best",
+                    },
+                )
+            )
+        if threshold < 256:
+            choices.append(
+                selector_choice_result(
+                    state,
+                    side,
+                    result,
+                    int(second_index),
+                    {
+                        "threshold": threshold,
+                        "raw_values": [],
+                        "raw_range": [threshold, 255],
+                        "reason": "raw_at_or_above_threshold_choose_second",
+                    },
+                )
+            )
+        return choices
+    if stream is None:
+        raise AssertionError("fixed/sample Boss AI selector requires an RNG stream")
+    raw = stream.next_byte(purpose="boss ai selector")
+    selected_index = best_index if raw < threshold else int(second_index)
+    reason = "raw_below_threshold_choose_best" if raw < threshold else "raw_at_or_above_threshold_choose_second"
+    return [
+        selector_choice_result(
+            state,
+            side,
+            result,
+            selected_index,
+            {
+                "threshold": threshold,
+                "raw_values": [raw],
+                "raw_range": None,
+                "reason": reason,
+            },
+        )
+    ]
+
+
+def selector_choice_result(
+    state: BattleState,
+    side: str,
+    selector_result: dict[str, Any],
+    selected_slot_index: int,
+    selector_check: dict[str, Any],
+) -> dict[str, Any]:
+    actor = get_side(state, side)
+    if selected_slot_index < 0 or selected_slot_index >= len(actor.moves):
+        raise SimulationInputError(
+            f"boss_ai_selector_move selected slot {selected_slot_index} but {side} has {len(actor.moves)} moves"
+        )
+    selected_move = actor.moves[selected_slot_index]
+    selected_slot = selector_slot(selector_result, selected_slot_index)
+    selected_move_id = int(selected_slot["move_id"])
+    if selected_move.move_id is not None and selected_move.move_id != selected_move_id:
+        raise SimulationInputError(
+            "boss_ai_selector_move selected move id "
+            f"{selected_move_id} for slot {selected_slot_index}, but state.{side}.moves[{selected_slot_index}] "
+            f"is {selected_move.name} ({selected_move.move_id})"
+        )
+    return {
+        "move_index": selected_slot_index,
+        "raw_values": selector_check["raw_values"],
+        "event": {
+            "turn": state.turn,
+            "actor": side,
+            "type": "boss_ai_select_move",
+            "selected_slot_index": selected_slot_index,
+            "selected_move_id": selected_move_id,
+            "selected_move": selected_move.name,
+            "selector": selector_result,
+            "selector_check": selector_check,
+            "proof_status": "source_mirrored_existing_selector_oracle_executed_move",
+        },
+    }
+
+
+def selector_slot(selector_result: dict[str, Any], slot_index: int) -> dict[str, Any]:
+    for slot in selector_result.get("slots", []):
+        if int(slot.get("slot_index", -1)) == slot_index:
+            return slot
+    raise SimulationInputError(f"boss_ai_selector_move selected unknown slot {slot_index}")
+
+
+def boss_ai_selector_result(state: BattleState, side: str, action: ActionState) -> dict[str, Any]:
+    assert action.selector is not None
+    selector = action.selector
+    actor = get_side(state, side)
+    move_names = {move.move_id: move.name for move in actor.moves if move.move_id is not None}
+    try:
+        return rom_scenarios.select_from_score_bytes(
+            scenario_id=str(selector.get("scenario_id", "headless_boss_ai_selector")),
+            tier=selector.get("tier", "late"),
+            move_ids=[int(value) for value in selector["move_ids"]],
+            scores=[int(value) for value in selector["scores"]],
+            move_names=move_names,
+        )
+    except (KeyError, PreferenceDataError, ValueError) as exc:
+        raise SimulationInputError(f"invalid {action.kind} action: {exc}") from exc
 
 
 def parse_state(raw: Any) -> BattleState:
@@ -905,6 +1085,7 @@ def parse_move(raw: Any, path: str) -> MoveState:
         row = tables.load_moves()[tables.resolve_move(name)]
     except tables.InputError:
         row = None
+    default_move_id = move_id_for_name(row.name) if row is not None else None
     type_name = raw.get("type", row.type_name if row is not None else "NORMAL")
     move_type_name, move_type = parse_type(type_name, f"{path}.type")
     return MoveState(
@@ -915,8 +1096,15 @@ def parse_move(raw: Any, path: str) -> MoveState:
         bp=parse_non_negative_int(raw.get("bp", row.bp if row is not None else 40), f"{path}.bp"),
         priority=parse_int(raw.get("priority", 1), f"{path}.priority"),
         accuracy=parse_accuracy(raw, row, f"{path}.accuracy"),
-        move_id=parse_optional_byte(raw.get("move_id"), f"{path}.move_id"),
+        move_id=parse_optional_byte(raw.get("move_id", default_move_id), f"{path}.move_id"),
     )
+
+
+def move_id_for_name(name: str) -> int | None:
+    global _MOVE_IDS_BY_NAME
+    if _MOVE_IDS_BY_NAME is None:
+        _MOVE_IDS_BY_NAME = tables.parse_const_values(tables.ROOT / "constants/move_constants.asm")
+    return _MOVE_IDS_BY_NAME.get(name)
 
 
 def parse_accuracy(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -> int:
@@ -977,6 +1165,10 @@ def parse_action(raw: Any, path: str) -> ActionState:
             raise SimulationInputError(f"{path}.bench_index is required for {kind} actions")
         return ActionState(kind=kind, switch_index=parse_non_negative_int(switch_index, f"{path}.bench_index"))
     if kind == "boss_ai_selector":
+        if raw.get("execute") is True:
+            return ActionState(kind="boss_ai_selector_move", selector=raw)
+        return ActionState(kind=kind, selector=raw)
+    if kind == "boss_ai_selector_move":
         return ActionState(kind=kind, selector=raw)
     return ActionState(kind=kind)
 
@@ -1098,7 +1290,7 @@ def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None
 
 
 def clone_branch(branch: dict[str, Any]) -> dict[str, Any]:
-    return {
+    cloned = {
         "state": branch["state"],
         "turn_order": list(branch["turn_order"]),
         "turn_orders": copy.deepcopy(branch["turn_orders"]),
@@ -1107,6 +1299,9 @@ def clone_branch(branch: dict[str, Any]) -> dict[str, Any]:
         "rng_consumed": list(branch["rng_consumed"]),
         "turns_simulated": branch["turns_simulated"],
     }
+    if "actions" in branch:
+        cloned["actions"] = branch["actions"]
+    return cloned
 
 
 def branch_to_outcome(branch: dict[str, Any], index: int) -> dict[str, Any]:
@@ -1229,13 +1424,19 @@ def coverage_report() -> dict[str, Any]:
                 "id": "boss_ai_selector_from_post_score_bytes",
                 "source": "tools.boss_ai_debugger.rom_scenarios.select_from_score_bytes",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Boss AI selector actions consume already-known post-score bytes. Live score generation is out of scope.",
+                "notes": "Report-only Boss AI selector actions consume already-known post-score bytes. Live score generation is out of scope.",
+            },
+            {
+                "id": "boss_ai_selector_move_execution",
+                "source": "engine/battle/ai/boss_policy_move.asm:BossAI_SelectMove + tools.boss_ai_debugger.rom_scenarios.select_from_score_bytes",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Executable Boss AI selector actions branch fixed/sample/exhaustive RNG over already-known final score bytes, validate the selected slot/move id when available, and then run the chosen move through the existing selected-turn path. Score generation and switch confidence remain out of scope.",
             },
         ],
         "out_of_scope": [
-            "automatic full battle flow, automatic action choice, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
+            "automatic full battle flow, automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
-            "RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
@@ -1287,6 +1488,11 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['move']} -> "
                     f"{event['target']} {event['damage']} damage{suffix}"
+                )
+            elif event["type"] == "boss_ai_select_move" and "selected_move" in event:
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} boss_ai_select_move -> "
+                    f"{event['selected_move']} slot={event['selected_slot_index']}"
                 )
             else:
                 lines.append(f"  turn {event.get('turn')} {event.get('actor', '')} {event['type']}")
@@ -1340,6 +1546,23 @@ def run_self_test() -> None:
     selector = simulate_payload(selector_payload)["outcomes"][0]["events"][1]
     if selector["type"] != "boss_ai_select_move" or not selector["selector"]["ready"]:
         raise AssertionError(selector)
+    selector_move_payload = scenario_template()
+    selector_move_payload["state"]["player"]["moves"][0]["bp"] = 0
+    selector_move_payload["state"]["enemy"]["moves"] = [
+        {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+        {"name": "EMBER", "type": "FIRE", "bp": 40},
+    ]
+    selector_move_payload["actions"]["enemy"] = {
+        "type": "boss_ai_selector_move",
+        "scenario_id": "self_test_selector_move",
+        "tier": "late",
+        "move_ids": [33, 52, 0, 0],
+        "scores": [20, 21, 80, 80],
+    }
+    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+    selector_move = simulate_payload(selector_move_payload)["outcomes"][0]["events"]
+    if selector_move[0]["selected_slot_index"] != 1 or selector_move[-1].get("move") != "EMBER":
+        raise AssertionError(selector_move)
 
 
 def load_payload(path: Path) -> dict[str, Any]:

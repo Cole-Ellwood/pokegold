@@ -339,6 +339,63 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertTrue(event["selector"]["ready"])
         self.assertEqual(event["selector"]["best_slot_index"], 0)
 
+    def test_boss_ai_selector_move_executes_selected_second_slot(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"] = [
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+            {"name": "EMBER", "type": "FIRE", "bp": 40},
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_selector_move",
+            "scenario_id": "unit_selector_execute",
+            "tier": "late",
+            "move_ids": [33, 52, 0, 0],
+            "scores": [20, 21, 80, 80],
+        }
+        payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual(events[0]["type"], "boss_ai_select_move")
+        self.assertEqual(events[0]["selected_slot_index"], 1)
+        self.assertEqual(events[0]["selected_move"], "EMBER")
+        self.assertEqual(events[0]["selector_check"]["raw_values"], [200])
+        self.assertEqual(events[2]["type"], "damage")
+        self.assertEqual(events[2]["actor"], "enemy")
+        self.assertEqual(events[2]["move"], "EMBER")
+
+    def test_exhaustive_boss_ai_selector_move_branches_best_and_second(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"] = [
+            {"name": "TACKLE", "type": "NORMAL", "bp": 0},
+            {"name": "EMBER", "type": "FIRE", "bp": 0},
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_selector_move",
+            "scenario_id": "unit_selector_exhaustive",
+            "tier": "late",
+            "move_ids": [33, 52, 0, 0],
+            "scores": [20, 21, 80, 80],
+        }
+        payload["rng"] = {"mode": "exhaustive"}
+
+        report = simulate_payload(payload)
+
+        self.assertEqual(report["outcome_count"], 2)
+        selected_slots = {
+            outcome["events"][0]["selected_slot_index"]
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(selected_slots, {0, 1})
+        raw_ranges = {
+            tuple(outcome["events"][0]["selector_check"]["raw_range"])
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(raw_ranges, {(0, 185), (186, 255)})
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -352,7 +409,11 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
-        self.assertIn("RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))
+        self.assertIn("boss_ai_selector_move_execution", mirrored)
+        self.assertIn(
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/critical hits/accuracy/damage variation",
+            "\n".join(report["coverage"]["out_of_scope"]),
+        )
 
     def test_cli_json_out(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
