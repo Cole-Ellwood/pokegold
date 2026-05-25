@@ -92,7 +92,9 @@ POISON_STATUS_EFFECTS = {
     "EFFECT_POISON": "poison",
     "EFFECT_TOXIC": "toxic",
 }
+PARALYSIS_STATUS_EFFECTS = {"EFFECT_PARALYZE": "paralyze"}
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
+FULL_PARALYSIS_THRESHOLD = 25 * 255 // 100
 TYPE_FACTOR_CONSTANTS = {
     "NO_EFFECT": 0,
     "NOT_VERY_EFFECTIVE": 5,
@@ -113,6 +115,7 @@ ITEM_HYPER_POTION = tables.resolve_item("HYPER_POTION")
 ITEM_MAX_POTION = tables.resolve_item("MAX_POTION")
 ITEM_FULL_RESTORE = tables.resolve_item("FULL_RESTORE")
 ITEM_PSNCUREBERRY = tables.resolve_item("PSNCUREBERRY")
+ITEM_PRZCUREBERRY = tables.resolve_item("PRZCUREBERRY")
 LIFE_ORB_RECOIL_DENOMINATOR = 10
 ROCKY_HELMET_DENOMINATOR = 6
 SHELL_BELL_DENOMINATOR = 8
@@ -539,7 +542,50 @@ def speed_tie_results(rng: RngConfig, *, stream: RuntimeRng | None) -> list[dict
 
 
 def effective_speed(pokemon: PokemonState) -> int:
-    return apply_stat_stage(pokemon.speed, pokemon.speed_stage)
+    speed = apply_stat_stage(pokemon.speed, pokemon.speed_stage)
+    if pokemon.status == "paralyze":
+        speed = apply_stat_fraction(speed, 1, 4)
+    return speed
+
+
+def full_paralysis_results(
+    pokemon: PokemonState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]] | None:
+    if pokemon.status != "paralyze":
+        return None
+    threshold = FULL_PARALYSIS_THRESHOLD
+    if rng.mode == "exhaustive":
+        return [
+            {
+                "fully_paralyzed": True,
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": [0, threshold - 1],
+                "reason": "raw_below_threshold",
+            },
+            {
+                "fully_paralyzed": False,
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": [threshold, 255],
+                "reason": "raw_at_or_above_threshold",
+            },
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample full paralysis requires an RNG stream")
+    raw = stream.next_byte(purpose="full paralysis")
+    return [
+        {
+            "fully_paralyzed": raw < threshold,
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+            "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
+        }
+    ]
 
 
 def apply_move(
@@ -555,6 +601,44 @@ def apply_move(
     move = selected_move(attacker, action)
     if move.pp <= 0:
         raise SimulationInputError(f"{side} move {move.name} has no PP; Struggle is out of scope")
+    paralysis_checks = full_paralysis_results(attacker, rng, stream=stream)
+    if paralysis_checks is not None:
+        branches = []
+        for paralysis_check in paralysis_checks:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(paralysis_check["raw_values"])
+            if paralysis_check["fully_paralyzed"]:
+                updated["events"].append(
+                    {
+                        "turn": state.turn,
+                        "actor": side,
+                        "move": move.name,
+                        "type": "fully_paralyzed",
+                        "paralysis_check": paralysis_check,
+                        "pp_before": move.pp,
+                        "pp_after": move.pp,
+                        "proof_status": "source_mirrored_baseline_full_paralysis",
+                    }
+                )
+                branches.append(updated)
+                continue
+            branches.extend(apply_move_after_action_check(updated, side, action, rng, stream=stream))
+        return branches
+
+    return apply_move_after_action_check(branch, side, action, rng, stream=stream)
+
+
+def apply_move_after_action_check(
+    branch: dict[str, Any],
+    side: str,
+    action: ActionState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    state: BattleState = branch["state"]
+    attacker = get_side(state, side)
+    move = selected_move(attacker, action)
     pp_before = move.pp
     branch = consume_move_pp(branch, side, action.move_index)
     state = branch["state"]
@@ -576,6 +660,18 @@ def apply_move(
         )
         if poison_status_branches is not None:
             return poison_status_branches
+        paralysis_status_branches = apply_paralysis_status_move(
+            branch,
+            side,
+            target_side,
+            move,
+            pp_before,
+            pp_after,
+            rng,
+            stream=stream,
+        )
+        if paralysis_status_branches is not None:
+            return paralysis_status_branches
         self_heal_branch = apply_self_heal_move(branch, side, move, pp_before, pp_after)
         if self_heal_branch is not None:
             return [self_heal_branch]
@@ -792,6 +888,113 @@ def poison_status_blocked_reason(target: PokemonState, move: MoveState) -> str |
     if target.status != "none":
         return "already_statused"
     if target.item == ITEM_PSNCUREBERRY:
+        return "held_status_healing_item_out_of_scope"
+    return None
+
+
+def apply_paralysis_status_move(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    pp_before: int,
+    pp_after: int,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]] | None:
+    status = PARALYSIS_STATUS_EFFECTS.get(move.effect)
+    if status is None:
+        return None
+    out = []
+    for hit_check in accuracy_results(branch["state"], move, rng, stream=stream):
+        if not hit_check["hit"]:
+            updated = clone_branch(branch)
+            updated["rng_consumed"].extend(hit_check["raw_values"])
+            updated["events"].append(
+                {
+                    "turn": branch["state"].turn,
+                    "actor": side,
+                    "target": target_side,
+                    "move": move.name,
+                    "type": "miss",
+                    "accuracy_check": hit_check,
+                    "pp_before": pp_before,
+                    "pp_after": pp_after,
+                    "proof_status": "source_mirrored_paralysis_status_move_accuracy",
+                }
+            )
+            out.append(updated)
+            continue
+        out.append(
+            apply_paralysis_status_change(
+                branch,
+                side,
+                target_side,
+                move,
+                status,
+                hit_check,
+                pp_before,
+                pp_after,
+            )
+        )
+    return out
+
+
+def apply_paralysis_status_change(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    status: str,
+    hit_check: dict[str, Any],
+    pp_before: int,
+    pp_after: int,
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    blocked_reason = paralysis_status_blocked_reason(target, move)
+    updated = clone_branch(branch)
+    updated["rng_consumed"].extend(hit_check["raw_values"])
+    if blocked_reason is None:
+        updated_target = replace_hp(target, target.hp, status=status)
+        updated["state"] = replace_side(state, target_side, updated_target)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": target_side,
+            "move": move.name,
+            "type": "status_apply" if blocked_reason is None else "status_no_effect",
+            "status": status,
+            "status_before": target.status,
+            "status_after": status if blocked_reason is None else target.status,
+            "blocked_reason": blocked_reason,
+            "accuracy_check": hit_check,
+            "pp_before": pp_before,
+            "pp_after": pp_after,
+            "proof_status": (
+                "source_mirrored_selected_paralysis_status_move"
+                if blocked_reason is None
+                else (
+                    "out_of_scope"
+                    if blocked_reason == "held_status_healing_item_out_of_scope"
+                    else "source_mirrored_selected_paralysis_status_no_effect"
+                )
+            ),
+        }
+    )
+    return updated
+
+
+def paralysis_status_blocked_reason(target: PokemonState, move: MoveState) -> str | None:
+    if type_effectiveness_factor(move.move_type_name, target.type_names) == 0:
+        return "type_immunity"
+    if target.status == "paralyze":
+        return "already_paralyzed"
+    if target.status != "none":
+        return "already_statused"
+    if target.item == ITEM_PRZCUREBERRY:
         return "held_status_healing_item_out_of_scope"
     return None
 
@@ -1666,6 +1869,10 @@ def stat_stages_to_json(pokemon: PokemonState) -> dict[str, int]:
 
 def apply_stat_stage(value: int, stage: int) -> int:
     numerator, denominator = STAT_STAGE_MULTIPLIERS[stage]
+    return max(1, min(MAX_MODIFIED_BATTLE_STAT, value * numerator // denominator))
+
+
+def apply_stat_fraction(value: int, numerator: int, denominator: int) -> int:
     return max(1, min(MAX_MODIFIED_BATTLE_STAT, value * numerator // denominator))
 
 
@@ -2553,7 +2760,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "basic_status_residual",
                 "source": "engine/battle/core.asm:ResidualDamage",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application, sleep, freeze, paralysis, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures outside the explicit active Full Restore subset remain out of scope.",
+                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application outside selected poison/paralysis moves, sleep, freeze, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures outside the explicit active Full Restore subset remain out of scope.",
             },
             {
                 "id": "basic_pp_decrement",
@@ -2577,7 +2784,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Priority, unequal modified-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Speed stages use data/battle/stat_multipliers.asm. Quick Claw, Choice Scarf, link-battle inversion, status speed, and passive speed modifiers are not in this slice.",
+                "notes": "Priority, unequal modified-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Speed stages use data/battle/stat_multipliers.asm. Baseline paralysis speed uses the source 1/4 speed rule. Quick Claw, Choice Scarf, link-battle inversion, and type-passive speed modifiers are not in this slice.",
             },
             {
                 "id": "explicit_stat_stage_state",
@@ -2602,6 +2809,12 @@ def coverage_report() -> dict[str, Any]:
                 "source": "data/moves/effects.asm:Toxic/DoPoison + engine/battle/effect_commands.asm:BattleCommand_Poison",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "PoisonPowder, Poison Gas, and Toxic consume PP, run the basic accuracy check, apply poison/toxic to healthy non-Poison non-immune targets, initialize toxic_count at 0, and report no-effect cases for Poison-type targets, type immunity, and already-statused targets. Safeguard, Substitute, held status-healing item consumption, damaging poison secondary effects, and text/animation side effects remain out of scope.",
+            },
+            {
+                "id": "selected_paralysis_status_moves",
+                "source": "data/moves/effects.asm:DoParalyze + engine/battle/effect_commands.asm:BattleCommand_Paralyze + type_passive_damage_mods.asm:TypePassive_GetUserParalysisFailThreshold_Far",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed by the baseline 1/4 rule, and branch full-paralysis action denial before PP decrement. Type immunity and already-statused targets report no effect. Safeguard, Substitute, held prevent/cure items, Fighting/Electric type-passive paralysis modifiers, and damaging paralysis secondary effects remain out of scope.",
             },
             {
                 "id": "multi_turn_selected_action_progression",
@@ -2651,7 +2864,7 @@ def coverage_report() -> dict[str, Any]:
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chain moves, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "sleep, freeze, paralysis, burn application, Safeguard/Substitute, held status-healing item consumption, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "sleep, freeze, burn application, Safeguard/Substitute, held status prevent/cure item consumption, Fighting/Electric type-passive paralysis modifiers, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -2746,6 +2959,11 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['actor']} {event['status']} residual -> "
                     f"{event['damage']} damage"
+                )
+            elif event["type"] == "fully_paralyzed":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} fully paralyzed -> "
+                    f"{event['move']} skipped"
                 )
             elif event["type"] == "stat_stage_change":
                 changes = ", ".join(
@@ -2913,12 +3131,17 @@ def parse_status(raw: Any, path: str) -> str:
         "brn": "burn",
         "burn": "burn",
         "burned": "burn",
+        "par": "paralyze",
+        "prz": "paralyze",
+        "paralyze": "paralyze",
+        "paralyzed": "paralyze",
+        "paralysis": "paralyze",
     }
     try:
         return aliases[normalized]
     except KeyError as exc:
         raise SimulationInputError(
-            f"{path} must be none, poison, toxic, or burn; other status mechanics are out of scope"
+            f"{path} must be none, poison, toxic, burn, or paralyze; other status mechanics are out of scope"
         ) from exc
 
 

@@ -244,6 +244,39 @@ def main() -> int:
         )
         return 1
     print("selected_poison_status_moves: PASS poisonpowder_residual toxic_count")
+    paralysis_payload = scenario_template()
+    paralysis_payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+    paralysis_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    paralysis_outcome = simulate_payload(paralysis_payload)["outcomes"][0]
+    paralysis_event = paralysis_outcome["events"][0]
+    if (
+        paralysis_event.get("type") != "status_apply"
+        or paralysis_event.get("status") != "paralyze"
+        or paralysis_outcome["state"]["enemy"].get("status") != "paralyze"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: paralysis status move mismatch: {paralysis_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    full_para_payload = scenario_template()
+    full_para_payload["state"]["player"]["stats"]["speed"] = 80
+    full_para_payload["state"]["player"]["status"] = "paralyze"
+    full_para_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    full_para_payload["rng"] = {"mode": "fixed", "values": [0]}
+    full_para_outcome = simulate_payload(full_para_payload)["outcomes"][0]
+    full_para_event = full_para_outcome["events"][0]
+    if (
+        full_para_event.get("type") != "fully_paralyzed"
+        or full_para_event.get("pp_after") != full_para_event.get("pp_before")
+        or full_para_outcome["state"]["player"]["moves"][0].get("pp") != 35
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: full paralysis mismatch: {full_para_outcome}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_paralysis_status_moves: PASS thunder_wave full_paralysis_no_pp")
     selector = select_from_score_bytes(
         scenario_id="headless_audit_selector",
         tier="late",

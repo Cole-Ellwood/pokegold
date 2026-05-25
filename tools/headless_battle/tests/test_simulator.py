@@ -1148,6 +1148,132 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(event["proof_status"], "out_of_scope")
         self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
 
+    def test_paralysis_status_move_applies_paralysis(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_apply")
+        self.assertEqual(event["move"], "THUNDER_WAVE")
+        self.assertEqual(event["status"], "paralyze")
+        self.assertEqual(event["status_before"], "none")
+        self.assertEqual(event["status_after"], "paralyze")
+        self.assertEqual(event["pp_before"], 20)
+        self.assertEqual(event["pp_after"], 19)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "paralyze")
+
+    def test_paralysis_status_move_uses_accuracy_check(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "STUN_SPORE"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "miss")
+        self.assertEqual(event["move"], "STUN_SPORE")
+        self.assertEqual(event["accuracy_check"]["threshold"], 191)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_paralysis_status_move_reports_no_effect_on_type_immunity(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+        payload["state"]["enemy"]["types"] = ["GROUND", "GROUND"]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "type_immunity")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_glare_reports_no_effect_on_ghost_immunity(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "GLARE"}]
+        payload["state"]["enemy"]["types"] = ["GHOST", "GHOST"]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "type_immunity")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_paralysis_status_move_reports_no_effect_on_existing_status(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "THUNDER_WAVE"}]
+        payload["state"]["enemy"]["status"] = "poison"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "already_statused")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "poison")
+
+    def test_paralysis_speed_changes_next_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 40
+        payload["state"]["enemy"]["stats"]["speed"] = 80
+        payload["state"]["player"]["moves"] = [
+            {"name": "THUNDER_WAVE"},
+            {"name": "TACKLE", "type": "NORMAL", "bp": 40},
+        ]
+        payload["state"]["enemy"]["hp"] = 100
+        payload["state"]["enemy"]["max_hp"] = 100
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 1}, "enemy": {"type": "move", "move": 0}},
+        ]
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        self.assertEqual(outcome["turn_orders"][0]["order"], ["enemy", "player"])
+        self.assertEqual(outcome["turn_orders"][1]["order"], ["player", "enemy"])
+        self.assertEqual(outcome["turn_orders"][1]["turn_order_check"]["effective_speeds"]["enemy"], 20)
+
+    def test_full_paralysis_skips_move_before_pp_decrement(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 80
+        payload["state"]["player"]["status"] = "paralyze"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "fully_paralyzed")
+        self.assertEqual(event["paralysis_check"]["threshold"], 63)
+        self.assertEqual(event["paralysis_check"]["raw_values"], [0])
+        self.assertEqual(event["pp_before"], 35)
+        self.assertEqual(event["pp_after"], 35)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["moves"][0]["pp"], 35)
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["hp"], 18)
+
+    def test_full_paralysis_high_roll_allows_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 80
+        payload["state"]["player"]["status"] = "paralyze"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][0]
+        self.assertEqual(event["type"], "damage")
+        self.assertEqual(event["critical_check"]["raw_values"], [255])
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["moves"][0]["pp"], 34)
+
     def test_report_exposes_proof_boundary(self) -> None:
         report = simulate_payload(scenario_template())
 
@@ -1166,6 +1292,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
+        self.assertIn("selected_paralysis_status_moves", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
         self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)
