@@ -11,6 +11,10 @@ python -m tools.headless_battle --scenario .local\tmp\headless_turn.json --json
 python tools\audit\check_headless_battle_simulator.py
 ```
 
+Default text output names source-mirrored rows as pending differential and
+prints the out-of-scope boundary. Use `--json` or `--json-out` for the full
+machine-readable proof surface.
+
 Proof boundary:
 
 - `damage_core_pre_variation` is byte-proven through the existing `tools.damage_debugger.oracle.predict_damage` and `tools.damage_debugger.clobber_smoke` gate.

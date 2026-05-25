@@ -4119,7 +4119,13 @@ def format_text(report: dict[str, Any]) -> str:
     for row in report["coverage"]["byte_proven"]:
         lines.append(f"  byte-proven: {row['id']} via {row['gate']}")
     for row in report["coverage"]["source_mirrored_pending_differential"]:
-        lines.append(f"  source-mirrored: {row['id']} via {row['source']}")
+        lines.append(
+            f"  source-mirrored pending-differential: {row['id']} via {row['source']}"
+        )
+    if report["coverage"].get("out_of_scope"):
+        lines.append("Out of scope:")
+        for item in report["coverage"]["out_of_scope"]:
+            lines.append(f"  - {item}")
     lines.append("")
     for outcome in report["outcomes"]:
         state = outcome["state"]

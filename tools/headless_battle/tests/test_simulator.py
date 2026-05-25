@@ -11,6 +11,7 @@ from tools.headless_battle.__main__ import main
 from tools.headless_battle.simulator import (
     REPORT_KIND,
     SimulationInputError,
+    format_text,
     scenario_template,
     simulate_payload,
 )
@@ -2213,6 +2214,13 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation",
             "\n".join(report["coverage"]["out_of_scope"]),
         )
+
+    def test_text_report_exposes_pending_differential_and_out_of_scope(self) -> None:
+        text = format_text(simulate_payload(scenario_template()))
+
+        self.assertIn("source-mirrored pending-differential", text)
+        self.assertIn("Out of scope:", text)
+        self.assertIn("Boss AI live score generation", text)
 
     def test_cli_json_out(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
