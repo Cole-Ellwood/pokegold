@@ -637,10 +637,32 @@ separate tasks.
   `python tools/audit/check_headless_battle_simulator.py` PASS (27/27
   scenarios within expected damage ranges).
 
+- **Item 3 — Split `boss_ai_preference/__main__.py`.** (§1) Applied the
+  d62cafec pattern that fixed `boss_ai_debugger/__main__.py`. Old
+  935-line `__main__.py` (24 inlined `cmd_*` handlers + 24
+  `subparsers.add_parser` blocks + a 283-line `build_parser`) is now
+  three files: `__main__.py` (18 lines — just `main()` + entrypoint
+  guard with `PreferenceDataError` exit-wrap), `parsers.py` (440 lines
+  — `path_arg`, `add_common_paths`, `add_trajectory_paths`,
+  `add_include_trajectories_arg`, `add_v2_metadata_args`, and the full
+  `build_parser` body, with imports focused on the
+  `DEFAULT_*`/`ALLOWED_*` constants used as argparse defaults +
+  `from .commands import cmd_*`), `commands.py` (597 lines — the 24
+  `cmd_*` handlers + their helpers `metric_label`,
+  `v2_metadata_kwargs`, and the full subsystem import block).
+
+  Verification: `python -m tools.boss_ai_preference --help` registers
+  all 24 subcommands. `python -m unittest discover
+  tools.boss_ai_preference.tests` → 32/33 OK (1 pre-existing failure
+  on `test_benchmark_harvest::test_harvest_finds_complete_fixture_derived_candidates`:
+  `assertEqual(report["fixture_count"], 57)` against actual 59 — A/B
+  verified against `HEAD~` via `git stash`, fixture count drift, not
+  caused by this refactor; same stale-fixture issue surfaces in
+  `tools/audit/check_boss_ai_preference.py` independently).
+  `python tools/audit/check_release_smoke.py` → PASS.
+
 **Remaining items, ranked by leverage:**
 
-3. **Split `boss_ai_preference/__main__.py`.** (§1) Same pattern as
-   `boss_ai_debugger/__main__.py` (`d62cafec`).
 4. **Extract embedded HTML/CSS** from
    `scripts/generate_move_progression_audit_html.py` and
    `tools/boss_ai_preference/app.py`. (§6)
