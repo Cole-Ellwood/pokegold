@@ -183,7 +183,7 @@ TRIAGE_RULES = (
             "python tools\\audit\\check_headless_battle_simulator.py",
         ),
         gaps=(
-            "Automatic full battle choice, switch/replacement flow, link-battle turn-order inversion, accuracy/evasion modifiers, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
+            "Automatic full battle choice, switch/replacement flow, link-battle turn-order inversion, accuracy/evasion modifiers, status application, sleep/freeze/paralysis, RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(

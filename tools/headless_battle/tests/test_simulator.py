@@ -164,6 +164,47 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             {("player", "enemy"), ("enemy", "player")},
         )
 
+    def test_poison_residual_applies_after_actor_move(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["status"] = "poison"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        residual = next(event for event in events if event["type"] == "residual_damage")
+        self.assertEqual(residual["actor"], "player")
+        self.assertEqual(residual["status"], "poison")
+        self.assertEqual(residual["damage"], 2)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 14)
+
+    def test_toxic_residual_increments_counter(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["status"] = "toxic"
+        payload["state"]["player"]["toxic_count"] = 1
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        residual = next(event for event in report["outcomes"][0]["events"] if event["type"] == "residual_damage")
+        self.assertEqual(residual["toxic_count_before"], 1)
+        self.assertEqual(residual["toxic_count_after"], 2)
+        self.assertEqual(residual["damage"], 2)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["toxic_count"], 2)
+
+    def test_residual_faint_skips_later_action(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["hp"] = 1
+        payload["state"]["player"]["status"] = "burn"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        self.assertEqual([event["type"] for event in events], ["damage", "residual_damage"])
+        self.assertTrue(report["outcomes"][0]["battle_over"])
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 0)
+
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -228,6 +269,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("damage_variation_rng_branching", mirrored)
         self.assertIn("basic_move_accuracy_rng", mirrored)
         self.assertIn("basic_critical_hit_rng", mirrored)
+        self.assertIn("basic_status_residual", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
         self.assertIn("RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation", "\n".join(report["coverage"]["out_of_scope"]))

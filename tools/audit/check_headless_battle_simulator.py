@@ -107,6 +107,25 @@ def main() -> int:
         )
         return 1
     print("basic_critical_hit: PASS raw=0")
+    poison_payload = scenario_template()
+    poison_payload["state"]["player"]["status"] = "poison"
+    poison_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    poison_report = simulate_payload(poison_payload)
+    residual_events = [
+        event for event in poison_report["outcomes"][0]["events"]
+        if event.get("type") == "residual_damage"
+    ]
+    if (
+        len(residual_events) != 1
+        or residual_events[0].get("status") != "poison"
+        or residual_events[0].get("damage") != 2
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: poison residual mismatch: {poison_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("basic_status_residual: PASS poison_damage=2")
     proc = subprocess.run(
         [sys.executable, "-m", "tools.damage_debugger.clobber_smoke"],
         cwd=ROOT,

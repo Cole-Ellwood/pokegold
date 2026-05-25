@@ -65,6 +65,8 @@ class PokemonState:
     item: int = oracle.HELD_NONE
     can_evolve: bool = False
     focus_energy: bool = False
+    status: str = "none"
+    toxic_count: int = 0
     moves: tuple[MoveState, ...] = ()
 
 
@@ -250,7 +252,9 @@ def simulate_turn(
                 )
                 next_branches.append(updated)
                 continue
-            next_branches.extend(apply_move(branch, side, action, rng, stream=stream))
+            moved_branches = apply_move(branch, side, action, rng, stream=stream)
+            for moved_branch in moved_branches:
+                next_branches.append(apply_post_action_residual(moved_branch, side))
         if len(next_branches) > rng.max_outcomes:
             raise SimulationInputError(
                 f"rng.max_outcomes exceeded while branching ({len(next_branches)} > {rng.max_outcomes})"
@@ -431,6 +435,60 @@ def apply_move(
                 )
                 branches.append(updated)
     return branches
+
+
+def apply_post_action_residual(branch: dict[str, Any], side: str) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    actor = get_side(state, side)
+    target = get_side(state, "enemy" if side == "player" else "player")
+    if actor.hp <= 0 or target.hp <= 0:
+        return branch
+    residual = residual_status_damage(actor)
+    if residual is None:
+        return branch
+    damage = residual["damage"]
+    hp_after = max(0, actor.hp - damage)
+    updated_actor = replace_hp(actor, hp_after, toxic_count=residual["toxic_count_after"])
+    updated = clone_branch(branch)
+    updated["state"] = replace_side(state, side, updated_actor)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "type": "residual_damage",
+            "status": residual["status"],
+            "damage": damage,
+            "hp_before": actor.hp,
+            "hp_after": hp_after,
+            "toxic_count_before": residual["toxic_count_before"],
+            "toxic_count_after": residual["toxic_count_after"],
+            "proof_status": "source_mirrored_basic_status_residual",
+        }
+    )
+    return updated
+
+
+def residual_status_damage(pokemon: PokemonState) -> dict[str, Any] | None:
+    if pokemon.status in {"poison", "burn"}:
+        return {
+            "status": pokemon.status,
+            "damage": fraction_max_hp(pokemon.max_hp, 8),
+            "toxic_count_before": pokemon.toxic_count,
+            "toxic_count_after": pokemon.toxic_count,
+        }
+    if pokemon.status == "toxic":
+        toxic_count_after = pokemon.toxic_count + 1
+        return {
+            "status": pokemon.status,
+            "damage": fraction_max_hp(pokemon.max_hp, 16) * toxic_count_after,
+            "toxic_count_before": pokemon.toxic_count,
+            "toxic_count_after": toxic_count_after,
+        }
+    return None
+
+
+def fraction_max_hp(max_hp: int, denominator: int) -> int:
+    return max(1, max_hp // denominator)
 
 
 def critical_results(
@@ -734,6 +792,8 @@ def parse_pokemon(raw: Any, side: str) -> PokemonState:
         item=parse_item(raw.get("item", 0)),
         can_evolve=bool(raw.get("can_evolve", can_evolve)),
         focus_energy=bool(raw.get("focus_energy", False)),
+        status=parse_status(raw.get("status", "none"), f"state.{side}.status"),
+        toxic_count=parse_non_negative_int(raw.get("toxic_count", 0), f"state.{side}.toxic_count"),
         moves=tuple(parse_move(move, f"state.{side}.moves[{index}]") for index, move in enumerate(moves_raw)),
     )
 
@@ -863,7 +923,7 @@ def advance_turn(state: BattleState) -> BattleState:
     return BattleState(player=state.player, enemy=state.enemy, weather=state.weather, turn=state.turn + 1)
 
 
-def replace_hp(pokemon: PokemonState, hp: int) -> PokemonState:
+def replace_hp(pokemon: PokemonState, hp: int, *, toxic_count: int | None = None) -> PokemonState:
     return PokemonState(
         side=pokemon.side,
         name=pokemon.name,
@@ -880,6 +940,8 @@ def replace_hp(pokemon: PokemonState, hp: int) -> PokemonState:
         item=pokemon.item,
         can_evolve=pokemon.can_evolve,
         focus_energy=pokemon.focus_energy,
+        status=pokemon.status,
+        toxic_count=pokemon.toxic_count if toxic_count is None else toxic_count,
         moves=pokemon.moves,
     )
 
@@ -932,6 +994,8 @@ def pokemon_to_json(pokemon: PokemonState) -> dict[str, Any]:
         "types": list(pokemon.type_names),
         "item": pokemon.item,
         "focus_energy": pokemon.focus_energy,
+        "status": pokemon.status,
+        "toxic_count": pokemon.toxic_count,
         "stats": {
             "attack": pokemon.attack,
             "defense": pokemon.defense,
@@ -985,6 +1049,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Critical-hit level and raw-byte threshold are mirrored for normal damaging moves, including Focus Energy, high-critical moves, Lucky Punch, Stick, and Scope Lens. Fixed/sample/exhaustive modes branch critical/non-critical before damage variation and accuracy, matching the NormalHit command order.",
             },
             {
+                "id": "basic_status_residual",
+                "source": "engine/battle/core.asm:ResidualDamage",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application, sleep, freeze, paralysis, Leech Seed, Nightmare, Curse, weather, Leftovers, and item/status cures remain out of scope.",
+            },
+            {
                 "id": "selected_turn_order_priority_speed",
                 "source": "engine/battle/core.asm:DetermineMoveOrder",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -1007,7 +1077,7 @@ def coverage_report() -> dict[str, Any]:
             "automatic full battle flow, switch actions, forced switch prompts, items as actions, and trainer item turns",
             "RNG-consuming mechanics outside speed ties/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
-            "critical hit messaging, status effects, volatile effects, between-turn effects, and after-hit effects",
+            "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, and after-hit effects",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -1173,6 +1243,33 @@ def parse_item(raw: Any) -> int:
     if not isinstance(raw, str):
         raise SimulationInputError("item must be an int or item constant")
     return tables.resolve_item(raw)
+
+
+def parse_status(raw: Any, path: str) -> str:
+    if not isinstance(raw, str):
+        raise SimulationInputError(f"{path} must be a status string")
+    normalized = raw.strip().lower()
+    aliases = {
+        "": "none",
+        "none": "none",
+        "ok": "none",
+        "healthy": "none",
+        "psn": "poison",
+        "poison": "poison",
+        "poisoned": "poison",
+        "tox": "toxic",
+        "toxic": "toxic",
+        "badly_poisoned": "toxic",
+        "brn": "burn",
+        "burn": "burn",
+        "burned": "burn",
+    }
+    try:
+        return aliases[normalized]
+    except KeyError as exc:
+        raise SimulationInputError(
+            f"{path} must be none, poison, toxic, or burn; other status mechanics are out of scope"
+        ) from exc
 
 
 def parse_int(raw: Any, path: str) -> int:
