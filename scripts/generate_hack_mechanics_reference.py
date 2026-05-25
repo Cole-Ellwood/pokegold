@@ -294,6 +294,11 @@ def parse_item_attributes() -> list[ItemAttribute]:
         comment = re.match(r"\s*;\s*([A-Z0-9_$() #]+)", raw)
         if comment:
             pending_constant = comment.group(1).strip()
+            if pending_constant.endswith("("):
+                # `; MOON_STONE (removed YYYY-MM-DD; stub slot)` style: the
+                # regex stops at the first lowercase char inside the parens
+                # and captures `MOON_STONE (`. Drop the dangling open-paren.
+                pending_constant = pending_constant.rsplit(" (", 1)[0]
             continue
         match = attr_line.match(raw)
         if not match:

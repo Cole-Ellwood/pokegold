@@ -433,7 +433,7 @@ be reasoned about as ordinary Atk/SpA damage.
 | EA | MORNING SUN | `MORNING_SUN` | Normal | status | 0 | 100 | 5 | `EFFECT_MORNING_SUN` | 0 | no |
 | EB | SYNTHESIS | `SYNTHESIS` | Grass | status | 0 | 100 | 5 | `EFFECT_SYNTHESIS` | 0 | no |
 | EC | MOONLIGHT | `MOONLIGHT` | Normal | status | 0 | 100 | 5 | `EFFECT_MOONLIGHT` | 0 | no |
-| ED | HIDDEN POWER | `HIDDEN_POWER` | Normal | physical | 1 | 100 | 15 | `EFFECT_HIDDEN_POWER` | 0 | no |
+| ED | HIDDEN POWER | `HIDDEN_POWER` | Normal | physical | 60 | 100 | 15 | `EFFECT_HIDDEN_POWER` | 0 | no |
 | EE | CROSS CHOP | `CROSS_CHOP` | Fighting | physical | 120 | 80 | 20 | `EFFECT_NORMAL_HIT` | 0 | yes |
 | EF | TWISTER | `TWISTER` | Dragon | special | 40 | 100 | 20 | `EFFECT_TWISTER` | 20 | no |
 | F0 | RAIN DANCE | `RAIN_DANCE` | Water | status | 0 | 100 | 5 | `EFFECT_RAIN_DANCE` | 0 | no |
@@ -467,7 +467,7 @@ engine effect. For behavior, check `engine/battle/late_gen_held_items.asm`,
 | 05 | # BALL | `POKE_BALL` | `HELD_NONE` | 0 | `BALL` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
 | 06 | TERU-SAMA | `TOWN_MAP` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 07 | BICYCLE | `BICYCLE` | `HELD_NONE` | 0 | `KEY_ITEM` | `ITEMMENU_CLOSE` | `ITEMMENU_NOUSE` |
-| 08 | MOON STONE | `MOON_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 08 | ????? | `MOON_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 09 | ANTIDOTE | `ANTIDOTE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 0A | BURN HEAL | `BURN_HEAL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 0B | ICE HEAL | `ICE_HEAL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
@@ -481,9 +481,9 @@ engine effect. For behavior, check `engine/battle/late_gen_held_items.asm`,
 | 13 | ESCAPE ROPE | `ESCAPE_ROPE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CLOSE` | `ITEMMENU_NOUSE` |
 | 14 | REPEL | `REPEL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
 | 15 | MAX ELIXER | `MAX_ELIXER` | `HELD_NONE` | -1 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
-| 16 | FIRE STONE | `FIRE_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 17 | THUNDERSTONE | `THUNDERSTONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 18 | WATER STONE | `WATER_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 16 | ????? | `FIRE_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
+| 17 | ????? | `THUNDERSTONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
+| 18 | ????? | `WATER_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 19 | TERU-SAMA | `ITEM_19` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 1A | HP UP | `HP_UP` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
 | 1B | PROTEIN | `PROTEIN` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
@@ -492,27 +492,27 @@ engine effect. For behavior, check `engine/battle/late_gen_held_items.asm`,
 | 1E | LUCKY PUNCH | `LUCKY_PUNCH` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 1F | CALCIUM | `CALCIUM` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
 | 20 | RARE CANDY | `RARE_CANDY` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 21 | X ACCURACY | `X_ACCURACY` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
-| 22 | LEAF STONE | `LEAF_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 21 | ????? | `X_ACCURACY` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
+| 22 | ????? | `LEAF_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 23 | METAL POWDER | `METAL_POWDER` | `HELD_METAL_POWDER` | 10 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 24 | NUGGET | `NUGGET` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 25 | # DOLL | `POKE_DOLL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
 | 26 | FULL HEAL | `FULL_HEAL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 27 | REVIVE | `REVIVE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 28 | MAX REVIVE | `MAX_REVIVE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
-| 29 | GUARD SPEC. | `GUARD_SPEC` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
+| 29 | ????? | `GUARD_SPEC` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 2A | SUPER REPEL | `SUPER_REPEL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
 | 2B | MAX REPEL | `MAX_REPEL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
-| 2C | DIRE HIT | `DIRE_HIT` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
+| 2C | ????? | `DIRE_HIT` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 2D | TERU-SAMA | `ITEM_2D` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 2E | FRESH WATER | `FRESH_WATER` | `HELD_NONE` | 50 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 2F | SODA POP | `SODA_POP` | `HELD_NONE` | 60 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
 | 30 | LEMONADE | `LEMONADE` | `HELD_NONE` | 80 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_PARTY` |
-| 31 | X ATTACK | `X_ATTACK` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
+| 31 | ????? | `X_ATTACK` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 32 | TERU-SAMA | `ITEM_32` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
-| 33 | X DEFEND | `X_DEFEND` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
-| 34 | X SPEED | `X_SPEED` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
-| 35 | X SPECIAL | `X_SPECIAL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
+| 33 | ????? | `X_DEFEND` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
+| 34 | ????? | `X_SPEED` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
+| 35 | ????? | `X_SPECIAL` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 36 | COIN CASE | `COIN_CASE` | `HELD_NONE` | 0 | `KEY_ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
 | 37 | ITEMFINDER | `ITEMFINDER` | `HELD_NONE` | 0 | `KEY_ITEM` | `ITEMMENU_CLOSE` | `ITEMMENU_NOUSE` |
 | 38 | TERU-SAMA | `POKE_FLUTE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
@@ -628,7 +628,7 @@ engine effect. For behavior, check `engine/battle/late_gen_held_items.asm`,
 | A6 | LOVE BALL | `LOVE_BALL` | `HELD_NONE` | 0 | `BALL` | `ITEMMENU_NOUSE` | `ITEMMENU_CLOSE` |
 | A7 | NORMAL BOX | `NORMAL_BOX` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
 | A8 | GORGEOUS BOX | `GORGEOUS_BOX` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
-| A9 | SUN STONE | `SUN_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| A9 | ????? | `SUN_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | AA | POLKADOT BOW | `POLKADOT_BOW` | `HELD_NORMAL_BOOST` | 20 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | AB | LANTERN | `LANTERN` | `HELD_NONE` | 0 | `KEY_ITEM` | `ITEMMENU_CLOSE` | `ITEMMENU_NOUSE` |
 | AC | UP-GRADE | `UP_GRADE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
@@ -735,10 +735,10 @@ lives in each same file after the stat/type/item rows.
 | 009 | Blastoise | Water | 94 | 98 | 115 | 93 | 100 | 120 | 620 | `NO_ITEM`, `NO_ITEM` |
 | 010 | Caterpie | Bug | 45 | 30 | 35 | 45 | 20 | 20 | 195 | `NO_ITEM`, `NO_ITEM` |
 | 011 | Metapod | Bug | 60 | 30 | 55 | 30 | 25 | 25 | 225 | `NO_ITEM`, `NO_ITEM` |
-| 012 | Butterfree | Bug/Flying | 90 | 45 | 50 | 110 | 95 | 110 | 500 | `NO_ITEM`, `SILVERPOWDER` |
+| 012 | Butterfree | Bug/Flying | 90 | 45 | 40 | 85 | 80 | 110 | 450 | `NO_ITEM`, `SILVERPOWDER` |
 | 013 | Weedle | Bug/Poison | 40 | 35 | 30 | 50 | 20 | 20 | 195 | `NO_ITEM`, `NO_ITEM` |
 | 014 | Kakuna | Bug/Poison | 45 | 40 | 50 | 35 | 25 | 25 | 220 | `NO_ITEM`, `NO_ITEM` |
-| 015 | Beedrill | Bug/Poison | 75 | 120 | 40 | 120 | 45 | 80 | 480 | `NO_ITEM`, `POISON_BARB` |
+| 015 | Beedrill | Bug/Poison | 75 | 90 | 40 | 120 | 45 | 80 | 450 | `NO_ITEM`, `POISON_BARB` |
 | 016 | Pidgey | Normal/Flying | 50 | 45 | 40 | 56 | 35 | 35 | 261 | `NO_ITEM`, `NO_ITEM` |
 | 017 | Pidgeotto | Normal/Flying | 70 | 60 | 60 | 71 | 50 | 60 | 371 | `NO_ITEM`, `NO_ITEM` |
 | 018 | Pidgeot | Normal/Flying | 113 | 80 | 95 | 91 | 70 | 110 | 559 | `NO_ITEM`, `NO_ITEM` |
@@ -758,8 +758,8 @@ lives in each same file after the stat/type/item rows.
 | 032 | Nidoran M | Poison | 46 | 57 | 40 | 50 | 40 | 40 | 273 | `NO_ITEM`, `NO_ITEM` |
 | 033 | Nidorino | Poison | 61 | 102 | 57 | 75 | 55 | 55 | 405 | `NO_ITEM`, `NO_ITEM` |
 | 034 | Nidoking | Poison/Ground | 95 | 115 | 77 | 100 | 100 | 78 | 565 | `NO_ITEM`, `NO_ITEM` |
-| 035 | Clefairy | Normal | 70 | 45 | 48 | 35 | 60 | 65 | 323 | `MYSTERYBERRY`, `MOON_STONE` |
-| 036 | Clefable | Normal | 120 | 50 | 90 | 45 | 85 | 100 | 490 | `MYSTERYBERRY`, `MOON_STONE` |
+| 035 | Clefairy | Normal | 70 | 45 | 48 | 35 | 60 | 65 | 323 | `MYSTERYBERRY`, `NUGGET` |
+| 036 | Clefable | Normal | 120 | 50 | 90 | 45 | 85 | 100 | 490 | `MYSTERYBERRY`, `NUGGET` |
 | 037 | Vulpix | Fire | 55 | 41 | 40 | 65 | 70 | 65 | 336 | `BURNT_BERRY`, `BURNT_BERRY` |
 | 038 | Ninetales | Fire | 80 | 76 | 75 | 100 | 100 | 100 | 531 | `BURNT_BERRY`, `BURNT_BERRY` |
 | 039 | Jigglypuff | Normal | 115 | 45 | 20 | 20 | 45 | 25 | 270 | `NO_ITEM`, `NO_ITEM` |
@@ -852,7 +852,7 @@ lives in each same file after the stat/type/item rows.
 | 126 | Magmar | Fire | 120 | 95 | 60 | 82 | 125 | 85 | 567 | `BURNT_BERRY`, `BURNT_BERRY` |
 | 127 | Pinsir | Bug | 80 | 140 | 100 | 85 | 55 | 70 | 530 | `NO_ITEM`, `NO_ITEM` |
 | 128 | Tauros | Normal | 75 | 120 | 95 | 110 | 40 | 70 | 510 | `NO_ITEM`, `NO_ITEM` |
-| 129 | Magikarp | Water | 20 | 10 | 55 | 80 | 15 | 20 | 200 | `NO_ITEM`, `NO_ITEM` |
+| 129 | Magikarp | Water | 40 | 30 | 75 | 100 | 35 | 40 | 320 | `NO_ITEM`, `NO_ITEM` |
 | 130 | Gyarados | Water/Dragon | 100 | 125 | 79 | 81 | 90 | 100 | 575 | `NO_ITEM`, `NO_ITEM` |
 | 131 | Lapras | Water/Ice | 130 | 85 | 110 | 60 | 85 | 110 | 580 | `NO_ITEM`, `NO_ITEM` |
 | 132 | Ditto | Normal | 100 | 48 | 48 | 48 | 48 | 48 | 340 | `NO_ITEM`, `NO_ITEM` |
@@ -889,14 +889,14 @@ lives in each same file after the stat/type/item rows.
 | 163 | Hoothoot | Normal/Flying | 60 | 50 | 30 | 50 | 36 | 56 | 282 | `NO_ITEM`, `NO_ITEM` |
 | 164 | Noctowl | Normal/Flying | 100 | 50 | 50 | 70 | 110 | 120 | 500 | `NO_ITEM`, `NO_ITEM` |
 | 165 | Ledyba | Bug/Flying | 40 | 40 | 30 | 55 | 40 | 80 | 285 | `NO_ITEM`, `NO_ITEM` |
-| 166 | Ledian | Bug/Flying | 80 | 100 | 50 | 105 | 45 | 120 | 500 | `NO_ITEM`, `NO_ITEM` |
+| 166 | Ledian | Bug/Flying | 80 | 100 | 50 | 90 | 45 | 105 | 470 | `NO_ITEM`, `NO_ITEM` |
 | 167 | Spinarak | Bug/Poison | 40 | 60 | 40 | 30 | 40 | 40 | 250 | `NO_ITEM`, `NO_ITEM` |
 | 168 | Ariados | Bug/Poison | 110 | 90 | 100 | 40 | 60 | 60 | 460 | `NO_ITEM`, `NO_ITEM` |
 | 169 | Crobat | Poison/Flying | 100 | 120 | 105 | 130 | 70 | 80 | 605 | `NO_ITEM`, `NO_ITEM` |
 | 170 | Chinchou | Water/Electric | 75 | 38 | 38 | 67 | 56 | 56 | 330 | `NO_ITEM`, `NO_ITEM` |
 | 171 | Lanturn | Water/Electric | 125 | 58 | 76 | 75 | 105 | 105 | 544 | `NO_ITEM`, `NO_ITEM` |
 | 172 | Pichu | Electric | 20 | 40 | 15 | 60 | 35 | 35 | 205 | `NO_ITEM`, `BERRY` |
-| 173 | Cleffa | Normal | 50 | 25 | 28 | 15 | 45 | 55 | 218 | `MYSTERYBERRY`, `MOON_STONE` |
+| 173 | Cleffa | Normal | 50 | 25 | 28 | 15 | 45 | 55 | 218 | `MYSTERYBERRY`, `NUGGET` |
 | 174 | Igglybuff | Normal | 90 | 30 | 15 | 15 | 40 | 20 | 210 | `NO_ITEM`, `NO_ITEM` |
 | 175 | Togepi | Normal | 35 | 20 | 65 | 20 | 40 | 65 | 245 | `NO_ITEM`, `NO_ITEM` |
 | 176 | Togetic | Normal/Flying | 55 | 40 | 85 | 40 | 140 | 105 | 465 | `NO_ITEM`, `NO_ITEM` |
@@ -923,8 +923,8 @@ lives in each same file after the stat/type/item rows.
 | 197 | Umbreon | Dark | 100 | 65 | 110 | 65 | 60 | 130 | 530 | `NO_ITEM`, `NO_ITEM` |
 | 198 | Murkrow | Dark/Flying | 110 | 100 | 80 | 91 | 100 | 80 | 561 | `NO_ITEM`, `NO_ITEM` |
 | 199 | Slowking | Water/Psychic | 95 | 75 | 80 | 30 | 120 | 110 | 510 | `NO_ITEM`, `KINGS_ROCK` |
-| 200 | Misdreavus | Ghost | 80 | 120 | 80 | 85 | 70 | 85 | 520 | `NO_ITEM`, `SPELL_TAG` |
-| 201 | Unown | Psychic | 148 | 102 | 48 | 48 | 102 | 48 | 496 | `NO_ITEM`, `NO_ITEM` |
+| 200 | Misdreavus | Ghost | 100 | 80 | 90 | 85 | 70 | 95 | 520 | `NO_ITEM`, `SPELL_TAG` |
+| 201 | Unown | Psychic | 70 | 70 | 70 | 70 | 70 | 70 | 420 | `NO_ITEM`, `NO_ITEM` |
 | 202 | Wobbuffet | Psychic | 220 | 33 | 65 | 33 | 33 | 65 | 449 | `NO_ITEM`, `NO_ITEM` |
 | 203 | Girafarig | Normal/Psychic | 70 | 80 | 65 | 112 | 90 | 65 | 482 | `NO_ITEM`, `NO_ITEM` |
 | 204 | Pineco | Bug | 80 | 65 | 90 | 15 | 35 | 35 | 320 | `NO_ITEM`, `NO_ITEM` |
@@ -951,7 +951,7 @@ lives in each same file after the stat/type/item rows.
 | 225 | Delibird | Ice/Flying | 100 | 55 | 45 | 75 | 65 | 150 | 490 | `NO_ITEM`, `NO_ITEM` |
 | 226 | Mantine | Water/Flying | 95 | 40 | 85 | 90 | 105 | 140 | 555 | `NO_ITEM`, `NO_ITEM` |
 | 227 | Skarmory | Steel/Flying | 75 | 80 | 140 | 70 | 40 | 70 | 475 | `NO_ITEM`, `NO_ITEM` |
-| 228 | Houndour | Dark/Fire | 45 | 60 | 30 | 65 | 80 | 50 | 330 | `NO_ITEM`, `NO_ITEM` |
+| 228 | Houndour | Dark/Fire | 60 | 60 | 50 | 65 | 80 | 60 | 375 | `NO_ITEM`, `NO_ITEM` |
 | 229 | Houndoom | Dark/Fire | 100 | 90 | 50 | 115 | 130 | 80 | 565 | `NO_ITEM`, `NO_ITEM` |
 | 230 | Kingdra | Water/Dragon | 95 | 95 | 95 | 85 | 105 | 95 | 570 | `NO_ITEM`, `DRAGON_SCALE` |
 | 231 | Phanpy | Ground | 90 | 60 | 60 | 40 | 40 | 40 | 330 | `NO_ITEM`, `NO_ITEM` |
