@@ -253,6 +253,48 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         with self.assertRaisesRegex(PreferenceDataError, "out of range"):
             switch_materialization_patches(scenario)
 
+    def test_switch_materialization_sub1_sub3_overrides_apply(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                # NIGHTMARE bit on sub1, CONFUSED bit somewhere in sub3 -- the
+                # exact bit positions vary; this slice exposes the raw byte for
+                # callers to hand-write any pattern.
+                "player_sub1": 0x80,
+                "enemy_sub1": 0x40,
+                "player_sub3": 0x10,
+                "enemy_sub3": 0x08,
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wPlayerSubStatus1", 0)], 0x80)
+        self.assertEqual(patches[("wEnemySubStatus1", 0)], 0x40)
+        self.assertEqual(patches[("wPlayerSubStatus3", 0)], 0x10)
+        self.assertEqual(patches[("wEnemySubStatus3", 0)], 0x08)
+
+    def test_switch_materialization_skips_sub1_sub3_when_absent(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+        }
+        symbols = {
+            patch.symbol_name
+            for patch in switch_materialization_patches(scenario)
+        }
+        for symbol in (
+            "wPlayerSubStatus1",
+            "wEnemySubStatus1",
+            "wPlayerSubStatus3",
+            "wEnemySubStatus3",
+        ):
+            self.assertNotIn(symbol, symbols)
+
     def test_switch_materialization_substitute_overrides_apply(self) -> None:
         scenario = {
             "family": "switch_sack",

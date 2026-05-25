@@ -52,15 +52,6 @@ STAT_STAGE_LEVEL_SYMBOLS = (
 BASE_ROUTE_TRAINER_CLASS = {
     "shared_switch_loop": "JASMINE",
 }
-CLASS_SWITCH_THRESHOLD_MODS = {
-    "CHAMPION": -10,
-    "KOGA": -8,
-    "CLAIR": -6,
-    "KAREN": -4,
-    "BRUNO": -4,
-    "JASMINE": 4,
-    "CHUCK": 2,
-}
 
 KNOWN_LIMITS = [
     (
@@ -365,6 +356,18 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         optional_overrides.append(("wPlayerSubStatus5", "player_sub5", _resolve_int(overrides_raw["player_sub5"], 0)))
     if "enemy_sub5" in overrides_raw:
         optional_overrides.append(("wEnemySubStatus5", "enemy_sub5", _resolve_int(overrides_raw["enemy_sub5"], 0)))
+    # Residual sub-status bytes (sub1 carries NIGHTMARE, sub3 carries CONFUSED;
+    # see constants/battle_constants.asm). The headless simulator does not model
+    # these bits yet, so the exporter cannot auto-populate them -- but hand-written
+    # scenarios can reach the WRAM bits via these overrides for end-to-end coverage.
+    if "player_sub1" in overrides_raw:
+        optional_overrides.append(("wPlayerSubStatus1", "player_sub1", _resolve_int(overrides_raw["player_sub1"], 0)))
+    if "enemy_sub1" in overrides_raw:
+        optional_overrides.append(("wEnemySubStatus1", "enemy_sub1", _resolve_int(overrides_raw["enemy_sub1"], 0)))
+    if "player_sub3" in overrides_raw:
+        optional_overrides.append(("wPlayerSubStatus3", "player_sub3", _resolve_int(overrides_raw["player_sub3"], 0)))
+    if "enemy_sub3" in overrides_raw:
+        optional_overrides.append(("wEnemySubStatus3", "enemy_sub3", _resolve_int(overrides_raw["enemy_sub3"], 0)))
     # Slice C-substitute: sub4 byte (SUBSTATUS_SUBSTITUTE = bit 4) + the
     # separate wPlayer/EnemySubstituteHP storage. Presence-only emission --
     # the base state's existing sub4 + substitute_hp bytes survive untouched
@@ -770,12 +773,10 @@ def source_base_switch_threshold(
         threshold = AI_SWITCH_THRESHOLD_LATE
         tier_name = "late"
     trainer_class = normalized_trainer_class(scenario.get("trainer_class"), base_route)
-    class_mod = CLASS_SWITCH_THRESHOLD_MODS.get(trainer_class or "", 0)
-    threshold = apply_class_threshold_mod(threshold, class_mod)
     return {
         "tier": tier_name,
         "trainer_class": trainer_class,
-        "class_threshold_mod": class_mod,
+        "class_threshold_mod": 0,
         "threshold": threshold,
     }
 
@@ -786,14 +787,6 @@ def normalized_trainer_class(raw: Any, base_route: str) -> str | None:
     if raw is None:
         return None
     return str(raw).strip().upper().replace(" ", "_")
-
-
-def apply_class_threshold_mod(threshold: int, class_mod: int) -> int:
-    if class_mod < 0:
-        return max(0, threshold + class_mod)
-    if class_mod > 0:
-        return min(95, threshold + class_mod)
-    return threshold
 
 
 def parse_optional_byte(raw: Any, field: str) -> int:
