@@ -550,9 +550,12 @@ Ordered by ratio of (reader-pain reduced) / (refactor risk):
    concern.** (§3) Bigger move but every battle-mechanic edit would
    benefit. Save for when someone next touches a move handler — when
    that happens, the split is then non-speculative.
-8. **Split `check_boss_ai_trace_invariants.py` by audit family.** (§2)
-   Mechanical, behavior-preserving. Defer unless adding a new audit
-   family.
+8. ~~**Split `check_boss_ai_trace_invariants.py` by audit family.**~~ (§2)
+   Shipped 2026-05-26. 2,770-line god-script split into a 171-line thin
+   runner plus three sibling modules
+   (`trace_rom.py`/`trace_coverage.py`/`trace_logic.py`) sharing
+   helpers via `_trace_helpers.py`. Byte-identical stdout vs baseline.
+   See Execution Status.
 9. **~~Add asm guide §3.15~~ — already covered.** (§8) On reread,
    `docs/asm_authoring_guide.md` §3.14 (lines 598–711) is exactly the
    "same-bank transitive register clobber" section my original §8
@@ -730,11 +733,49 @@ separate tasks.
   canonical battle-helper files. Audit passes. No doc gap to fill.
   Audit doc updated to flag the false-positive finding for honesty.
 
+- **Item 8 — Split `check_boss_ai_trace_invariants.py` by audit family.** (§2)
+  Old 2,770-line god-script with 34 inlined audit functions (three over
+  200 lines each) is now five files: `check_boss_ai_trace_invariants.py`
+  shrinks to a 171-line thin runner that loads source files, invokes 33
+  audits in the original order, and prints the same 60-invariant summary;
+  `_trace_helpers.py` (83 lines) holds the shared `top_block` /
+  `local_block` / `require_*` / `first_add_value` helpers plus path
+  constants and regexes; the three audit families live in `trace_rom.py`
+  (502 lines, 15 register/pointer/state-preservation audits including the
+  data-presence `audit_priority_trainers` / `audit_constants`),
+  `trace_coverage.py` (856 lines, 12 information-reveal/no-cheat audits
+  including the four 1-line `audit_revealed_effect_matrix_bias` wrappers
+  and the cohesive `audit_haki_quarantine`), and `trace_logic.py`
+  (1,127 lines, 7 tactical-scoring audits including the policy bundles
+  `audit_spikes_and_status` and `audit_item_and_passive_reasoning`).
+
+  File-shape note: both `trace_coverage.py` and `trace_logic.py` exceed
+  the 700-line CLAUDE.md threshold. Justified inline in each file's
+  docstring: every `audit_*` here corresponds to a single named
+  invariant in the runner's "Checked invariants:" output, the bodies
+  are mostly declarative `require_order(..., [list of asm needles])`
+  policy strings rather than branching logic, and further subdividing
+  would either rename the public invariants (changing audit-doc
+  references and `bug_hunt_triage.py` diagnostics) or add a sub-runner
+  with no reduction in reader load. The 3-file split per audit family
+  was the user-specified shape.
+
+  Verification: `python tools/audit/check_boss_ai_trace_invariants.py`
+  exit code 0, 62-line stdout (1 pass header + 60 invariants + 1
+  "Checked invariants:" label), byte-for-byte identical to pre-refactor
+  baseline (`Compare-Object` returns empty). Subprocess invocation
+  matching `check_boss_ai_debugger_done.py`'s call pattern
+  (`[sys.executable, "tools\\audit\\check_boss_ai_trace_invariants.py"]`)
+  returns rc=0 with the same 62 stdout lines. `python
+  tools/audit/check_release_smoke.py` → ALL RELEASE SMOKE CHECKS PASSED.
+  `python tools/audit/bug_hunt_triage.py` → exit 0 (its diagnostic
+  string-literal references to `check_boss_ai_trace_invariants.py`
+  still point at the same entrypoint).
+
 **Remaining items, ranked by leverage:**
 
 5. **Convert `check_headless_battle_simulator.py`'s 2,260-line `main()`
    into a fixtures list + runner.** (§2)
 6. **Backfill `tools/trace/` tests.** (§7)
 7. **Split `tools/headless_battle/simulator.py` into a package.** (§3)
-8. **Split `check_boss_ai_trace_invariants.py` by audit family.** (§2)
 10. **Consolidate `scripts/_rom_data.py` for the 8 generator scripts.** (§4)
