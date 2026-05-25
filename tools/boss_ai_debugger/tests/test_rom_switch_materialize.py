@@ -253,6 +253,46 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         with self.assertRaisesRegex(PreferenceDataError, "out of range"):
             switch_materialization_patches(scenario)
 
+    def test_switch_materialization_substitute_overrides_apply(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+            "overrides": {
+                # SUBSTATUS_SUBSTITUTE = bit 4 -> 1<<4 = 16
+                "player_sub4": 16,
+                "player_substitute_hp": 25,
+                "enemy_sub4": 16,
+                "enemy_substitute_hp": 22,
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+        self.assertEqual(patches[("wPlayerSubStatus4", 0)], 16)
+        self.assertEqual(patches[("wEnemySubStatus4", 0)], 16)
+        self.assertEqual(patches[("wPlayerSubstituteHP", 0)], 25)
+        self.assertEqual(patches[("wEnemySubstituteHP", 0)], 22)
+
+    def test_switch_materialization_skips_substitute_when_absent(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "late",
+            "expectation": {"condition_tags": ["switch_sack"]},
+        }
+        symbols = {
+            patch.symbol_name
+            for patch in switch_materialization_patches(scenario)
+        }
+        for symbol in (
+            "wPlayerSubStatus4",
+            "wEnemySubStatus4",
+            "wPlayerSubstituteHP",
+            "wEnemySubstituteHP",
+        ):
+            self.assertNotIn(symbol, symbols)
+
     def test_switch_materialization_rejects_stat_stages_non_int(self) -> None:
         scenario = {
             "family": "switch_sack",

@@ -365,6 +365,26 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         optional_overrides.append(("wPlayerSubStatus5", "player_sub5", _resolve_int(overrides_raw["player_sub5"], 0)))
     if "enemy_sub5" in overrides_raw:
         optional_overrides.append(("wEnemySubStatus5", "enemy_sub5", _resolve_int(overrides_raw["enemy_sub5"], 0)))
+    # Slice C-substitute: sub4 byte (SUBSTATUS_SUBSTITUTE = bit 4) + the
+    # separate wPlayer/EnemySubstituteHP storage. Presence-only emission --
+    # the base state's existing sub4 + substitute_hp bytes survive untouched
+    # when callers don't ask for non-default substitute state.
+    if "player_sub4" in overrides_raw:
+        optional_overrides.append(("wPlayerSubStatus4", "player_sub4", _resolve_int(overrides_raw["player_sub4"], 0)))
+    if "enemy_sub4" in overrides_raw:
+        optional_overrides.append(("wEnemySubStatus4", "enemy_sub4", _resolve_int(overrides_raw["enemy_sub4"], 0)))
+    if "player_substitute_hp" in overrides_raw:
+        optional_overrides.append((
+            "wPlayerSubstituteHP",
+            "player_substitute_hp",
+            _resolve_int(overrides_raw["player_substitute_hp"], 0),
+        ))
+    if "enemy_substitute_hp" in overrides_raw:
+        optional_overrides.append((
+            "wEnemySubstituteHP",
+            "enemy_substitute_hp",
+            _resolve_int(overrides_raw["enemy_substitute_hp"], 0),
+        ))
     # Slice C-stages: 5 stat stages per side, base-7 encoded. Like the other
     # optional overrides, only emit when explicitly present so the base save
     # state's existing wPlayer/EnemyStatLevels survive when callers don't ask

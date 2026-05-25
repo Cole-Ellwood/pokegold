@@ -65,6 +65,7 @@ STATUS_STRING_TO_BYTE = {
 OVERRIDABLE_STATUSES = frozenset({*STATUS_STRING_TO_BYTE, "sleep"})
 SCREENS_SAFEGUARD_BIT = 2  # matches constants/battle_constants.asm SCREENS_SAFEGUARD
 SUBSTATUS_TOXIC_BIT = 0  # matches constants/battle_constants.asm SUBSTATUS_TOXIC (first const in sub5)
+SUBSTATUS_SUBSTITUTE_BIT = 4  # matches constants/battle_constants.asm SUBSTATUS_SUBSTITUTE (sub4)
 
 
 def _status_byte_for(mon: PokemonState) -> int:
@@ -218,6 +219,17 @@ def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:
     enemy_stages = _stat_stages_for(battle_state.enemy)
     if any(enemy_stages):
         overrides["enemy_stat_stages"] = list(enemy_stages)
+    # Slice C-substitute: SUBSTATUS_SUBSTITUTE bit on sub4 + substitute_hp byte
+    # emitted only when caller has an active Substitute. Defaults (no Substitute)
+    # leave the base state's sub4 / substitute_hp bytes untouched.
+    if battle_state.player.substitute:
+        overrides["player_sub4"] = 1 << SUBSTATUS_SUBSTITUTE_BIT
+    if battle_state.enemy.substitute:
+        overrides["enemy_sub4"] = 1 << SUBSTATUS_SUBSTITUTE_BIT
+    if battle_state.player.substitute_hp:
+        overrides["player_substitute_hp"] = battle_state.player.substitute_hp
+    if battle_state.enemy.substitute_hp:
+        overrides["enemy_substitute_hp"] = battle_state.enemy.substitute_hp
     return overrides
 
 
@@ -241,10 +253,9 @@ def _assert_overridable_active(mon: PokemonState, *, side: str) -> None:
     # overrides.enemy_item, so non-zero held items are allowed in override mode.
     # Stat stages are now patched in slice C-stages via overrides.player_stat_stages /
     # overrides.enemy_stat_stages, so non-zero stages are allowed here.
-    if mon.substitute or mon.substitute_hp:
-        raise SimulationInputError(
-            f"rom_switch_scenario_export: {side} has Substitute active; slice B does not model it"
-        )
+    # Substitute is now patched in slice C-substitute via overrides.player_sub4 /
+    # overrides.enemy_sub4 (SUBSTATUS_SUBSTITUTE bit) plus overrides.player_substitute_hp /
+    # overrides.enemy_substitute_hp, so an active Substitute is allowed.
     # toxic_count and sleep_turns are now patched in slice C-toxic-sleep via
     # the sub5 / status byte overrides, so they're allowed.
 

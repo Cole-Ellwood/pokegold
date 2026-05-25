@@ -1344,10 +1344,78 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    # Slice C-substitute: SUBSTATUS_SUBSTITUTE bit on sub4 + substitute_hp byte.
+    sub_state = {
+        "weather": "none",
+        "turn": 1,
+        "player": {
+            "species": "STARMIE",
+            "level": 50,
+            "types": ["GROUND", "GROUND"],
+            "hp": 80,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 80, "speed": 100, "sp_attack": 90, "sp_defense": 80},
+            "moves": [{"name": "SURF"}],
+            "substitute": True,
+            "substitute_hp": 25,
+        },
+        "enemy": {
+            "species": "QWILFISH",
+            "level": 50,
+            "types": ["POISON", "WATER"],
+            "hp": 100,
+            "max_hp": 100,
+            "stats": {"attack": 70, "defense": 75, "speed": 85, "sp_attack": 55, "sp_defense": 55},
+            "moves": [{"name": "POISON_STING"}],
+            "bench": [
+                {
+                    "name": "GENGAR",
+                    "level": 50,
+                    "types": ["GHOST", "POISON"],
+                    "hp": 80,
+                    "max_hp": 100,
+                    "stats": {"attack": 65, "defense": 60, "speed": 110, "sp_attack": 130, "sp_defense": 75},
+                    "moves": [{"name": "LICK"}],
+                },
+            ],
+        },
+    }
+    sub_scenario = headless_to_switch_sack_scenario(
+        sub_state, scenario_id="audit_substitute", tier="late", accept_overrides=True
+    )
+    sub_overrides = sub_scenario["overrides"]
+    if (
+        sub_overrides.get("player_sub4") != 16
+        or sub_overrides.get("player_substitute_hp") != 25
+        or "enemy_sub4" in sub_overrides  # enemy has no Sub -> no emit
+    ):
+        print(
+            "Headless battle simulator audit FAILED: substitute exporter emit "
+            f"mismatch: {sub_overrides}",
+            file=sys.stderr,
+        )
+        return 1
+    sub_patches = {
+        (p.symbol_name, p.offset): p.value
+        for p in switch_materialization_patches(sub_scenario)
+    }
+    if (
+        sub_patches.get(("wPlayerSubStatus4", 0)) != 16
+        or sub_patches.get(("wPlayerSubstituteHP", 0)) != 25
+        or ("wEnemySubStatus4", 0) in sub_patches
+        or ("wEnemySubstituteHP", 0) in sub_patches
+    ):
+        print(
+            "Headless battle simulator audit FAILED: substitute materializer "
+            f"round-trip mismatch: {sub_patches}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         "rom_switch_scenario_export_overrides: PASS "
         "accept_overrides_emit override_round_trip status_override "
-        "environment_override toxic_sleep_override stat_stages_override"
+        "environment_override toxic_sleep_override stat_stages_override "
+        "substitute_override"
     )
     # Phase 1 from docs/headless_batch_validation_implementation.md §5: batch
     # switch-materialize runner output shape. We synthesize a 3-scenario report

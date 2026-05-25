@@ -279,6 +279,31 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
             scenario["overrides"]["enemy_stat_stages"], [0, 0, 0, 2, 2]
         )
 
+    def test_accept_overrides_now_accepts_active_substitute(self) -> None:
+        state = fixture_state()
+        state["player"]["substitute"] = True
+        state["player"]["substitute_hp"] = 25
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # SUBSTATUS_SUBSTITUTE is bit 4 -> 1<<4 = 16
+        self.assertEqual(scenario["overrides"]["player_sub4"], 16)
+        self.assertEqual(scenario["overrides"]["player_substitute_hp"], 25)
+        # Enemy without substitute -> no override emitted.
+        self.assertNotIn("enemy_sub4", scenario["overrides"])
+        self.assertNotIn("enemy_substitute_hp", scenario["overrides"])
+
+    def test_accept_overrides_skips_substitute_when_absent(self) -> None:
+        state = fixture_state()
+        scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
+        # Default (no Substitute) leaves the base state's sub4 + substitute_hp
+        # bytes untouched -- mirrors the slice C-stages presence-only convention.
+        for key in (
+            "player_sub4",
+            "enemy_sub4",
+            "player_substitute_hp",
+            "enemy_substitute_hp",
+        ):
+            self.assertNotIn(key, scenario["overrides"])
+
     def test_accept_overrides_skips_stat_stages_when_all_zero(self) -> None:
         state = fixture_state()
         scenario = headless_to_switch_sack_scenario(state, accept_overrides=True)
