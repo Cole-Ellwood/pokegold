@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import random
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -22,6 +23,15 @@ TURN_ORDER_AFFECTING_ITEMS = frozenset(
 DAMAGE_VARIATION_MIN_MULTIPLIER = (85 * 255 // 100) + 1
 DAMAGE_VARIATION_MAX_MULTIPLIER = 100 * 255 // 100
 WILD_RANDOM_MOVE_SLOT_COUNT = 4
+PARTY_LENGTH = 6
+EFFECTIVE_FACTOR = 10
+TYPE_FACTOR_CONSTANTS = {
+    "NO_EFFECT": 0,
+    "NOT_VERY_EFFECTIVE": 5,
+    "EFFECTIVE": 10,
+    "MORE_EFFECTIVE": 15,
+    "SUPER_EFFECTIVE": 20,
+}
 CRITICAL_HIT_THRESHOLDS = (256 // 15, 256 // 8, 256 // 4, 256 // 3, 256 // 2, 256 // 2, 256 // 2)
 ITEM_LUCKY_PUNCH = tables.resolve_item("LUCKY_PUNCH")
 ITEM_STICK = tables.resolve_item("STICK")
@@ -39,6 +49,7 @@ HIGH_CRIT_MOVES = {
 }
 _MOVE_IDS_BY_NAME: dict[str, int] | None = None
 _CONTACT_FLAGS_BY_MOVE_ID: dict[int, bool] | None = None
+_TYPE_CHART_BY_NAME: dict[tuple[str, str], int] | None = None
 
 
 class SimulationInputError(Exception):
@@ -193,7 +204,7 @@ def simulate_battle(
         for branch in branches:
             branch_state: BattleState = branch["state"]
             if branch_state.player.hp <= 0 or branch_state.enemy.hp <= 0:
-                next_branches.append(apply_forced_replacements(branch, actions))
+                next_branches.extend(apply_forced_replacements(branch, actions, rng, stream=stream))
                 continue
             next_branches.extend(simulate_turn(branch, actions, rng, stream=stream))
         if len(next_branches) > rng.max_outcomes:
@@ -265,6 +276,8 @@ def simulate_turn(
             if action.kind == "replace":
                 next_branches.append(apply_switch_action(branch, side, action, event_type="replacement"))
                 continue
+            if action.kind == "auto_replace":
+                raise SimulationInputError(f"{side} auto_replace action requires a fainted active Pokemon")
             if action.kind != "move":
                 updated = clone_branch(branch)
                 updated["events"].append(
@@ -633,21 +646,205 @@ def apply_life_orb_recoil(branch: dict[str, Any], side: str) -> dict[str, Any]:
     return updated
 
 
-def apply_forced_replacements(branch: dict[str, Any], actions: dict[str, ActionState]) -> dict[str, Any]:
-    state: BattleState = branch["state"]
-    updated = clone_branch(branch)
+def apply_forced_replacements(
+    branch: dict[str, Any],
+    actions: dict[str, ActionState],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    branches = [clone_branch(branch)]
     for side in ("player", "enemy"):
-        active = get_side(updated["state"], side)
-        if active.hp > 0:
-            continue
-        action = actions[side]
-        if action.kind != "replace":
-            continue
-        updated = apply_switch_action(updated, side, action, event_type="replacement")
-    state_after: BattleState = updated["state"]
-    if state_after.player.hp > 0 and state_after.enemy.hp > 0:
-        updated["state"] = advance_turn(state_after)
-    return updated
+        next_branches: list[dict[str, Any]] = []
+        for working in branches:
+            active = get_side(working["state"], side)
+            if active.hp > 0:
+                next_branches.append(working)
+                continue
+            action = actions[side]
+            if action.kind == "replace":
+                next_branches.append(apply_switch_action(working, side, action, event_type="replacement"))
+            elif action.kind == "auto_replace":
+                next_branches.extend(apply_auto_replace_action(working, side, rng, stream=stream))
+            else:
+                next_branches.append(working)
+        branches = next_branches
+    completed = []
+    for working in branches:
+        state_after: BattleState = working["state"]
+        if state_after.player.hp > 0 and state_after.enemy.hp > 0:
+            working = clone_branch(working)
+            working["state"] = advance_turn(state_after)
+        completed.append(working)
+    return completed
+
+
+def apply_auto_replace_action(
+    branch: dict[str, Any],
+    side: str,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    if side != "enemy":
+        raise SimulationInputError("player auto_replace is out of scope; use an explicit replace action")
+    state: BattleState = branch["state"]
+    active = get_side(state, side)
+    if active.hp > 0:
+        raise SimulationInputError(f"{side} auto_replace action requires a fainted active Pokemon")
+    choices = auto_replacement_choice_results(state, side, rng, stream=stream)
+    out = []
+    for choice in choices:
+        updated = clone_branch(branch)
+        updated["events"].append(choice["event"])
+        updated["rng_consumed"].extend(choice["raw_values"])
+        action = ActionState(kind="replace", switch_index=choice["bench_index"])
+        out.append(apply_switch_action(updated, side, action, event_type="replacement"))
+    return out
+
+
+def auto_replacement_choice_results(
+    state: BattleState,
+    side: str,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    bench = get_bench(state, side)
+    legal = [index for index, pokemon in enumerate(bench) if pokemon.hp > 0 and index < PARTY_LENGTH]
+    if not legal:
+        raise SimulationInputError(f"{side} auto_replace has no non-fainted bench Pokemon")
+    opponent = get_side(state, "player" if side == "enemy" else "enemy")
+    evaluations = [
+        auto_replacement_candidate_evaluation(index, pokemon, opponent)
+        for index, pokemon in enumerate(bench)
+        if index < PARTY_LENGTH
+    ]
+    enemy_pressure = [
+        row for row in evaluations
+        if row["legal"] and row["candidate_has_super_effective_move"] and not row["opponent_has_super_effective_type"]
+    ]
+    if enemy_pressure:
+        return [
+            auto_replacement_choice(
+                state,
+                side,
+                enemy_pressure[0]["bench_index"],
+                "candidate_super_effective_move",
+                evaluations,
+                raw_values=[],
+            )
+        ]
+    acceptable = [
+        row for row in evaluations
+        if row["legal"] and not row["player_discouraged"]
+    ]
+    if acceptable:
+        return [
+            auto_replacement_choice(
+                state,
+                side,
+                acceptable[0]["bench_index"],
+                "not_player_discouraged",
+                evaluations,
+                raw_values=[],
+            )
+        ]
+    return random_auto_replacement_choices(state, side, legal, evaluations, rng, stream=stream)
+
+
+def auto_replacement_candidate_evaluation(
+    bench_index: int,
+    candidate: PokemonState,
+    opponent: PokemonState,
+) -> dict[str, Any]:
+    candidate_has_super_effective_move = any(
+        type_effectiveness_factor(move.move_type_name, opponent.type_names) > EFFECTIVE_FACTOR
+        for move in candidate.moves
+        if move.name != "NO_MOVE"
+    )
+    opponent_has_super_effective_type = any(
+        type_effectiveness_factor(type_name, candidate.type_names) > EFFECTIVE_FACTOR
+        for type_name in unique_type_names(opponent.type_names)
+    )
+    player_discouraged = opponent_has_super_effective_type and not candidate_has_super_effective_move
+    return {
+        "bench_index": bench_index,
+        "name": candidate.name,
+        "legal": candidate.hp > 0,
+        "candidate_has_super_effective_move": candidate_has_super_effective_move,
+        "opponent_has_super_effective_type": opponent_has_super_effective_type,
+        "player_discouraged": player_discouraged,
+    }
+
+
+def random_auto_replacement_choices(
+    state: BattleState,
+    side: str,
+    legal: list[int],
+    evaluations: list[dict[str, Any]],
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    if rng.mode == "exhaustive":
+        return [
+            auto_replacement_choice(
+                state,
+                side,
+                bench_index,
+                "random_fallback",
+                evaluations,
+                raw_values=[],
+                raw_low_bits=bench_index,
+            )
+            for bench_index in legal
+        ]
+    if stream is None:
+        raise AssertionError("fixed/sample auto replacement choice requires an RNG stream")
+    raw_values = []
+    while True:
+        raw = stream.next_byte(purpose="auto replacement choice")
+        raw_values.append(raw)
+        bench_index = raw & 7
+        if bench_index in legal:
+            return [
+                auto_replacement_choice(
+                    state,
+                    side,
+                    bench_index,
+                    "random_fallback",
+                    evaluations,
+                    raw_values=raw_values,
+                    raw_low_bits=bench_index,
+                )
+            ]
+
+
+def auto_replacement_choice(
+    state: BattleState,
+    side: str,
+    bench_index: int,
+    reason: str,
+    evaluations: list[dict[str, Any]],
+    *,
+    raw_values: list[int],
+    raw_low_bits: int | None = None,
+) -> dict[str, Any]:
+    incoming = get_bench(state, side)[bench_index]
+    event = {
+        "turn": state.turn,
+        "actor": side,
+        "type": "auto_replacement_choice",
+        "selected_bench_index": bench_index,
+        "selected": incoming.name,
+        "reason": reason,
+        "candidate_evaluations": evaluations,
+        "raw_values": raw_values,
+        "raw_low_bits": raw_low_bits,
+        "proof_status": "source_mirrored_basic_trainer_replacement_choice",
+    }
+    return {"bench_index": bench_index, "event": event, "raw_values": raw_values}
 
 
 def apply_switch_action(
@@ -1358,6 +1555,40 @@ def contact_flags_by_move_id() -> dict[int, bool]:
     return flags
 
 
+def type_effectiveness_factor(attack_type: str, defender_types: tuple[str, str]) -> int:
+    factor = EFFECTIVE_FACTOR
+    for defender_type in unique_type_names(defender_types):
+        factor = factor * source_type_chart().get((attack_type, defender_type), EFFECTIVE_FACTOR) // EFFECTIVE_FACTOR
+    return factor
+
+
+def unique_type_names(type_names: tuple[str, str]) -> tuple[str, ...]:
+    if type_names[0] == type_names[1]:
+        return (type_names[0],)
+    return type_names
+
+
+def source_type_chart() -> dict[tuple[str, str], int]:
+    global _TYPE_CHART_BY_NAME
+    if _TYPE_CHART_BY_NAME is not None:
+        return _TYPE_CHART_BY_NAME
+    chart: dict[tuple[str, str], int] = {}
+    pattern = re.compile(r"db\s+([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)\s*,\s*([A-Z0-9_]+)")
+    for raw in (tables.ROOT / "data/types/type_matchups.asm").read_text(encoding="utf-8").splitlines():
+        code = raw.split(";", 1)[0].strip()
+        if code == "db -1":
+            break
+        if not code or code == "db -2":
+            continue
+        match = pattern.fullmatch(code)
+        if match is None:
+            continue
+        attack_type, defender_type, factor_name = match.groups()
+        chart[(attack_type, defender_type)] = TYPE_FACTOR_CONSTANTS[factor_name]
+    _TYPE_CHART_BY_NAME = chart
+    return chart
+
+
 def parse_accuracy(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -> int:
     if "accuracy" in raw:
         return parse_byte(raw["accuracy"], path)
@@ -1415,6 +1646,8 @@ def parse_action(raw: Any, path: str) -> ActionState:
         if switch_index is None:
             raise SimulationInputError(f"{path}.bench_index is required for {kind} actions")
         return ActionState(kind=kind, switch_index=parse_non_negative_int(switch_index, f"{path}.bench_index"))
+    if kind == "auto_replace":
+        return ActionState(kind=kind)
     if kind == "boss_ai_selector":
         if raw.get("execute") is True:
             return ActionState(kind="boss_ai_selector_move", selector=raw)
@@ -1733,13 +1966,19 @@ def coverage_report() -> dict[str, Any]:
                 "id": "multi_turn_selected_action_progression",
                 "source": "tools.headless_battle.simulator.simulate_battle",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "A turns[] list carries HP/RNG state forward across selected-action turns, supports caller-selected switch actions, and supports caller-supplied replacement actions after a KO. Automatic action choice and automatic replacement selection are still out of scope.",
+                "notes": "A turns[] list carries HP/RNG state forward across selected-action turns, supports caller-selected switch actions, caller-supplied replacement actions after a KO, and explicit enemy auto_replace actions. Automatic action choice is still out of scope.",
             },
             {
                 "id": "selected_switch_and_replacement",
                 "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, and replace actions can continue a planned battle after a KO. Pursuit, Spikes, switch-in effects, forced prompts, and automatic replacement choice remain out of scope.",
+                "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, and replace actions can continue a planned battle after a KO. Pursuit, Spikes, switch-in effects, and forced prompts remain out of scope.",
+            },
+            {
+                "id": "auto_replacement_choice_basic_type_chart",
+                "source": "engine/battle/core.asm:FindMonInOTPartyToSwitchIntoBattle + data/types/type_matchups.asm",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Enemy auto_replace actions choose from living bench Pokemon using the source-shaped trainer replacement preference: prefer candidates with a super-effective move, otherwise avoid candidates the player's public types hit super-effectively, otherwise use BattleRandom-style low-three-bit rejection. Dragon's Majesty, Air Balloon, Foresight/identified state, trainer party loading, player prompt flow, and switch-in effects remain out of scope.",
             },
             {
                 "id": "boss_ai_selector_from_post_score_bytes",
@@ -1761,9 +2000,9 @@ def coverage_report() -> dict[str, Any]:
             },
         ],
         "out_of_scope": [
-            "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, automatic replacement selection, items as actions, and trainer item turns",
+            "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, items as actions, and trainer item turns",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
-            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
             "accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive accuracy bonuses",
             "status application, sleep, freeze, paralysis, volatile effects, weather, item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
@@ -1835,6 +2074,11 @@ def format_text(report: dict[str, Any]) -> str:
                 lines.append(
                     f"  turn {event['turn']} {event['source_item']} heal -> "
                     f"{event['actor']} {event['heal']} hp"
+                )
+            elif event["type"] == "auto_replacement_choice":
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} auto_replace -> "
+                    f"{event['selected']} bench={event['selected_bench_index']} reason={event['reason']}"
                 )
             else:
                 lines.append(f"  turn {event.get('turn')} {event.get('actor', '')} {event['type']}")

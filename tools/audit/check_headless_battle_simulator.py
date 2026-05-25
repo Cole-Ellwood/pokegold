@@ -240,6 +240,43 @@ def main() -> int:
         )
         return 1
     print("selected_switch_and_replacement: PASS switch_then_replace")
+    auto_replace_payload = scenario_template()
+    auto_replace_payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+    auto_replace_payload["state"]["enemy"]["hp"] = 0
+    auto_replace_payload["state"]["enemy"]["bench"] = [
+        {
+            "name": "NEUTRAL_RESERVE",
+            "hp": 20,
+            "max_hp": 20,
+            "types": ["NORMAL", "NORMAL"],
+            "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+        },
+        {
+            "name": "WATER_RESERVE",
+            "hp": 20,
+            "max_hp": 20,
+            "types": ["WATER", "WATER"],
+            "moves": [{"name": "WATER_GUN", "type": "WATER", "bp": 40}],
+        },
+    ]
+    auto_replace_payload["actions"]["enemy"] = {"type": "auto_replace"}
+    auto_replace_report = simulate_payload(auto_replace_payload)
+    auto_replace_events = auto_replace_report["outcomes"][0]["events"]
+    auto_replace_choices = [
+        event for event in auto_replace_events
+        if event.get("type") == "auto_replacement_choice"
+    ]
+    if (
+        len(auto_replace_choices) != 1
+        or auto_replace_choices[0].get("selected_bench_index") != 1
+        or auto_replace_choices[0].get("reason") != "candidate_super_effective_move"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: auto replacement mismatch: {auto_replace_report}",
+            file=sys.stderr,
+        )
+        return 1
+    print("auto_replacement_choice_basic_type_chart: PASS selected=WATER_RESERVE")
     miss_payload = scenario_template()
     miss_payload["state"]["player"]["moves"][0]["accuracy"] = 242
     miss_payload["state"]["enemy"]["moves"][0]["bp"] = 0

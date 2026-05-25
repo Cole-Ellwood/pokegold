@@ -365,6 +365,158 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(outcome["state"]["enemy"]["name"], "ENEMY_RESERVE")
         self.assertEqual(outcome["state"]["enemy"]["hp"], 0)
 
+    def test_enemy_auto_replace_prefers_super_effective_candidate(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "NEUTRAL_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+            {
+                "name": "WATER_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["WATER", "WATER"],
+                "moves": [{"name": "WATER_GUN", "type": "WATER", "bp": 40}],
+            },
+        ]
+        payload["actions"]["enemy"] = {"type": "auto_replace"}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        choice = next(event for event in outcome["events"] if event["type"] == "auto_replacement_choice")
+        self.assertEqual(choice["selected_bench_index"], 1)
+        self.assertEqual(choice["reason"], "candidate_super_effective_move")
+        self.assertEqual(outcome["state"]["enemy"]["name"], "WATER_RESERVE")
+
+    def test_enemy_auto_replace_avoids_player_super_effective_candidate(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GRASS_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["GRASS", "GRASS"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+            {
+                "name": "NEUTRAL_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["NORMAL", "NORMAL"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+        ]
+        payload["actions"]["enemy"] = {"type": "auto_replace"}
+
+        report = simulate_payload(payload)
+
+        choice = next(event for event in report["outcomes"][0]["events"] if event["type"] == "auto_replacement_choice")
+        self.assertEqual(choice["selected_bench_index"], 1)
+        self.assertEqual(choice["reason"], "not_player_discouraged")
+
+    def test_enemy_auto_replace_keeps_mutual_pressure_candidate_acceptable(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "MUTUAL_PRESSURE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["GRASS", "GRASS"],
+                "moves": [{"name": "ROCK_HIT", "type": "ROCK", "bp": 40}],
+            },
+            {
+                "name": "BAD_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["BUG", "BUG"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+        ]
+        payload["actions"]["enemy"] = {"type": "auto_replace"}
+
+        report = simulate_payload(payload)
+
+        choice = next(event for event in report["outcomes"][0]["events"] if event["type"] == "auto_replacement_choice")
+        self.assertEqual(choice["selected_bench_index"], 0)
+        self.assertEqual(choice["reason"], "not_player_discouraged")
+        self.assertTrue(choice["candidate_evaluations"][0]["candidate_has_super_effective_move"])
+        self.assertTrue(choice["candidate_evaluations"][0]["opponent_has_super_effective_type"])
+
+    def test_enemy_auto_replace_random_fallback_rejects_invalid_slots(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GRASS_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["GRASS", "GRASS"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+            {
+                "name": "BUG_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["BUG", "BUG"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+        ]
+        payload["actions"]["enemy"] = {"type": "auto_replace"}
+        payload["rng"] = {"mode": "fixed", "values": [5, 1]}
+
+        report = simulate_payload(payload)
+
+        choice = next(event for event in report["outcomes"][0]["events"] if event["type"] == "auto_replacement_choice")
+        self.assertEqual(choice["selected_bench_index"], 1)
+        self.assertEqual(choice["reason"], "random_fallback")
+        self.assertEqual(choice["raw_values"], [5, 1])
+
+    def test_enemy_auto_replace_exhaustive_fallback_branches_legal_slots(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["types"] = ["FIRE", "FIRE"]
+        payload["state"]["enemy"]["hp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GRASS_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["GRASS", "GRASS"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+            {
+                "name": "BUG_RESERVE",
+                "hp": 20,
+                "max_hp": 20,
+                "types": ["BUG", "BUG"],
+                "moves": [{"name": "TACKLE", "type": "NORMAL", "bp": 40}],
+            },
+        ]
+        payload["actions"]["enemy"] = {"type": "auto_replace"}
+        payload["rng"] = {"mode": "exhaustive"}
+
+        report = simulate_payload(payload)
+
+        selected_slots = {
+            next(event for event in outcome["events"] if event["type"] == "auto_replacement_choice")[
+                "selected_bench_index"
+            ]
+            for outcome in report["outcomes"]
+        }
+        self.assertEqual(report["outcome_count"], 2)
+        self.assertEqual(selected_slots, {0, 1})
+
     def test_turns_list_progresses_hp_across_selected_turns(self) -> None:
         payload = scenario_template()
         payload["state"]["enemy"]["moves"][0]["bp"] = 0
@@ -531,11 +683,12 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("selected_turn_order_priority_speed", mirrored)
         self.assertIn("selected_switch_and_replacement", mirrored)
+        self.assertIn("auto_replacement_choice_basic_type_chart", mirrored)
         self.assertIn("boss_ai_selector_from_post_score_bytes", mirrored)
         self.assertIn("boss_ai_selector_move_execution", mirrored)
         self.assertIn("wild_random_move_choice", mirrored)
         self.assertIn(
-            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/critical hits/accuracy/damage variation",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation",
             "\n".join(report["coverage"]["out_of_scope"]),
         )
 
