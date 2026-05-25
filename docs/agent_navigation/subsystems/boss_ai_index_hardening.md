@@ -25,9 +25,9 @@ edits, all worth landing as one commit:
    inline boss-AI effect tables in the split Boss AI source. Closes a real
    misread risk: the prior phrasing implied editing those data files would
    change boss behavior directly.
-2. New row "Per-boss role-bias dispatcher" pointing to `.ApplyRoleBias:2075`
-   and a per-boss branch row listing `.falkner:2109`, `.rival:2101`, ... ,
-   `.champion:2187`. Previously you'd have to grep.
+2. Per-boss role-bias rows were removed after the source role-bias
+   dispatcher/tables were deleted; boss identity now comes from roster,
+   moves/items, tier, plans, and public battle state.
 3. `BossAITierRampMap` row now names the actual file/line:
    `data/trainers/ai_tiers.asm:51`. The old index only pointed at a
    monolith-local comment.
@@ -87,7 +87,7 @@ own subsection just above it):
 | --- | --- |
 | Vanilla AI effect lists (`useful_moves`, `risky_effects`, `stall_moves`, etc.) | `data/battle/ai/*.asm` (consumed by `engine/battle/ai/scoring.asm`) |
 | Boss AI effect tables (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`) | `engine/battle/ai/boss_policy_move.asm` |
-| Per-boss role-effect tables (`BossAIChuckRoleEffects` etc.) | `engine/battle/ai/boss_policy_move.asm` |
+| Per-class role/switch-threshold bias | Removed from `engine/battle/ai/boss_policy_move.asm` and `engine/battle/ai/boss_policy_switch.asm` |
 | Per-trainer tier (class+id → EARLY/MID/LATE) | `BossAITierMap:1` in `data/trainers/ai_tiers.asm`; consumed by `LoadBossAITier:69` in `engine/battle/read_trainer_attributes.asm` |
 | Per-class tier-weight-row override | `BossAITierRampMap:51` in `data/trainers/ai_tiers.asm` (default = `tier - 1`, set at `LoadBossAITier:97-98`) |
 | Tier weight table (rows indexed by tier-weight-row) | `BossAITierWeights:5026` in `engine/battle/ai/boss_policy_move.asm` |
