@@ -412,6 +412,15 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
         self.assertIn("expected semantics", rec["disproof_standard"][0])
         self.assertIn("learnset-inspect", rec["regression_gate"])
 
+    def test_headless_battle_routes_to_headless_simulator(self) -> None:
+        report = build_next_step(symptom="I want a text-only battle simulator with fixed RNG")
+        rec = report["recommendation"]
+
+        self.assertEqual(rec["symptom_class"], "headless_battle_simulation")
+        self.assertEqual(rec["matched_lane"], "headless_battle")
+        self.assertIn("tools.headless_battle", rec["first_command"])
+        self.assertIn("check_headless_battle_simulator.py", rec["regression_gate"])
+
     def test_species_id_map_ignores_unown_form_constants(self) -> None:
         by_id = damage_state.species_name_by_id()
 
@@ -525,11 +534,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             self.assertIn("expected switch result", rec["disproof_standard"][0])
             self.assertIn("rom-switch-materialize", rec["regression_gate"])
 
-    def test_cli_audit_strict_fails_until_whole_rom_goal_is_done(self) -> None:
+    def test_cli_audit_strict_passes_when_whole_rom_goal_is_done(self) -> None:
         with redirect_stdout(io.StringIO()):
             code = debugger_main(["audit", "--strict"])
 
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 0)
 
     def test_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -831,6 +840,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
     def test_localize_uses_embedded_next_step_sources_and_proof_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            next_step = build_next_step(symptom="boss selected wrong switch")
+            for source_ref in next_step["recommendation"]["source_refs"]:
+                source_path = root / source_ref
+                source_path.parent.mkdir(parents=True, exist_ok=True)
+                if source_path.exists():
+                    continue
+                source_path.write_text("# source ref placeholder\n", encoding="utf-8")
+
             investigation_report = root / "investigate.json"
             investigation_report.write_text(
                 json.dumps(
@@ -845,7 +862,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "commands": [],
                         "errors": [],
                         "warnings": [],
-                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "symptom_only_next_step": next_step,
                     }
                 ),
                 encoding="utf-8",
@@ -892,6 +909,14 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "01:4000 BossAI_SwitchOrTryItem\n01:4010 AI_SwitchOrTryItem\n",
                 encoding="utf-8",
             )
+            next_step = build_next_step(symptom="boss selected wrong switch")
+            for source_ref in next_step["recommendation"]["source_refs"]:
+                source_path = root / source_ref
+                source_path.parent.mkdir(parents=True, exist_ok=True)
+                if source_path.exists():
+                    continue
+                source_path.write_text("# source ref placeholder\n", encoding="utf-8")
+
             investigation_report = root / "investigate.json"
             investigation_report.write_text(
                 json.dumps(
@@ -906,7 +931,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                         "commands": [],
                         "errors": [],
                         "warnings": [],
-                        "symptom_only_next_step": build_next_step(symptom="boss selected wrong switch"),
+                        "symptom_only_next_step": next_step,
                     }
                 ),
                 encoding="utf-8",

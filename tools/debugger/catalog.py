@@ -84,6 +84,20 @@ SUBSYSTEMS = (
         ),
     ),
     Subsystem(
+        id="headless_battle",
+        title="Headless battle simulator",
+        scope="Text/JSON no-GUI selected-turn battle simulation with explicit proof labels.",
+        entrypoints=(
+            "python -m tools.headless_battle --template",
+            "python tools\\audit\\check_headless_battle_simulator.py",
+        ),
+        evidence_paths=(
+            "tools/headless_battle/simulator.py",
+            "tools/headless_battle/README.md",
+            "tools/audit/check_headless_battle_simulator.py",
+        ),
+    ),
+    Subsystem(
         id="trace_runtime",
         title="Trace runtime",
         scope="PyBoy runtime helpers, symbol parsing, trace capture, save-state replay plumbing.",
@@ -141,6 +155,32 @@ TRIAGE_RULES = (
             "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
             "python tools\\audit\\check_damage_ai_report.py",
             "python tools\\audit\\check_move_score_probe.py",
+        ),
+    ),
+    TriageRule(
+        id="headless_battle",
+        title="Headless text/JSON selected-turn battle simulation",
+        path_prefixes=(
+            "tools/headless_battle/",
+            "tools/audit/check_headless_battle_simulator.py",
+        ),
+        symptom_keywords=(
+            "headless battle",
+            "battle simulator",
+            "simulate a battle",
+            "text-only battle",
+            "text only battle",
+            "no gui",
+            "fixed rng",
+            "exhaustive rng",
+        ),
+        reason="The no-GUI selected-turn simulator has its own proof-labeled text/JSON path and audit gate.",
+        commands=(
+            "python -m tools.headless_battle --template",
+            "python tools\\audit\\check_headless_battle_simulator.py",
+        ),
+        gaps=(
+            "Full battle automation, switch flow, speed ties, sample/exhaustive RNG, consumed fixed RNG bytes, damage variation, accuracy, status, live Boss AI scoring, and scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(

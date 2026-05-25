@@ -93,6 +93,25 @@ Current completion source of truth:
 branch handoff notes as current debugger truth unless the task explicitly asks
 to inspect those copies.
 
+### Headless Battle Slice
+
+For no-GUI, text/JSON selected-turn battle questions, start with:
+
+```powershell
+python -m tools.headless_battle --template
+python -m tools.headless_battle --scenario <scenario.json> --json
+python tools\audit\check_headless_battle_simulator.py
+```
+
+Current scope is intentionally narrow: move-vs-move selected turns with fixed
+deterministic RNG and no consumed RNG bytes, explicit stats or species
+shorthand, pre-variation HP damage delegated to the existing ROM-backed damage
+oracle, and post-score Boss AI selector replay from known score bytes. Reports
+label byte-proven, source-mirrored, and out-of-scope surfaces; do not claim
+full battle automation, status, accuracy, switch flow, damage variation,
+sample/exhaustive RNG, live Boss AI scoring, or scripts until the simulator
+report and audit say that surface exists.
+
 ## Truth Precedence
 
 1. Current source files and linker outputs (`pokegold.map`, `pokegold.sym`).

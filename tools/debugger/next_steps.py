@@ -262,6 +262,25 @@ NEXT_STEP_ROWS = [
         "escalation_command": "python -m tools.damage_debugger.clobber_smoke",
     },
     {
+        "symptom_class": "headless_battle_simulation",
+        "matched_lane": "headless_battle",
+        "title": "Headless text/JSON selected-turn battle simulation",
+        "keywords": [
+            "headless battle",
+            "battle simulator",
+            "simulate a battle",
+            "text-only battle",
+            "text only battle",
+            "no gui",
+            "fixed rng",
+            "exhaustive rng",
+        ],
+        "first_command": "python -m tools.headless_battle --template",
+        "required_inputs": ["scenario JSON with active mons, stats or species shorthand, selected actions, and fixed deterministic RNG"],
+        "proof_limit": "First selected-turn slice: move-vs-move priority/unequal-raw-speed order, fixed RNG with no consumed RNG bytes, pre-variation damage delegated to the existing ROM-backed damage oracle, and post-score Boss AI selector replay from known score bytes. Full battle automation, switch flow, damage variation, speed ties, accuracy, status, sample/exhaustive RNG, live Boss AI scoring, and scripts remain out of scope until separately implemented and proven.",
+        "escalation_command": "python tools\\audit\\check_headless_battle_simulator.py",
+    },
+    {
         "symptom_class": "type_chart_navigation",
         "matched_lane": "pokemon_semantics",
         "title": "Type matchup table and runtime reader",
@@ -416,6 +435,7 @@ REGRESSION_GATES = {
     "qol_gate_design": "python tools\\audit\\check_navigation_floor.py",
     "damage_math_hazard": "python tools\\audit\\check_battle_math_safety.py",
     "damage_matchup_cli": "python -m tools.damage_debugger.clobber_smoke",
+    "headless_battle_simulation": "python tools\\audit\\check_headless_battle_simulator.py",
     "type_chart_navigation": "python tools\\audit\\check_release_smoke.py",
     "add_new_move_navigation": "python tools\\audit\\check_release_smoke.py",
     "boss_ai_navigation": "python tools\\audit\\check_boss_ai_no_cheat.py",
@@ -482,6 +502,11 @@ SOURCE_REFS = {
         "tools/boss_ai_debugger/damage_ai_report.py",
         "tools/boss_ai_debugger/rom_scenarios.py",
         "engine/battle/ai/boss_policy_move.asm",
+    ],
+    "headless_battle_simulation": [
+        "tools/headless_battle/simulator.py",
+        "tools/headless_battle/README.md",
+        "tools/audit/check_headless_battle_simulator.py",
     ],
     "learnset_semantics": [
         "tools/debugger/pokemon_semantics.py",
@@ -748,6 +773,9 @@ EVIDENCE_STANDARDS = {
     "damage_matchup_cli": [
         "The answer points to the damage debugger matchup/oracle tools and gives a current concrete command such as python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json before relying on memory.",
     ],
+    "headless_battle_simulation": [
+        "The answer routes to tools.headless_battle, uses a JSON state/actions/fixed-RNG scenario, and preserves proof labels: pre-variation damage is delegated to the existing ROM-backed damage oracle, selected-turn priority/unequal-raw-speed order is source-mirrored, post-score Boss AI selector replay starts from known score bytes, and unimplemented RNG/full-battle mechanics remain out of scope.",
+    ],
     "type_chart_navigation": [
         "The answer names data/types/type_matchups.asm, constants/type_constants.asm, and the runtime reader in engine/battle/effect_commands.asm before suggesting any matchup edit.",
     ],
@@ -856,6 +884,9 @@ DISPROOF_STANDARDS = {
     ],
     "damage_matchup_cli": [
         "If matchup output or clobber smoke disagrees with the claimed damage path, defer to current debugger evidence rather than memory.",
+    ],
+    "headless_battle_simulation": [
+        "If the report claims full battle automation, switch flow, speed ties, sample/exhaustive RNG, damage variation, accuracy, status, live Boss AI scoring, scripts, or byte-proven turn sequencing beyond the listed coverage labels, reject the route as overclaimed.",
     ],
     "type_chart_navigation": [
         "If the answer returns engine battle code without naming data/types/type_matchups.asm, it missed the matchup data file.",
