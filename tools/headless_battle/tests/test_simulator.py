@@ -1136,6 +1136,133 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         with self.assertRaisesRegex(SimulationInputError, "ranged switch probability"):
             simulate_payload(payload)
 
+    def test_boss_ai_switch_roll_report_only_reports_ranged_probabilities(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "report_only": True,
+            "switch_roll": {
+                "available": True,
+                "confidence": 90,
+                "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
+                "threshold_exact": True,
+                "probability_exact": False,
+                "base_threshold": 74,
+                "assumed_effective_threshold": 74,
+                "possible_effective_thresholds": [74, 82, 84, 92],
+                "possible_switch_probabilities": [
+                    {"effective_threshold": 74, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
+                    {"effective_threshold": 82, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
+                    {"effective_threshold": 84, "switch_chance_threshold": 192, "switch_probability": 192 / 256},
+                    {"effective_threshold": 92, "switch_chance_threshold": 0, "switch_probability": 0.0},
+                ],
+                "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            },
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        outcome = simulate_payload(payload)["outcomes"][0]
+        report_event = outcome["events"][0]
+
+        self.assertEqual(report_event["type"], "boss_ai_switch_roll_report")
+        self.assertEqual(report_event["selected_action"], "report_only_no_branching")
+        self.assertEqual(report_event["roll_source"], "rom_switch_materialization_switch_roll_report")
+        self.assertFalse(report_event["probability_exact"])
+        self.assertEqual(report_event["raw_values"], [])
+        self.assertEqual(report_event["fallback_action_kind"], "move")
+        self.assertEqual(report_event["assumed_effective_threshold"], 74)
+        self.assertEqual(len(report_event["possible_switch_probabilities"]), 4)
+        self.assertEqual(report_event["switch_probability_range"], [0.0, 230 / 256])
+        self.assertEqual(
+            report_event["proof_status"],
+            "source_mirrored_ranged_switch_probability_report",
+        )
+        self.assertEqual(outcome.get("rng_consumed"), [])
+
+    def test_boss_ai_switch_roll_report_only_with_exact_roll_does_not_branch(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "report_only": True,
+            "switch_roll": {
+                "available": True,
+                "confidence": 90,
+                "threshold_source": "explicit_switch_threshold",
+                "threshold_exact": True,
+                "probability_exact": True,
+                "base_threshold": 74,
+                "assumed_effective_threshold": 70,
+                "possible_effective_thresholds": [70],
+                "switch_chance_threshold": 230,
+                "switch_probability": 230 / 256,
+                "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            },
+            "fallback": {"type": "move", "move": 0},
+        }
+        payload["rng"] = {"mode": "fixed", "values": [0]}
+
+        outcome = simulate_payload(payload)["outcomes"][0]
+        report_event = outcome["events"][0]
+
+        self.assertEqual(report_event["type"], "boss_ai_switch_roll_report")
+        self.assertEqual(report_event["selected_action"], "report_only_no_branching")
+        self.assertTrue(report_event["probability_exact"])
+        self.assertEqual(
+            report_event["roll_source"],
+            "rom_switch_materialization_switch_roll_report_only_exact",
+        )
+        self.assertEqual(report_event["switch_probability_range"], [230 / 256, 230 / 256])
+        self.assertEqual(outcome.get("rng_consumed"), [])
+
+    def test_boss_ai_switch_roll_report_only_still_rejects_unavailable(self) -> None:
+        payload = scenario_template()
+        payload["state"]["enemy"]["bench"] = [
+            {
+                "name": "GENGAR",
+                "hp": 30,
+                "max_hp": 30,
+                "types": ["GHOST", "POISON"],
+                "moves": [{"name": "LICK", "type": "GHOST", "bp": 20}],
+            }
+        ]
+        payload["actions"]["enemy"] = {
+            "type": "boss_ai_switch_roll",
+            "candidate_bench_index": 0,
+            "report_only": True,
+            "switch_roll": {
+                "available": False,
+                "reason": "no_switch_dispatch_observation",
+            },
+        }
+
+        with self.assertRaisesRegex(SimulationInputError, "no_switch_dispatch_observation"):
+            simulate_payload(payload)
+
     def test_wild_random_move_rejects_zero_pp_slot_then_executes(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["moves"][0]["bp"] = 0

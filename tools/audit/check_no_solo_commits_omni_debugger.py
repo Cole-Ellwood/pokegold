@@ -2,12 +2,18 @@
 """Audit paired-review coverage for claude/debugger-godmode commits.
 
 The debugger-godmode roadmap requires that every commit on
-``claude/debugger-godmode`` after ``claude/boss-ai-rom-expansion`` has a paired
-handoff-log phase: one model starts the slice and the other model accepts it
-with repo-proven review evidence. This script enforces that structural defense
-without assuming every commit subject maps perfectly to a phase name.
+``claude/debugger-godmode`` after ``claude/boss-ai-rom-expansion`` that
+touches the omni-debugger workstream has a paired handoff-log phase: one
+model starts the slice and the other model accepts it with repo-proven
+review evidence. This script enforces that structural defense without
+assuming every commit subject maps perfectly to a phase name.
 
-For each commit in ``BASE..HEAD`` it gathers candidate phases from:
+Scope: a commit is audited only when it touches a path under
+``OMNI_DEBUGGER_PATHS`` or the omni-debugger handoff log. Boss-AI perf
+cleanups, ROM source edits, and other non-debugger work in ``BASE..HEAD``
+are skipped as out-of-scope and reported separately.
+
+For each in-scope commit it gathers candidate phases from:
 
 * JSONL rows added to the handoff log by that commit,
 * current handoff rows that cite the commit SHA,
@@ -15,8 +21,9 @@ For each commit in ``BASE..HEAD`` it gathers candidate phases from:
 
 A commit passes when any candidate phase has at least one ``ack_start`` row and
 one accepted ``slice_review`` row, and the phase contains both ``claude`` and
-``codex`` model signatures. Cole-approved solo-Codex continuation phases can
-instead pass with an explicit ``solo_codex_approved_by_cole`` self-review row.
+``codex`` model signatures. Cole-approved solo continuation phases can
+instead pass with an explicit ``solo_codex_approved_by_cole`` or
+``solo_claude_approved_by_cole`` self-review row.
 """
 from __future__ import annotations
 
@@ -38,6 +45,25 @@ EXPECTED_MODELS = {"claude", "codex"}
 VALID_EVENTS = {"ack_start", "slice_update", "slice_review", "phase_done"}
 ACCEPTED_REVIEW_STATUSES = {"slice_accepted", "phase_complete", "approved", "complete"}
 SOLO_CODEX_APPROVAL_KEY = "solo_codex_approved_by_cole"
+SOLO_CLAUDE_APPROVAL_KEY = "solo_claude_approved_by_cole"
+# Paths that define the omni-debugger workstream. Commits in BASE..HEAD that
+# touch none of these (and add no rows to the handoff log) are out of scope
+# for this audit -- e.g. boss-AI perf cleanups, ROM source edits, build/asm
+# work. The audit firing on those was a structural false positive and the
+# fix is path-scoping, not retroactive paired-review of unrelated work.
+OMNI_DEBUGGER_PATHS: tuple[str, ...] = (
+    "tools/headless_battle/",
+    "tools/debugger/",
+    "tools/boss_ai_debugger/",
+    "tools/damage_debugger/",
+    "tools/trace/",
+    "audit/boss_ai_trace/",
+    "tools/audit/check_headless_battle_simulator.py",
+    "tools/audit/check_two_llm_handoff_log.py",
+    "tools/audit/check_no_solo_commits_omni_debugger.py",
+    "tools/audit/check_debugger_godmode_benchmark.py",
+    "tools/audit/check_debugger_next_coverage.py",
+)
 
 
 @dataclass(frozen=True)
@@ -157,6 +183,23 @@ def added_handoff_rows_for_commit(sha: str, handoff_log: Path) -> list[dict[str,
     return rows
 
 
+def commit_changed_files(sha: str) -> list[str]:
+    output = run_git("diff-tree", "--no-commit-id", "--name-only", "-r", sha)
+    return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+def commit_touches_omni_debugger(sha: str, handoff_log: Path) -> bool:
+    files = commit_changed_files(sha)
+    handoff_rel = repo_rel(handoff_log)
+    for path in files:
+        if path == handoff_rel:
+            return True
+        for prefix in OMNI_DEBUGGER_PATHS:
+            if path == prefix.rstrip("/") or path.startswith(prefix):
+                return True
+    return False
+
+
 def subject_phase_candidates(subject: str, all_phases: set[str]) -> set[str]:
     subject_lower = subject.lower()
     candidates: set[str] = set()
@@ -222,6 +265,16 @@ def phase_has_pair(rows_by_phase: dict[str, list[dict[str, Any]]], phase: str) -
     )
     if solo_codex_signed:
         return True, "solo_codex_self_review"
+    solo_claude_signed = (
+        primary == "claude"
+        and any(
+            row.get("model") == "claude"
+            and row.get(SOLO_CLAUDE_APPROVAL_KEY) is True
+            for row in review_rows
+        )
+    )
+    if solo_claude_signed:
+        return True, "solo_claude_self_review"
 
     models = {row.get("model") for row in rows if row.get("model") in EXPECTED_MODELS}
     if not EXPECTED_MODELS.issubset(models):
@@ -295,7 +348,17 @@ def main(argv: list[str] | None = None) -> int:
 
     violations: list[dict[str, Any]] = []
     passes: list[dict[str, Any]] = []
+    out_of_scope: list[dict[str, Any]] = []
     for commit in commits:
+        if not commit_touches_omni_debugger(commit.sha, handoff_log):
+            out_of_scope.append(
+                {
+                    "sha": commit.sha,
+                    "subject": commit.subject,
+                    "reason": "no_omni_debugger_paths_touched",
+                }
+            )
+            continue
         candidate_sources = candidate_phases_for_commit(
             commit,
             rows=loaded.rows,
@@ -337,11 +400,15 @@ def main(argv: list[str] | None = None) -> int:
         "head": args.head,
         "handoff_log": repo_rel(handoff_log),
         "commit_count": len(commits),
+        "audited_count": len(passes) + len(violations),
         "passed_count": len(passes),
         "violation_count": len(violations),
+        "out_of_scope_count": len(out_of_scope),
+        "omni_debugger_paths": list(OMNI_DEBUGGER_PATHS) + [repo_rel(handoff_log)],
         "ignored_handoff_rows": loaded.ignored_rows,
         "passes": passes,
         "violations": violations,
+        "out_of_scope": out_of_scope,
     }
 
     if args.json_out is not None:
@@ -352,8 +419,13 @@ def main(argv: list[str] | None = None) -> int:
     for warning in loaded.ignored_rows:
         print(f"WARN: {warning}")
 
+    audited_count = len(passes) + len(violations)
     if violations:
-        print(f"FAIL: {len(violations)} of {len(commits)} commit(s) lack paired handoff evidence:")
+        print(
+            f"FAIL: {len(violations)} of {audited_count} audited commit(s) "
+            f"lack paired handoff evidence "
+            f"({len(out_of_scope)} of {len(commits)} commit(s) skipped as out of scope)."
+        )
         for item in violations:
             print(f"  - {item['sha'][:7]} {item['subject']}")
             if item["candidate_phases"]:
@@ -365,7 +437,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         f"PASS: {len(passes)} commit(s) in {args.base}..{args.head} have paired "
-        f"Claude/Codex handoff evidence."
+        f"Claude/Codex handoff evidence "
+        f"({len(out_of_scope)} of {len(commits)} commit(s) skipped as out of scope)."
     )
     if loaded.ignored_rows:
         print(

@@ -973,9 +973,55 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+    switch_roll_report = scenario_template()
+    switch_roll_report["state"]["player"]["moves"][0]["bp"] = 0
+    switch_roll_report["state"]["enemy"]["moves"][0]["bp"] = 0
+    switch_roll_report["state"]["enemy"]["bench"] = switch_roll_payload["state"]["enemy"]["bench"]
+    switch_roll_report["actions"]["enemy"] = {
+        "type": "boss_ai_switch_roll",
+        "candidate_bench_index": 0,
+        "report_only": True,
+        "switch_roll": {
+            "available": True,
+            "confidence": 90,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
+            "threshold_exact": True,
+            "probability_exact": False,
+            "base_threshold": 74,
+            "assumed_effective_threshold": 74,
+            "possible_effective_thresholds": [74, 82, 84, 92],
+            "possible_switch_probabilities": [
+                {"effective_threshold": 74, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
+                {"effective_threshold": 82, "switch_chance_threshold": 230, "switch_probability": 230 / 256},
+                {"effective_threshold": 84, "switch_chance_threshold": 192, "switch_probability": 192 / 256},
+                {"effective_threshold": 92, "switch_chance_threshold": 0, "switch_probability": 0.0},
+            ],
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+        },
+        "fallback": {"type": "move", "move": 0},
+    }
+    switch_roll_report["rng"] = {"mode": "fixed", "values": [0]}
+    report_outcome = simulate_payload(switch_roll_report)["outcomes"][0]
+    report_event = report_outcome["events"][0]
+    if (
+        report_event.get("type") != "boss_ai_switch_roll_report"
+        or report_event.get("selected_action") != "report_only_no_branching"
+        or report_event.get("probability_exact") is not False
+        or report_event.get("raw_values") != []
+        or report_event.get("switch_probability_range") != [0.0, 230 / 256]
+        or report_event.get("roll_source") != "rom_switch_materialization_switch_roll_report"
+        or report_event.get("proof_status") != "source_mirrored_ranged_switch_probability_report"
+        or report_outcome.get("rng_consumed") != []
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: ranged switch-roll report mismatch: {report_outcome}",
+            file=sys.stderr,
+        )
+        return 1
     print(
         "boss_ai_switch_roll: PASS "
-        "fixed_switch no_roll_stay exhaustive_switch_or_stay materialized_exact_bridge"
+        "fixed_switch no_roll_stay exhaustive_switch_or_stay materialized_exact_bridge "
+        "ranged_report_only"
     )
     wild_payload = scenario_template()
     wild_payload["state"]["player"]["moves"][0]["bp"] = 0

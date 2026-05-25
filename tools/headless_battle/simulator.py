@@ -3235,7 +3235,8 @@ def boss_ai_switch_roll_results(
     if action.selector is None:
         raise SimulationInputError("boss_ai_switch_roll requires selector data")
     selector = action.selector
-    roll_source = boss_ai_switch_roll_source(selector)
+    report_only = bool(selector.get("report_only"))
+    roll_source = boss_ai_switch_roll_source(selector, report_only=report_only)
     confidence = roll_source["confidence"]
     threshold = roll_source["threshold"]
     candidate_index = parse_non_negative_int(
@@ -3244,6 +3245,18 @@ def boss_ai_switch_roll_results(
     )
     validate_switch_index(state, side, candidate_index)
     fallback = action.fallback or ActionState(kind="move", move_index=0)
+    if report_only:
+        return [
+            boss_ai_switch_roll_report_selection(
+                state,
+                side,
+                candidate_index,
+                confidence,
+                threshold,
+                action=fallback,
+                roll_source=roll_source,
+            )
+        ]
     chance = boss_ai_switch_roll_threshold(confidence, threshold)
     if chance == 0:
         return [
@@ -3315,10 +3328,15 @@ def boss_ai_switch_roll_results(
     ]
 
 
-def boss_ai_switch_roll_source(selector: dict[str, Any]) -> dict[str, Any]:
+def boss_ai_switch_roll_source(
+    selector: dict[str, Any],
+    *,
+    report_only: bool = False,
+) -> dict[str, Any]:
     roll = selector.get("switch_roll", selector.get("rom_switch_roll"))
     source = "scenario_supplied_confidence_threshold"
     event_fields: dict[str, Any] = {}
+    ranged_roll: dict[str, Any] | None = None
     if roll is not None:
         if not isinstance(roll, dict):
             raise SimulationInputError("boss_ai_switch_roll.switch_roll must be an object")
@@ -3326,10 +3344,13 @@ def boss_ai_switch_roll_source(selector: dict[str, Any]) -> dict[str, Any]:
             reason = roll.get("reason", "unknown")
             raise SimulationInputError(f"boss_ai_switch_roll.switch_roll is unavailable: {reason}")
         if roll.get("probability_exact") is False:
-            raise SimulationInputError(
-                "boss_ai_switch_roll.switch_roll has a ranged switch probability; "
-                "provide an exact threshold before executable branching"
-            )
+            if not report_only:
+                raise SimulationInputError(
+                    "boss_ai_switch_roll.switch_roll has a ranged switch probability; "
+                    "provide an exact threshold before executable branching, "
+                    "or set report_only:true to emit a non-branching range report"
+                )
+            ranged_roll = roll
         source = "rom_switch_materialization_switch_roll"
         event_fields = {
             key: roll[key]
@@ -3344,6 +3365,10 @@ def boss_ai_switch_roll_source(selector: dict[str, Any]) -> dict[str, Any]:
             )
             if key in roll
         }
+    if report_only and ranged_roll is None:
+        source = "rom_switch_materialization_switch_roll_report_only_exact"
+    elif report_only:
+        source = "rom_switch_materialization_switch_roll_report"
     confidence_raw = selector.get("confidence")
     if confidence_raw is None and isinstance(roll, dict):
         confidence_raw = roll.get("confidence")
@@ -3357,6 +3382,7 @@ def boss_ai_switch_roll_source(selector: dict[str, Any]) -> dict[str, Any]:
         "threshold": threshold,
         "source": source,
         "event_fields": event_fields,
+        "ranged_roll": ranged_roll,
     }
 
 
@@ -3416,6 +3442,85 @@ def boss_ai_switch_roll_selection(
             "reason": reason,
             "roll_source": roll_source["source"],
             **roll_source["event_fields"],
+            "proof_status": proof_status,
+        },
+    }
+
+
+def boss_ai_switch_roll_report_selection(
+    state: BattleState,
+    side: str,
+    candidate_index: int,
+    confidence: int,
+    threshold: int,
+    *,
+    action: ActionState,
+    roll_source: dict[str, Any],
+) -> dict[str, Any]:
+    candidate = get_bench(state, side)[candidate_index]
+    ranged_roll = roll_source.get("ranged_roll")
+    if ranged_roll is not None:
+        possible = list(ranged_roll.get("possible_switch_probabilities", []))
+        if not possible:
+            possible = [
+                {
+                    "effective_threshold": threshold,
+                    "switch_chance_threshold": boss_ai_switch_roll_threshold(confidence, threshold),
+                    "switch_probability": boss_ai_switch_roll_threshold(confidence, threshold) / 256,
+                }
+            ]
+        probabilities = [entry["switch_probability"] for entry in possible]
+        switch_probability_range = [min(probabilities), max(probabilities)]
+        probability_exact = False
+        proof_status = "source_mirrored_ranged_switch_probability_report"
+    else:
+        assumed_chance = boss_ai_switch_roll_threshold(confidence, threshold)
+        possible = [
+            {
+                "effective_threshold": threshold,
+                "switch_chance_threshold": assumed_chance,
+                "switch_probability": assumed_chance / 256,
+            }
+        ]
+        switch_probability_range = [assumed_chance / 256, assumed_chance / 256]
+        probability_exact = True
+        proof_status = roll_source["event_fields"].get(
+            "proof_status",
+            "source_mirrored_boss_ai_switch_roll_report",
+        )
+    assumed_chance = boss_ai_switch_roll_threshold(confidence, threshold)
+    base_event_fields = {
+        key: value
+        for key, value in roll_source["event_fields"].items()
+        if key != "proof_status"
+    }
+    return {
+        "action": action,
+        "raw_values": [],
+        "event": {
+            "turn": state.turn,
+            "actor": side,
+            "type": "boss_ai_switch_roll_report",
+            "candidate_bench_index": candidate_index,
+            "candidate": candidate.name,
+            "confidence": confidence,
+            "assumed_effective_threshold": threshold,
+            "margin": max(0, confidence - threshold),
+            "assumed_switch_chance_threshold": assumed_chance,
+            "assumed_switch_probability": assumed_chance / 256,
+            "possible_switch_probabilities": possible,
+            "switch_probability_range": switch_probability_range,
+            "probability_exact": probability_exact,
+            "selected_action": "report_only_no_branching",
+            "fallback_action_kind": action.kind,
+            "raw_values": [],
+            "reason": (
+                "ranged_switch_probability_report_only"
+                if ranged_roll is not None
+                else "exact_switch_probability_report_only"
+            ),
+            "roll_source": roll_source["source"],
+            **base_event_fields,
             "proof_status": proof_status,
         },
     }
@@ -4517,7 +4622,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "boss_ai_switch_roll",
                 "source": "engine/battle/ai/boss_policy_switch.asm:BossAI_SwitchOrTryItem final confidence gate",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "boss_ai_switch_roll actions mirror the final BossAI_SwitchOrTryItem confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. The action accepts either direct scenario-supplied confidence/threshold bytes or a switch_roll object copied from rom-switch-materialize, preserving its threshold/probability proof fields in the event. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization from headless state remain out of scope.",
+                "notes": "boss_ai_switch_roll actions mirror the final BossAI_SwitchOrTryItem confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. The action accepts either direct scenario-supplied confidence/threshold bytes or a switch_roll object copied from rom-switch-materialize, preserving its threshold/probability proof fields in the event. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Setting report_only:true emits a single non-branching boss_ai_switch_roll_report event with possible_switch_probabilities and a switch_probability_range, consumes no RNG, and defaults the side action to the supplied fallback; this mode accepts ranged materializer output (probability_exact:false) without inventing an exact branch. Available:false materializer output is still rejected in both modes. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization from headless state remain out of scope.",
             },
             {
                 "id": "wild_random_move_choice",
@@ -4608,6 +4713,14 @@ def format_text(report: dict[str, Any]) -> str:
                     f"  turn {event['turn']} {event['actor']} boss_ai_switch_roll -> "
                     f"{event['selected_action']} candidate={event['candidate']} "
                     f"confidence={event['confidence']} threshold={event['threshold']}"
+                )
+            elif event["type"] == "boss_ai_switch_roll_report":
+                low, high = event["switch_probability_range"]
+                lines.append(
+                    f"  turn {event['turn']} {event['actor']} boss_ai_switch_roll_report -> "
+                    f"candidate={event['candidate']} confidence={event['confidence']} "
+                    f"switch_probability_range={low:.3f}..{high:.3f} "
+                    f"(no branching; fallback {event['fallback_action_kind']})"
                 )
             elif event["type"] == "wild_random_move":
                 lines.append(
