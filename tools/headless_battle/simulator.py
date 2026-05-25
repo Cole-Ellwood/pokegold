@@ -97,6 +97,11 @@ POISON_STATUS_EFFECTS = {
     "EFFECT_TOXIC": "toxic",
 }
 PARALYSIS_STATUS_EFFECTS = {"EFFECT_PARALYZE": "paralyze"}
+DAMAGING_SECONDARY_STATUS_EFFECTS = {
+    "EFFECT_BURN_HIT": "burn",
+    "EFFECT_POISON_HIT": "poison",
+    "EFFECT_PARALYZE_HIT": "paralyze",
+}
 SELF_HEALING_MOVE_NAMES = frozenset({"RECOVER", "SOFTBOILED", "MILK_DRINK"})
 FULL_PARALYSIS_THRESHOLD = 25 * 255 // 100
 TYPE_FACTOR_CONSTANTS = {
@@ -120,6 +125,8 @@ ITEM_MAX_POTION = tables.resolve_item("MAX_POTION")
 ITEM_FULL_RESTORE = tables.resolve_item("FULL_RESTORE")
 ITEM_PSNCUREBERRY = tables.resolve_item("PSNCUREBERRY")
 ITEM_PRZCUREBERRY = tables.resolve_item("PRZCUREBERRY")
+ITEM_ICE_BERRY = tables.resolve_item("ICE_BERRY")
+ITEM_MIRACLEBERRY = tables.resolve_item("MIRACLEBERRY")
 LIFE_ORB_RECOIL_DENOMINATOR = 10
 ROCKY_HELMET_DENOMINATOR = 6
 SHELL_BELL_DENOMINATOR = 8
@@ -152,6 +159,7 @@ class MoveState:
     bp: int
     priority: int = 1
     accuracy: int = 255
+    effect_chance: int = 0
     pp: int = 0
     contact: bool = False
     move_id: int | None = None
@@ -772,46 +780,64 @@ def apply_move_after_action_check(
                     )
                     branches.append(updated)
                     continue
-                damage = variation["damage"]
-                hp_after = max(0, target.hp - damage)
-                updated_target = replace_hp(target, hp_after)
-                updated_state = replace_side(state, target_side, updated_target)
-                updated = clone_branch(branch)
-                updated["state"] = updated_state
-                updated["rng_consumed"].extend(critical_check["raw_values"])
-                updated["rng_consumed"].extend(variation["raw_values"])
-                updated["rng_consumed"].extend(hit_check["raw_values"])
-                updated["events"].append(
-                    {
-                        "turn": state.turn,
-                        "actor": side,
-                        "target": target_side,
-                        "move": move.name,
-                        "type": "damage",
-                        "damage": damage,
-                        "pre_variation_damage": pre_variation_damage,
-                        "target_hp_before": target.hp,
-                        "target_hp_after": hp_after,
-                        "critical_check": critical_check,
-                        "accuracy_check": hit_check,
-                        "pp_before": pp_before,
-                        "pp_after": pp_after,
-                        "damage_variation": {
-                            "applied": variation["applied"],
-                            "multiplier": variation["multiplier"],
-                            "raw_values": variation["raw_values"],
-                        },
-                        "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
-                    }
+                secondary_status = DAMAGING_SECONDARY_STATUS_EFFECTS.get(move.effect)
+                secondary_checks = (
+                    effect_chance_results(move, rng, stream=stream)
+                    if secondary_status is not None
+                    else [None]
                 )
-                updated = apply_after_hit_effects(
-                    updated,
-                    side,
-                    target_side,
-                    move,
-                    damage,
-                )
-                branches.append(updated)
+                for secondary_check in secondary_checks:
+                    damage = variation["damage"]
+                    hp_after = max(0, target.hp - damage)
+                    updated_target = replace_hp(target, hp_after)
+                    updated_state = replace_side(state, target_side, updated_target)
+                    updated = clone_branch(branch)
+                    updated["state"] = updated_state
+                    updated["rng_consumed"].extend(critical_check["raw_values"])
+                    updated["rng_consumed"].extend(variation["raw_values"])
+                    updated["rng_consumed"].extend(hit_check["raw_values"])
+                    if secondary_check is not None:
+                        updated["rng_consumed"].extend(secondary_check["raw_values"])
+                    updated["events"].append(
+                        {
+                            "turn": state.turn,
+                            "actor": side,
+                            "target": target_side,
+                            "move": move.name,
+                            "type": "damage",
+                            "damage": damage,
+                            "pre_variation_damage": pre_variation_damage,
+                            "target_hp_before": target.hp,
+                            "target_hp_after": hp_after,
+                            "critical_check": critical_check,
+                            "accuracy_check": hit_check,
+                            "pp_before": pp_before,
+                            "pp_after": pp_after,
+                            "damage_variation": {
+                                "applied": variation["applied"],
+                                "multiplier": variation["multiplier"],
+                                "raw_values": variation["raw_values"],
+                            },
+                            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+                        }
+                    )
+                    if secondary_status is not None and secondary_check is not None:
+                        updated = apply_damaging_secondary_status(
+                            updated,
+                            side,
+                            target_side,
+                            move,
+                            secondary_status,
+                            secondary_check,
+                        )
+                    updated = apply_after_hit_effects(
+                        updated,
+                        side,
+                        target_side,
+                        move,
+                        damage,
+                    )
+                    branches.append(updated)
     return branches
 
 
@@ -1029,6 +1055,87 @@ def paralysis_status_blocked_reason(target: PokemonState, move: MoveState) -> st
     if target.status != "none":
         return "already_statused"
     if target.item == ITEM_PRZCUREBERRY:
+        return "held_status_healing_item_out_of_scope"
+    return None
+
+
+def apply_damaging_secondary_status(
+    branch: dict[str, Any],
+    side: str,
+    target_side: str,
+    move: MoveState,
+    status: str,
+    effect_chance_check: dict[str, Any],
+) -> dict[str, Any]:
+    state: BattleState = branch["state"]
+    target = get_side(state, target_side)
+    blocked_reason = damaging_secondary_status_blocked_reason(target, move, status, effect_chance_check)
+    updated = clone_branch(branch)
+    if blocked_reason is None:
+        updated_target = replace_hp(target, target.hp, status=status, toxic_count=0 if status == "poison" else target.toxic_count)
+        updated["state"] = replace_side(state, target_side, updated_target)
+    updated["events"].append(
+        {
+            "turn": state.turn,
+            "actor": side,
+            "target": target_side,
+            "move": move.name,
+            "type": "status_apply" if blocked_reason is None else "status_no_effect",
+            "status": status,
+            "status_before": target.status,
+            "status_after": status if blocked_reason is None else target.status,
+            "toxic_count_before": target.toxic_count,
+            "toxic_count_after": 0 if blocked_reason is None and status == "poison" else target.toxic_count,
+            "target_hp_after_damage": target.hp,
+            "blocked_reason": blocked_reason,
+            "effect_chance_check": effect_chance_check,
+            "proof_status": (
+                "source_mirrored_selected_damaging_status_secondary"
+                if blocked_reason is None
+                else (
+                    "out_of_scope"
+                    if blocked_reason == "held_status_healing_item_out_of_scope"
+                    else "source_mirrored_selected_damaging_status_secondary_no_effect"
+                )
+            ),
+        }
+    )
+    return updated
+
+
+def damaging_secondary_status_blocked_reason(
+    target: PokemonState,
+    move: MoveState,
+    status: str,
+    effect_chance_check: dict[str, Any],
+) -> str | None:
+    if not effect_chance_check["success"]:
+        return "effect_chance_failed"
+    if target.hp <= 0:
+        return "target_fainted"
+    if status == "burn":
+        return burn_status_blocked_reason(target, move)
+    if status == "poison":
+        if target.item == ITEM_MIRACLEBERRY:
+            return "held_status_healing_item_out_of_scope"
+        return poison_status_blocked_reason(target, move)
+    if status == "paralyze":
+        if target.item == ITEM_MIRACLEBERRY:
+            return "held_status_healing_item_out_of_scope"
+        return paralysis_status_blocked_reason(target, move)
+    raise AssertionError(f"unsupported damaging secondary status {status!r}")
+
+
+def burn_status_blocked_reason(target: PokemonState, move: MoveState) -> str | None:
+    if type_effectiveness_factor(move.move_type_name, target.type_names) == 0:
+        return "type_immunity"
+    if "FIRE" in target.type_names:
+        return "fire_type"
+    if target.status == "burn":
+        return "already_burned"
+    if target.status != "none":
+        return "already_statused"
+    if target.item in {ITEM_ICE_BERRY, ITEM_MIRACLEBERRY}:
         return "held_status_healing_item_out_of_scope"
     return None
 
@@ -1807,6 +1914,59 @@ def effective_accuracy_threshold(state: BattleState, move: MoveState) -> int | N
     return move.accuracy
 
 
+def effect_chance_results(
+    move: MoveState,
+    rng: RngConfig,
+    *,
+    stream: RuntimeRng | None,
+) -> list[dict[str, Any]]:
+    threshold = move.effect_chance
+    if threshold >= 255:
+        return [
+            {
+                "success": True,
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": None,
+                "reason": "guaranteed_effect",
+            }
+        ]
+    if rng.mode == "exhaustive":
+        out = []
+        if threshold > 0:
+            out.append(
+                {
+                    "success": True,
+                    "threshold": threshold,
+                    "raw_values": [],
+                    "raw_range": [0, threshold - 1],
+                    "reason": "raw_below_threshold",
+                }
+            )
+        out.append(
+            {
+                "success": False,
+                "threshold": threshold,
+                "raw_values": [],
+                "raw_range": [threshold, 255],
+                "reason": "raw_at_or_above_threshold",
+            }
+        )
+        return out
+    if stream is None:
+        raise AssertionError("fixed/sample secondary effect chance requires an RNG stream")
+    raw = stream.next_byte(purpose="effect chance")
+    return [
+        {
+            "success": raw < threshold,
+            "threshold": threshold,
+            "raw_values": [raw],
+            "raw_range": None,
+            "reason": "raw_below_threshold" if raw < threshold else "raw_at_or_above_threshold",
+        }
+    ]
+
+
 def damage_variation_results(
     damage: int,
     rng: RngConfig,
@@ -2295,6 +2455,7 @@ def parse_move(raw: Any, path: str) -> MoveState:
         bp=parse_non_negative_int(raw.get("bp", row.bp if row is not None else 40), f"{path}.bp"),
         priority=parse_int(raw.get("priority", 1), f"{path}.priority"),
         accuracy=parse_accuracy(raw, row, f"{path}.accuracy"),
+        effect_chance=parse_effect_chance(raw, row, f"{path}.effect_chance"),
         pp=parse_byte(raw.get("pp", row.pp if row is not None else 35), f"{path}.pp"),
         contact=parse_bool(raw.get("contact", is_contact_move_id(move_id)), f"{path}.contact"),
         move_id=move_id,
@@ -2374,6 +2535,16 @@ def parse_accuracy(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -
     if row is not None:
         return accuracy_percent_to_byte(row.accuracy)
     return 255
+
+
+def parse_effect_chance(raw: dict[str, Any], row: tables.MoveRow | None, path: str) -> int:
+    if "effect_chance" in raw:
+        return parse_byte(raw["effect_chance"], path)
+    if "effect_chance_percent" in raw:
+        return accuracy_percent_to_byte(parse_percentage(raw["effect_chance_percent"], f"{path}_percent"))
+    if row is not None:
+        return accuracy_percent_to_byte(row.effect_chance)
+    return 0
 
 
 def accuracy_percent_to_byte(percent: int) -> int:
@@ -2686,6 +2857,7 @@ def replace_move_pp(move: MoveState, pp: int) -> MoveState:
         bp=move.bp,
         priority=move.priority,
         accuracy=move.accuracy,
+        effect_chance=move.effect_chance,
         pp=pp,
         contact=move.contact,
         move_id=move.move_id,
@@ -2767,6 +2939,7 @@ def move_to_json(move: MoveState) -> dict[str, Any]:
         "bp": move.bp,
         "priority": move.priority,
         "accuracy": move.accuracy,
+        "effect_chance": move.effect_chance,
         "pp": move.pp,
         "contact": move.contact,
         "move_id": move.move_id,
@@ -2851,6 +3024,12 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Dragon Dance, Calm Mind, and Quiver Dance consume PP, mutate their chained supported stat stages, report cap/no-effect through the shared stat-stage machinery, and influence later damage and turn order. Dragon Dance mirrors bestattackup using the simulator-supported current attack/sp_attack values; burn/passive attack modifiers, Curse, Psych Up, Baton Pass, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
             },
             {
+                "id": "selected_damaging_status_secondaries",
+                "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. Thunder, Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, Substitute/Safeguard, held status item consumption, and text/animation side effects remain out of scope.",
+            },
+            {
                 "id": "selected_self_heal_moves",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
@@ -2914,9 +3093,9 @@ def coverage_report() -> dict[str, Any]:
         "out_of_scope": [
             "automatic full battle flow, trainer/Boss automatic action choice without caller-supplied final Boss AI score bytes, forced switch prompts, implicit replacement without an auto_replace action, automatic trainer item turns, player trainer-battle Pack availability, and item inventory accounting",
             "Pursuit-on-switch, Spikes/switch-in entry effects, switch-triggered abilities/passives, and switch memory side effects",
-            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation, Quick Claw/Choice Scarf turn-order effects",
-            "accuracy/evasion stat-stage move effects, damaging secondary stat effects, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
-            "sleep, freeze, burn application, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
+            "RNG-consuming mechanics outside speed ties/Boss AI selector choice/wild random move choice/auto-replace fallback/critical hits/accuracy/damage variation/selected damaging status secondary chance, Quick Claw/Choice Scarf turn-order effects",
+            "accuracy/evasion stat-stage move effects, damaging secondary stat effects outside selected burn/poison/paralysis status secondaries, multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, Baton Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed modifiers, passive stat/speed/accuracy bonuses, and passive accuracy bonuses",
+            "sleep, freeze, burn application outside selected damaging burn secondaries, Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed Electric speed passives, volatile effects, weather/time healing, Rest, drain moves, Heal Bell, unsupported item recovery/cures, Air Balloon pop, Substitute-blocked contact, Focus Punch break, after-hit text/script effects outside supported HP mutations, Struggle, PP Up bit packing, Mimic/Transform PP routing, and full PP legality selection",
             "Boss AI live score generation and switch candidate/confidence generation",
             "graphics, text scripts, animations, EXP, and party writes",
         ],
@@ -3096,7 +3275,7 @@ def run_self_test() -> None:
         "move_ids": [33, 52, 0, 0],
         "scores": [20, 21, 80, 80],
     }
-    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255, 255]}
     selector_move = simulate_payload(selector_move_payload)["outcomes"][0]["events"]
     if selector_move[0]["selected_slot_index"] != 1 or selector_move[-1].get("move") != "EMBER":
         raise AssertionError(selector_move)

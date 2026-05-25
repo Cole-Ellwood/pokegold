@@ -205,6 +205,60 @@ def main() -> int:
         )
         return 1
     print("selected_multi_stat_setup_moves: PASS calm_mind dragon_dance_bestattack")
+    burn_hit_payload = scenario_template()
+    burn_hit_payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+    burn_hit_payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+    burn_hit_payload["state"]["enemy"]["hp"] = 40
+    burn_hit_payload["state"]["enemy"]["max_hp"] = 40
+    burn_hit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    burn_hit_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    burn_hit_events = simulate_payload(burn_hit_payload)["outcomes"][0]["events"]
+    burn_hit_event = burn_hit_events[1]
+    if (
+        burn_hit_event.get("type") != "status_apply"
+        or burn_hit_event.get("status") != "burn"
+        or burn_hit_event.get("effect_chance_check", {}).get("threshold") != 25
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: damaging burn secondary mismatch: {burn_hit_events}",
+            file=sys.stderr,
+        )
+        return 1
+    poison_hit_payload = scenario_template()
+    poison_hit_payload["state"]["player"]["moves"] = [{"name": "SLUDGE"}]
+    poison_hit_payload["state"]["enemy"]["hp"] = 48
+    poison_hit_payload["state"]["enemy"]["max_hp"] = 48
+    poison_hit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    poison_hit_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+    poison_hit_events = simulate_payload(poison_hit_payload)["outcomes"][0]["events"]
+    poison_hit_event = poison_hit_events[1]
+    if (
+        poison_hit_event.get("type") != "status_apply"
+        or poison_hit_event.get("status") != "poison"
+        or poison_hit_event.get("effect_chance_check", {}).get("threshold") != 76
+        or poison_hit_events[-1].get("type") != "residual_damage"
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: damaging poison secondary mismatch: {poison_hit_events}",
+            file=sys.stderr,
+        )
+        return 1
+    paralysis_hit_payload = scenario_template()
+    paralysis_hit_payload["state"]["player"]["moves"] = [{"name": "BODY_SLAM"}]
+    paralysis_hit_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    paralysis_hit_payload["rng"] = {"mode": "fixed", "values": [255, 255, 0, 255]}
+    paralysis_hit_event = simulate_payload(paralysis_hit_payload)["outcomes"][0]["events"][1]
+    if (
+        paralysis_hit_event.get("type") != "status_apply"
+        or paralysis_hit_event.get("status") != "paralyze"
+        or paralysis_hit_event.get("effect_chance_check", {}).get("threshold") != 76
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: damaging paralysis secondary mismatch: {paralysis_hit_event}",
+            file=sys.stderr,
+        )
+        return 1
+    print("selected_damaging_status_secondaries: PASS ember_burn sludge_poison body_slam_paralyze")
     heal_payload = scenario_template()
     heal_payload["state"]["player"]["hp"] = 10
     heal_payload["state"]["player"]["max_hp"] = 40
@@ -351,7 +405,7 @@ def main() -> int:
         "move_ids": [33, 52, 0, 0],
         "scores": [20, 21, 80, 80],
     }
-    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+    selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255, 255]}
     selector_move_report = simulate_payload(selector_move_payload)
     selector_move_events = selector_move_report["outcomes"][0]["events"]
     if (
@@ -371,7 +425,7 @@ def main() -> int:
         {"name": "EMBER", "type": "FIRE", "bp": 40, "pp": 1},
     ]
     wild_payload["actions"]["enemy"] = {"type": "wild_random_move"}
-    wild_payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255]}
+    wild_payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255, 255]}
     wild_report = simulate_payload(wild_payload)
     wild_events = wild_report["outcomes"][0]["events"]
     if (

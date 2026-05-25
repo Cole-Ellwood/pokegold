@@ -622,7 +622,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             "move_ids": [33, 52, 0, 0],
             "scores": [20, 21, 80, 80],
         }
-        payload["rng"] = {"mode": "fixed", "values": [200, 255, 255]}
+        payload["rng"] = {"mode": "fixed", "values": [200, 255, 255, 255]}
 
         report = simulate_payload(payload)
 
@@ -673,7 +673,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             {"name": "EMBER", "type": "FIRE", "bp": 40, "pp": 1},
         ]
         payload["actions"]["enemy"] = {"type": "wild_random_move"}
-        payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255]}
+        payload["rng"] = {"mode": "fixed", "values": [0, 1, 255, 255, 255]}
 
         report = simulate_payload(payload)
 
@@ -1018,6 +1018,107 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             [(row["stat"], row["stage_after"]) for row in event["changes"]],
             [("sp_attack", 1), ("speed", 1)],
         )
+
+    def test_damaging_secondary_burn_applies_after_damage(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        damage = events[0]
+        burn = events[1]
+        self.assertEqual(damage["type"], "damage")
+        self.assertEqual(burn["type"], "status_apply")
+        self.assertEqual(burn["move"], "EMBER")
+        self.assertEqual(burn["status"], "burn")
+        self.assertEqual(burn["effect_chance_check"]["threshold"], 25)
+        self.assertEqual(burn["effect_chance_check"]["raw_values"], [0])
+        self.assertEqual(burn["target_hp_after_damage"], damage["target_hp_after"])
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "burn")
+
+    def test_damaging_secondary_effect_chance_failure_does_not_status(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][1]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "effect_chance_failed")
+        self.assertEqual(event["effect_chance_check"]["raw_values"], [255])
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
+
+    def test_damaging_secondary_poison_applies_and_residual_ticks(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "SLUDGE"}]
+        payload["state"]["enemy"]["hp"] = 48
+        payload["state"]["enemy"]["max_hp"] = 48
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        poison = next(event for event in events if event.get("type") == "status_apply")
+        residual = events[-1]
+        self.assertEqual(poison["status"], "poison")
+        self.assertEqual(poison["effect_chance_check"]["threshold"], 76)
+        self.assertEqual(residual["type"], "residual_damage")
+        self.assertEqual(residual["status"], "poison")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "poison")
+
+    def test_damaging_secondary_paralysis_changes_next_turn_order(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["stats"]["speed"] = 10
+        payload["state"]["enemy"]["stats"]["speed"] = 12
+        payload["state"]["enemy"]["hp"] = 80
+        payload["state"]["enemy"]["max_hp"] = 80
+        payload["state"]["player"]["moves"] = [{"name": "BODY_SLAM"}]
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload.pop("actions")
+        payload["turns"] = [
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+            {"player": {"type": "move", "move": 0}, "enemy": {"type": "move", "move": 0}},
+        ]
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0, 255, 255, 255, 255]}
+
+        report = simulate_payload(payload)
+
+        outcome = report["outcomes"][0]
+        paralyze = next(event for event in outcome["events"] if event.get("type") == "status_apply")
+        self.assertEqual(paralyze["status"], "paralyze")
+        self.assertEqual(paralyze["effect_chance_check"]["threshold"], 76)
+        self.assertEqual(outcome["turn_orders"][0]["order"], ["enemy", "player"])
+        self.assertEqual(outcome["turn_orders"][1]["order"], ["player", "enemy"])
+
+    def test_damaging_secondary_held_status_cure_stays_out_of_scope(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["moves"] = [{"name": "EMBER"}]
+        payload["state"]["enemy"]["types"] = ["NORMAL", "NORMAL"]
+        payload["state"]["enemy"]["item"] = "ICE_BERRY"
+        payload["state"]["enemy"]["hp"] = 40
+        payload["state"]["enemy"]["max_hp"] = 40
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+        payload["rng"] = {"mode": "fixed", "values": [255, 255, 0]}
+
+        report = simulate_payload(payload)
+
+        event = report["outcomes"][0]["events"][1]
+        self.assertEqual(event["type"], "status_no_effect")
+        self.assertEqual(event["blocked_reason"], "held_status_healing_item_out_of_scope")
+        self.assertEqual(event["proof_status"], "out_of_scope")
+        self.assertEqual(report["outcomes"][0]["state"]["enemy"]["status"], "none")
 
     def test_self_heal_move_restores_half_max_hp(self) -> None:
         payload = scenario_template()
@@ -1414,6 +1515,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("explicit_stat_stage_state", mirrored)
         self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("selected_multi_stat_setup_moves", mirrored)
+        self.assertIn("selected_damaging_status_secondaries", mirrored)
         self.assertIn("selected_self_heal_moves", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)

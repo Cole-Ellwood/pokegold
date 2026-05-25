@@ -108,34 +108,37 @@ BP=0 single-stat stage moves, selected Dragon Dance/Calm Mind/Quiver Dance
 setup moves, selected Recover/Softboiled/Milk Drink self-heal moves, selected
 PoisonPowder/Poison Gas/Toxic poison-status moves, selected Thunder
 Wave/Stun Spore/Glare paralysis-status moves with paralyzed speed/full-paralysis
-checks plus Fighting/Electric type-passive paralysis modifiers, repeated action
-maps with `max_turns`, `auto_replace_or` for simple KO/send-out loops,
-ROM-mirrored `wild_random_move`, selected switch actions, caller-supplied
-replacement after KO, explicit enemy `auto_replace` using the basic source type
-chart, explicit active Potion/Super Potion/Hyper Potion/Max Potion/Full Restore
-actions, explicit
+checks plus Fighting/Electric type-passive paralysis modifiers, selected
+EFFECT_BURN_HIT/EFFECT_POISON_HIT/EFFECT_PARALYZE_HIT damaging status
+secondaries, repeated action maps with `max_turns`, `auto_replace_or` for
+simple KO/send-out loops, ROM-mirrored `wild_random_move`, selected switch
+actions, caller-supplied replacement after KO, explicit enemy `auto_replace`
+using the basic source type chart, explicit active Potion/Super Potion/Hyper
+Potion/Max Potion/Full Restore actions, explicit
 stats/species/stat-stage state, PP decrement, supported Rocky
 Helmet/Shell Bell/Life Orb after-hit HP effects, modified-speed turn order and
 equal-speed tie RNG, basic critical-hit checks, basic move accuracy with
 fixed/sample/exhaustive hit/miss branching, damage variation with
-fixed/sample/exhaustive RNG, selected-action `turns[]` progression with HP/RNG
-carryover, initial poison/burn/toxic residual damage after selected moves and
-supported item actions, pre-variation HP damage delegated to the existing
-ROM-backed damage oracle, and post-score Boss AI selector replay/execution from
-known score bytes. Reports label byte-proven, source-mirrored, and out-of-scope
-surfaces; do not claim strategic full battle action choice, automatic trainer
+fixed/sample/exhaustive RNG, selected damaging status secondary chance RNG,
+selected-action `turns[]` progression with HP/RNG carryover, initial
+poison/burn/toxic residual damage after selected moves and supported item
+actions, pre-variation HP damage delegated to the existing ROM-backed damage
+oracle, and post-score Boss AI selector replay/execution from known score bytes.
+Reports label byte-proven, source-mirrored, and out-of-scope surfaces; do not
+claim strategic full battle action choice, automatic trainer
 item usage, player trainer-battle Pack availability, item inventory accounting,
 implicit replacement without `auto_replace_or` or `auto_replace`,
-accuracy/evasion stage moves/modifiers, damaging secondary stat effects,
-multi-stat chains outside Dragon Dance/Calm Mind/Quiver Dance, Baton
+accuracy/evasion stage moves/modifiers, damaging secondary stat effects outside
+selected burn/poison/paralysis status secondaries, multi-stat chains outside
+Dragon Dance/Calm Mind/Quiver Dance, Baton
 Pass/Psych Up, Substitute/Mist blockers, badge boosts, status speed, passive
 stat/speed/accuracy bonuses, status application outside selected
-poison/paralysis-status moves, sleep/freeze, burn application,
-Safeguard/Substitute, held status prevent/cure item consumption,
-non-paralyzed Electric speed passives, Rest, weather/time healing, drain moves,
-Heal Bell, RNG-consuming mechanics outside the listed branch points, live Boss
-AI scoring, or scripts until the simulator report and audit say that surface
-exists.
+poison/paralysis-status moves and selected damaging status secondaries,
+sleep/freeze, burn application outside selected damaging burn secondaries,
+Safeguard/Substitute, held status prevent/cure item consumption, non-paralyzed
+Electric speed passives, Rest, weather/time healing, drain moves, Heal Bell,
+RNG-consuming mechanics outside the listed branch points, live Boss AI scoring,
+or scripts until the simulator report and audit say that surface exists.
 
 ## Truth Precedence
 
