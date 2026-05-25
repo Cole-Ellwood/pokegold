@@ -3,8 +3,15 @@
 # Enforces:
 #   1. No whitespace errors in staged changes (git diff --check).
 #   2. No banned staged-work markers in staged additions.
-# Bypass markers (only when user explicitly asked for staged work):
-#   CLAUDE_MD_ALLOW_MARKERS=1 git commit ...
+#   3. CLAUDE.md lint on staged Python (banned identifiers, dups, comments).
+#   4. No dependency-manifest changes without explicit approval.
+#   5. No large unexplained rewrites: >200 added lines or any modified file
+#      with >50% of its lines changed.
+# Bypass envs (only when user explicitly approved):
+#   CLAUDE_MD_ALLOW_MARKERS=1   skip rule 2
+#   CLAUDE_MD_ALLOW_LINT=1      skip rule 3
+#   CLAUDE_MD_ALLOW_DEP=1       skip rule 4
+#   CLAUDE_MD_ALLOW_REWRITE=1   skip rule 5
 
 set -e
 
@@ -33,6 +40,45 @@ fi
 if [ "${CLAUDE_MD_ALLOW_LINT:-0}" != "1" ]; then
     if ! python3 tools/audit/check_claude_md_lint.py; then
         echo "pre-commit: CLAUDE.md lint failed (see above)." >&2
+        exit 1
+    fi
+fi
+
+# 4. Dependency manifest guard.
+if [ "${CLAUDE_MD_ALLOW_DEP:-0}" != "1" ]; then
+    dep_changes=$(git diff --cached --name-only | grep -E '(^|/)(requirements.*\.txt|pyproject\.toml|setup\.py|setup\.cfg|package\.json|Pipfile(\.lock)?|poetry\.lock|package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$' || true)
+    if [ -n "$dep_changes" ]; then
+        echo "pre-commit: dependency manifest change(s) staged:" >&2
+        printf "  %s\n" $dep_changes >&2
+        echo "Set CLAUDE_MD_ALLOW_DEP=1 only after the user explicitly approved the dep." >&2
+        exit 1
+    fi
+fi
+
+# 5. Rewrite-size guard.
+if [ "${CLAUDE_MD_ALLOW_REWRITE:-0}" != "1" ]; then
+    total_added=$(git diff --cached --numstat | awk '$1 != "-" {sum += $1} END {print sum+0}')
+    if [ "${total_added:-0}" -gt 200 ]; then
+        echo "pre-commit: $total_added lines added in staged diff (>200 threshold)." >&2
+        echo "Set CLAUDE_MD_ALLOW_REWRITE=1 if the user explicitly approved this rewrite." >&2
+        exit 1
+    fi
+    over_ratio=$(git diff --cached --diff-filter=M --numstat 2>/dev/null | while IFS="	" read added deleted path; do
+        case "$added" in -) continue;; esac
+        case "$deleted" in -) continue;; esac
+        after=$(git show ":$path" 2>/dev/null | wc -l | tr -d ' ')
+        [ -z "$after" ] && continue
+        [ "$after" -eq 0 ] && continue
+        changed=$((added + deleted))
+        threshold=$((after / 2))
+        if [ "$changed" -gt "$threshold" ]; then
+            printf "%s: %s/%s lines changed\n" "$path" "$changed" "$after"
+        fi
+    done)
+    if [ -n "$over_ratio" ]; then
+        echo "pre-commit: >50% of one or more modified files changed:" >&2
+        printf "  %s\n" "$over_ratio" >&2
+        echo "Set CLAUDE_MD_ALLOW_REWRITE=1 if the user explicitly approved this rewrite." >&2
         exit 1
     fi
 fi

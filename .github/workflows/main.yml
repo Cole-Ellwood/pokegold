@@ -65,6 +65,21 @@ jobs:
           add: "*.sym *.map"
           message: ${{ github.event.commits[0].message }}
 
+  python-audits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run release smoke audit
+        run: |
+          python3 tools/audit/check_release_smoke.py
+
   build-macos:
     runs-on: macos-latest
     steps:
