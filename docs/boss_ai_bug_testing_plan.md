@@ -135,9 +135,17 @@ Assertions to implement:
   move table.
 - `BossAI_NeedsLoopPenalty` checks the proposed target in
   `wEnemySwitchMonParam` before or alongside the current-mon loop check.
-- `BossAI_NeedsLoopPenalty` still has exception calls for imminent KO
-  prevention, public Perish Song escape, immunity pivot opportunity, and ace
-  timing.
+- `BossAI_NeedsLoopPenalty` still has exception calls for public revenge
+  pressure only through a safer-return-target check, public Perish Song escape,
+  immunity pivot opportunity, and ace timing.
+- `BossAI_SwitchOrTryItem` calls `BossAI_SwitchTargetSolvesDefensiveProblem`
+  after `BossAI_RefineSwitchCandidateForPlausibleRisk` and before
+  `BossAI_ComputeSwitchConfidence`, so a candidate can be rejected before the
+  switch roll.
+- `BossAI_SwitchTargetSolvesDefensiveProblem` compares the proposed target's
+  public risk against the current active's public risk. A normal switch must be
+  meaningfully safer; at quarter HP or lower, the target may be no more risky,
+  but not worse.
 - `BossAI_SwitchOrTryItem` checks `BossAI_EnemyPerishEscapeUrgent` before
   `BossAI_HasAnyKOMove`, so a ticking Perish count can bypass the KO-stay gate.
 - `BossAI_EnemyPerishEscapeUrgent` reads `wEnemySubStatus1` /
@@ -510,8 +518,12 @@ Shared switch-loop scenario:
   switching back B->A.
 - Confirm `BossAI_NeedsLoopPenalty` applies unless a public emergency exception
   is active.
-- Repeat with an imminent KO or public immunity pivot opportunity and confirm
-  the exception can waive the penalty.
+- Repeat with public revenge pressure where the return target is meaningfully
+  safer, or with a public immunity pivot opportunity, and confirm the exception
+  can waive the penalty.
+- Present Morty Misdreavus against player Haunter with Ghost as a likely public
+  threat. Confirm Gengar is not accepted as a defensive switch target because it
+  is riskier than staying in Misdreavus.
 
 Shared Perish Song scenario:
 

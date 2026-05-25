@@ -103,9 +103,8 @@ future roster changes can preserve identity.
 
 One hook covers Oracle Haki entirely.
 
-**Haki dispatch** — top of `BossAI_SwitchOrTryItem`, after
-`ParsePlayerAction` has populated player intent and before normal
-KO-pressure early returns. The dispatch:
+**Haki dispatch** — after `ParsePlayerAction` has populated player intent
+and before `DetermineMoveOrder` finalizes move order. The dispatch:
 
 1. Returns immediately if `wHakiSpent != 0`.
 2. Returns immediately if the active boss mon is not the trainer's ace
@@ -114,8 +113,9 @@ KO-pressure early returns. The dispatch:
    battle.
 4. Reads the player's locked move via `wCurPlayerMove` (or equivalent
    post-`ParsePlayerAction` slot).
-5. Calls Boss AI move scoring with the locked move available as known
-   input.
+5. Sets a temporary Haki scoring context so normal Boss AI threat helpers can
+   treat the locked move as known input, then calls the normal Boss AI move
+   scoring and lookahead path.
 6. Writes the chosen move via `wCurEnemyMove` / `wCurEnemyMoveNum`.
 7. Sets `wHakiSpent`, writes trace fields, returns nonzero with carry
    clear.
@@ -159,16 +159,18 @@ own slot) to the existing Boss AI WRAM reserve:
 Current implementation note (2026-05-14): the Morty/Gengar prototype does not
 add WRAM. It packs spent / ace-seen / current-turn eligibility bits into
 `wBossAIRevealedMovesBitmapSpare` byte 1 and uses existing trace fields plus
-`wBossAITraceRiskFlags` bit 3. A generic all-leader rollout still needs a fresh
-memory review because priority-changing Oracle choices require a pre-order hook
-or an equal-priority-only contract.
+`wBossAITraceRiskFlags` bit 3. Oracle now runs after the player action is
+locked and before turn order is finalized, so priority-changing Haki choices
+are resolved by normal battle order after the cheat has picked the boss move.
 
 Current implementation note (2026-05-23): the Uniform Haki Oracle still avoids
 new WRAM layout growth. Spent / ace-seen / eligibility remain in
 `wBossAIRevealedMovesBitmapSpare` byte 1, and the queued taunt id reuses byte 2
 of the same spare block. This keeps taunt state in the `ClearBossAIState`
 cleared battle-volatile range and avoids WRAMX bank switches immediately before
-the enemy action text path.
+the enemy action text path. Bit 3 of byte 1 is a temporary scoring-context bit
+used only while Oracle re-scores with the locked player move; it is cleared
+before returning.
 
 For exact addresses and current free-byte counts, see the Runtime State
 Budget section below.
@@ -219,8 +221,9 @@ Allowed shape:
 - Gate on player action already being locked, such as
   `wBattlePlayerAction == BATTLEPLAYERACTION_USEMOVE`, and keep current-turn
   reads inside the spent Haki branch only.
-- For Destiny Bond-style Oracle plays, require legal timing such as
-  `wEnemyGoesFirst != 0`; Haki may not make Destiny Bond retroactive.
+- Do not gate Haki on enemy-first order. Haki is the authored cheat: it
+  reads the locked player move before order is finalized, then the selected
+  boss move participates in normal priority/speed resolution.
 - On override, write `wCurEnemyMove` / `wCurEnemyMoveNum`, set `wHakiSpent`
   before returning, update trace fields, and keep chosen-move/repeat memory
   consistent with the actual move.
@@ -367,11 +370,25 @@ the fourth candidate beam is hiding a real boss-quality line.
 ### Anti-loop cooldown
 
 - Any mon that switches out gets a short switch cooldown.
-- During cooldown, switching that same mon again requires +0.10 extra confidence.
-- Forced exceptions: imminent KO prevention, public Perish Song escape,
-  immunity pivot opportunity, or scripted ace timing.
+- During cooldown, switching that same mon again requires enough extra confidence
+  to block ordinary high-confidence loops.
+- Forced exceptions: public revenge pressure only when the return target is
+  meaningfully safer than the current mon, public Perish Song escape, immunity
+  pivot opportunity, or scripted ace timing.
 
 Goal: prevent repetitive pivot loops while preserving smart tactical switching.
+
+### Defensive switch purpose
+
+- After the best bench target is refined, `BossAI_SwitchOrTryItem` must call
+  `BossAI_SwitchTargetSolvesDefensiveProblem` before confidence can roll.
+- Normal defensive switches must make the proposed target meaningfully safer
+  than the current active against public threat risk.
+- If the current active is at quarter HP or lower, preservation may allow a
+  switch to a target that is no more risky than staying, but not to a target
+  that is worse into the same public threat.
+- Public Perish Song escape, immunity pivot opportunity, and scripted ace
+  timing remain explicit exceptions.
 
 ### Current public revenge denial
 
@@ -738,9 +755,14 @@ hidden party information:
   for `wEnemyPerishCount` `1` or `2`; it can override KO-stay and switch-loop
   reluctance without reading hidden player state.
 - `BossAI_NeedsLoopPenalty`: A->B->A switch-loop guard. The loop penalty is
-  waived for low current HP, public revenge pressure, own Perish Song escape,
-  public immunity pivots, or ace timing; generic public type pressure alone is
-  not enough to waive the cost.
+  waived for public revenge pressure only when the return target is meaningfully
+  safer than the current mon, own Perish Song escape, public immunity pivots, or
+  ace timing; generic public type pressure and low HP alone are not enough to
+  waive the cost.
+- `BossAI_SwitchTargetSolvesDefensiveProblem`: active-vs-target switch-purpose
+  gate. A normal switch target must be meaningfully safer than the current
+  active; at quarter HP or lower, it may be merely no more risky. Perish Song,
+  immunity pivots, and ace timing are explicit public exceptions.
 - `BossAI_SeenBenchThreatScore`: public seen-species STAB pressure estimate
   excluding the current active bait and publicly fainted seen species; legal
   only for species already revealed in the current battle.

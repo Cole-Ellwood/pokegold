@@ -923,7 +923,7 @@ lives in each same file after the stat/type/item rows.
 | 197 | Umbreon | Dark | 100 | 65 | 110 | 65 | 60 | 130 | 530 | `NO_ITEM`, `NO_ITEM` |
 | 198 | Murkrow | Dark/Flying | 110 | 100 | 80 | 91 | 100 | 80 | 561 | `NO_ITEM`, `NO_ITEM` |
 | 199 | Slowking | Water/Psychic | 95 | 75 | 80 | 30 | 120 | 110 | 510 | `NO_ITEM`, `KINGS_ROCK` |
-| 200 | Misdreavus | Ghost | 80 | 120 | 80 | 85 | 70 | 85 | 520 | `NO_ITEM`, `SPELL_TAG` |
+| 200 | Misdreavus | Ghost | 100 | 80 | 90 | 85 | 70 | 95 | 520 | `NO_ITEM`, `SPELL_TAG` |
 | 201 | Unown | Psychic | 148 | 102 | 48 | 48 | 102 | 48 | 496 | `NO_ITEM`, `NO_ITEM` |
 | 202 | Wobbuffet | Psychic | 220 | 33 | 65 | 33 | 33 | 65 | 449 | `NO_ITEM`, `NO_ITEM` |
 | 203 | Girafarig | Normal/Psychic | 70 | 80 | 65 | 112 | 90 | 65 | 482 | `NO_ITEM`, `NO_ITEM` |

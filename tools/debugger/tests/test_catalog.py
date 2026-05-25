@@ -11,6 +11,7 @@ from unittest.mock import patch
 from tools.damage_debugger import state as damage_state
 from tools.debugger.__main__ import main as debugger_main
 from tools.debugger.catalog import (
+    ROOT,
     build_capability_report,
     build_inventory,
     triage_request,
@@ -388,6 +389,18 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 "grass_regrowth_balance",
                 "grass-regrowth",
             ),
+            "I want a text-only battle simulator with fixed RNG": (
+                "headless_battle_simulation",
+                "tools.headless_battle",
+            ),
+            "simulate the final switch confidence roll without pyboy": (
+                "headless_battle_simulation",
+                "tools.headless_battle",
+            ),
+            "can the debugger test a patch to boss ai on how often it switches": (
+                "wrong_switch",
+                "rom-switch-materialize",
+            ),
             "Mirror Move copied Sketch and corrupted memory": (
                 "move_search_unbounded",
                 "bug_hunt_triage.py",
@@ -400,6 +413,12 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 rec = report["recommendation"]
                 self.assertEqual(rec["symptom_class"], expected_class)
                 self.assertIn(command_fragment, rec["first_command"])
+
+    def test_triage_routes_headless_battle_to_headless_lane(self) -> None:
+        report = triage_request(symptom="I want a text-only battle simulator with fixed RNG")
+
+        self.assertEqual(report["matches"][0]["id"], "headless_battle")
+        self.assertIn("tools.headless_battle", "\n".join(report["commands"]))
 
     def test_changed_pokemon_data_routes_to_semantic_inspection(self) -> None:
         report = build_next_step(changed_files=("data/pokemon/evos_attacks.asm",))
@@ -525,11 +544,11 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
             self.assertIn("expected switch result", rec["disproof_standard"][0])
             self.assertIn("rom-switch-materialize", rec["regression_gate"])
 
-    def test_cli_audit_strict_fails_until_whole_rom_goal_is_done(self) -> None:
+    def test_cli_audit_strict_passes_when_whole_rom_goal_is_done(self) -> None:
         with redirect_stdout(io.StringIO()):
             code = debugger_main(["audit", "--strict"])
 
-        self.assertEqual(code, 1)
+        self.assertEqual(code, 0)
 
     def test_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -912,7 +931,7 @@ class UnifiedDebuggerCatalogTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            report = build_explanation_report(reports=("investigate.json",), root=root)
+            report = build_explanation_report(reports=(str(investigation_report),), root=ROOT)
 
         path = report["paths"][0]
         roles = {

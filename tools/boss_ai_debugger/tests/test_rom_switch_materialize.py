@@ -34,6 +34,7 @@ class RomSwitchMaterializeTests(unittest.TestCase):
             scenario,
             {
                 "proposed_switch": True,
+                "actual_switch": True,
                 "switch_confidence": 90,
                 "switch_param": 0x21,
             },
@@ -41,6 +42,22 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertFalse(verdict["expected_switch"])
         self.assertEqual(verdict["rom_policy"]["verdict"], "mismatch")
+
+    def test_switch_verdict_allows_rejected_proposal_when_policy_expects_stay(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=3, seed=2)[2]
+
+        verdict = switch_verdict_from_report(
+            scenario,
+            {
+                "proposed_switch": True,
+                "actual_switch": False,
+                "switch_confidence": 90,
+                "switch_param": 0x21,
+            },
+        )
+
+        self.assertFalse(verdict["expected_switch"])
+        self.assertEqual(verdict["rom_policy"]["verdict"], "pass")
 
 
 if __name__ == "__main__":

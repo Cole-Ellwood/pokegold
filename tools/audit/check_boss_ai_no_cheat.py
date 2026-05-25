@@ -92,10 +92,10 @@ APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
         approval="uniform Haki oracle exception",
     ),
     ApprovedForbiddenPatternException(
-        path="engine/battle/ai/boss_policy_switch.asm",
+        path="engine/battle/ai/boss_policy_move.asm",
         reason="player input read",
-        top_label="BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
-        approval="uniform Haki oracle exception helper",
+        top_label="BossAI_HakiSelectedMove",
+        approval="uniform Haki scoring-context helper",
     ),
 ]
 

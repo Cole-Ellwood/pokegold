@@ -271,8 +271,6 @@ def drive_replay_to_switch_observation(
     for frame in range(watch_frames + 1):
         values = capture.read_trace_values(pyboy, symbols)
         last_values = values
-        if values["wBossAITraceSwitchConfidence"][0] != 0:
-            return values, frame
         if values["wEnemySwitchMonIndex"][0] != 0:
             return values, frame
         if values["wBossAITraceChosenMove"][0] != 0:
@@ -323,22 +321,29 @@ def switch_verdict_from_report(
     scenario_id = str(scenario.get("id", "unnamed"))
     expected_switch = scenario_expects_switch(scenario)
     proposed_switch = bool(report.get("proposed_switch", False))
-    if expected_switch and proposed_switch:
-        rom_policy = switch_policy_result("pass", 0, "ROM proposes a switch")
+    actual_switch = bool(report.get("actual_switch", False))
+    if expected_switch and actual_switch:
+        rom_policy = switch_policy_result("pass", 0, "ROM commits a switch")
     elif expected_switch:
         rom_policy = switch_policy_result(
             "best_never_rolled",
             75,
-            "ROM switch dispatch does not propose the expected switch",
+            "ROM switch dispatch does not commit the expected switch",
         )
-    elif proposed_switch:
+    elif actual_switch:
         rom_policy = switch_policy_result(
             "mismatch",
             70,
-            "ROM switch dispatch proposes a switch when policy expects staying",
+            "ROM switch dispatch commits a switch when policy expects staying",
+        )
+    elif proposed_switch:
+        rom_policy = switch_policy_result(
+            "pass",
+            0,
+            "ROM considers a switch but threshold keeps the boss in",
         )
     else:
-        rom_policy = switch_policy_result("pass", 0, "ROM does not propose a switch")
+        rom_policy = switch_policy_result("pass", 0, "ROM does not commit a switch")
     return {
         "scenario_id": scenario_id,
         "status": "pass",
@@ -463,6 +468,7 @@ def format_rom_switch_materialization(
                 f"policy={policy.get('verdict', 'unknown')} "
                 f"expected_switch={verdict.get('expected_switch')} "
                 f"proposed_switch={rom.get('proposed_switch')} "
+                f"actual_switch={rom.get('actual_switch')} "
                 f"confidence={rom.get('switch_confidence')}"
             )
     lines.append("")

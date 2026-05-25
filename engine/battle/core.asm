@@ -199,6 +199,7 @@ BattleTurn:
 	call EnemyTriesToFlee
 	jr c, .quit
 
+	callfar BossAI_OracleHakiRead
 	call DetermineMoveOrder
 	jr c, .false
 	call Battle_EnemyFirst
@@ -1004,6 +1005,7 @@ Battle_PlayerFirst:
 	call LoadTilemapToTempTilemap
 	call TryEnemyFlee
 	jp c, WildFled_EnemyFled_LinkBattleCanceled
+	callfar BossAI_FlushPendingHakiTaunt
 	call EnemyTurn_EndOpponentProtectEndureDestinyBond
 	ld a, [wForcedSwitch]
 	and a
