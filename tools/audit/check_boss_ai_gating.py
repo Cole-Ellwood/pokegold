@@ -35,6 +35,7 @@ GUARDED_ENTRYPOINTS = {
     "BossAI_SelectPlanIfNeeded",
     "BossAI_ComputePlayerPlausibleTypeMask",
     "BossAI_EvaluateActionLookahead",
+    "BossAI_OracleHakiRead",
     "BossAI_FlushPendingHakiTaunt",
 }
 

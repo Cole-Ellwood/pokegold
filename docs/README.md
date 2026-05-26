@@ -93,6 +93,103 @@ Current completion source of truth:
 branch handoff notes as current debugger truth unless the task explicitly asks
 to inspect those copies.
 
+## Headless Battle Simulation
+
+For no-GUI text/JSON battle simulation, start with:
+
+```powershell
+python -m tools.headless_battle --template
+python -m tools.headless_battle --scenario <scenario.json> --json
+python tools\audit\check_headless_battle_simulator.py
+```
+
+This is the new Python battle-state path. Current scope is selected turn
+sequences with move actions, explicit switch actions against active-plus-bench
+state, post-score Boss AI selector actions, final-confidence Boss AI
+switch-policy actions for known candidate and confidence inputs, default-role
+priority/raw-speed order, Quick Claw and Choice Scarf turn-order effects, HP mutation for normal
+damaging moves, Rocky Helmet / Shell Bell / Life Orb after-hit HP effects,
+poison / burn / toxic residual HP damage after selected action phases,
+Leftovers between-turn healing,
+paralysis fully-paralyzed move blocking and speed recalculation,
+sleep counter decrement / fast-asleep blocking / wake-up clearing,
+freeze frozen-solid blocking with Flame Wheel / Sacred Fire CheckTurn bypass,
+flinch one-turn blocking and flag clearing,
+move accuracy for supported damaging moves including accuracy/evasion stage
+modifiers, BrightPowder, X Accuracy, Lock-On, semi-invulnerable
+flying/underground targets, Thunder-in-rain, and source-table sure-hit effects,
+ROM-style damage variation,
+fixed/sample/exhaustive RNG modes, and damage core delegated to the existing
+damage oracle. Its reports label byte-proven,
+source-mirrored, and out-of-scope mechanics. Damage variation, default-role
+turn order including Quick Claw and Choice Scarf, and supported damaging-move
+accuracy and critical-hit chance have direct ROM-differential gates. Selected switch actions are
+source-mirrored, not yet ROM-differential. Boss AI selector actions consume
+exact final score bytes via
+`select_from_score_bytes`; they do not calculate live scores from battle state.
+Boss AI switch-policy actions consume an already-known candidate and confidence,
+then mirror the final tier/class threshold, anti-loop/sack/wincon deltas, and
+90/75/55 percent switch-roll bands from `BossAI_SwitchOrTryItem`; they do not
+generate the candidate or confidence from battle state.
+User-provided Protect flags are source-mirrored in the hit-check order, not yet
+ROM-differential, because the isolated ROM path enters text/delay handling under
+the current safe-call harness.
+Scenarios can provide fully materialized stats/moves or source-table shorthand
+such as `species`, `level`, and move names; shorthand uses repo base stats,
+type rows, move rows, move IDs, and trainer/default stat profiles unless
+overridden. Scenarios can also pass `stages.accuracy` and `stages.evasion` as
+battle-stage modifiers from `-6` to `+6`, plus `volatile.protect`,
+`volatile.x_accuracy`, and `volatile.lock_on` for current hit-check flags.
+`volatile.flying` and `volatile.underground` model current semi-invulnerable
+hit-check state. `volatile.focus_energy` feeds the supported critical-hit
+chance surface. `volatile.flinched` models the current one-turn flinch
+substatus. Gust and Earthquake additionally mirror the ROM
+post-variation double-damage commands for flying and underground targets.
+Scenarios can set `status` to `poison`, `burn`, or `toxic`; toxic also accepts
+`toxic_count` as the current pre-residual counter. The residual HP mutation is
+ROM-differential after the text/animation branch, while its selected-action
+timing is source-mirrored from `Battle_PlayerFirst` / `Battle_EnemyFirst`.
+Scenarios can also set `status` to `paralysis` for fully-paralyzed move
+blocking before supported move execution. That check is ROM-differential
+through `BattleCommand_CheckTurn` text-path hooks and covers the
+Fighting-type passive thresholds. Paralysis speed recalculation, including
+Electric and Fighting passive fractions, is ROM-differential through
+`ApplyPrzEffectOnSpeed_Far`; paralysis infliction is not yet modeled.
+Scenarios can set `status` to `sleep` with `sleep_turns` from 1 to 7. Sleep
+counter decrement, fast-asleep blocking, and wake-up clearing are
+ROM-differential through `BattleCommand_CheckTurn` text/animation hooks; Sleep
+Clause slot bookkeeping and sleep infliction are not yet modeled.
+Scenarios can set `status` to `freeze`. Frozen-solid turn blocking and the
+Flame Wheel / Sacred Fire CheckTurn bypass are ROM-differential through
+`BattleCommand_CheckTurn`; freeze infliction and the later `defrost`
+move-script status clearing are not yet modeled.
+Scenarios can set `volatile.flinched=true`. One-turn flinch blocking and flag
+clearing are ROM-differential through `BattleCommand_CheckTurn`; automatic
+volatile lifetime generation is not yet modeled.
+Scenarios can set `item` to `LEFTOVERS`; the HP mutation is ROM-differential
+through `HandleLeftovers.do_it`, and the between-turn timing is source-mirrored
+from `HandleBetweenTurnEffects`.
+Other source move damage-effect commands still need separate implementation and
+proof. Supported damage scripts follow the ROM command order for implemented
+surfaces: critical-hit chance, damage variation, and supported post-variation
+damage effects run before hit checking, and HP is applied only if the hit check
+passes.
+Exhaustive mode reports distinct outcome classes with `raw_count` weights,
+per-outcome `rng_weight` probabilities, and aggregate event/selector rates in
+`summary`.
+Outcomes that KO an active Pokemon while its bench is still alive set
+`requires_forced_switch=true`; continue with an explicit forced switch phase
+where the forced side switches and the other side waits. Do not claim full
+battle automation, held-item turn-order effects beyond Quick Claw and Choice
+Scarf, held-item after-hit effects beyond Rocky Helmet / Shell Bell / Life
+Orb, held-item between-turn effects beyond Leftovers, automatic forced-switch selection, Boss AI live score generation, Boss AI
+switch candidate/confidence generation, status infliction, freeze infliction,
+defrost move-script status clearing, Sleep Clause slot bookkeeping,
+automatic volatile-state lifetimes, source move
+damage-effect commands beyond normal/always-hit/Thunder/Gust/Earthquake HP mutation, or
+battle-script equivalence
+until the simulator report and audit say that mechanic is supported.
+
 ## Truth Precedence
 
 1. Current source files and linker outputs (`pokegold.map`, `pokegold.sym`).

@@ -1126,6 +1126,8 @@ ENDC
 	ld [wBossAITemp], a
 	push hl
 	push bc
+	call BossAI_HakiSelectedMoveEffectMatchesTemp
+	jr c, .revealed_effect_yes
 	ld hl, wPlayerUsedMoves
 	ld c, NUM_MOVES
 .revealed_effect_loop
@@ -3068,6 +3070,8 @@ BossAI_PlayerHasPublicThreatVsEnemy:
 
 ; ai-layer: POLICY
 BossAI_PlayerHasPublicThreatVsEnemyUncached:
+	call BossAI_HakiSelectedMoveSuperEffectiveVsEnemy
+	jr c, .yes
 	call BossAI_HasRevealedSuperEffectiveMove
 	jr c, .yes
 
@@ -3143,6 +3147,8 @@ BossAI_PlayerHasRevealedPriorityThreat:
 
 ; ai-layer: POLICY
 BossAI_PlayerHasRevealedPriorityThreatUncached:
+	call BossAI_HakiSelectedMoveIsPriorityThreat
+	ret c
 	ld hl, wPlayerUsedMoves
 	ld c, NUM_MOVES
 .loop
@@ -3195,6 +3201,134 @@ BossAI_PlayerHasRevealedPriorityThreatUncached:
 .yes_pop
 	pop bc
 	pop hl
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiScoringContextActive:
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	bit BOSSAI_HAKI_SCORING_CONTEXT_F, [hl]
+	jr z, .no
+	scf
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiSelectedMove:
+	call BossAI_HakiScoringContextActive
+	ret nc
+	ld a, [wCurPlayerMove]
+	and a
+	jr z, .no
+	scf
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiSelectedMoveEffectMatchesTemp:
+	call BossAI_HakiSelectedMove
+	ret nc
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	ld b, a
+	ld a, [wBossAITemp]
+	cp b
+	jr z, .yes
+	and a
+	ret
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiSelectedMoveSuperEffectiveVsEnemy:
+	call BossAI_HakiSelectedMove
+	ret nc
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .no
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld c, a
+	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiSelectedMoveThreatTypeAndSeverity:
+	call BossAI_HakiSelectedMove
+	ret nc
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .no
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld c, a
+	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	and a
+	jr z, .no
+	ld b, c
+	scf
+	ret
+.no
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_HakiSelectedMoveIsPriorityThreat:
+	call BossAI_HakiSelectedMove
+	ret nc
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	cp EFFECT_PRIORITY_HIT
+	jr nz, .no
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .no
+	ld d, a
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld c, a
+	call BossAI_PlayerThreatTypeHitsEnemy
+	jr nc, .no
+	call AICheckEnemyQuarterHP_HL
+	jr nc, .yes
+	call AICheckEnemyHalfHP_HL
+	jr c, .no
+	ld a, d
+	cp 80
+	jr nc, .yes
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE + 1
+	jr nc, .yes
+.no
+	and a
+	ret
+.yes
 	scf
 	ret
 
@@ -3707,6 +3841,26 @@ if DEF(BOSSAI_EMIT_MOVE_PUBLIC_FASTER)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_PublicEnemyFaster:
+; Per-tick cache wrapper. The uncached body does two GetBaseData calls
+; (heaviest single op in ScoreMove). Inputs (player species, enemy species,
+; enemy item) are stable within one AI tick; cached result is reused across
+; all moves and lookahead candidates in the same turn.
+	ld a, [wBossAIPublicEnemyFasterCache]
+	inc a
+	jr z, .miss
+	dec a
+	rrca
+	ret
+.miss
+	call BossAI_PublicEnemyFasterUncached
+	push af
+	sbc a, a
+	and 1
+	ld [wBossAIPublicEnemyFasterCache], a
+	pop af
+	ret
+
+BossAI_PublicEnemyFasterUncached:
 	push hl
 	push de
 	push bc
@@ -3849,6 +4003,8 @@ BossAI_PredictPlayerSwitch:
 
 ; ai-layer: POLICY
 BossAI_HasRevealedSuperEffectiveMove:
+	call BossAI_HakiSelectedMoveSuperEffectiveVsEnemy
+	ret c
 	call BossAI_GetActiveSpeciesRevealedMaskPointer
 	jr nc, .no
 	ld a, l
@@ -4403,6 +4559,8 @@ BossAI_CoachExpectedMoveResistedByPlayer:
 ; ai-layer: POLICY
 BossAI_PlayerHasRevealedEffectA_Coach:
 	ld [wBossAITemp], a
+	call BossAI_HakiSelectedMoveEffectMatchesTemp
+	jr c, .yes
 	ld hl, wPlayerUsedMoves
 	ld c, NUM_MOVES
 .loop
@@ -4821,6 +4979,7 @@ BossAI_ComputePlayerPlausibleTypeMask:
 
 	call BossAI_AddPublicSTABThreatsToMask
 	call BossAI_AddRevealedDamagingTypesToMask
+	call BossAI_AddHakiSelectedMoveToPlausibleMasks
 	call BossAI_PlayerActiveFourMoveSaturated
 	jr c, .done
 	ld a, [wBossAITemp]
@@ -4964,6 +5123,36 @@ BossAI_AddMoveIdToLikelyMask:
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
 	call BossAI_SetLikelyMaskBit
+	ret
+
+; ai-layer: POLICY
+BossAI_AddHakiSelectedMoveToPlausibleMasks:
+	call BossAI_HakiSelectedMove
+	ret nc
+	ld b, a
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	cp EFFECT_HIDDEN_POWER
+	jr nz, .check_power
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_SetPlausibleAndLikelyMaskBit
+	ret
+
+.check_power
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	ret z
+	cp BOSS_AI_PLAUSIBLE_MIN_POWER
+	ret c
+	ld a, b
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	call BossAI_SetPlausibleAndLikelyMaskBit
 	ret
 
 ; ai-layer: POLICY
@@ -5741,15 +5930,27 @@ BossAI_ApplyMultiTurnProjection:
 	ret
 
 .GetProjectionDepth
+; Per-tick cached projection depth. Inputs (wBossAITier) are stable within
+; one AI tick; called 8x per ApplyMultiTurnProjection × up to 4 candidates
+; per turn. First call computes and stores; later calls in the same turn
+; (across all candidates) hit the cache.
+	ld a, [wBossAILookaheadDepthCache]
+	inc a
+	jr z, .compute_depth
+	dec a
+	ret
+.compute_depth
 	ld a, [wBossAITier]
 	cp AI_TIER_LATE
 	ld a, BOSS_AI_LOOKAHEAD_HORIZON_LATE - 1
-	ret z
+	jr z, .store_depth
 	ld a, [wBossAITier]
 	cp AI_TIER_MID
 	ld a, BOSS_AI_LOOKAHEAD_HORIZON_MID - 1
-	ret z
+	jr z, .store_depth
 	xor a
+.store_depth
+	ld [wBossAILookaheadDepthCache], a
 	ret
 
 .IsUnderPressure
@@ -5850,6 +6051,13 @@ BossAI_GetPrimaryThreatType:
 
 ; ai-layer: POLICY
 BossAI_GetPrimaryThreatTypeUncached:
+	call BossAI_HakiSelectedMoveThreatTypeAndSeverity
+	jr nc, .scan_revealed
+	ld a, b
+	scf
+	ret
+
+.scan_revealed
 	ld d, 0
 	ld e, 0
 	ld hl, wPlayerUsedMoves
@@ -6018,9 +6226,11 @@ BossAI_GetRevealedMoveThreatTypeAndSeverity:
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
 	ld b, a
+	ld c, a
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
 	and a
 	ret z
+	ld b, c
 	scf
 	ret
 
@@ -6225,20 +6435,44 @@ endc
 
 if DEF(BOSSAI_EMIT_MOVE_SCOUT_DECISION)
 BossAI_ShouldScout:
-	call BossAI_IsActiveSpeciesScouted
-	jr c, .no
-	call BossAI_GetPrimaryThreatType
-	jr nc, .no
-	call BossAI_GetTypeThreatSeverityVsEnemyMon
-	cp 3
-	jr c, .no
-	call BossAI_HasAnyKOMove
-	jr c, .no
-	call BossAI_GetScoutRollThreshold
+; Per-tick cache for the prereq chain only. The five prereq helpers
+; (IsActiveSpeciesScouted / GetPrimaryThreatType /
+; GetTypeThreatSeverityVsEnemyMon / HasAnyKOMove / GetScoutRollThreshold)
+; have turn-stable outputs. The Random roll varies per call and stays
+; inside this function so RNG consumption is preserved.
+	ld a, [wBossAIShouldScoutPrereqCache]
+	inc a
+	jr z, .compute_prereqs
+	dec a
+	jr z, .no
+	; cached "prereqs passed" -- roll random against cached threshold
+	ld a, [wBossAIShouldScoutThresholdCache]
 	ld b, a
 	call Random
 	cp b
 	jr nc, .no
+	jr .yes
+
+.compute_prereqs
+	call BossAI_IsActiveSpeciesScouted
+	jr c, .prereqs_failed
+	call BossAI_GetPrimaryThreatType
+	jr nc, .prereqs_failed
+	call BossAI_GetTypeThreatSeverityVsEnemyMon
+	cp 3
+	jr c, .prereqs_failed
+	call BossAI_HasAnyKOMove
+	jr c, .prereqs_failed
+	call BossAI_GetScoutRollThreshold
+	ld [wBossAIShouldScoutThresholdCache], a
+	ld b, a
+	ld a, 1
+	ld [wBossAIShouldScoutPrereqCache], a
+	call Random
+	cp b
+	jr nc, .no
+
+.yes
 IF DEF(BOSS_AI_TRACE)
 	ld a, [wBossAITraceRiskFlags]
 	or 1
@@ -6246,6 +6480,10 @@ IF DEF(BOSS_AI_TRACE)
 ENDC
 	scf
 	ret
+
+.prereqs_failed
+	xor a
+	ld [wBossAIShouldScoutPrereqCache], a
 .no
 	and a
 	ret

@@ -84,6 +84,20 @@ SUBSYSTEMS = (
         ),
     ),
     Subsystem(
+        id="headless_battle",
+        title="Headless battle simulator",
+        scope="Text/JSON no-GUI battle-turn simulation with explicit proof labels.",
+        entrypoints=(
+            "python -m tools.headless_battle --template",
+            "python tools\\audit\\check_headless_battle_simulator.py",
+        ),
+        evidence_paths=(
+            "tools/headless_battle/simulator.py",
+            "tools/headless_battle/README.md",
+            "tools/audit/check_headless_battle_simulator.py",
+        ),
+    ),
+    Subsystem(
         id="trace_runtime",
         title="Trace runtime",
         scope="PyBoy runtime helpers, symbol parsing, trace capture, save-state replay plumbing.",
@@ -400,6 +414,42 @@ TRIAGE_RULES = (
         ),
         gaps=(
             "There is no generic whole-ROM dataflow/provenance debugger for arbitrary register symptoms yet.",
+        ),
+    ),
+    TriageRule(
+        id="headless_battle",
+        title="Headless text/JSON battle simulation",
+        path_prefixes=(
+            "tools/headless_battle/",
+            "tools/audit/check_headless_battle_simulator.py",
+        ),
+        symptom_keywords=(
+            "headless battle",
+            "text battle",
+            "text-only battle",
+            "battle simulator",
+            "simulate a battle",
+            "turn by turn",
+            "fixed rng",
+            "exhaustive rng",
+            "critical hit",
+            "focus energy",
+            "frozen",
+            "flinch",
+            "switch roll",
+            "switch dice",
+            "final switch confidence",
+            "known switch candidate",
+            "no gui",
+            "without pyboy",
+        ),
+        reason="The no-GUI simulator has its own proof-labeled text/JSON path and audit gate.",
+        commands=(
+            "python -m tools.headless_battle --template",
+            "python tools\\audit\\check_headless_battle_simulator.py",
+        ),
+        gaps=(
+            "Full live Boss AI scoring, switch candidate/confidence generation, status infliction, paralysis speed recalculation, freeze infliction, defrost move-script status clearing, Sleep Clause slot bookkeeping, held-item effects beyond the currently listed supported items, and battle scripts remain outside the headless simulator until separately proven.",
         ),
     ),
     TriageRule(

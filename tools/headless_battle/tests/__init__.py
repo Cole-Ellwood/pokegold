@@ -1,0 +1,1 @@
+"""Headless battle simulator tests."""

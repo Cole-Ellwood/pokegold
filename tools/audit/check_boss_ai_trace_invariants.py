@@ -421,15 +421,30 @@ def audit_switch_loop(boss: str) -> None:
     require_order(
         switch_entry,
         [
+            "ld a, [wBossAIRevealedMovesBitmapSpare + 2]",
+            "ret nz",
             "call BossAI_SelectPlanIfNeeded",
             "call BossAI_ComputePlayerPlausibleTypeMask",
-            "call BossAI_OracleHakiRead",
-            "ret nz",
             "call BossAI_EnemyPerishEscapeUrgent",
             "jr c, .check_switch",
             "call BossAI_HasAnyKOMove",
         ],
         "perish escape can override KO stay gate",
+    )
+    require_order(
+        switch_entry,
+        [
+            "call BossAI_RefineSwitchCandidateForPlausibleRisk",
+            "ld a, [wEnemySwitchMonParam]",
+            "and a",
+            "jp z, AI_TryItem",
+            "call BossAI_SwitchTargetSolvesDefensiveProblem",
+            "jp nc, AI_TryItem",
+            "ld a, [wEnemySwitchMonParam]",
+            "push af",
+            "call BossAI_ComputeSwitchConfidence",
+        ],
+        "switch dispatch requires target to improve the defensive problem",
     )
 
     block = top_block(boss, "BossAI_NeedsLoopPenalty")
@@ -449,15 +464,64 @@ def audit_switch_loop(boss: str) -> None:
     require_order(
         block,
         [
-            "call AICheckEnemyQuarterHP",
-            "jr nc, .no_penalty",
             "call BossAI_ShouldRespectPotentialPlayerRevenge",
+            "jr nc, .check_perish_exception",
+            "call BossAI_LoopReturnTargetMeaningfullySafer",
             "jr c, .no_penalty",
         ],
         "switch loop narrow emergency exception",
     )
+    if "call AICheckEnemyQuarterHP" in block:
+        fail("switch loop exception must not be waived by low HP alone")
     if "call BossAI_IsImminentKOPrevention" in block:
         fail("switch loop exception must not use broad imminent-KO predicate")
+    target_gate = top_block(boss, "BossAI_SwitchTargetSolvesDefensiveProblem")
+    require_order(
+        target_gate,
+        [
+            "call BossAI_EnemyPerishEscapeUrgent",
+            "call BossAI_IsImmunityPivotOpportunity",
+            "call BossAI_AceTimingHook",
+            "call BossAI_SwitchTargetMeaningfullySaferThanCurrent",
+            "call AICheckEnemyQuarterHP_HL",
+            "jr c, .no",
+            "call BossAI_SwitchTargetNoMoreRiskyThanCurrent",
+        ],
+        "switch target defensive-purpose gate",
+    )
+    meaningful = top_block(boss, "BossAI_SwitchTargetMeaningfullySaferThanCurrent")
+    require_order(
+        meaningful,
+        [
+            "call BossAI_CompareSwitchTargetRiskToCurrent",
+            "add 4",
+            "cp b",
+        ],
+        "switch target meaningful safety margin",
+    )
+    no_more_risky = top_block(boss, "BossAI_SwitchTargetNoMoreRiskyThanCurrent")
+    require_order(
+        no_more_risky,
+        [
+            "call BossAI_CompareSwitchTargetRiskToCurrent",
+            "cp b",
+        ],
+        "low-HP switch target no-more-risky fallback",
+    )
+    helper = top_block(boss, "BossAI_CompareSwitchTargetRiskToCurrent")
+    require_order(
+        helper,
+        [
+            "call BossAI_ComputeSwitchCandidateRisk",
+            "ld [wBossAITemp4], a",
+            "ld a, [wCurOTMon]",
+            "inc a",
+            "call BossAI_ComputeSwitchCandidateRisk",
+            "ld b, a",
+            "ld a, [wBossAITemp4]",
+        ],
+        "switch target risk comparison uses active and proposed target",
+    )
     for call in (
         "call BossAI_EnemyPerishEscapeUrgent",
         "call BossAI_IsImmunityPivotOpportunity",
@@ -567,11 +631,12 @@ def audit_haki_quarantine(boss: str) -> None:
             "ld hl, wBossAIRevealedMovesBitmapSpare + 1",
             "bit BOSSAI_HAKI_SPENT_F, [hl]",
             "bit BOSSAI_HAKI_ELIGIBLE_F, [hl]",
-            "ld a, [wEnemyGoesFirst]",
             "ld a, [wBattlePlayerAction]",
+            "farcall CheckEnemyLockedIn",
             "ld a, [wCurPlayerMove]",
-            "call BossAI_ApplyKnownPlayerActionOracleBias",
-            "call BossAI_ChooseBestOracleMove",
+            "call BossAI_BeginOracleHakiScoring",
+            "call BossAI_OracleScoreKnownPlayerAction",
+            "call BossAI_EndOracleHakiScoring",
             "callfar EnforceEnemyHeldMoveRestrictions_Far",
             "callfar UpdateMoveData",
             "call BossAI_UpdateRepeatTracker",
@@ -581,6 +646,11 @@ def audit_haki_quarantine(boss: str) -> None:
         ],
         "Uniform Haki oracle is post-input, one-shot, queues taunt, and refreshes move data",
     )
+    require_not_contains(
+        oracle,
+        "wEnemyGoesFirst",
+        "Uniform Haki oracle must not be gated on enemy-first order",
+    )
     for needle in (
         "ld a, [wCurPlayerMove]",
         "or 1 << BOSSAI_HAKI_TRACE_FIRED_F",
@@ -588,17 +658,26 @@ def audit_haki_quarantine(boss: str) -> None:
     ):
         require_contains(oracle, needle, "Uniform Haki quarantine trace/input boundary")
 
-    bias = top_block(boss, "BossAI_ApplyKnownPlayerActionOracleBias")
+    score = top_block(boss, "BossAI_OracleScoreKnownPlayerAction")
     require_order(
-        bias,
+        score,
         [
-            "call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
-            "cp EFFECT_DESTINY_BOND",
-            "cp EFFECT_PROTECT",
-            "cp EFFECT_ENDURE",
-            "ld [hl], a",
+            "call BossAI_OracleResetMoveScores",
+            "call BossAI_ApplyMoveModel",
+            "call BossAI_ApplyLookaheadToTopMoveCandidates",
+            "call BossAI_ChooseBestOracleMove",
         ],
-        "Uniform Haki known-action bias is generic effect-based, not trainer-specific",
+        "Uniform Haki known-action path re-scores through the normal move model",
+    )
+    require_not_contains(
+        boss,
+        "BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack",
+        "Uniform Haki must not keep the old strong-SE special-case predicate",
+    )
+    require_contains(
+        boss,
+        "BossAI_AddHakiSelectedMoveToPlausibleMasks",
+        "Uniform Haki selected move is integrated into normal scoring inputs",
     )
 
 
@@ -1795,7 +1874,11 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
         "Fire passive low HP model",
     )
 
-    speed = top_block(boss, "BossAI_PublicEnemyFaster")
+    # BossAI_PublicEnemyFaster is now a thin per-tick cache wrapper around
+    # BossAI_PublicEnemyFasterUncached (same pattern as
+    # BossAI_PlayerHasPublicThreatVsEnemy / *Uncached at line 357). Inspect
+    # the Uncached body for the Choice Scarf model.
+    speed = top_block(boss, "BossAI_PublicEnemyFasterUncached")
     require_contains(speed, "HELD_CHOICE_SCARF", "Choice Scarf public speed model")
     require_contains(
         speed,

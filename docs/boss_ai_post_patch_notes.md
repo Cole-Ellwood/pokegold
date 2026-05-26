@@ -172,12 +172,14 @@ Implemented behavior:
 - Role-bias personality coverage now includes the remaining named leaders
   through existing type/effect nudges. These are close-score identity biases,
   not legality overrides.
-- Morty's Gengar has the first quarantined Haki prototype. On its ace-first
-  active turn only, after player input and turn order are locked, it may spend
-  Haki to choose Destiny Bond into a strong super-effective selected attack if
-  Gengar moves first. The input read is label-scoped to
-  `BossAI_TryMortyHakiOracle`, refreshed through `UpdateMoveData`, recorded in
-  trace risk bit 3, and explicitly allowlisted by the no-cheat audit.
+- Haki is a quarantined Oracle path. On the ace's first active turn, after
+  player input is locked and before turn order is finalized, it may spend Haki
+  to re-score the boss move with the player's selected move known through the
+  normal Boss AI move model and lookahead path. The direct input read is
+  label-scoped to `BossAI_OracleHakiRead` plus the temporary
+  `BossAI_HakiSelectedMove` scoring-context helper, refreshed through
+  `UpdateMoveData`, recorded in trace risk bit 3, and explicitly allowlisted
+  by the no-cheat audit.
 - Late-tier class role bias is restored, so late bosses keep identity bonuses
   and Lance-style non-KO Hyper Beam discouragement.
 - Phase 2 heuristics were added without a simulator: Spikes plus phazing bias,
@@ -239,7 +241,7 @@ Important anchors:
 - `.ApplyRecoveryTimingDiscipline`
 - `.ApplySelfKOTradeDiscipline`
 - `BossAI_ApplyPreservationSwitchBias`
-- `BossAI_TryMortyHakiOracle`
+- `BossAI_OracleHakiRead`
 - `BossAI_UpdateHakiAceWindow`
 - `.ApplyChoiceFirstLockRegret`
 - `.SeenSpeciesChoiceLockRisk`
@@ -389,10 +391,13 @@ Required behavior checks:
 
 - Alakazam reveals Ice Punch, then another player species enters; the revealed
   Ice threat must not transfer globally.
+- A defensive switch target must solve the public defensive problem before
+  confidence rolls. Example: Morty's Misdreavus should not pivot to Gengar
+  against a Haunter Ghost threat, because Gengar is riskier than staying.
 - Boss switches A->B, then considers B->A; loop penalty should apply unless
-  low current HP, public revenge pressure, own Perish Song escape, public
-  immunity pivot, or ace timing applies. Generic public type pressure alone
-  should not waive it.
+  public revenge pressure makes the return target meaningfully safer, own Perish
+  Song escape, public immunity pivot, or ace timing applies. Generic public type
+  pressure and low HP alone should not waive it.
 - Spikes lead on the actual first scoring turn; hazard bias should be high only
   when public pressure is not immediate.
 - Toxic, Thunder Wave, Confuse Ray, sleep, and Leech Seed should be heavily

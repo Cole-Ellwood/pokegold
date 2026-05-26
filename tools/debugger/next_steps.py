@@ -262,6 +262,39 @@ NEXT_STEP_ROWS = [
         "escalation_command": "python -m tools.damage_debugger.clobber_smoke",
     },
     {
+        "symptom_class": "headless_battle_simulation",
+        "matched_lane": "headless_battle",
+        "title": "Headless text/JSON battle-turn simulation",
+        "keywords": [
+            "headless battle",
+            "text battle",
+            "text-only battle",
+            "txt battle",
+            "battle simulator",
+            "simulate a battle",
+            "full battle",
+            "turn by turn",
+            "fixed rng",
+            "random rng",
+            "all rng",
+            "exhaustive rng",
+            "critical hit",
+            "focus energy",
+            "simulate switch",
+            "switch action",
+            "switch roll",
+            "switch dice",
+            "final switch confidence",
+            "known switch candidate",
+            "no gui",
+            "without pyboy",
+        ],
+        "first_command": "python -m tools.headless_battle --template",
+        "required_inputs": ["text/JSON battle state with active mons, optional bench mons, explicit stats/moves or species+level+move-name shorthand, selected actions, RNG mode, and already-known Boss AI switch candidate/confidence when using boss_ai_switch_policy"],
+        "proof_limit": "Executable selected-turn slice: move actions, explicit selected switch actions, explicit forced switch phases, post-score Boss AI selector actions, and final-confidence Boss AI switch-policy actions across one or more provided turns; default-role priority/speed/Quick Claw/Choice Scarf order; supported critical-hit chance including Focus Energy, high-critical moves, Scope Lens, Lucky Punch, and Stick; supported damaging-move accuracy including accuracy/evasion stages, BrightPowder, X Accuracy, Lock-On, semi-invulnerable flying/underground targets, Thunder-in-rain, and source-table always-hit effects; HP mutation for normal, always-hit, Thunder, Gust, and Earthquake damaging moves, including Gust/Earthquake post-variation double damage against flying/underground targets. Supported damaging scripts follow ROM command order for implemented surfaces: critical-hit chance, damage variation, and supported post-variation effects run before hit checking, and HP is applied only if the hit check passes. Rocky Helmet/Shell Bell/Life Orb after-hit HP effects; poison/burn/toxic residual HP mutation after selected action phases; Leftovers between-turn HP mutation; paralysis fully-paralyzed move blocking; sleep counter decrement, fast-asleep blocking, and wake-up clearing; frozen-solid move blocking with Flame Wheel/Sacred Fire CheckTurn bypass; one-turn flinch blocking and flag clearing; continuous RNG streams; damage oracle; and ROM-shaped damage variation. Exhaustive mode reports distinct outcome classes with raw_count weights, rng_weight probabilities, and aggregate summary rates. It labels selected switch actions, explicit forced switch phases, Protect hit-check blocking, post-score Boss AI selector consumption, final-confidence Boss AI switch-policy rolls, residual-status turn timing, Leftovers between-turn timing, paralysis turn-block timing, sleep turn-counter timing, freeze turn-block timing, and flinch turn-block timing as source-mirrored, and Boss AI live score generation, Boss AI switch candidate/confidence generation, automatic forced-switch selection, status infliction, paralysis speed recalculation, freeze infliction, defrost move-script status clearing, Sleep Clause slot bookkeeping, automatic volatile-state lifetimes beyond the explicit flinched input flag, source move damage-effect commands beyond normal/always-hit/Thunder/Gust/Earthquake HP mutation, held-item effects beyond Quick Claw/Choice Scarf/Rocky Helmet/Shell Bell/Life Orb/Leftovers, and full battle scripts as out of scope until proven.",
+        "escalation_command": "python tools\\audit\\check_headless_battle_simulator.py",
+    },
+    {
         "symptom_class": "type_chart_navigation",
         "matched_lane": "pokemon_semantics",
         "title": "Type matchup table and runtime reader",
@@ -365,7 +398,7 @@ NEXT_STEP_ROWS = [
         "symptom_class": "wrong_switch",
         "matched_lane": "boss_ai",
         "title": "Boss selected the wrong switch",
-        "keywords": ["wrong switch", "bad switch", "selected switch", "boss switch", "boss switched", "propose a switch", "proposed switch", "switch_sack", "expected staying", "expected to stay", "stay in", "staying in", "should stay", "switched when expected", "policy expected", "switch confidence", "switch target", "preserve"],
+        "keywords": ["wrong switch", "bad switch", "selected switch", "boss switch", "boss switched", "boss ai switch", "switch frequency", "switching frequency", "switch rate", "switch probability", "how often it switches", "test switch patch", "propose a switch", "proposed switch", "switch_sack", "expected staying", "expected to stay", "stay in", "staying in", "should stay", "switched when expected", "policy expected", "switch confidence", "switch target", "preserve"],
         "first_command": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios <scenarios.jsonl> --fail-on-mismatch",
         "required_inputs": ["scenario JSONL with the disputed switch case", "base route or manifest if the default materializer cannot position the battle"],
         "proof_limit": "ROM materialization proof for supplied switch scenarios; without a scenario this remains only routing guidance.",
@@ -416,6 +449,7 @@ REGRESSION_GATES = {
     "qol_gate_design": "python tools\\audit\\check_navigation_floor.py",
     "damage_math_hazard": "python tools\\audit\\check_battle_math_safety.py",
     "damage_matchup_cli": "python -m tools.damage_debugger.clobber_smoke",
+    "headless_battle_simulation": "python tools\\audit\\check_headless_battle_simulator.py",
     "type_chart_navigation": "python tools\\audit\\check_release_smoke.py",
     "add_new_move_navigation": "python tools\\audit\\check_release_smoke.py",
     "boss_ai_navigation": "python tools\\audit\\check_boss_ai_no_cheat.py",
@@ -588,6 +622,14 @@ SOURCE_REFS = {
         "tools/debugger/README.md",
         "tools/audit/check_release_smoke.py",
     ],
+    "headless_battle_simulation": [
+        "tools/headless_battle/simulator.py",
+        "tools/headless_battle/README.md",
+        "tools/audit/check_headless_battle_simulator.py",
+        "tools/damage_debugger/oracle.py",
+        "engine/battle/effect_commands.asm",
+        "engine/battle/core.asm",
+    ],
     "type_chart_navigation": [
         "data/types/type_matchups.asm",
         "constants/type_constants.asm",
@@ -748,6 +790,9 @@ EVIDENCE_STANDARDS = {
     "damage_matchup_cli": [
         "The answer points to the damage debugger matchup/oracle tools and gives a current concrete command such as python -m tools.damage_debugger.matchup CHARIZARD:50 LAPRAS:50 FLAMETHROWER --json before relying on memory.",
     ],
+    "headless_battle_simulation": [
+        "The answer routes to tools.headless_battle, uses a JSON state/actions-or-turns/RNG scenario, and preserves the proof labels: damage core is delegated to the existing oracle and checked through clobber_smoke, damage variation is ROM-differential through injected link-battle RNG bytes, critical-hit chance is ROM-differential through BattleCommand_Critical, default-role priority/speed/Quick Claw/Choice Scarf turn order is ROM-differential through DetermineMoveOrder, supported damaging-move accuracy including accuracy/evasion stages, BrightPowder, X Accuracy, Lock-On, semi-invulnerable flying/underground targets, Thunder-in-rain, and source-table always-hit effects is ROM-differential through BattleCommand_CheckHit for both actors, Gust/Earthquake post-variation double damage is ROM-differential through BattleCommand_DoubleFlyingDamage and BattleCommand_DoubleUndergroundDamage, Rocky Helmet/Shell Bell/Life Orb after-hit HP effects are ROM-differential through HandleLateGenAfterHitEffects_Far, poison/burn/toxic residual HP mutation is ROM-differential through ResidualDamage.check_toxic, Leftovers HP mutation is ROM-differential through HandleLeftovers.do_it, paralysis CheckTurn blocking is ROM-differential through BattleCommand_CheckTurn with a FullyParalyzedText hook, sleep CheckTurn counter behavior is ROM-differential through FastAsleep/WokeUp text-or-animation hooks, freeze CheckTurn behavior is ROM-differential through FrozenSolidText and thaw-move return-path hooks, flinch CheckTurn behavior is ROM-differential through FlinchedText and substatus clearing hooks, selected turn sequencing, selected switch actions, explicit forced switch phases, Protect hit-check blocking, post-score Boss AI selector consumption, final-confidence Boss AI switch-policy rolls, residual-status turn timing, Leftovers between-turn timing, paralysis turn-block timing, sleep turn-counter timing, freeze turn-block timing, and flinch turn-block timing are source mirrors, exhaustive mode is distinct outcome classes with raw_count weights, rng_weight probabilities, and aggregate summary rates, and unimplemented full-battle mechanics stay out of scope until differential ROM proof exists.",
+    ],
     "type_chart_navigation": [
         "The answer names data/types/type_matchups.asm, constants/type_constants.asm, and the runtime reader in engine/battle/effect_commands.asm before suggesting any matchup edit.",
     ],
@@ -761,7 +806,7 @@ EVIDENCE_STANDARDS = {
         "The answer explains that SVBK remaps $D000-$DFFF so call/ret with SP in remapped WRAMX can pop a return address from the wrong bank, then runs check_observation_log_invariants.py or wram-bank-hazards on the source file.",
     ],
     "haki_taunt_read": [
-        "The Haki oracle audit passes on current source tables and names the ai_haki_excluded exclusion table, the boss policy switch surface (BossAI_OracleHakiRead defined in boss_policy_switch.asm; BossAI_QueueHakiTaunt defined in haki_taunt_queue.asm and invoked from boss_policy_switch.asm), and the tier-and-class gate logic upstream of the oracle call. Proof can start with python -m tools.debugger next --symptom \"where is the boss AI Haki eligibility gate\" --json-out .local\\tmp\\q_haki.json; emulator-live textbox or render claims need a separate live scenario.",
+        "The Haki oracle audit passes on current source tables and names the ai_haki_excluded exclusion table, the pre-order BossAI_OracleHakiRead hook after ParsePlayerAction and before DetermineMoveOrder, the temporary selected-move scoring context feeding normal BossAI_ApplyMoveModel/lookahead, BossAI_QueueHakiTaunt in haki_taunt_queue.asm, both turn-order taunt flush sites, and the tier-and-class gate logic upstream of the oracle call. Proof can start with python -m tools.debugger next --symptom \"where is the boss AI Haki eligibility gate\" --json-out .local\\tmp\\q_haki.json; emulator-live textbox or render claims need a separate live scenario.",
     ],
     "ko_band_pressure": [
         "The KO-band oracle materialization audit passes for committed scenarios; arbitrary fight claims need a matching scenario file.",
@@ -856,6 +901,9 @@ DISPROOF_STANDARDS = {
     ],
     "damage_matchup_cli": [
         "If matchup output or clobber smoke disagrees with the claimed damage path, defer to current debugger evidence rather than memory.",
+    ],
+    "headless_battle_simulation": [
+        "If the report lacks coverage labels, claims full battle/Boss AI live scoring/Boss AI switch candidate/confidence generation/status infliction/paralysis speed recalculation/freeze infliction/defrost move-script clearing/Sleep Clause slot bookkeeping/automatic-forced-switch/held-item effects beyond Quick Claw, Choice Scarf, Rocky Helmet, Shell Bell, Life Orb, and Leftovers/volatile-lifetime beyond explicit flinch input or source move damage-effect equivalence beyond the listed supported effects, treats selected switch actions, explicit forced switch phases, Protect hit-check blocking, post-score Boss AI selector consumption, final-confidence Boss AI switch-policy rolls, residual-status turn timing, Leftovers between-turn timing, paralysis turn-block timing, sleep turn-counter timing, freeze turn-block timing, or flinch turn-block timing as byte-proven, omits the critical-hit RNG byte before damage variation for supported damaging moves, or omits check_headless_battle_simulator.py as the current gate, reject the simulation route as overclaimed.",
     ],
     "type_chart_navigation": [
         "If the answer returns engine battle code without naming data/types/type_matchups.asm, it missed the matchup data file.",

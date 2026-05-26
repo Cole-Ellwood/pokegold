@@ -18,11 +18,12 @@ BossAI_SwitchOrTryItem:
 	ld a, [wBossAITier]
 	and a
 	ret z
+	ld a, [wBossAIRevealedMovesBitmapSpare + 2]
+	and a
+	ret nz
 	call BossAI_ResetTurnCaches
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
-	call BossAI_OracleHakiRead
-	ret nz
 
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .check_switch
@@ -43,6 +44,9 @@ BossAI_SwitchOrTryItem:
 	ld a, [wEnemySwitchMonParam]
 	and a
 	jp z, AI_TryItem
+	call BossAI_SwitchTargetSolvesDefensiveProblem
+	jp nc, AI_TryItem
+	ld a, [wEnemySwitchMonParam]
 
 	push af
 	call BossAI_ComputeSwitchConfidence
@@ -110,18 +114,18 @@ ENDC
 	jp AI_TryItem
 
 ; ai-layer: POLICY
-BossAI_OracleHakiRead:
+BossAI_OracleHakiRead::
 ; Uniform Haki exception: once per battle, on the ace's first active turn,
 ; an eligible boss may re-score deterministically against the player's
 ; already-locked move. This is the only normal Boss AI routine allowed to
 ; read current-turn input.
+	ld a, [wBossAITier]
+	and a
+	ret z
 	ld hl, wBossAIRevealedMovesBitmapSpare + 1
 	bit BOSSAI_HAKI_SPENT_F, [hl]
 	jr nz, .no
 	bit BOSSAI_HAKI_ELIGIBLE_F, [hl]
-	jr z, .no
-	ld a, [wEnemyGoesFirst]
-	and a
 	jr z, .no
 	ld a, [wBattlePlayerAction]
 	and a
@@ -129,14 +133,28 @@ BossAI_OracleHakiRead:
 	ld a, [wEnemySubStatus5]
 	bit SUBSTATUS_ENCORED, a
 	jr nz, .no
+	farcall CheckEnemyLockedIn
+	jr nz, .no
 	ld a, [wCurPlayerMove]
 	and a
 	jr z, .no
-	call BossAI_ApplyKnownPlayerActionOracleBias
-	call BossAI_ChooseBestOracleMove
+	call BossAI_BeginOracleHakiScoring
+	call BossAI_OracleScoreKnownPlayerAction
+	push af
+	call BossAI_EndOracleHakiScoring
+	pop af
 	jr nc, .no
+	ld a, [wBossAIMoveChoiceReady]
+	and a
+	jr z, .no
+	ldh a, [hBattleTurn]
+	push af
+	ld a, 1
+	ldh [hBattleTurn], a
 	callfar EnforceEnemyHeldMoveRestrictions_Far
 	callfar UpdateMoveData
+	pop af
+	ldh [hBattleTurn], a
 	call BossAI_UpdateRepeatTracker
 	call BossAI_MarkScoutedIfScoutMove
 	call BossAI_QueueHakiTaunt
@@ -158,48 +176,72 @@ ENDC
 	xor a
 	ret
 
-BossAI_ApplyKnownPlayerActionOracleBias:
-; Keep the base score model intact, then force only generic emergency
-; defensive effects when the locked player move is a strong public threat.
-	call BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack
-	ret nc
-	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld c, NUM_MOVES
-.bias_loop
-	ld a, [de]
-	and a
-	ret z
-	ld a, [hl]
-	cp 80
-	jr nc, .bias_next
-	push hl
-	push de
-	push bc
-	ld a, [de]
-	dec a
-	ld hl, Moves + MOVE_EFFECT
-	call BossAI_GetMoveAttr
-	ld b, a
-	pop bc
-	pop de
-	pop hl
-	ld a, b
-	cp EFFECT_DESTINY_BOND
-	jr z, .force_best
-	cp EFFECT_PROTECT
-	jr z, .force_best
-	cp EFFECT_ENDURE
-	jr nz, .bias_next
-.force_best
+BossAI_BeginOracleHakiScoring:
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	set BOSSAI_HAKI_SCORING_CONTEXT_F, [hl]
 	xor a
-	ld [hl], a
-.bias_next
-	inc hl
-	inc de
-	dec c
-	jr nz, .bias_loop
+	ld [wBossAIPlausibleTypeMaskSpecies], a
+	ld [wBossAIPlausibleTypeMaskLevel], a
+	call BossAI_ResetTurnCaches
 	ret
+
+BossAI_EndOracleHakiScoring:
+	ld hl, wBossAIRevealedMovesBitmapSpare + 1
+	res BOSSAI_HAKI_SCORING_CONTEXT_F, [hl]
+	xor a
+	ld [wBossAIPlausibleTypeMaskSpecies], a
+	ld [wBossAIPlausibleTypeMaskLevel], a
+	call BossAI_ResetTurnCaches
+	ret
+
+BossAI_OracleScoreKnownPlayerAction:
+	call BossAI_OracleResetMoveScores
+	call BossAI_ApplyMoveModel
+	call BossAI_ApplyLookaheadToTopMoveCandidates
+	call BossAI_ChooseBestOracleMove
+	ret
+
+BossAI_OracleResetMoveScores:
+	ld a, 20
+	ld hl, wEnemyAIMoveScores
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+
+	ld a, [wEnemyDisabledMove]
+	and a
+	jr z, .check_pp
+	ld hl, wEnemyMonMoves
+	ld c, 0
+.disabled_loop
+	cp [hl]
+	jr z, .score_disabled
+	inc c
+	inc hl
+	jr .disabled_loop
+.score_disabled
+	ld hl, wEnemyAIMoveScores
+	ld b, 0
+	add hl, bc
+	ld [hl], 80
+
+.check_pp
+	ld hl, wEnemyAIMoveScores - 1
+	ld de, wEnemyMonPP
+	ld b, 0
+.pp_loop
+	inc b
+	ld a, b
+	cp NUM_MOVES + 1
+	ret z
+	inc hl
+	ld a, [de]
+	inc de
+	and PP_MASK
+	jr nz, .pp_loop
+	ld [hl], 80
+	jr .pp_loop
 
 BossAI_ChooseBestOracleMove:
 	ld hl, wEnemyAIMoveScores
@@ -249,26 +291,6 @@ BossAI_ChooseBestOracleMove:
 	scf
 	ret
 .no_best
-	and a
-	ret
-
-BossAI_HakiPlayerSelectedStrongSuperEffectiveAttack:
-	ld a, [wCurPlayerMove]
-	and a
-	jr z, .selected_no
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	cp 60
-	jr c, .selected_no
-	ld a, [wCurPlayerMove]
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	call BossAI_GetMoveAttr
-	ld c, a
-	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
-	ret
-.selected_no
 	and a
 	ret
 
@@ -462,10 +484,12 @@ BossAI_NeedsLoopPenalty:
 .check_exceptions
 ; Public threat creates many normal switch candidates. Only a real emergency
 ; should waive the anti-loop penalty, or A->B->A pivots never pay the cost.
-	call AICheckEnemyQuarterHP_HL
-	jr nc, .no_penalty
 	call BossAI_ShouldRespectPotentialPlayerRevenge
+	jr nc, .check_perish_exception
+	call BossAI_LoopReturnTargetMeaningfullySafer
 	jr c, .no_penalty
+
+.check_perish_exception
 	call BossAI_EnemyPerishEscapeUrgent
 	jr c, .no_penalty
 	call BossAI_IsImmunityPivotOpportunity
@@ -478,6 +502,75 @@ BossAI_NeedsLoopPenalty:
 
 .no_penalty
 	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_LoopReturnTargetMeaningfullySafer:
+	call BossAI_SwitchTargetMeaningfullySaferThanCurrent
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchTargetSolvesDefensiveProblem:
+	call BossAI_EnemyPerishEscapeUrgent
+	jr c, .yes
+	call BossAI_IsImmunityPivotOpportunity
+	jr c, .yes
+	call BossAI_AceTimingHook
+	jr c, .yes
+	call BossAI_SwitchTargetMeaningfullySaferThanCurrent
+	jr c, .yes
+	call AICheckEnemyQuarterHP_HL
+	jr c, .no
+	call BossAI_SwitchTargetNoMoreRiskyThanCurrent
+	jr c, .yes
+
+.no
+	and a
+	ret
+
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchTargetMeaningfullySaferThanCurrent:
+	call BossAI_CompareSwitchTargetRiskToCurrent
+	add 4
+	cp b
+	jr c, .yes
+	jr z, .yes
+	and a
+	ret
+
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchTargetNoMoreRiskyThanCurrent:
+	call BossAI_CompareSwitchTargetRiskToCurrent
+	cp b
+	jr c, .yes
+	jr z, .yes
+	and a
+	ret
+
+.yes
+	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_CompareSwitchTargetRiskToCurrent:
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	inc a
+	call BossAI_ComputeSwitchCandidateRisk
+	ld [wBossAITemp4], a
+	ld a, [wCurOTMon]
+	inc a
+	call BossAI_ComputeSwitchCandidateRisk
+	ld b, a
+	ld a, [wBossAITemp4]
 	ret
 
 endc
