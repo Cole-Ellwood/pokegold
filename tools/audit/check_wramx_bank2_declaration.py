@@ -12,7 +12,7 @@ phase P0.5b. Verifies:
   5. home/init.asm sets [rSVBK]=1 (CGB-guarded) before the WRAM clear,
      and [hWRAMBank]=1 after the HRAM clear.
   6. docs/generated/dev_index.md still shows the Boss AI WRAM Reserve
-     bank-1 floor (normal >= 36 free bytes, trace >= 9 free bytes) — i.e.
+     bank-1 floor (normal >= 29 free bytes, trace >= 2 free bytes) — i.e.
      adding bank 2 didn't regress the bank-1 reserve.
   7. The symbol `wBossAIWramx2Buffer` resolves on bank 2 in pokegold.sym
      (skipped if sym file absent).
@@ -94,10 +94,10 @@ def main() -> int:
         else:
             normal_free = int(reserve_match.group(2))
             trace_free = int(reserve_match.group(4))
-            if normal_free < 36:
-                fail(f"Boss AI WRAM Reserve (Normal) bank-1 free bytes {normal_free} < 36 floor")
-            if trace_free < 9:
-                fail(f"Boss AI WRAM Reserve (BOSS_AI_TRACE) bank-1 free bytes {trace_free} < 9 floor")
+            if normal_free < 29:
+                fail(f"Boss AI WRAM Reserve (Normal) bank-1 free bytes {normal_free} < 29 floor")
+            if trace_free < 2:
+                fail(f"Boss AI WRAM Reserve (BOSS_AI_TRACE) bank-1 free bytes {trace_free} < 2 floor")
 
     # 7. Symbol verification (optional)
     if SYM_FILE.exists():

@@ -32,7 +32,7 @@ BossAIMatchupTables::
 	db 10, 20, 20, 10, 10, 10, 10, 20, 10, 10, 20, 10, 10, 20, 10, 10, 10 ; offensive vector
 	db HAUNTER
 	db 0, 0, 10, 5, 0, 5, 10, 20, 10, 10, 10, 10, 10, 5, 10, 10, 20 ; defensive vector
-	db 10, 20, 10, 10, 10, 10, 10, 20, 5, 10, 10, 10, 10, 20, 10, 10, 5 ; offensive vector
+	db 10, 20, 20, 10, 20, 10, 10, 20, 10, 10, 20, 20, 10, 20, 10, 20, 10 ; offensive vector
 
 	; PRYCE : PRYCE1
 	db PRYCE, PRYCE1
