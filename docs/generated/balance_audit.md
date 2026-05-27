@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-25T06:45:46
+Generated: 2026-05-26T22:42:48
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -171,7 +171,7 @@ _No rows._
 | 0 | `PORYGON2` | `current-final` | 565 | 515 | 50 | 115/80/100/60/105/105 | HP+30, Def+10, SpD+10 | NORMAL/NORMAL | - | - | 10 | 24 | HYPER_BEAM (NORMAL 180bp 90%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `STARMIE` | `current-final` | 565 | 520 | 45 | 80/75/85/115/125/85 | HP+20, SpA+25 | WATER/PSYCHIC_TYPE | - | - | 9 | 24 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `MAGMAR` | `current-final` | 567 | 495 | 72 | 120/95/60/82/125/85 | HP+55, Def+3, Spe-11, SpA+25 | FIRE/FIRE | - | - | 11 | 25 | FIRE_BLAST (FIRE 140bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
-| 0 | `GYARADOS` | `current-final` | 575 | 630 | -55 | 100/125/79/81/90/100 | HP-25, Atk-20, SpA-10 | WATER/DRAGON | - | - | 10 | 31 | OUTRAGE (DRAGON 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
+| 0 | `GYARADOS` | `current-final` | 575 | 630 | -55 | 100/125/79/81/90/100 | HP-25, Atk-20, SpA-10 | WATER/DRAGON | - | - | 8 | 31 | OUTRAGE (DRAGON 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `LAPRAS` | `current-final` | 580 | 535 | 45 | 130/85/110/60/85/110 | Def+30, SpD+15 | WATER/ICE | - | - | 11 | 28 | BLIZZARD (ICE 120bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `RAICHU` | `current-final` | 590 | 475 | 115 | 80/110/55/110/125/110 | HP+20, Atk+20, Spe+10, SpA+35, SpD+30 | ELECTRIC/FIGHTING | - | - | 9 | 27 | FOCUS_PUNCH (FIGHTING 150bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 0 | `MACHAMP` | `current-final` | 595 | 635 | -40 | 110/150/130/55/65/85 | HP-40, Atk+20, Def+20, SpD-40 | FIGHTING/FIGHTING | - | - | 10 | 27 | FOCUS_PUNCH (FIGHTING 150bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |

@@ -39,30 +39,37 @@ The arc:
 
 ## Mechanical gates
 
-### "Holy moves" — Dragon-only, no exceptions
+### "Holy moves" — Dragon-line-only, with documented exceptions
 
 | Move | Power | Gate | Mechanism |
 |---|---|---|---|
 | **Outrage** | 100 BP, 2-3 turn lock + confusion on lock-out | Level-up at **L55** on every Dragon (post-Lance / pre-Kanto-leaders); *plus* one-time TM from Clair after gym victory | TM50 is Dragon-type-restricted (step-3 commit `a10a8454`); level-up entries set per Dragon line |
-| **Dragon Dance** | +1 to best-attack stat (max of Atk and SpA) / +1 Spe | Level-up at **L30+** on every Dragon | Level-up move only — never a TM in this hack. Effect script in `data/moves/effects.asm` uses `bestattackup` not `attackup`, so it pairs cleanly with Outrage's category-flip rule — Dragon Dance always boosts whichever stat Outrage will run off for that user. |
+| **Dragon Dance** | +1 to best-attack stat (max of Atk and SpA) / +1 Spe | Level-up at **L30+** on every Dragon line | Level-up move only — never a TM in this hack. Effect script in `data/moves/effects.asm` uses `bestattackup` not `attackup`, so it pairs cleanly with Outrage's category-flip rule — Dragon Dance always boosts whichever stat Outrage will run off for that user. |
 
-Non-Dragons must not have access to either move — with three named
-legendary-flavor exceptions documented below. No other exceptions.
+The rule is narrative, not strictly type-tagged: any species whose
+evolution chain contains a Dragon-typed member counts as a Dragon
+line, including its non-Dragon-typed pre-evos. So Magikarp (Water →
+Water/Dragon Gyarados) and Seadra (Water → Water/Dragon Kingdra)
+can carry pre-evo holy-move entries in service of the upcoming
+Dragon evolution; they are "Dragons" narratively, even if their
+type bytes don't show it. Outside Dragon lines, the documented
+exceptions below are the only learners.
 
 #### Documented exceptions
 
-These three non-Dragon entries are intentional, locked, and not subject
+These non-Dragon-line entries are intentional, locked, and not subject
 to "is this Dragon-only" audit removals:
 
 | Species | Move | Level | Reason |
 |---|---|---|---|
 | Kangaskhan | DRAGON_DANCE | L31 | Legacy character move; Kangaskhan's identity as a strong setup attacker predates this hack's Dragon-only rule and the user wants it preserved. |
 | Larvitar (line) | DRAGON_DANCE | L15 (Larvitar); inherited by Pupitar/Tyranitar via evolution chain | Legacy character move on the pseudo-legend line. Tyranitar's identity as a setup-sweeper threat depends on it. |
-| Arcanine | DRAGON_DANCE + OUTRAGE | L35 / L55 | Singular exception: Arcanine is "legendary enough" in flavor to have learned both holy moves despite reverting to pure Fire typing. The only non-Dragon with both. Preserves Arcanine's existing identity as an apex Fire attacker. |
+| Arcanine (line) | DRAGON_DANCE + OUTRAGE | Growlithe L35 / Arcanine L55 (Outrage) | Singular exception: Arcanine is "legendary enough" in flavor to have learned both holy moves despite reverting to pure Fire typing. The only non-Dragon-line learner of both. Growlithe carries the L35 Dragon Dance entry so a player's Arcanine actually reaches it (Growlithe evolves at L42, so the pre-evo entry is the natural-progression path); Arcanine retains its own L35 entry as FillMoves baseline. Preserves Arcanine's identity as an apex Fire attacker. |
 
 If a future change wants to grant either holy move to a fourth
-non-Dragon, that change is a real design decision and needs to be
-documented as a fourth row here, not slipped in as a one-off.
+non-Dragon-line species, that change is a real design decision and
+needs to be documented as a fourth row here, not slipped in as a
+one-off.
 
 ### Anti-Dragon counter-moves — universal but uncommon
 

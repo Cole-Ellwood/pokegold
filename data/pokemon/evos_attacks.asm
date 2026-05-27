@@ -791,6 +791,7 @@ GrowlitheEvosAttacks:
 	db 18, LEER
 	db 26, TAKE_DOWN
 	db 34, FLAME_WHEEL
+	db 35, DRAGON_DANCE
 	db 42, AGILITY
 	db 50, FLAMETHROWER
 	db 0 ; no more level-up moves
@@ -1091,7 +1092,8 @@ SlowpokeEvosAttacks:
 	db 15, WATER_GUN
 	db 20, CONFUSION
 	db 29, DISABLE
-	db 34, HEADBUTT
+	db 32, HEADBUTT
+	db 34, HYDRO_PUMP
 	db 43, AMNESIA
 	db 48, PSYCHIC_M
 	db 0 ; no more level-up moves
@@ -1119,7 +1121,7 @@ MagnemiteEvosAttacks:
 	db 11, SUPERSONIC
 	db 16, SONICBOOM
 	db 21, THUNDER_WAVE
-	db 27, LOCK_ON
+	db 27, SPIKES
 	db 33, SWIFT
 	db 39, SCREECH
 	db 45, ZAP_CANNON
@@ -1313,6 +1315,7 @@ OnixEvosAttacks:
 	db 10, BIND
 	db 14, ROCK_THROW
 	db 20, SPIKES
+	db 23, HARDEN
 	db 27, RAGE
 	db 30, ROCK_SLIDE
 	db 36, SANDSTORM
@@ -1628,6 +1631,8 @@ SeadraEvosAttacks:
 	db 15, LEER
 	db 22, WATER_GUN
 	db 29, TWISTER
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 40, AGILITY
 	db 51, HYDRO_PUMP
 	db 0 ; no more level-up moves
@@ -1792,20 +1797,20 @@ MagikarpEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, SPLASH
 	db 15, TACKLE
+	db 20, DRAGON_RAGE
 	db 25, HYDRO_PUMP
 	db 30, FLAIL
+	db 35, DRAGON_DANCE
 	db 0 ; no more level-up moves
 
 GyaradosEvosAttacks:
 	db 0 ; no more evolutions
 	db 1, THRASH
 	db 1, TWISTER
-	db 20, BITE
 	db 25, DRAGON_RAGE
-	db 30, LEER
-	db 32, DRAGONBREATH
 	db 35, DRAGON_DANCE
 	db 40, HYDRO_PUMP
+	db 42, DRAGONBREATH
 	db 50, HYPER_BEAM
 	db 55, OUTRAGE
 	db 0 ; no more level-up moves
