@@ -157,6 +157,4 @@ ELSE
 	ds 1
 ENDC
 
-	ds 20
-
 ENDSECTION
