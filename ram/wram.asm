@@ -391,15 +391,6 @@ wPuzzlePieces:: ds 6 * 6
 ENDU
 
 
-SECTION "Unused Map Buffer", WRAM0
-
-; This was a buffer for map-related pointers in the 1997 G/S prototype.
-; See wMapBuffer in pokegold-spaceworld's wram.asm.
-; Retained for WRAM layout; current map setup does not clear or read it.
-wUnusedMapBuffer:: ds 24
-wUnusedMapBufferEnd::
-
-
 SECTION UNION "Overworld Map", WRAM0
 
 ; overworld map blocks
@@ -827,7 +818,6 @@ wCurEnemyMoveNum:: db
 wEnemyHPAtTimeOfPlayerSwitch:: dw
 wPayDayMoney:: ds 3
 
-wSafariMonAngerCount:: db ; unreferenced
 wSafariMonEating:: db
 	ds 1
 wEnemyBackupDVs:: dw ; used when enemy is transformed

@@ -2,7 +2,7 @@
 
 Boss AI cognition note: if you are here for the Boss AI loop, think wildly in the journal before changing source; this index is the hard memory/bank reality check for those ideas.
 
-Generated: 2026-05-24
+Generated: 2026-05-26
 ROM target: `pokegold`
 
 Generated from `layout.link`, assembly sources, `pokegold.map`, and `pokegold.sym`.
@@ -58,7 +58,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### RAM, saves, and temporary battle state
 - Intent: WRAM, SRAM, VRAM, HRAM, save data, and low-memory pressure points.
 - Start here: `ram/wram.asm`, `ram/sram.asm`, `ram/vram.asm`, `ram/hram.asm`
-- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2020`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2013`); `wBattleMon` (00:cafc, `ram/wram.asm:670`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
+- Anchors: `wBattleMode` (01:d116, `ram/wram.asm:2010`); `wEnemyMon` (01:d0ef, `ram/wram.asm:2003`); `wBattleMon` (00:cafc, `ram/wram.asm:661`); `hROMBank` (00:ff9f, `ram/hram.asm:26`)
 
 ### Graphics
 - Intent: Pokemon pics, trainer pics, sprites, tilesets, palettes, and UI art.
@@ -77,9 +77,9 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | ROM0 | 15721 | 663 |  |
 | ROMX | 1148565 | 932203 | 127 |
 | SRAM | 31419 | 1349 | 4 |
-| WRAM0 | 4049 | 47 |  |
+| WRAM0 | 4024 | 72 |  |
 | WRAMX | 3711 | 4481 | 2 |
-| HRAM | 127 | 0 |  |
+| HRAM | 107 | 20 |  |
 
 ### Boss AI WRAM Reserve
 
@@ -105,7 +105,6 @@ Bank numbers in this table are hexadecimal.
 
 | Region | Bank | Free bytes |
 | --- | ---: | ---: |
-| HRAM | 00 | 0 |
 | ROMX | 12 | 0 |
 | ROMX | 15 | 0 |
 | ROMX | 17 | 0 |
@@ -114,12 +113,13 @@ Bank numbers in this table are hexadecimal.
 | ROMX | 1c | 1 |
 | ROMX | 1f | 1 |
 | ROMX | 1a | 4 |
+| HRAM | 00 | 20 |
 | ROMX | 3e | 43 |
-| WRAM0 | 00 | 47 |
 | ROMX | 16 | 48 |
 | ROMX | 20 | 64 |
 | ROMX | 30 | 64 |
 | ROMX | 07 | 67 |
+| WRAM0 | 00 | 72 |
 | ROMX | 19 | 77 |
 | ROMX | 3a | 78 |
 | ROMX | 1d | 79 |
@@ -244,9 +244,9 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
 | `MoveReminder` | 0b:444e | `engine/events/move_reminder.asm:8` |
-| `wBattleMode` | 01:d116 | `ram/wram.asm:2020` |
-| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2013` |
-| `wBattleMon` | 00:cafc | `ram/wram.asm:670` |
+| `wBattleMode` | 01:d116 | `ram/wram.asm:2010` |
+| `wEnemyMon` | 01:d0ef | `ram/wram.asm:2003` |
+| `wBattleMon` | 00:cafc | `ram/wram.asm:661` |
 | `hROMBank` | 00:ff9f | `ram/hram.asm:26` |
 | `PokemonPicPointers` | 12:4000 | `data/pokemon/pic_pointers.asm:3` |
 | `TrainerPicPointers` | 20:4000 | `data/trainers/pic_pointers.asm:3` |
