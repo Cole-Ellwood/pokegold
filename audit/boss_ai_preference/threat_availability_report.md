@@ -161,7 +161,7 @@ Generated from ROM source tables for the Boss AI preference lab.
 - Meganium `Reflect`: 99%, support, active; support/no rough damage. revealed in the public fixture state
 - Meganium `Solarbeam`: 75%, lethal, active; about 60-71% vs Starmie. natural level-up STAB/core move by this checkpoint
 - Meganium `Giga Drain`: 50%, lethal, active; about 52-62% vs Starmie. legal via pre-evolution level-up path
-- Meganium `Earthquake`: 50%, chip, active; about 23-28% vs Starmie. direct TM source is available by this checkpoint
+- Meganium `Earthquake`: 50%, chip, active; about 21-26% vs Starmie. direct TM source is available by this checkpoint
 
 ### `erika_victreebel_vs_snorlax_sleep_or_boost`
 
@@ -244,16 +244,16 @@ Generated from ROM source tables for the Boss AI preference lab.
 
 ### `jasmine_magneton_vs_quilava_thunder_wave_or_bolt`
 
-- Quilava `Flame Wheel`: 99%, lethal, active; about 87-103% vs Magneton. revealed in the public fixture state
-- Quilava `Quick Attack`: 99%, chip, active; about 4-5% vs Magneton. revealed in the public fixture state
-- Quilava `Flamethrower`: 75%, lethal, active; about 136-160% vs Magneton. natural level-up STAB/core move by this checkpoint
-- Quilava `Ember`: 75%, major, active; about 72-84% vs Magneton. natural level-up STAB/core move by this checkpoint
-- Quilava `Fire Blast`: 50%, lethal, active; about 198-234% vs Magneton. direct TM source is available by this checkpoint
+- Quilava `Flame Wheel`: 99%, lethal, active; about 93-110% vs Magneton. revealed in the public fixture state
+- Quilava `Quick Attack`: 99%, chip, active; about 4-6% vs Magneton. revealed in the public fixture state
+- Quilava `Flamethrower`: 75%, lethal, active; about 145-171% vs Magneton. natural level-up STAB/core move by this checkpoint
+- Quilava `Ember`: 75%, major, active; about 76-90% vs Magneton. natural level-up STAB/core move by this checkpoint
+- Quilava `Fire Blast`: 50%, lethal, active; about 211-249% vs Magneton. direct TM source is available by this checkpoint
 
 ### `pryce_piloswine_vs_typhlosion_amnesia_or_attack`
 
 - Typhlosion `Flamethrower`: 99%, lethal, active; about 72-85% vs Piloswine. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
-- Typhlosion `Swift`: 99%, chip, active; about 12-15% vs Piloswine. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
+- Typhlosion `Swift`: 99%, chip, active; about 15-18% vs Piloswine. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
 - Typhlosion `Flame Wheel`: 75%, meaningful, active; about 46-54% vs Piloswine. natural level-up STAB/core move by this checkpoint
 - Typhlosion `Ember`: 75%, meaningful, active; about 38-46% vs Piloswine. natural level-up STAB/core move by this checkpoint
 - Typhlosion `Fire Blast`: 50%, lethal, active; about 107-126% vs Piloswine. direct TM source is available by this checkpoint
@@ -276,10 +276,10 @@ Generated from ROM source tables for the Boss AI preference lab.
 ### `will_xatu_vs_typhlosion_psychic_or_confuse_ray`
 
 - Typhlosion `Flamethrower`: 99%, meaningful, active; about 48-58% vs Xatu. revealed in the public fixture state
-- Typhlosion `Quick Attack`: 99%, chip, active; about 8-10% vs Xatu. revealed in the public fixture state
+- Typhlosion `Quick Attack`: 99%, chip, active; about 10-12% vs Xatu. revealed in the public fixture state
 - Typhlosion `Earthquake`: 99%, chip, active; about 0% vs Xatu. revealed in the public fixture state
 - Typhlosion `Fire Blast`: 75%, major, active; about 71-84% vs Xatu. natural level-up STAB/core move by this checkpoint
-- Typhlosion `Flame Wheel`: 75%, meaningful, active; about 30-36% vs Xatu. natural level-up STAB/core move by this checkpoint
+- Typhlosion `Double Edge`: 75%, meaningful, active; about 32-38% vs Xatu. natural level-up STAB/core move by this checkpoint
 
 ### `will_slowbro_vs_houndoom_amnesia_or_surf`
 
@@ -323,19 +323,19 @@ Generated from ROM source tables for the Boss AI preference lab.
 
 ### `bruno_hitmonlee_vs_skarmory_high_jump_kick_or_brick_break`
 
-- Skarmory `Drill Peck`: 99%, lethal, active; about 156-185% vs Hitmonlee. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
-- Skarmory `Steel Wing`: 99%, chip, active; about 25-30% vs Hitmonlee. revealed in the public fixture state
-- Skarmory `Peck`: 75%, lethal, active; about 72-86% vs Hitmonlee. natural level-up STAB/core move by this checkpoint
-- Skarmory `Wing Attack`: 50%, lethal, active; about 116-137% vs Hitmonlee. direct TM source is available by this checkpoint
-- Skarmory `Swift`: 50%, chip, active; about 29-34% vs Hitmonlee. natural level-up move by this checkpoint
+- Skarmory `Drill Peck`: 99%, lethal, active; about 125-148% vs Hitmonlee. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
+- Skarmory `Steel Wing`: 99%, chip, active; about 20-24% vs Hitmonlee. revealed in the public fixture state
+- Skarmory `Peck`: 75%, meaningful, active; about 58-69% vs Hitmonlee. natural level-up STAB/core move by this checkpoint
+- Skarmory `Wing Attack`: 50%, lethal, active; about 93-110% vs Hitmonlee. direct TM source is available by this checkpoint
+- Skarmory `Swift`: 50%, chip, active; about 23-27% vs Hitmonlee. natural level-up move by this checkpoint
 
 ### `bruno_onix_vs_typhlosion_sandstorm_or_explosion`
 
-- Typhlosion `Flamethrower`: 99%, lethal, active; about 71-84% vs Onix. revealed in the public fixture state
-- Typhlosion `Earthquake`: 99%, lethal, active; about 44-53% vs Onix. revealed in the public fixture state
-- Typhlosion `Fire Blast`: 75%, lethal, active; about 103-122% vs Onix. natural level-up STAB/core move by this checkpoint
-- Typhlosion `Flame Wheel`: 75%, lethal, active; about 44-53% vs Onix. natural level-up STAB/core move by this checkpoint
-- Typhlosion `Ember`: 75%, lethal, active; about 37-44% vs Onix. natural level-up STAB/core move by this checkpoint
+- Typhlosion `Flamethrower`: 99%, lethal, active; about 52-62% vs Onix. revealed in the public fixture state
+- Typhlosion `Earthquake`: 99%, lethal, active; about 38-46% vs Onix. revealed in the public fixture state
+- Typhlosion `Fire Blast`: 75%, lethal, active; about 77-91% vs Onix. natural level-up STAB/core move by this checkpoint
+- Typhlosion `Flame Wheel`: 75%, lethal, active; about 32-39% vs Onix. natural level-up STAB/core move by this checkpoint
+- Typhlosion `Ember`: 75%, lethal, active; about 28-32% vs Onix. natural level-up STAB/core move by this checkpoint
 
 ### `karen_houndoom_vs_alakazam_pursuit_or_flamethrower`
 
@@ -347,11 +347,11 @@ Generated from ROM source tables for the Boss AI preference lab.
 
 ### `karen_umbreon_vs_dragonite_curse_or_toxic`
 
-- Dragonite `Outrage`: 99%, meaningful, active; about 39-47% vs Umbreon. revealed in the public fixture state
-- Dragonite `Wing Attack`: 75%, meaningful, active; about 31-37% vs Umbreon. natural level-up STAB/core move by this checkpoint
-- Dragonite `Dynamicpunch`: 50%, meaningful, active; about 53-62% vs Umbreon. direct TM source is available by this checkpoint
-- Dragonite `Hyper Beam`: 50%, meaningful, active; about 47-55% vs Umbreon. legal via pre-evolution level-up path
-- Dragonite `Double Edge`: 50%, meaningful, active; about 34-40% vs Umbreon. direct TM source is available by this checkpoint
+- Dragonite `Outrage`: 99%, meaningful, active; about 44-52% vs Umbreon. revealed in the public fixture state
+- Dragonite `Wing Attack`: 75%, meaningful, active; about 35-41% vs Umbreon. natural level-up STAB/core move by this checkpoint
+- Dragonite `Dragon Rage`: 75%, chip, active; about 26% vs Umbreon. natural level-up STAB/core move by this checkpoint
+- Dragonite `Dynamicpunch`: 50%, major, active; about 59-70% vs Umbreon. direct TM source is available by this checkpoint
+- Dragonite `Hyper Beam`: 50%, meaningful, active; about 52-62% vs Umbreon. legal via pre-evolution level-up path
 
 ### `karen_gengar_vs_snorlax_destiny_bond_or_thunderbolt`
 
@@ -361,7 +361,7 @@ Generated from ROM source tables for the Boss AI preference lab.
 - Snorlax `Solarbeam`: 50%, lethal, active; about 50-59% vs Gengar. direct TM source is available by this checkpoint
 - Snorlax `Fire Blast`: 50%, lethal, active; about 38-46% vs Gengar. direct TM source is available by this checkpoint
 
-### `lance_dragonite_vs_aerodactyl_thunder_or_outrage`
+### `lance_dragonite_vs_aerodactyl_outrage_or_dragon_dance`
 
 - Aerodactyl `Rock Slide`: 99%, meaningful, active; about 51-60% vs Dragonite. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
 - Aerodactyl `Ancientpower`: 75%, meaningful, active; about 40-48% vs Dragonite. natural level-up STAB/core move by this checkpoint
@@ -369,23 +369,22 @@ Generated from ROM source tables for the Boss AI preference lab.
 - Zapdos `Thunderbolt`: 75%, chip, switch; about 25-30% vs Dragonite. natural level-up STAB/core move by this checkpoint
 - Zapdos `Drill Peck`: 75%, chip, switch; about 23-28% vs Dragonite. natural level-up STAB/core move by this checkpoint
 
-### `lance_aerodactyl_vs_porygon2_rock_slide_or_ancient_power`
+### `lance_ampharos_vs_porygon2_thunder_or_dragon_dance`
 
-- Porygon2 `Tri Attack`: 99%, chip, active; about 15-18% vs Aerodactyl. revealed in the public fixture state
+- Porygon2 `Tri Attack`: 99%, chip, active; about 20-24% vs Ampharos. revealed in the public fixture state
 - Porygon2 `Recover`: 99%, support, active; support/no rough damage. revealed in the public fixture state
-- Porygon2 `Blizzard`: 50%, lethal, active; about 76-90% vs Aerodactyl. direct TM source is available by this checkpoint
-- Porygon2 `Thunder`: 50%, lethal, active; about 76-90% vs Aerodactyl. direct TM source is available by this checkpoint
-- Porygon2 `Zap Cannon`: 50%, lethal, active; about 65-76% vs Aerodactyl. natural level-up move by this checkpoint
+- Porygon2 `Blizzard`: 50%, major, active; about 61-72% vs Ampharos. direct TM source is available by this checkpoint
+- Tyranitar `Earthquake`: 50%, lethal, switch; about 79-93% vs Ampharos; switch fit bad vs Thunder (about 35-41% into Tyranitar). direct TM source is available by this checkpoint
 
-### `lance_charizard_vs_milotic_fire_blast_or_solarbeam`
+### `lance_kingdra_vs_milotic_dragon_dance_or_attack`
 
 - Milotic `Surf`: 99%, support, active; support/no rough damage. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
-- Snorlax `Body Slam`: 75%, meaningful, switch; about 38-45% vs Charizard; switch fit risky vs Wing Attack (about 25-29% into Snorlax). natural level-up STAB/core move by this checkpoint
-- Snorlax `Headbutt`: 75%, meaningful, switch; about 36-42% vs Charizard; switch fit risky vs Wing Attack (about 25-29% into Snorlax). natural level-up STAB/core move by this checkpoint
-- Snorlax `Double Edge`: 50%, major, switch; about 65-77% vs Charizard; switch fit risky vs Wing Attack (about 25-29% into Snorlax). direct TM source is available by this checkpoint
-- Snorlax `Thunder`: 50%, meaningful, switch; about 45-53% vs Charizard; switch fit risky vs Wing Attack (about 25-29% into Snorlax). direct TM source is available by this checkpoint
+- Snorlax `Body Slam`: 75%, chip, switch; about 22-26% vs Kingdra; switch fit risky vs Surf (about 21-25% into Snorlax). natural level-up STAB/core move by this checkpoint
+- Snorlax `Headbutt`: 75%, chip, switch; about 21-25% vs Kingdra; switch fit risky vs Surf (about 21-25% into Snorlax). natural level-up STAB/core move by this checkpoint
+- Snorlax `Double Edge`: 50%, meaningful, switch; about 38-45% vs Kingdra; switch fit risky vs Surf (about 21-25% into Snorlax). direct TM source is available by this checkpoint
+- Snorlax `Solarbeam`: 50%, chip, switch; about 21-25% vs Kingdra; switch fit risky vs Surf (about 21-25% into Snorlax). direct TM source is available by this checkpoint
 
-### `red_pikachu_vs_dragonite_thunderbolt_or_quick_attack`
+### `red_pikachu_vs_dragonite_thunderbolt_or_extremespeed`
 
 - Dragonite `Outrage`: 99%, lethal, active; about 152-180% vs Pikachu. revealed in the public fixture state
 - Dragonite `Dragonbreath`: 75%, major, active; about 62-73% vs Pikachu. natural level-up STAB/core move by this checkpoint
@@ -393,26 +392,50 @@ Generated from ROM source tables for the Boss AI preference lab.
 - Dragonite `Twister`: 75%, meaningful, active; about 42-49% vs Pikachu. natural level-up STAB/core move by this checkpoint
 - Dragonite `Hyper Beam`: 50%, lethal, active; about 183-215% vs Pikachu. legal via pre-evolution level-up path
 
-### `red_snorlax_vs_alakazam_amnesia_or_body_slam`
+### `red_snorlax_vs_alakazam_curse_or_body_slam`
 
-- Alakazam `Psychic`: 99%, chip, active; about 28-33% vs Snorlax. revealed in the public fixture state
+- Alakazam `Psychic`: 99%, meaningful, active; about 34-39% vs Snorlax. revealed in the public fixture state
 - Alakazam `Recover`: 99%, support, active; support/no rough damage. revealed in the public fixture state
-- Alakazam `Future Sight`: 75%, chip, active; about 25-30% vs Snorlax. natural level-up STAB/core move by this checkpoint
-- Alakazam `Dream Eater`: 50%, meaningful, active; about 31-37% vs Snorlax. direct TM source is available by this checkpoint
-- Alakazam `Dynamicpunch`: 50%, chip, active; about 25-30% vs Snorlax. direct TM source is available by this checkpoint
+- Alakazam `Future Sight`: 75%, meaningful, active; about 30-35% vs Snorlax. natural level-up STAB/core move by this checkpoint
+- Alakazam `Psybeam`: 75%, chip, active; about 24-28% vs Snorlax. natural level-up STAB/core move by this checkpoint
+- Alakazam `Dream Eater`: 50%, meaningful, active; about 37-44% vs Snorlax. direct TM source is available by this checkpoint
 
-### `red_charizard_vs_starmie_fire_blast_or_wing_attack`
+### `red_charizard_vs_starmie_sunny_day_or_switch`
 
-- Starmie `Surf`: 99%, lethal, active; about 82-96% vs Charizard. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
-- Starmie `Hydro Pump`: 75%, lethal, active; about 104-122% vs Charizard. natural level-up STAB/core move by this checkpoint
-- Starmie `Bubblebeam`: 75%, meaningful, active; about 57-67% vs Charizard. natural level-up STAB/core move by this checkpoint
-- Starmie `Psychic`: 75%, meaningful, active; about 39-46% vs Charizard. natural level-up STAB/core move by this checkpoint
-- Starmie `Thunder`: 50%, major, active; about 69-81% vs Charizard. direct TM source is available by this checkpoint
+- Starmie `Surf`: 99%, lethal, active; about 87-102% vs Charizard. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
+- Starmie `Hydro Pump`: 75%, lethal, active; about 110-130% vs Charizard. natural level-up STAB/core move by this checkpoint
+- Starmie `Bubblebeam`: 75%, major, active; about 61-72% vs Charizard. natural level-up STAB/core move by this checkpoint
+- Starmie `Psychic`: 75%, meaningful, active; about 41-49% vs Charizard. natural level-up STAB/core move by this checkpoint
+- Starmie `Thunder`: 50%, major, active; about 74-87% vs Charizard. direct TM source is available by this checkpoint
 
-### `lance_dragonite_vs_steelix_fire_blast_or_thunder`
+### `lance_dragonite_vs_steelix_earthquake_or_outrage`
 
-- Steelix `Rock Slide`: 99%, meaningful, active; about 32-38% vs Dragonite. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
+- Steelix `Rock Slide`: 99%, meaningful, active; about 32-38% vs Dragonite. revealed in the public fixture state
 - Steelix `Earthquake`: 99%, chip, active; about 7-8% vs Dragonite. revealed in the public fixture state
 - Steelix `Iron Tail`: 75%, chip, active; about 27-32% vs Dragonite. natural level-up STAB/core move by this checkpoint
 - Steelix `Dragonbreath`: 75%, chip, active; about 22-26% vs Dragonite. natural level-up STAB/core move by this checkpoint
 - Steelix `Rock Throw`: 50%, chip, active; about 22-26% vs Dragonite. natural level-up move by this checkpoint
+
+### `red_blastoise_vs_zapdos_mirror_coat_or_blizzard`
+
+- Zapdos `Thunderbolt`: 99%, major, active; about 71-84% vs Blastoise. revealed in the public fixture state
+- Zapdos `Drill Peck`: 75%, meaningful, active; about 34-41% vs Blastoise. natural level-up STAB/core move by this checkpoint
+- Zapdos `Thundershock`: 75%, meaningful, active; about 30-36% vs Blastoise. natural level-up STAB/core move by this checkpoint
+- Zapdos `Thunder`: 50%, lethal, active; about 90-106% vs Blastoise. direct TM source is available by this checkpoint
+- Zapdos `Zap Cannon`: 50%, lethal, active; about 75-89% vs Blastoise. direct TM source is available by this checkpoint
+
+### `red_blastoise_vs_tyranitar_surf_or_mirror_coat`
+
+- Tyranitar `Rock Slide`: 99%, meaningful, active; about 30-36% vs Blastoise. revealed in the public fixture state
+- Tyranitar `Crunch`: 99%, chip, active; about 25-29% vs Blastoise. revealed in the public fixture state
+- Tyranitar `Hyper Beam`: 50%, meaningful, active; about 49-57% vs Blastoise. legal via pre-evolution level-up path
+- Tyranitar `Focus Punch`: 50%, meaningful, active; about 41-48% vs Blastoise. direct TM source is available by this checkpoint
+- Tyranitar `Double Edge`: 50%, meaningful, active; about 35-41% vs Blastoise. direct TM source is available by this checkpoint
+
+### `lance_yanma_vs_lapras_sleep_powder_or_quiver_dance`
+
+- Lapras `Surf`: 99%, chip, active; about 14-17% vs Yanma. revealed in the public fixture state; fixture-attested but not derivable from ROM at this checkpoint
+- Lapras `Ice Beam`: 75%, lethal, active; about 89-106% vs Yanma. natural level-up STAB/core move by this checkpoint
+- Lapras `Blizzard`: 50%, lethal, active; about 112-132% vs Yanma. direct TM source is available by this checkpoint
+- Lapras `Double Edge`: 50%, meaningful, active; about 30-35% vs Yanma. direct TM source is available by this checkpoint
+- Machamp `Cross Chop`: 75%, major, switch; about 82-97% vs Yanma; switch fit reasonable vs Giga Drain (about 13-16% into Machamp). natural level-up STAB/core move by this checkpoint

@@ -98,6 +98,9 @@ Implemented behavior:
   speed says the boss should move first, Encore gets a stronger trap
   encouragement after public fail gates pass. This does not read the player's
   current-turn choice, hidden move list, hidden PP, or hidden party.
+- Ramp moves now avoid non-KO resisted opening hits. Rollout and Fury Cutter no
+  longer get setup-style encouragement when the public type matchup says the
+  first hit is resisted and the move does not already have KO pressure.
 - Mid and late bosses now have a public Destiny Bond trade-window bias. If a
   Destiny Bond user is visibly at quarter HP or lower, has no KO line, is
   publicly faster, and the active player has a public threat, Destiny Bond gets

@@ -1953,13 +1953,13 @@ def audit_priority_trainers(parties: str, tiers: str) -> None:
         require_contains(tiers, entry, "priority boss AI tier")
 
     for move in (
-        "GENGAR,     SPELL_TAG, SHADOW_BALL, THUNDERBOLT, DESTINY_BOND, SPIKES",
-        "MAGNETON,   MAGNET, SPIKES, THUNDERBOLT, THUNDER_WAVE, LIGHT_SCREEN",
+        "GENGAR,     SPELL_TAG, SHADOW_BALL, THUNDERBOLT, DESTINY_BOND, PSYCHIC_M",
+        "MAGNETON,   MAGNET, SPIKES, THUNDERBOLT, THUNDER_WAVE, SWIFT",
         "STEELIX,    METAL_COAT, EARTHQUAKE, IRON_TAIL, ROCK_SLIDE, ROAR",
         "SKARMORY,   ROCKY_HELMET, SPIKES, STEEL_WING, TOXIC, WHIRLWIND",
         "GLIGAR,     QUICK_CLAW, SPIKES, EARTHQUAKE, WING_ATTACK, TOXIC",
         "TENTACRUEL, MYSTIC_WATER, RAPID_SPIN, SURF, SLUDGE_BOMB, HAZE",
-        "GYARADOS,   LEFTOVERS, RAIN_DANCE, OUTRAGE, SURF, HYPER_BEAM",
+        "GYARADOS,   LEFTOVERS, DRAGON_DANCE, OUTRAGE, HYDRO_PUMP, HYPER_BEAM",
     ):
         require_contains(parties, move, "priority boss scenario move")
 

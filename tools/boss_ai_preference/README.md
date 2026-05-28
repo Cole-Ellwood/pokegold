@@ -61,6 +61,15 @@ Saving the same fixture/action pair again replaces the older row, even if the
 left/right display order changed. This keeps the solo review file focused on
 your latest judgment.
 
+## Label quality
+
+After roster or moveset changes, refresh fixtures before treating labels as
+training signal. Keep compared actions legal for the current boss moveset, and
+prefer paired examples when a move is conditional: one fixture where the move is
+good and one where it is bad. If the real lesson is upstream team selection or
+ace timing rather than the current move choice, use `needs_context` and say so
+in the note.
+
 Write reports:
 
 ```powershell

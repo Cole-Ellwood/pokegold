@@ -911,14 +911,24 @@ BossAI_ApplyMoveModel:
 	cp EFFECT_FURY_CUTTER
 	ret nz
 .ramp_move
+	call .HasKOLine
+	ret c
+	push hl
+	call BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
+	pop hl
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE
+	jr c, .ramp_resisted
 	call .EnemyUnderPressure
 	jr c, .ramp_risky
 	ld c, 3
 	call .EncourageByTierWeight
 	ret
+.ramp_resisted
+	ld a, 6
+	call BossAI_DiscourageScoreHL
+	ret
 .ramp_risky
-	call .HasKOLine
-	ret c
 	ld a, 5
 	call BossAI_DiscourageScoreHL
 	ret
