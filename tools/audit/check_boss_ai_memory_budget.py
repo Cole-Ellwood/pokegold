@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -27,6 +30,19 @@ LABEL_RE = re.compile(r"^\t\s+\$(?P<address>[0-9a-fA-F]+) = (?P<name>\S+)$")
 SYM_RE = re.compile(r"^(?P<bank>[0-9a-fA-F]{2}):(?P<address>[0-9a-fA-F]{4}) (?P<name>\S+)$")
 
 BOSS_RESERVE_BYTES = 140
+
+SAVE_ASM = ROOT / "engine" / "menus" / "save.asm"
+MISC_CONSTANTS = ROOT / "constants" / "misc_constants.asm"
+OFFSET_MAP_DATA = ROOT / "tools" / "audit" / "data" / "save_offset_map_fingerprints.json"
+
+V2_OFF_RE = re.compile(r"^DEF\s+(V2_[A-Z0-9_]+_OFF)\s+EQU\s+\$([0-9a-fA-F]+)")
+V2_SIZE_RE = re.compile(r"^DEF\s+(V2_[A-Z0-9_]+_SIZE)\s+EQU\s+\$([0-9a-fA-F]+)")
+CHUNK_RE = re.compile(
+    r"^\s*copy_v2_save_chunk\s+\\1,\s*(V2_[A-Z0-9_]+_OFF),\s*"
+    r"([A-Za-z0-9_]+(?:\s*\+\s*\d+)?),\s*"
+    r"([A-Za-z0-9_]+(?:\s*\+\s*\d+)?)\s*(?:;.*)?$"
+)
+SAVE_VERSION_RE = re.compile(r"^\s*DEF\s+SAVE_FORMAT_VERSION\s+EQU\s+(\d+)")
 
 
 def parse_sections(map_text: str) -> list[dict[str, object]]:
@@ -188,7 +204,157 @@ def audit_dev_index(
         fail("regenerate docs/generated/dev_index.md")
 
 
-def main() -> int:
+def parse_v2_constants() -> tuple[dict[str, int], dict[str, int]]:
+    offsets: dict[str, int] = {}
+    sizes: dict[str, int] = {}
+    for line in load(SAVE_ASM).splitlines():
+        off_match = V2_OFF_RE.match(line)
+        if off_match:
+            offsets[off_match.group(1)] = int(off_match.group(2), 16)
+            continue
+        size_match = V2_SIZE_RE.match(line)
+        if size_match:
+            sizes[size_match.group(1)] = int(size_match.group(2), 16)
+    if not offsets:
+        fail("save.asm: no V2_*_OFF constants found")
+    return offsets, sizes
+
+
+def parse_chunks() -> list[tuple[str, str, str]]:
+    chunks: list[tuple[str, str, str]] = []
+    for line in load(SAVE_ASM).splitlines():
+        match = CHUNK_RE.match(line)
+        if match:
+            chunks.append((match.group(1), match.group(2), match.group(3)))
+    if not chunks:
+        fail("save.asm: no copy_v2_save_chunk lines found")
+    return chunks
+
+
+def parse_save_format_version() -> int:
+    for line in load(MISC_CONSTANTS).splitlines():
+        match = SAVE_VERSION_RE.match(line)
+        if match:
+            return int(match.group(1))
+    fail(f"could not parse SAVE_FORMAT_VERSION from {MISC_CONSTANTS.relative_to(ROOT)}")
+    return 0
+
+
+def resolve_label_addr(token: str, symbols: dict[str, tuple[int, int]]) -> int:
+    token = token.strip()
+    if "+" in token:
+        base, _, offset_text = token.partition("+")
+        base = base.strip()
+        extra = int(offset_text.strip())
+    else:
+        base, extra = token, 0
+    bank, addr = require_symbol(symbols, base)
+    if bank != 1:
+        fail(f"save.asm chunk symbol {base} is not in WRAM bank 1")
+    return addr + extra
+
+
+def audit_save_offset_map(symbols: dict[str, tuple[int, int]], update: bool) -> None:
+    """Verify the v2 save image is overlap-free and its per-field byte offsets
+    have not drifted without a SAVE_FORMAT_VERSION bump.
+
+    check_save_format_version.py fingerprints saved WRAM by label only and
+    cannot see `ds N` size tweaks (it says so). This closes that gap: it walks
+    the actual linked addresses (pokegold.sym) through the v2 chunk offset map
+    and fingerprints every saved field's absolute file offset. The wBossAI*
+    reserve block is excluded because the fixed 140-byte pad keeps everything
+    after it pinned regardless of internal wBossAI* churn.
+    """
+    offsets, sizes = parse_v2_constants()
+    chunks = parse_chunks()
+
+    resolved: list[tuple[str, int, int, int]] = []  # (offset_name, offset, start_addr, size)
+    for off_name, start_token, end_token in chunks:
+        if off_name not in offsets:
+            fail(f"save.asm chunk uses undefined offset constant {off_name}")
+        start_addr = resolve_label_addr(start_token, symbols)
+        end_addr = resolve_label_addr(end_token, symbols)
+        if end_addr < start_addr:
+            fail(f"save.asm chunk {off_name}: end {end_token} precedes start {start_token}")
+        resolved.append((off_name, offsets[off_name], start_addr, end_addr - start_addr))
+
+    # Hard check: no chunk may run into the next one's pinned offset.
+    ordered = sorted(resolved, key=lambda row: row[1])
+    for (a_name, a_off, _, a_size), (b_name, b_off, _, _) in zip(ordered, ordered[1:]):
+        if a_off + a_size > b_off:
+            fail(
+                f"v2 save chunks overlap: {a_name} (${a_off:04x}+{a_size}) runs into "
+                f"{b_name} (${b_off:04x}); a chunk grew past its pinned slot and old "
+                "saves would corrupt"
+            )
+
+    game_size = sizes.get("V2_GAME_DATA_SIZE")
+    if game_size is not None:
+        last_name, last_off, _, last_size = ordered[-1]
+        if last_off + last_size > game_size:
+            fail(f"v2 save: chunk {last_name} exceeds V2_GAME_DATA_SIZE (${game_size:04x})")
+
+    offset_map: dict[str, int] = {}
+    for name, (bank, addr) in symbols.items():
+        if bank != 1 or not name.startswith("w") or name.startswith("wBossAI"):
+            continue
+        for _, off, start_addr, size in resolved:
+            if start_addr <= addr < start_addr + size:
+                offset_map[name] = off + (addr - start_addr)
+                break
+
+    canonical = json.dumps(offset_map, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    version = parse_save_format_version()
+    key = str(version)
+    stored = (
+        json.loads(OFFSET_MAP_DATA.read_text(encoding="utf-8"))
+        if OFFSET_MAP_DATA.exists()
+        else {}
+    )
+
+    if update:
+        stored[key] = digest
+        OFFSET_MAP_DATA.parent.mkdir(parents=True, exist_ok=True)
+        OFFSET_MAP_DATA.write_text(
+            json.dumps(stored, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        print(f"Recorded save offset map for SAVE_FORMAT_VERSION={version}: {digest}")
+        return
+
+    expected = stored.get(key)
+    if expected is None:
+        fail(
+            f"no save offset map fingerprint for SAVE_FORMAT_VERSION={version}; "
+            "run check_boss_ai_memory_budget.py --update if this is intentional"
+        )
+    if expected != digest:
+        print(f"current save offset map:  {digest}")
+        print(f"expected save offset map: {expected}")
+        fail(
+            "saved-field byte offsets changed without a SAVE_FORMAT_VERSION bump. "
+            "A ds-size tweak or V2_*_OFF change moved a field in the save image, so "
+            "old saves would misalign. Revert it, or bump SAVE_FORMAT_VERSION and run "
+            "check_boss_ai_memory_budget.py --update."
+        )
+    print(f"Save offset map matches SAVE_FORMAT_VERSION={version} ({len(offset_map)} fields).")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Audit Boss AI ROM/WRAM budget and the v2 save offset map."
+    )
+    parser.add_argument(
+        "--update",
+        action="store_true",
+        help=(
+            "rebaseline the save offset map fingerprint for the current "
+            "SAVE_FORMAT_VERSION. Use only after a deliberate version bump."
+        ),
+    )
+    args = parser.parse_args(argv)
+
     normal_enemy, normal_core = audit_map(NORMAL_MAP, trace=False)
     normal_wram = audit_symbols(NORMAL_SYM, trace=False)
 
@@ -211,6 +377,7 @@ def main() -> int:
     trace_enemy, _ = audit_map(TRACE_MAP, trace=True)
     trace_wram = audit_symbols(TRACE_SYM, trace=True)
     audit_dev_index(normal_enemy, normal_core, normal_wram, trace_wram)
+    audit_save_offset_map(parse_symbols(load(NORMAL_SYM)), update=args.update)
 
     print("Boss AI memory budget audit passed.")
     print(
