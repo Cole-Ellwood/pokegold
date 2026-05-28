@@ -9,8 +9,8 @@ retype the spec.
 | --- | --- |
 | `objective.txt` | The durable objective text (the loop spec a continuation sees every turn) |
 | `criteria.txt` | The six success criteria, tagged [v1]..[v5] + [manual] |
-| `constraints.txt` | Hard constraints the loop must respect |
-| `verify.txt` | The five verifier commands |
+| `constraints.txt` | Hard constraints the loop must respect (incl. sync hygiene: `sync-preflight` before an iteration, `land` after) |
+| `verify.txt` | The five loop verifiers + the branch-currency tripwire (`check_branch_currency.py --strict`) |
 
 ## To (re-)arm the loop in a fresh Claude session
 
