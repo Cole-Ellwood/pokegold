@@ -71,13 +71,23 @@ These are preservation snapshots, not finished work — triage and land delibera
   self-contradictory "Merging to master = release event" escalation bullet with
   "shipping a public release to players," and retargeted "Recent work" to
   `git log master`.
-- [ ] **A3 — autonomous-loop sync hygiene** (biggest divergence *generator*).
-  `tools/pokemon_mastery/loop_runner.py` has zero git awareness and pgoal is
-  told "never leave your claude/ branch." Add `sync-preflight` (fetch + rebase
-  master + currency check + verify, refuse on non-FF) and `land` (FF-merge to
-  one shared integration line) to `loop_runner.py`; wire
-  `tools/pokemon_mastery/pgoal_spec/{constraints,verify}.txt` and
-  `C:/Users/lolno/Downloads/codex-supervisor/supervisor.ps1`. [Agent 7]
+- [x] **A3 — autonomous-loop sync hygiene** (DONE `92d7f655`; biggest divergence
+  *generator*). New `tools/pokemon_mastery/sync.py` adds two ops surfaced as
+  `loop_runner.py` subcommands: `sync-preflight` (clean check → best-effort
+  fetch → rebase onto canonical master → integrity gate; refuses cleanly on a
+  dirty tree, a conflicting rebase, or a red gate) and `land` (FF-only advance
+  of the shared integration line, default **master**, via `update-ref` CAS;
+  worktree-safe — refuses rather than desync a branch checked out elsewhere or
+  rewrite history). The land/preflight gate is the per-iteration SAFETY subset
+  (pytest + `verify_loop_state` + `verify_regression_battery` +
+  `check_branch_currency --strict`), deliberately NOT the full `verify.txt`,
+  whose aspirational progress/breadth gates stay red until the loop finishes.
+  Wired: `constraints.txt` (replaced "NEVER commit to master" with
+  preflight-before / land-after-green), `verify.txt` (added the currency check
+  as a pure criterion), `pgoal_spec/README.md`, and the out-of-repo
+  `codex-supervisor/supervisor.ps1` (journals commits-behind-master, toasts on
+  the rising edge of staleness, downgrades a DONE verdict on a stale branch).
+  14 new hermetic tests; full pokemon_mastery suite green. [Agent 7]
 - [x] **A4 — uncommitted-work tripwire** (DONE `85800645`; the gap this
   incident exposed). Branch-currency (A2) checks commits-*behind*, not *dirty*
   worktrees — yet the near-loss on 2026-05-27 was ~2,900 lines sitting
