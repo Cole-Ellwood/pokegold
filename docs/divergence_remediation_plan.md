@@ -53,12 +53,15 @@ These are preservation snapshots, not finished work — triage and land delibera
 - **A2 — branch-currency guardrail.** `tools/audit/check_branch_currency.py`
   (DONE, tested: warns + lists missing gameplay commits on a stale branch,
   `--strict` exits 1, silent-PASS when current).
-  - [ ] Wire it: (1) SessionStart hook in `.claude/settings.json` — emit the
-    banner as `hookSpecificOutput.additionalContext` (pattern:
-    `scripts/inject_asm_guide.py`), always exit 0. (2) release-smoke floor —
-    add a `_run_subaudit` call with `--strict` in `check_release_smoke.py`
-    `main()`. (3) Makefile pre-build banner via `$(shell ... --warn)` near the
-    `tools_bootstrap` block (~line 147). [Agent 3]
+  - [x] Wired (commits `bcee4f16` + `85800645`): (1) SessionStart hook in
+    `.claude/settings.json` via `--hook` (JSON envelope, only when stale).
+    (2) release-smoke floor — `check_branch_currency()` `_run_subaudit` call
+    with `--strict`. (3) Makefile pre-build banner via `$(shell ... --warn)`
+    after `tools_bootstrap`. `--warn`/`--hook` emit modes added to the script.
+    Note: under WSL, a Windows-created linked worktree's `.git` points to a
+    Windows path Linux git cannot resolve, so the Makefile banner degrades to
+    a silent no-op there; the SessionStart + release-smoke layers run natively
+    and are unaffected. [Agent 3]
 - [ ] **A1 — canonical-branch policy (CLAUDE.md).** Name `master` canonical +
   integration; redefine "release" (roms.sha1 refresh + distribute, NOT "a
   commit reached master"); sync-before-work and before any playtest build
@@ -74,14 +77,16 @@ These are preservation snapshots, not finished work — triage and land delibera
   one shared integration line) to `loop_runner.py`; wire
   `tools/pokemon_mastery/pgoal_spec/{constraints,verify}.txt` and
   `C:/Users/lolno/Downloads/codex-supervisor/supervisor.ps1`. [Agent 7]
-- [ ] **A4 — uncommitted-work tripwire** (the gap this incident exposed).
-  Branch-currency (A2) checks commits-*behind*, not *dirty* worktrees — yet the
-  near-loss on 2026-05-27 was ~2,900 lines sitting uncommitted in the master
-  worktree, plus two other dirty worktrees. Add a check that warns when a
-  worktree carries significant uncommitted changes, plus a SessionEnd /
-  loop-iteration hook that commits-or-snapshots before a session or iteration
-  ends, so work cannot accumulate unprotected. Pairs with A3 (loops must `land`
-  each iteration).
+- [x] **A4 — uncommitted-work tripwire** (DONE `85800645`; the gap this
+  incident exposed). Branch-currency (A2) checks commits-*behind*, not *dirty*
+  worktrees — yet the near-loss on 2026-05-27 was ~2,900 lines sitting
+  uncommitted in the master worktree, plus two other dirty worktrees.
+  `tools/audit/check_uncommitted_work.py` measures tracked+untracked changes
+  (significant = >=25 lines or >=4 files); `--hook` warns at SessionStart,
+  `--strict` exits 1 for autonomous loops, `--snapshot` (wired to SessionEnd)
+  preserves the worktree to `refs/wip-snapshots/<branch>-<ts>` without touching
+  the working tree, index, or branch HEAD. Still pairs with A3 (loops should
+  also `land` each iteration).
 
 ## Tier B — Recover & reconcile (one-time)
 
