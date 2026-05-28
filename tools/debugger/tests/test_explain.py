@@ -27,7 +27,7 @@ class ExplanationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "engine" / "battle" / "ai" / "boss_policy_switch.asm").write_text(
-                "BossAI_SwitchOrTryItem:\n\tret\n",
+                "BossAI_TrySwitch:\n\tret\n",
                 encoding="utf-8",
             )
             (root / "engine" / "battle" / "ai" / "switch.asm").write_text(
@@ -35,7 +35,7 @@ class ExplanationTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "pokegold.sym").write_text(
-                "01:4000 BossAI_SwitchOrTryItem\n01:4010 AI_SwitchOrTryItem\n",
+                "01:4000 BossAI_TrySwitch\n01:4010 AI_SwitchOrTryItem\n",
                 encoding="utf-8",
             )
             next_step = build_next_step(symptom="boss selected wrong switch")

@@ -49,7 +49,7 @@ state:
   and scores each live enemy move.
 - `engine/battle/ai/boss_policy_move.asm:1944` `BossAI_SelectMove` recomputes
   the move choice from current scores, with weighted best-vs-second randomness.
-- `engine/battle/ai/boss_policy_switch.asm:17` `BossAI_SwitchOrTryItem`
+- `engine/battle/ai/boss_policy_switch.asm:17` `BossAI_TrySwitch`
   separately resets caches, selects a plan, computes public plausible type
   masks, and checks whether a switch should be attempted.
 - `engine/battle/ai/boss_policy_move.asm:883` `.PlayerHasRevealedEffectA`

@@ -49,7 +49,7 @@ def summarize_batch_switch(report: dict[str, Any]) -> dict[str, Any]:
     Counts:
     - ``scenario_count`` — total verdicts in the report (skipped/error included)
     - ``observed_switches`` — verdicts whose ROM observation reached
-      ``BossAI_SwitchOrTryItem`` (i.e. ``rom.observed_switch_path`` is True)
+      ``BossAI_TrySwitch`` (i.e. ``rom.observed_switch_path`` is True)
     - ``probability_exact_count`` — verdicts where the source-mirrored final
       switch roll was reported with a single probability (no untraced bias
       range and no ranged threshold)
@@ -244,7 +244,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--watch-frames", type=int, default=DEFAULT_WATCH_FRAMES)
     parser.add_argument(
         "--switch-threshold", type=int, default=None,
-        help="explicit final BossAI_SwitchOrTryItem threshold byte for exact rate",
+        help="explicit final BossAI_TrySwitch threshold byte for exact rate",
     )
     parser.add_argument(
         "--json", action="store_true",

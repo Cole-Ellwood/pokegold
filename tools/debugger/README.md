@@ -294,7 +294,7 @@ the recipe block shows the exact state factory, materializer, or watch/probe
 commands to run next. When a report contains an embedded
 `unified_debugger_next_step` route, `setup --report` treats that route as the
 setup surface and target source of truth; for the wrong-switch route this keeps
-setup on Boss AI and targets `BossAI_SwitchOrTryItem`,
+setup on Boss AI and targets `BossAI_TrySwitch`,
 `wEnemySwitchMonIndex`, `wEnemySwitchMonParam`, and `wEnemyAIMoveScores`
 instead of inheriting unrelated nested damage or banking setup lanes. It plans
 setup and trigger work; it does not yet synthesize every arbitrary save state
@@ -373,7 +373,7 @@ instruction-trace commands so ROM proof starts from the concrete scenario state
 when one is available. When a report contains an embedded
 `unified_debugger_next_step` route, `replay --report` turns that route into
 concrete trace/watch targets and source refs; for the wrong-switch route this
-means `BossAI_SwitchOrTryItem`, `wEnemySwitchMonIndex`,
+means `BossAI_TrySwitch`, `wEnemySwitchMonIndex`,
 `wEnemySwitchMonParam`, and `wEnemyAIMoveScores`, not impact-report tag words
 from prose. With `--execute-watch`, it runs the generic PyBoy watch bridge and
 embeds the enriched watch report, including dynamic context windows, in the

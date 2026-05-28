@@ -33,15 +33,20 @@ MahoganyRedGyaradosSpeechHouseUnusedBookshelf2: ; unreferenced
 	jumpstd MagazineBookshelfScript
 
 MahoganyRedGyaradosSpeechHouseBlackBeltText:
-	text "I heard that a red"
-	line "GYARADOS appeared"
-	cont "at the LAKE."
+	text "I heard a strange"
+	line "MAGIKARP showed"
+	cont "up at the LAKE."
 
-	para "That's odd, since"
-	line "even ordinary"
+	para "Wrong color, they"
+	line "say. Gold, of all"
+	cont "things."
 
-	para "GYARADOS are rare"
-	line "in that lake…"
+	para "And not a single"
+	line "GYARADOS to be"
+	cont "seen…"
+
+	para "Though that's been"
+	line "true a long time."
 	done
 
 MahoganyRedGyaradosSpeechHouseTeacherText:

@@ -513,7 +513,7 @@ SchoolboyGroup:
 	; SCHOOLBOY (15)
 	db "ALAN@", TRAINERTYPE_NORMAL
 	db 17, TANGELA
-	db 17, YANMA
+	db 17, PARAS
 	db -1 ; end
 
 	; SCHOOLBOY (16)
@@ -521,7 +521,7 @@ SchoolboyGroup:
 	db 20, NATU
 	db 22, TANGELA
 	db 20, QUAGSIRE
-	db 25, YANMA
+	db 25, PARASECT
 	db -1 ; end
 
 	; SCHOOLBOY (17)
@@ -742,7 +742,7 @@ LassGroup:
 	; LASS (15)
 	db "DANA@", TRAINERTYPE_MOVES
 	db 29, PSYDUCK,    SCRATCH, DISABLE, CONFUSION, SCREECH
-	db 29, AMPHAROS,   TACKLE, THUNDERSHOCK, THUNDER_WAVE, COTTON_SPORE
+	db 29, FLAAFFY,    TACKLE, THUNDERSHOCK, THUNDER_WAVE, COTTON_SPORE
 	db -1 ; end
 
 JanineGroup:
@@ -773,9 +773,9 @@ CooltrainerMGroup:
 
 	; COOLTRAINERM (3)
 	db "PAUL@", TRAINERTYPE_NORMAL
-	db 34, DRATINI
-	db 34, DRATINI
-	db 34, DRATINI
+	db 34, HORSEA
+	db 34, HORSEA
+	db 34, HORSEA
 	db -1 ; end
 
 	; COOLTRAINERM (4)
@@ -786,7 +786,7 @@ CooltrainerMGroup:
 
 	; COOLTRAINERM (5)
 	db "MIKE@", TRAINERTYPE_NORMAL
-	db 37, DRAGONAIR
+	db 37, SEADRA
 	db -1 ; end
 
 	; COOLTRAINERM (6)
@@ -903,8 +903,8 @@ CooltrainerFGroup:
 
 	; COOLTRAINERF (4)
 	db "LOLA@", TRAINERTYPE_NORMAL
-	db 34, DRATINI
-	db 36, DRAGONAIR
+	db 34, HORSEA
+	db 36, SEADRA
 	db -1 ; end
 
 	; COOLTRAINERF (5)
@@ -1549,9 +1549,9 @@ FisherGroup:
 	; FISHER (6)
 	db "MARVIN@", TRAINERTYPE_NORMAL
 	db 15, MAGIKARP
-	db 15, GYARADOS
+	db 15, POLIWAG
 	db 20, MAGIKARP
-	db 20, GYARADOS
+	db 20, POLIWHIRL
 	db -1 ; end
 
 	; FISHER (7)
@@ -1561,7 +1561,7 @@ FisherGroup:
 
 	; FISHER (8)
 	db "ANDRE@", TRAINERTYPE_NORMAL
-	db 27, GYARADOS
+	db 27, SEAKING
 	db -1 ; end
 
 	; FISHER (9)
@@ -1609,9 +1609,9 @@ FisherGroup:
 
 	; FISHER (15)
 	db "BARNEY@", TRAINERTYPE_NORMAL
-	db 30, GYARADOS
-	db 30, GYARADOS
-	db 30, GYARADOS
+	db 30, SEAKING
+	db 30, KINGLER
+	db 30, TENTACRUEL
 	db -1 ; end
 
 	; FISHER (16)
@@ -1702,8 +1702,8 @@ SwimmerMGroup:
 
 	; SWIMMERM (7)
 	db "KIRK@", TRAINERTYPE_NORMAL
-	db 20, GYARADOS
-	db 20, GYARADOS
+	db 20, TENTACRUEL
+	db 20, TENTACRUEL
 	db -1 ; end
 
 	; SWIMMERM (8)

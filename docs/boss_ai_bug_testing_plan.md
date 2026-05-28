@@ -138,7 +138,7 @@ Assertions to implement:
 - `BossAI_NeedsLoopPenalty` still has exception calls for imminent KO
   prevention, public Perish Song escape, immunity pivot opportunity, and ace
   timing.
-- `BossAI_SwitchOrTryItem` checks `BossAI_EnemyPerishEscapeUrgent` before
+- `BossAI_TrySwitch` checks `BossAI_EnemyPerishEscapeUrgent` before
   `BossAI_HasAnyKOMove`, so a ticking Perish count can bypass the KO-stay gate.
 - `BossAI_EnemyPerishEscapeUrgent` reads `wEnemySubStatus1` /
   `wEnemyPerishCount`, treats counts `1` and `2` as urgent, and never reads

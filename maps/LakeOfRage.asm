@@ -7,7 +7,7 @@
 	const LAKEOFRAGE_FISHER2
 	const LAKEOFRAGE_COOLTRAINER_M
 	const LAKEOFRAGE_COOLTRAINER_F2
-	const LAKEOFRAGE_GYARADOS
+	const LAKEOFRAGE_MAGIKARP
 	const LAKEOFRAGE_WESLEY
 	const LAKEOFRAGE_POKE_BALL1
 	const LAKEOFRAGE_POKE_BALL2
@@ -78,23 +78,23 @@ LakeOfRageLanceScript:
 	iffalse .RefusedToHelp
 	sjump .AgreedToHelp
 
-RedGyarados:
+RedMagikarp:
 	opentext
-	writetext LakeOfRageGyaradosCryText
+	writetext LakeOfRageMagikarpCryText
 	pause 15
-	cry GYARADOS
+	cry MAGIKARP
 	closetext
-	loadwildmon GYARADOS, 30
+	loadwildmon MAGIKARP, 30
 	loadvar VAR_BATTLETYPE, BATTLETYPE_FORCESHINY
 	startbattle
 	ifequal LOSE, .NotBeaten
-	disappear LAKEOFRAGE_GYARADOS
+	disappear LAKEOFRAGE_MAGIKARP
 .NotBeaten:
 	reloadmapafterbattle
 	opentext
-	giveitem RED_SCALE
+	giveitem GOLD_SCALE
 	waitsfx
-	writetext LakeOfRageGotRedScaleText
+	writetext LakeOfRageGotGoldScaleText
 	playsound SFX_ITEM
 	waitsfx
 	itemnotify
@@ -243,92 +243,85 @@ LakeOfRageLanceTeleportIntoSkyMovement:
 	step_end
 
 LakeOfRageLanceForcedToEvolveText:
-	text "This lake is full"
-	line "of GYARADOS but"
-	cont "nothing else…"
+	text "The Rockets tried"
+	line "to force every"
+	cont "MAGIKARP in this"
 
-	para "So the MAGIKARP"
-	line "are being forced"
-	cont "to evolve…"
+	para "lake into a"
+	line "GYARADOS. None of"
+	cont "them evolved."
+
+	para "Most of the lake's"
+	line "MAGIKARP are gone."
+
+	para "Only one stayed."
 	done
 
 LakeOfRageLanceIntroText:
-	text "Did you come here"
-	line "because of the"
-	cont "rumors?"
+	text "LANCE: So the"
+	line "rumors reached"
+	cont "you, too."
 
-	para "You're <PLAYER>?"
-	line "I'm LANCE, a"
-	cont "trainer like you."
+	para "I'm LANCE. I have"
+	line "my reasons for"
+	cont "being here."
 
-	para "I heard some ru-"
-	line "mors, so I came to"
-	cont "investigate…"
-
-	para "I saw the way you"
-	line "battled earlier,"
-	cont "<PLAYER>."
-
-	para "I can tell that"
-	line "you're a trainer"
-
-	para "with considerable"
-	line "skill."
-
-	para "If you don't mind,"
-	line "could you help me"
-	cont "investigate?"
+	para "Help me look"
+	line "around?"
 	done
 
 LakeOfRageLanceRadioSignalText:
-	text "LANCE: Excellent!"
+	text "LANCE: The signal"
+	line "comes from"
+	cont "MAHOGANY."
 
-	para "It seems that the"
-	line "LAKE's MAGIKARP"
+	para "That's where I'm"
+	line "going."
 
-	para "are being forced"
-	line "to evolve."
-
-	para "A mysterious radio"
-	line "broadcast coming"
-
-	para "from MAHOGANY is"
-	line "the cause."
-
-	para "I'll be waiting"
-	line "for you, <PLAYER>."
+	para "Meet me there,"
+	line "<PLAYER>."
 	done
 
 LakeOfRageLanceRefusedText:
-	text "Oh… Well, if you"
-	line "change your mind,"
-	cont "please help me."
+	text "Suit yourself."
+
+	para "If you change"
+	line "your mind, I'll"
+	cont "be here."
 	done
 
 LakeOfRageLanceAskHelpText:
-	text "LANCE: Hm? Are you"
-	line "going to help me?"
+	text "LANCE: Still"
+	line "thinking about"
+	cont "it?"
 	done
 
-LakeOfRageGyaradosCryText:
-	text "GYARADOS: Gyashaa!"
+LakeOfRageMagikarpCryText:
+	text "MAGIKARP: Splash!"
 	done
 
-LakeOfRageGotRedScaleText:
+LakeOfRageGotGoldScaleText:
 	text "<PLAYER> obtained a"
-	line "RED SCALE."
+	line "GOLD SCALE."
 	done
 
 LakeOfRageGrampsText:
-	text "The GYARADOS are"
-	line "angry!"
+	text "Where are all the"
+	line "MAGIKARP?"
 
-	para "It's a bad omen!"
+	para "Lake's been dead"
+	line "since the radio"
+	cont "started."
 	done
 
 LakeOfRageGrampsText_ClearedRocketHideout:
-	text "Hahah! The MAGI-"
-	line "KARP are biting!"
+	text "Quiet again."
+
+	para "But not the right"
+	line "kind of quiet."
+
+	para "The MAGIKARP"
+	line "never came back."
 	done
 
 LakeOfRageSuperNerdText:
@@ -336,23 +329,23 @@ LakeOfRageSuperNerdText:
 	line "was made by ram-"
 	cont "paging GYARADOS."
 
-	para "I wonder if there"
-	line "is any connection"
+	para "Strange that I've"
+	line "never seen one"
+	cont "in it."
 
-	para "to their mass out-"
-	line "break now?"
+	para "Not even with all"
+	line "this commotion."
 	done
 
 LakeOfRageCooltrainerFText:
 	text "Did my eyes de-"
 	line "ceive me? I saw a"
 
-	para "red GYARADOS in"
-	line "the LAKE…"
+	para "gold MAGIKARP"
+	line "in the LAKE…"
 
-	para "But I thought"
-	line "GYARADOS were"
-	cont "usually blue?"
+	para "But MAGIKARP are"
+	line "red, aren't they?"
 	done
 
 FisherAndreSeenText:
@@ -419,15 +412,15 @@ CooltrainermAaronAfterBattleText:
 
 CooltrainerfLoisSeenText:
 	text "What happened to"
-	line "the red GYARADOS?"
+	line "the gold MAGIKARP?"
 
-	para "It's gone?"
+	para "Already gone?"
 
-	para "Oh, darn. I came"
-	line "here for nothing?"
+	para "Oh, drat. I came"
+	line "all this way…"
 
-	para "I know--let's"
-	line "battle!"
+	para "Fine--I'll fight"
+	line "YOU instead!"
 	done
 
 CooltrainerfLoisBeatenText:
@@ -516,7 +509,7 @@ LakeOfRage_MapEvents:
 	object_event 24, 26, SPRITE_FISHER, SPRITEMOVEDATA_STANDING_UP, 0, 0, -1, -1, PAL_NPC_BLUE, OBJECTTYPE_TRAINER, 1, TrainerFisherRaymond, EVENT_LAKE_OF_RAGE_CIVILIANS
 	object_event  4, 15, SPRITE_COOLTRAINER_M, SPRITEMOVEDATA_STANDING_RIGHT, 0, 0, -1, -1, PAL_NPC_RED, OBJECTTYPE_TRAINER, 1, TrainerCooltrainermAaron, EVENT_LAKE_OF_RAGE_CIVILIANS
 	object_event 36,  7, SPRITE_COOLTRAINER_F, SPRITEMOVEDATA_STANDING_LEFT, 0, 0, -1, -1, PAL_NPC_RED, OBJECTTYPE_TRAINER, 0, TrainerCooltrainerfLois, EVENT_LAKE_OF_RAGE_CIVILIANS
-	object_event 18, 22, SPRITE_GYARADOS, SPRITEMOVEDATA_POKEMON, 0, 0, -1, -1, PAL_NPC_RED, OBJECTTYPE_SCRIPT, 0, RedGyarados, EVENT_LAKE_OF_RAGE_RED_GYARADOS
+	object_event 18, 22, SPRITE_MAGIKARP, SPRITEMOVEDATA_POKEMON, 0, 0, -1, -1, PAL_NPC_RED, OBJECTTYPE_SCRIPT, 0, RedMagikarp, EVENT_LAKE_OF_RAGE_RED_GYARADOS
 	object_event  4,  4, SPRITE_SUPER_NERD, SPRITEMOVEDATA_STANDING_DOWN, 0, 0, -1, -1, 0, OBJECTTYPE_SCRIPT, 0, WesleyScript, EVENT_LAKE_OF_RAGE_WESLEY_OF_WEDNESDAY
 	object_event  7, 10, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, LakeOfRageMaxEther, EVENT_LAKE_OF_RAGE_MAX_ETHER
 	object_event 35,  2, SPRITE_POKE_BALL, SPRITEMOVEDATA_STILL, 0, 0, -1, -1, 0, OBJECTTYPE_ITEMBALL, 0, LakeOfRageEvolite, EVENT_LAKE_OF_RAGE_EVOLITE

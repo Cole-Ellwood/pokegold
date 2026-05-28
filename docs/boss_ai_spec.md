@@ -110,7 +110,7 @@ future roster changes can preserve identity.
 
 Two hook sites cover one Oracle behavior:
 
-- **Enemy-first dispatch** — top of `BossAI_SwitchOrTryItem`, after
+- **Enemy-first dispatch** — top of `BossAI_TrySwitch`, after
   `ParsePlayerAction` has populated player intent and before normal
   KO-pressure early returns.
 - **Player-first dispatch** — `BossAI_OracleHakiAfterPlayerAction`, called in
@@ -212,7 +212,7 @@ move-choice cheat.
 Allowed shape:
 
 - Call only from the post-input window at the top of
-  `BossAI_SwitchOrTryItem`, after `BossAI_SelectPlanIfNeeded` /
+  `BossAI_TrySwitch`, after `BossAI_SelectPlanIfNeeded` /
   `BossAI_ComputePlayerPlausibleTypeMask` and before normal KO-pressure
   early returns.
 - Inherit the caller's safety gates. The override must not run in
@@ -384,7 +384,7 @@ Goal: prevent repetitive pivot loops while preserving smart tactical switching.
 Current implementation: `engine/battle/ai/boss_policy_switch.asm:170`,
 `BossAI_ShouldRespectPotentialPlayerRevenge`.
 
-When a boss has a KO-pressure move, `BossAI_SwitchOrTryItem` normally stays in
+When a boss has a KO-pressure move, `BossAI_TrySwitch` normally stays in
 and takes the prize. The exception is when public state says the KO may open a
 revenge door:
 
@@ -410,7 +410,7 @@ Current implementation: `engine/battle/ai/boss_policy_switch.asm:154`,
 `BossAI_EnemyPerishEscapeUrgent`.
 
 When the boss's own active mon is publicly under Perish Song and
-`wEnemyPerishCount` is `1` or `2`, `BossAI_SwitchOrTryItem` may bypass the usual
+`wEnemyPerishCount` is `1` or `2`, `BossAI_TrySwitch` may bypass the usual
 "take the KO and stay" gate and try to switch. `BossAI_ComputeSwitchConfidence`
 also adds a strong `+40` confidence bonus, capped at `99`, before ordinary
 player-switch prediction. The A->B->A loop penalty treats this as a public
@@ -506,7 +506,7 @@ Key source anchors:
 - `engine/battle/ai/move.asm`: `BossAI_ApplyMoveModel`,
   `BossAI_SelectMove`.
 - `engine/battle/ai/items.asm`: `AI_SwitchOrTryItem`,
-  `BossAI_SwitchOrTryItem`, `BossAI_OnSwitchExecuted`.
+  `BossAI_TrySwitch`, `BossAI_OnSwitchExecuted`.
 - `engine/battle/used_move_text.asm`: `BossAI_RecordRevealedPlayerMove`.
 - `engine/battle/read_trainer_attributes.asm`: `LoadBossAITier`,
   `ClearBossAIState`.
@@ -561,7 +561,7 @@ Visible move reveal path:
 
 Plausible move inference path:
 
-- `BossAI_ApplyMoveModel` and `BossAI_SwitchOrTryItem` both call
+- `BossAI_ApplyMoveModel` and `BossAI_TrySwitch` both call
   `BossAI_ComputePlayerPlausibleTypeMask` before using plausible player threat
   knowledge.
 - `BossAI_ComputePlayerPlausibleTypeMask` builds `wBossAIPlausibleTypeMaskCache`
@@ -781,10 +781,12 @@ Reserved block:
 - Reserved size: `140` bytes, enforced by
   `ds 140 - (wBossAIStateEnd - wBossAITier)`.
 - Current normal build: `wBossAITier = 01:d68e`,
-  `wBossAIStateEnd = 01:d6fd`, so normal state uses `111` bytes and leaves `29`
+  `wBossAIStateEnd = 01:d6fe`, so normal state uses `112` bytes and leaves `28`
   reserved bytes.
-- Current trace field set adds `27` bytes under `BOSS_AI_TRACE`, so trace state
-  would use `138` bytes and leave `2` reserved bytes.
+- Current trace field set adds `28` bytes under `BOSS_AI_TRACE`, so trace state
+  uses `140` bytes and leaves `0` reserved bytes — the trace reserve is fully
+  consumed and any further trace-only growth must trade against the normal-build
+  fields or expand the reserved block.
 
 Adding 2-3 bytes to this block is acceptable in principle, but every change must
 still be build-verified because WRAMX overall has no free unreserved space.

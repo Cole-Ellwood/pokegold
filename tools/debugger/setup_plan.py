@@ -22,7 +22,7 @@ CONTENT_RUNTIME_HELPERS_BY_PREFIX = (
 )
 NEXT_STEP_SETUP_TARGETS_BY_CLASS = {
     "wrong_switch": {
-        "symbols": ("BossAI_SwitchOrTryItem",),
+        "symbols": ("BossAI_TrySwitch",),
         "watch_symbols": ("wEnemySwitchMonIndex", "wEnemySwitchMonParam", "wEnemyAIMoveScores"),
     },
     "wrong_move_score": {

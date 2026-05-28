@@ -7,78 +7,79 @@ LakeOfRageMagikarpHouse_MapScripts:
 	def_callbacks
 
 MagikarpLengthRaterScript:
+; The Magikarp size sidequest is repurposed: the Fishing Guru now studies the
+; one gold MAGIKARP that survived the Rockets' forced-evolution attempt at the
+; lake. The vanilla state machine survives - EXPLAINED_WEIRD_MAGIKARP gates
+; history->menInBlack, ASKED_FOR_MAGIKARP gates "already rewarded,"
+; ELIXIR_ON_STANDBY holds the ETHER if the player's bag is full. The gate for
+; the reward is EVENT_LAKE_OF_RAGE_RED_GYARADOS (set when the lake event ends)
+; plus MAGIKARP in party: caught the survivor, didn't KO it.
 	faceplayer
 	opentext
-	checkevent EVENT_LAKE_OF_RAGE_ELIXIR_ON_STANDBY
-	iftrue .GetReward
 	checkevent EVENT_LAKE_OF_RAGE_ASKED_FOR_MAGIKARP
-	iftrue .AskedForMagikarp
-	checkevent EVENT_CLEARED_ROCKET_HIDEOUT
-	iftrue .ClearedRocketHideout
+	iftrue .AlreadyRewarded
+	checkevent EVENT_LAKE_OF_RAGE_ELIXIR_ON_STANDBY
+	iftrue .StandbyReward
+	checkevent EVENT_LAKE_OF_RAGE_RED_GYARADOS
+	iftrue .AskForSurvivor
 	checkevent EVENT_LAKE_OF_RAGE_EXPLAINED_WEIRD_MAGIKARP
-	iftrue .ExplainedHistory
+	iftrue .MidState
 	writetext MagikarpLengthRaterText_LakeOfRageHistory
 	waitbutton
 	closetext
 	setevent EVENT_LAKE_OF_RAGE_EXPLAINED_WEIRD_MAGIKARP
 	end
 
-.ExplainedHistory:
+.MidState:
 	writetext MagikarpLengthRaterText_MenInBlack
 	waitbutton
 	closetext
 	end
 
-.ClearedRocketHideout:
-	writetext MagikarpLengthRaterText_WorldsLargestMagikarp
-	waitbutton
-	closetext
-	setevent EVENT_LAKE_OF_RAGE_ASKED_FOR_MAGIKARP
-	end
-
-.AskedForMagikarp:
+.AskForSurvivor:
 	setval MAGIKARP
 	special FindPartyMonThatSpecies
-	iffalse .ClearedRocketHideout
-	writetext MagikarpLengthRaterText_YouHaveAMagikarp
-	waitbutton
-	special CheckMagikarpLength
-	ifequal MAGIKARPLENGTH_NOT_MAGIKARP, .NotMagikarp
-	ifequal MAGIKARPLENGTH_REFUSED, .Refused
-	ifequal MAGIKARPLENGTH_TOO_SHORT, .TooShort
-	; MAGIKARPLENGTH_BEAT_RECORD
-	sjump .GetReward
-
-.GetReward:
-	writetext MagikarpLengthRaterText_Memento
+	iffalse .NoSurvivor
+	writetext MagikarpLengthRaterText_ShowMeTheSurvivor
+	yesorno
+	iffalse .RefusedToShow
+	writetext MagikarpLengthRaterText_YesThatsTheOne
 	promptbutton
 	verbosegiveitem ETHER
-	iffalse .NoRoom
-	writetext MagikarpLengthRaterText_Bonus
-	waitbutton
+	iffalse .StoredReward
+	setevent EVENT_LAKE_OF_RAGE_ASKED_FOR_MAGIKARP
 	closetext
-	clearevent EVENT_LAKE_OF_RAGE_ELIXIR_ON_STANDBY
 	end
 
-.NoRoom:
-	closetext
+.StoredReward:
 	setevent EVENT_LAKE_OF_RAGE_ELIXIR_ON_STANDBY
+	closetext
 	end
 
-.TooShort:
-	writetext MagikarpLengthRaterText_TooShort
+.StandbyReward:
+	writetext MagikarpLengthRaterText_HereIsYourEther
+	promptbutton
+	verbosegiveitem ETHER
+	iffalse .StoredReward
+	clearevent EVENT_LAKE_OF_RAGE_ELIXIR_ON_STANDBY
+	setevent EVENT_LAKE_OF_RAGE_ASKED_FOR_MAGIKARP
+	closetext
+	end
+
+.NoSurvivor:
+	writetext MagikarpLengthRaterText_NoSurvivor
 	waitbutton
 	closetext
 	end
 
-.NotMagikarp:
-	writetext MagikarpLengthRaterText_NotMagikarp
+.RefusedToShow:
+	writetext MagikarpLengthRaterText_RefusedToShow
 	waitbutton
 	closetext
 	end
 
-.Refused:
-	writetext MagikarpLengthRaterText_Refused
+.AlreadyRewarded:
+	writetext MagikarpLengthRaterText_PostReward
 	waitbutton
 	closetext
 	end
@@ -90,108 +91,100 @@ MagikarpHouseBookshelf:
 	jumpstd DifficultBookshelfScript
 
 MagikarpLengthRaterText_LakeOfRageHistory:
-	text "LAKE OF RAGE is"
-	line "actually a crater"
+	text "LAKE OF RAGE is a"
+	line "crater made by a"
+	cont "single rampaging"
 
-	para "made by rampaging"
-	line "GYARADOS."
+	para "GYARADOS."
 
-	para "The crater filled"
-	line "up with rainwater"
+	para "That's what the"
+	line "old stories say."
 
-	para "and the LAKE was"
-	line "formed."
+	para "I can't imagine"
+	line "the strength to"
+	cont "carve a lake."
 
-	para "That's the story"
-	line "passed on from my"
+	para "We haven't seen"
+	line "anything like it"
+	cont "since."
 
-	para "Grandpa's great-"
-	line "great-grandpa."
-
-	para "It used to be that"
-	line "you could catch"
-
-	para "lively MAGIKARP"
-	line "there, but…"
+	para "The MAGIKARP that"
+	line "used to fill the"
+	cont "water -- gone."
 
 	para "I don't understand"
 	line "what's happening."
 	done
 
 MagikarpLengthRaterText_MenInBlack:
-	text "The LAKE hasn't"
-	line "been normal since"
+	text "The LAKE has been"
+	line "quiet since those"
+	cont "men in black came."
 
-	para "those men wearing"
-	line "black arrived."
+	para "Too quiet."
+
+	para "Even the MAGIKARP"
+	line "are gone."
 	done
 
-MagikarpLengthRaterText_WorldsLargestMagikarp:
-	text "LAKE OF RAGE is"
-	line "back to normal."
+MagikarpLengthRaterText_ShowMeTheSurvivor:
+	text "They tell me there"
+	line "was a survivor."
 
-	para "The MAGIKARP have"
-	line "returned."
+	para "A gold MAGIKARP."
 
-	para "I may yet realize"
-	line "my dream of see-"
-	cont "ing the world's"
-	cont "largest MAGIKARP."
+	para "Could I see it?"
+	line "Just once, with my"
+	cont "own eyes."
 
-	para "Do you have a ROD?"
-	line "Please help me if"
-	cont "you do."
+	para "Would you show me?"
 	done
 
-MagikarpLengthRaterText_YouHaveAMagikarp:
-	text "Ah, you have a"
-	line "MAGIKARP! Let's"
+MagikarpLengthRaterText_YesThatsTheOne:
+	text "Yes."
 
-	para "see how big that"
-	line "baby is."
+	para "That's the one."
+
+	para "Look at that."
+	line "Gold, just like"
+	cont "they said."
+
+	para "So this is what"
+	line "they tried to make"
+	cont "a dragon out of."
+
+	para "Take this -- you"
+	line "earned it."
 	done
 
-MagikarpLengthRaterText_Memento:
-	text "Wow! This one is"
-	line "outstanding!"
+MagikarpLengthRaterText_HereIsYourEther:
+	text "You came back."
 
-	para "I tip my hat to"
-	line "you!"
-
-	para "Take this as a"
-	line "memento!"
+	para "Here -- this is"
+	line "what I owed you."
 	done
 
-MagikarpLengthRaterText_Bonus:
-	text "The record is the"
-	line "important thing."
+MagikarpLengthRaterText_NoSurvivor:
+	text "You don't have it"
+	line "with you?"
 
-	para "Think of that as"
-	line "a bonus!"
+	para "The MAGIKARP from"
+	line "the LAKE -- that's"
+	cont "the one I want."
 	done
 
-MagikarpLengthRaterText_TooShort:
-	text "Wow! This one is"
-	line "outstanding!"
-
-	para "…I wish I could"
-	line "say that, but I've"
-
-	para "seen a bigger one"
-	line "before."
+MagikarpLengthRaterText_RefusedToShow:
+	text "Hm. Maybe later,"
+	line "then."
 	done
 
-MagikarpLengthRaterText_NotMagikarp:
-	text "What? That's not a"
-	line "MAGIKARP!"
-	done
+MagikarpLengthRaterText_PostReward:
+	text "I keep thinking"
+	line "about that gold"
+	cont "MAGIKARP."
 
-MagikarpLengthRaterText_Refused:
-	text "Oh… So you didn't"
-	line "get one good"
-
-	para "enough to show me?"
-	line "Maybe next time."
+	para "What a strange"
+	line "world this is."
 	done
 
 LakeOfRageMagikarpHouseUnusedRecordText:

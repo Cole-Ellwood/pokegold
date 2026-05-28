@@ -1,0 +1,119 @@
+{
+  "rom": "pokegold",
+  "samples_per_scenario": 10,
+  "boot_frames": 240,
+  "scenarios": {
+    "mid_lead": {
+      "tier": 2,
+      "apply": {
+        "mean": 2387612,
+        "median": 2387614,
+        "max": 2387620,
+        "min": 2387608,
+        "count": 10
+      },
+      "select": {
+        "mean": 589884,
+        "median": 702236,
+        "max": 702248,
+        "min": 421344,
+        "count": 10
+      },
+      "total": {
+        "mean": 2977497,
+        "median": 3089852,
+        "max": 3089864,
+        "min": 2808956,
+        "count": 10
+      },
+      "all_returned": true,
+      "raw_total": [
+        2808956,
+        2808960,
+        2808964,
+        2808960,
+        3089856,
+        3089852,
+        3089852,
+        3089856,
+        3089864,
+        3089852
+      ]
+    },
+    "late_lead": {
+      "tier": 3,
+      "apply": {
+        "mean": 3089856,
+        "median": 3089856,
+        "max": 3089864,
+        "min": 3089848,
+        "count": 10
+      },
+      "select": {
+        "mean": 702240,
+        "median": 702240,
+        "max": 702248,
+        "min": 702232,
+        "count": 10
+      },
+      "total": {
+        "mean": 3792096,
+        "median": 3792094,
+        "max": 3792104,
+        "min": 3792088,
+        "count": 10
+      },
+      "all_returned": true,
+      "raw_total": [
+        3792100,
+        3792088,
+        3792104,
+        3792092,
+        3792092,
+        3792100,
+        3792092,
+        3792096,
+        3792104,
+        3792092
+      ]
+    },
+    "late_lookahead_heavy": {
+      "tier": 3,
+      "apply": {
+        "mean": 2991544,
+        "median": 2949410,
+        "max": 3089864,
+        "min": 2949404,
+        "count": 10
+      },
+      "select": {
+        "mean": 702238,
+        "median": 702240,
+        "max": 702248,
+        "min": 702232,
+        "count": 10
+      },
+      "total": {
+        "mean": 3693782,
+        "median": 3651650,
+        "max": 3792100,
+        "min": 3651644,
+        "count": 10
+      },
+      "all_returned": true,
+      "raw_total": [
+        3651648,
+        3651644,
+        3792100,
+        3792092,
+        3651648,
+        3651656,
+        3651644,
+        3792096,
+        3651652,
+        3651648
+      ]
+    }
+  },
+  "late_tier_total_mean": 3792096
+}

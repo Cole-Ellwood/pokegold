@@ -683,8 +683,6 @@ ENDU
 
 	ds 2
 
-wEnemyTrainerItem1:: db
-wEnemyTrainerItem2:: db
 wEnemyTrainerBaseReward:: db
 wEnemyTrainerAIFlags:: ds 3
 wOTClassName:: ds TRAINER_CLASS_NAME_LENGTH
@@ -2453,7 +2451,7 @@ wBossAITemp5:: db
 wBossAITierWeightRow:: db ; row index into BossAITierWeights; defaults to wBossAITier - 1, overridable per-trainer
 wBossAISpeciesUsedMoves:: ds PARTY_LENGTH * NUM_MOVES ; per-seen-species mirror of wPlayerUsedMoves; preserved across same-fight switches
 ; Per-tick memo caches; cleared at the top of BossAI_ApplyMoveModel and
-; BossAI_SwitchOrTryItem via BossAI_ResetTurnCaches. Each helper checks its
+; BossAI_TrySwitch via BossAI_ResetTurnCaches. Each helper checks its
 ; cache byte and only recomputes on miss. Inputs to all five helpers are
 ; stable within one AI tick (player HP / used moves / revealed mask / enemy
 ; moves / choice lock all frozen across the ApplyMoveModel + SelectMove pair).
@@ -2463,6 +2461,11 @@ wBossAIRevealedPriorityCache:: db   ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else type id
 wBossAIPublicEnemyFasterCache:: db  ; $ff = uncomputed, 0 = not faster, 1 = enemy faster
 wBossAILookaheadDepthCache:: db     ; $ff = uncomputed, else projection depth (0 / mid-1 / late-1)
+wBossAILookaheadRunningBest:: db    ; $ff = uncomputed, else dynamic minimum non-saturated score seen
+                                    ; so far by BossAI_ApplyLookaheadToTopMoveCandidates this turn.
+                                    ; Used by the futility cutoff to skip candidates that cannot
+                                    ; improve on the running best even with maximum upside
+                                    ; (signed delta clamped to [-CAP, +CAP], saturating at score 1).
 wBossAILastMatchupType:: db         ; $ff = uncomputed, else last MOVE_TYPE queried via
                                     ; BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
 wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMatchupType
@@ -2485,7 +2488,8 @@ wBossAITracePlanPhase:: db
 wBossAITracePlanConfidence:: db
 wBossAITracePlausibleMask:: ds 4
 wBossAITraceRiskFlags:: db
-wBossAITraceLookaheadBonusTop:: ds 3
+wBossAITraceLookaheadBonusTop:: ds 4 ; one byte per candidate evaluated by the lookahead driver,
+                                     ; sized to BOSS_AI_LOOKAHEAD_N (4)
 ENDC
 wBossAIStateEnd::
 

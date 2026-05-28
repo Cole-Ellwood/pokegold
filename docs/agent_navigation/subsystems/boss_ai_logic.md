@@ -91,7 +91,7 @@ Phase 1 shipped (no behavior change):
    normal_used=104, normal_free=36; see `Boss AI WRAM Reserve` in
    `docs/generated/dev_index.md`).
 2. `BossAI_ResetTurnCaches` clears all four sentinels at the top of
-   `BossAI_ApplyMoveModel` and `BossAI_SwitchOrTryItem`; the four helpers
+   `BossAI_ApplyMoveModel` and `BossAI_TrySwitch`; the four helpers
    each check their cache byte and only recompute on miss.
 3. `PredictPlayerSwitch` was *not* wrapped — its two heavy internal calls
    are cached, so its per-call cost collapsed without a separate cache.
@@ -120,7 +120,7 @@ Phase 2 (deferred, needs live-trace dump and gameplay-taste call):
 | `engine/battle/ai/boss_thunks.asm` | ~80 | HL-preserving farcall thunks into the AI Scoring bank. |
 | `engine/battle/ai/scoring.asm` | ~3230 | Base Gen 2 AI scoring layers (`AI_Basic`, `AI_Setup`, `AI_Types`, `AI_Offensive`, `AI_Smart`, `AI_Cautious`, `AI_Status`, `AI_Risky`). Boss AI runs on top of these. |
 | `engine/battle/ai/switch.asm` | ~660 | Base switch helpers (`CheckPlayerMoveTypeMatchups`, `CheckAbleToSwitch`, `FindAliveEnemyMons*`, `FindEnemyMons*`). Boss switch logic calls into these. |
-| `engine/battle/ai/items.asm` | ~860 | `AI_SwitchOrTryItem` dispatcher (`SwitchOften` / `SwitchRarely` / `SwitchSometimes`), `AI_TryItem`, `EnemyUsed*` item routines. Vanilla path — Boss AI hooks in via `BossAI_SwitchOrTryItem`. |
+| `engine/battle/ai/items.asm` | ~225 | `AI_SwitchOrTryItem` dispatcher (`SwitchOften` / `SwitchRarely` / `SwitchSometimes`), `DontSwitch` (no-op stay), `AI_TrySwitch` / `AI_Switch`. Bag-item dispatch (`AI_TryItem`, `EnemyUsed*`, `AI_HealStatus`) was deleted 2026-05-27 — trainers don't use bag items in this hack. Boss AI hooks in via `BossAI_TrySwitch`. |
 | `engine/battle/ai/move.asm` | ~220 | Move-pick dispatcher. Where `BossAI_ApplyMoveModel` and `BossAI_SelectMove` are called from. |
 | `engine/battle/ai/redundant.asm` | ~200 | Move-redundancy avoidance helpers. |
 | `data/battle/ai/*.asm` | small | Effect lists for the **vanilla** AI scoring layer (`useful_moves`, `stall_moves`, `risky_effects`, `residual_moves`, `encore_moves`, `status_only_effects`, `constant_damage_effects`, `reckless_moves`, `rain_dance_moves`, `sunny_day_moves`). Boss AI inherits their effect because vanilla scoring runs first, but consumers are in `scoring.asm`, not the Boss AI split files. Boss AI's own effect tables live in `engine/battle/ai/boss_policy_move.asm` (`BossAIDenyKOEffects`, `BossAIStatusEffects`, `BossAIRiskyEffects`, role-effect tables). |
@@ -290,7 +290,7 @@ resistance in no-item Boss AI scoring.
 
 | Need | Label / line |
 | --- | --- |
-| Top-level switch / item dispatch | `BossAI_SwitchOrTryItem` (`engine/battle/ai/boss_policy_switch.asm:17`) |
+| Top-level switch / item dispatch | `BossAI_TrySwitch` (`engine/battle/ai/boss_policy_switch.asm:17`) |
 | Confidence dice | `BossAI_ComputeSwitchConfidence` (`engine/battle/ai/boss_policy_switch.asm:898`) (margin-based 55/75/90% — comment at `:2641-2644`) |
 | Threshold by tier | `BossAI_GetSwitchThreshold` (`engine/battle/ai/boss_policy_switch.asm:588`) |
 | Loop-prevention penalty | `BossAI_NeedsLoopPenalty` (`engine/battle/ai/boss_policy_switch.asm:603`) |

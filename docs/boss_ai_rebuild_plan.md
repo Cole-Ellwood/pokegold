@@ -73,7 +73,7 @@ These functions implement decisions and scoring. They are the part the user desc
 - **Move evaluation**: `BossAI_ApplyMoveModel`, `BossAI_CurrentEnemyMoveHasKOPressure`, `BossAI_CurrentEnemyMovePressureScore`, `BossAI_CurrentEnemyMoveScoredPower`, `BossAI_ScaleMovePowerByBaseStatRatio`, `BossAI_ApplyEnemyKnownPressureModifiers`.
 - **Threat assessment**: `BossAI_PlayerHasPublicThreatVsEnemy`, `BossAI_PlayerHasPublicThreatVsEnemyUncached`, `BossAI_PlayerHasRevealedPriorityThreat`, `BossAI_PlayerHasRevealedPriorityThreatUncached`.
 - **Type matchup heuristics**: `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem`, `BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem`, `BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem`, `BossAI_CheckTypeMatchupNoItem`, `BossAI_ApplyDragonsMajestyNoItem`.
-- **Switch logic**: `BossAI_SwitchOrTryItem`, `BossAI_OnSwitchExecuted`, `BossAI_DecaySwitchCooldown`, `BossAI_CheckAbleToSwitchSafe`, `BossAI_FindFirstAliveSwitchCandidate`, plus the switch confidence / cooldown machinery.
+- **Switch logic**: `BossAI_TrySwitch`, `BossAI_OnSwitchExecuted`, `BossAI_DecaySwitchCooldown`, `BossAI_CheckAbleToSwitchSafe`, `BossAI_FindFirstAliveSwitchCandidate`, plus the switch confidence / cooldown machinery.
 - **Top-level decision loop**: `BossAI_SelectMove`, `BossAI_ResetTurnCaches`, `BossAI_EnemyIsGhostType` (ghost-type special-casing).
 
 Estimated split: ~70% of `boss.asm` is policy code (~4500-5000 lines).

@@ -69,7 +69,7 @@ These functions are policy decisions, not platform:
 
 - `BossAI_ApplyMoveModel`
 - `BossAI_SelectMove`
-- `BossAI_SwitchOrTryItem`
+- `BossAI_TrySwitch`
 - `BossAI_SelectPlanIfNeeded`
 - `BossAI_ApplyLookaheadToTopMoveCandidates`
 - `BossAI_EvaluateActionLookahead`

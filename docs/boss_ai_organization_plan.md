@@ -65,7 +65,7 @@ duplicate it.
 | 495–2317 | **Move-scoring overlay** (`BossAI_ApplyMoveModel`) | The big one — 30+ `.ApplyXxxBias` heuristics, public-failure gates, role bias, tier weights | 1823 |
 | 2318–2329 | **Ghost helper** | `BossAI_EnemyIsGhostType` (used by setup/Curse logic) | 12 |
 | 2331–2521 | **Move pick** (`BossAI_SelectMove`) | Two-pass best/second-best, weighted dice, tier dice modifier | 191 |
-| 2523–2690 | **Switch dispatch** | `BossAI_SwitchOrTryItem`, switch confidence dice, base candidate scan | 168 |
+| 2523–2690 | **Switch dispatch** | `BossAI_TrySwitch`, switch confidence dice, base candidate scan | 168 |
 | 2692–2856 | **Threat caches (active)** | Public-threat / revealed-priority caches with $ff-sentinel cache pattern | 165 |
 | 2858–3007 | **Type-matchup (no item)** | Four no-item type-matchup wrappers + `Dragon's Majesty` overlay | 150 |
 | 3009–3360 | **Pressure scoring** | KO pressure / pressure score / scored power / known-modifier stack | 352 |
@@ -183,7 +183,7 @@ move.asm AI tick
         └── BossAI_MarkScoutedIfScoutMove  (6334)
 
 switch.asm AI tick
-    └── BossAI_SwitchOrTryItem              (2523)  — switch or item
+    └── BossAI_TrySwitch              (2523)  — switch or item
         ├── BossAI_ResetTurnCaches
         ├── BossAI_SelectPlanIfNeeded
         ├── BossAI_ComputePlayerPlausibleTypeMask

@@ -53,12 +53,12 @@ GetTrainerAttributes:
 	ld hl, TrainerClassAttributes + TRNATTR_ITEM1
 	ld bc, NUM_TRAINER_ATTRIBUTES
 	call AddNTimes
-	ld de, wEnemyTrainerItem1
-	ld a, [hli]
-	ld [de], a
-	inc de
-	ld a, [hli]
-	ld [de], a
+	; Skip TRNATTR_ITEM1 / TRNATTR_ITEM2 — items.asm AI dispatcher was deleted
+	; and trainers in this hack don't use bag items. The ROM columns stay in
+	; place to preserve NUM_TRAINER_ATTRIBUTES stride for TRNATTR_AI_ITEM_SWITCH
+	; and TRNATTR_AI_MOVE_WEIGHTS consumers.
+	inc hl
+	inc hl
 	ld a, [hl]
 	ld [wEnemyTrainerBaseReward], a
 	call LoadBossAITier

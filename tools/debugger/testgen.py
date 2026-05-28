@@ -89,7 +89,7 @@ GENERATOR_RULES = (
             "wEnemyAIMoveScores",
             "BossAI_SelectMove",
             "BossAI_ApplyMoveModel",
-            "BossAI_SwitchOrTryItem",
+            "BossAI_TrySwitch",
         ),
         symptom_keywords=("boss", "ai", "selector", "score", "switch", "policy"),
         commands=(

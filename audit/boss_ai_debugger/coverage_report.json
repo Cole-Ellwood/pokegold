@@ -9,8 +9,139 @@
     "uncovered_rules": []
   },
   "coverage_targets": {
-    "group_count": 37,
+    "group_count": 74,
     "groups": [
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 5241,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.apply_coach_plan_move_bias",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyCoachPlanMoveBias",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_ApplyCoachPlanMoveBias",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.apply_coach_plan_move_bias"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "internal",
+        "first_rules": [
+          {
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "expected_public_inputs": [],
+            "line": 1076,
+            "recommended_trace_mode": "rom_score_materialization",
+            "rule_id": "move.apply_move_model.has_strong_matchup_damaging_move",
+            "score_trace_target": true,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".HasStrongMatchupDamagingMove",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_ApplyMoveModel",
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.apply_move_model.has_strong_matchup_damaging_move"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "first_rules": [
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_score_execution_hook",
+            "expected_public_inputs": [],
+            "line": 949,
+            "recommended_trace_mode": "rom_score_materialization",
+            "rule_id": "move.apply_move_model.player_cant_act_this_turn_publicly",
+            "score_trace_target": true,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".PlayerCantActThisTurnPublicly",
+            "suggested_generator": "mastery_policy"
+          },
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_score_execution_hook",
+            "expected_public_inputs": [
+              "wPlayerUsedMoves"
+            ],
+            "line": 1660,
+            "recommended_trace_mode": "rom_score_materialization",
+            "rule_id": "move.apply_move_model.apply_revealed_effect_matrix_bias",
+            "score_trace_target": true,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".ApplyRevealedEffectMatrixBias",
+            "suggested_generator": "mastery_policy"
+          },
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_score_execution_hook",
+            "expected_public_inputs": [],
+            "line": 2723,
+            "recommended_trace_mode": "rom_score_materialization",
+            "rule_id": "move.apply_move_model.player_public_threat_category",
+            "score_trace_target": true,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".PlayerPublicThreatCategory",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_ApplyMoveModel",
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_count": 3,
+        "rule_ids": [
+          "move.apply_move_model.player_cant_act_this_turn_publicly",
+          "move.apply_move_model.apply_revealed_effect_matrix_bias",
+          "move.apply_move_model.player_public_threat_category"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "first_rules": [
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_score_execution_hook",
+            "expected_public_inputs": [
+              "wEnemyMonType1",
+              "wEnemyMonType2"
+            ],
+            "line": 2445,
+            "recommended_trace_mode": "rom_score_materialization",
+            "rule_id": "move.apply_move_model.player_has_seen_alive_bench_ghost",
+            "score_trace_target": true,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".PlayerHasSeenAliveBenchGhost",
+            "suggested_generator": "spikes_spin"
+          }
+        ],
+        "parent_label": "BossAI_ApplyMoveModel",
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.apply_move_model.player_has_seen_alive_bench_ghost"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "spikes_spin"
+      },
       {
         "classification": "internal",
         "first_rules": [
@@ -18,7 +149,7 @@
             "classification": "internal",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5149,
+            "line": 5760,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
             "score_trace_target": false,
@@ -43,7 +174,7 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 4855,
+            "line": 5454,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.apply_signed_delta_to_score",
             "score_trace_target": false,
@@ -68,7 +199,132 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 3318,
+            "line": 4327,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.coach_expected_move_resisted_by_player",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CoachExpectedMoveResistedByPlayer",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CoachExpectedMoveResistedByPlayer",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.coach_expected_move_resisted_by_player"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 4202,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.coach_plan_still_valid",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CoachPlanStillValid",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CoachPlanStillValid",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.coach_plan_still_valid"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 4303,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.coach_template_expected_move_from_hl",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CoachTemplateExpectedMoveFromHL",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CoachTemplateExpectedMoveFromHL",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.coach_template_expected_move_from_hl"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 4269,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.coach_template_stop_condition_clear",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CoachTemplateStopConditionClear",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CoachTemplateStopConditionClear",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.coach_template_stop_condition_clear"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 4213,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.current_plan_is_coach_template",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CurrentPlanIsCoachTemplate",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CurrentPlanIsCoachTemplate",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.current_plan_is_coach_template"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 3573,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.enemy_below_one_third_hp",
             "score_trace_target": false,
@@ -93,7 +349,7 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5546,
+            "line": 6181,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.enemy_species_can_evolve",
             "score_trace_target": false,
@@ -118,7 +374,32 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5606,
+            "line": 4226,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.find_coach_plan_template",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_FindCoachPlanTemplate",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_FindCoachPlanTemplate",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.find_coach_plan_template"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 6241,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.get_scout_roll_threshold",
             "score_trace_target": false,
@@ -143,7 +424,7 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5598,
+            "line": 6233,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.get_speculative_plausible_risk_weight",
             "score_trace_target": false,
@@ -168,7 +449,7 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5585,
+            "line": 6220,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.get_tier_plausible_risk_weight",
             "score_trace_target": false,
@@ -193,7 +474,7 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 4196,
+            "line": 4734,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.is_denial_effect",
             "score_trace_target": false,
@@ -218,13 +499,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 5679,
+            "line": 6354,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.maybe_mark_scout_pivot",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
             "source_label": "BossAI_MaybeMarkScoutPivot",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_MaybeMarkScoutPivot",
@@ -232,6 +513,58 @@
         "rule_count": 1,
         "rule_ids": [
           "move.maybe_mark_scout_pivot"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "public_info",
+        "first_rules": [
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [
+              "wPlayerUsedMoves"
+            ],
+            "line": 4365,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.player_has_revealed_effect_a_coach",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.player_has_revealed_effect_a_coach"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "first_rules": [
+          {
+            "classification": "public_info",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 3670,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.public_enemy_faster_uncached",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_PublicEnemyFasterUncached",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_PublicEnemyFasterUncached",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.public_enemy_faster_uncached"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "suggested_generator": "mastery_policy"
@@ -245,7 +578,7 @@
             "expected_public_inputs": [
               "wBossAISeenPlayerSpecies"
             ],
-            "line": 3585,
+            "line": 3868,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.seen_bench_threat_score",
             "score_trace_target": false,
@@ -270,13 +603,13 @@
             "classification": "internal",
             "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 3815,
+            "line": 4128,
             "recommended_trace_mode": "rom_contribution_trace",
             "rule_id": "move.select_plan_if_needed.is_wincon_compromised",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
             "source_label": ".IsWinconCompromised",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_SelectPlanIfNeeded",
@@ -284,6 +617,31 @@
         "rule_count": 1,
         "rule_ids": [
           "move.select_plan_if_needed.is_wincon_compromised"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 4169,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "move.try_coach_plan_template",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_TryCoachPlanTemplate",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_TryCoachPlanTemplate",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "move.try_coach_plan_template"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "suggested_generator": "mastery_policy"
@@ -295,13 +653,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 639,
+            "line": 852,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.ace_timing_hook",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_AceTimingHook",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_AceTimingHook",
@@ -311,7 +669,7 @@
           "switch.ace_timing_hook"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -320,13 +678,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 1201,
+            "line": 1593,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.apply_plan_switch_bias",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ApplyPlanSwitchBias",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ApplyPlanSwitchBias",
@@ -336,7 +694,7 @@
           "switch.apply_plan_switch_bias"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -345,13 +703,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 1148,
+            "line": 1362,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.apply_plausible_risk_to_switch_confidence",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
@@ -361,7 +719,7 @@
           "switch.apply_plausible_risk_to_switch_confidence"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -370,13 +728,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 1242,
+            "line": 1634,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.apply_preservation_switch_bias",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ApplyPreservationSwitchBias",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ApplyPreservationSwitchBias",
@@ -386,7 +744,7 @@
           "switch.apply_preservation_switch_bias"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -395,13 +753,63 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 232,
+            "line": 1415,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.apply_role_package_switch_bias",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_ApplyRolePackageSwitchBias",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_ApplyRolePackageSwitchBias",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.apply_role_package_switch_bias"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 2114,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.candidate_immune_to_player_stab",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_CandidateImmuneToPlayerSTAB",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_CandidateImmuneToPlayerSTAB",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.candidate_immune_to_player_stab"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 524,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.check_able_to_switch_safe",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_CheckAbleToSwitchSafe",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_CheckAbleToSwitchSafe",
@@ -411,7 +819,107 @@
           "switch.check_able_to_switch_safe"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 448,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.choose_best_oracle_move",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_ChooseBestOracleMove",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_ChooseBestOracleMove",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.choose_best_oracle_move"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 1495,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.classify_active_player_role_package",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_ClassifyActivePlayerRolePackage",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_ClassifyActivePlayerRolePackage",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.classify_active_player_role_package"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 301,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.commit_haki_oracle_choice",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_CommitHakiOracleChoice",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_CommitHakiOracleChoice",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.commit_haki_oracle_choice"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 321,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.commit_haki_oracle_switch",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_CommitHakiOracleSwitch",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_CommitHakiOracleSwitch",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.commit_haki_oracle_switch"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "internal",
@@ -420,13 +928,13 @@
             "classification": "internal",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 988,
+            "line": 1202,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": ".ApplyPrimaryThreatImmunityTieBreak",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ComputeSwitchCandidateRisk",
@@ -436,7 +944,7 @@
           "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -445,13 +953,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 848,
+            "line": 1062,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.compute_switch_candidate_risk",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ComputeSwitchCandidateRisk",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ComputeSwitchCandidateRisk",
@@ -461,7 +969,7 @@
           "switch.compute_switch_candidate_risk"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "public_info",
@@ -473,13 +981,13 @@
               "Moves + MOVE_EFFECT",
               "wPlayerUsedMoves"
             ],
-            "line": 1021,
+            "line": 1235,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": ".ApplyRevealedPrioritySwitchInRisk",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ComputeSwitchCandidateRisk",
@@ -489,7 +997,7 @@
           "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -498,13 +1006,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 685,
+            "line": 898,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.compute_switch_confidence",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ComputeSwitchConfidence",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ComputeSwitchConfidence",
@@ -514,7 +1022,7 @@
           "switch.compute_switch_confidence"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -526,13 +1034,13 @@
               "wEnemyPerishCount",
               "wEnemySubStatus1"
             ],
-            "line": 439,
+            "line": 666,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.enemy_perish_escape_urgent",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_EnemyPerishEscapeUrgent",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_EnemyPerishEscapeUrgent",
@@ -542,32 +1050,7 @@
           "switch.enemy_perish_escape_urgent"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "internal",
-        "first_rules": [
-          {
-            "classification": "internal",
-            "coverage_mode": "rom_route_execution_hook",
-            "expected_public_inputs": [],
-            "line": 311,
-            "recommended_trace_mode": "rom_route_contribution_trace",
-            "rule_id": "switch.get_switch_threshold.apply_class_switch_threshold_mod",
-            "score_trace_target": false,
-            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-            "source_label": ".ApplyClassSwitchThresholdMod",
-            "suggested_generator": "mastery_policy"
-          }
-        ],
-        "parent_label": "BossAI_GetSwitchThreshold",
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_count": 1,
-        "rule_ids": [
-          "switch.get_switch_threshold.apply_class_switch_threshold_mod"
-        ],
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -576,13 +1059,88 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 296,
+            "line": 1979,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.faint_repl_candidate_has_real_coverage",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_FaintRepl_CandidateHasRealCoverage",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_FaintRepl_CandidateHasRealCoverage",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.faint_repl_candidate_has_real_coverage"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 1754,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.faint_repl_eval_candidate",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_FaintRepl_EvalCandidate",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_FaintRepl_EvalCandidate",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.faint_repl_eval_candidate"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 1892,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.faint_repl_hpgate_and_pct",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_FaintRepl_HPGateAndPct",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_FaintRepl_HPGateAndPct",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.faint_repl_hpgate_and_pct"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 588,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.get_switch_threshold",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_GetSwitchThreshold",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_GetSwitchThreshold",
@@ -592,7 +1150,82 @@
           "switch.get_switch_threshold"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 344,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.haki_find_immunity_switch",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_HakiFindImmunitySwitch",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_HakiFindImmunitySwitch",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.haki_find_immunity_switch"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 228,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.haki_ready_common",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_HakiReadyCommon",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_HakiReadyCommon",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.haki_ready_common"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 209,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.haki_reserve_ace_action",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_HakiReserveAceAction",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_HakiReserveAceAction",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.haki_reserve_ace_action"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -601,13 +1234,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 425,
+            "line": 652,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_imminent_koprevention",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_IsImminentKOPrevention",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsImminentKOPrevention",
@@ -617,7 +1250,7 @@
           "switch.is_imminent_koprevention"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -626,13 +1259,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 567,
+            "line": 794,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_immunity_pivot_opportunity",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_IsImmunityPivotOpportunity",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsImmunityPivotOpportunity",
@@ -642,7 +1275,7 @@
           "switch.is_immunity_pivot_opportunity"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -651,13 +1284,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 519,
+            "line": 746,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_scarf_swing_possible",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_IsScarfSwingPossible",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsScarfSwingPossible",
@@ -667,7 +1300,7 @@
           "switch.is_scarf_swing_possible"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "internal",
@@ -676,13 +1309,13 @@
             "classification": "internal",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 555,
+            "line": 782,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_suspicious_switch_in.is_type_not_very_effective",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": ".IsTypeNotVeryEffective",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsSuspiciousSwitchIn",
@@ -692,7 +1325,7 @@
           "switch.is_suspicious_switch_in.is_type_not_very_effective"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -701,13 +1334,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 525,
+            "line": 752,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_suspicious_switch_in",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_IsSuspiciousSwitchIn",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsSuspiciousSwitchIn",
@@ -717,7 +1350,7 @@
           "switch.is_suspicious_switch_in"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -726,13 +1359,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 1283,
+            "line": 2228,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.is_switching_into_wincon_risk",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_IsSwitchingIntoWinconRisk",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_IsSwitchingIntoWinconRisk",
@@ -742,7 +1375,7 @@
           "switch.is_switching_into_wincon_risk"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -751,13 +1384,38 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 376,
+            "line": 1524,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.last_player_move_role_package_mask",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_LastPlayerMoveRolePackageMask",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_LastPlayerMoveRolePackageMask",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.last_player_move_role_package_mask"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 603,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.needs_loop_penalty",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_NeedsLoopPenalty",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_NeedsLoopPenalty",
@@ -767,7 +1425,7 @@
           "switch.needs_loop_penalty"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -776,13 +1434,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 208,
+            "line": 500,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.on_switch_executed",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_OnSwitchExecuted",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_OnSwitchExecuted",
@@ -792,7 +1450,57 @@
           "switch.on_switch_executed"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 177,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.oracle_haki_after_player_action",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_OracleHakiAfterPlayerAction",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_OracleHakiAfterPlayerAction",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.oracle_haki_after_player_action"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 147,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.oracle_haki_read",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_OracleHakiRead",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_OracleHakiRead",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.oracle_haki_read"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -801,13 +1509,63 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 765,
+            "line": 1675,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.pick_faint_replacement",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_PickFaintReplacement",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_PickFaintReplacement",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.pick_faint_replacement"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "first_rules": [
+          {
+            "classification": "haki_exception",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 249,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.rebuild_haki_move_scores",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_RebuildHakiMoveScores",
+            "suggested_generator": "selector_edges"
+          }
+        ],
+        "parent_label": "BossAI_RebuildHakiMoveScores",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.rebuild_haki_move_scores"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "selector_edges"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 979,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.refine_switch_candidate_for_plausible_risk",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_RefineSwitchCandidateForPlausibleRisk",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_RefineSwitchCandidateForPlausibleRisk",
@@ -817,7 +1575,7 @@
           "switch.refine_switch_candidate_for_plausible_risk"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -826,13 +1584,13 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 455,
+            "line": 682,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.should_respect_potential_player_revenge",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
@@ -842,7 +1600,7 @@
           "switch.should_respect_potential_player_revenge"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "public_info",
@@ -851,13 +1609,13 @@
             "classification": "public_info",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 491,
+            "line": 718,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.should_respect_potential_player_revenge.known_seen_revenge_threat",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": ".KnownSeenRevengeThreat",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
@@ -867,7 +1625,7 @@
           "switch.should_respect_potential_player_revenge.known_seen_revenge_threat"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -876,13 +1634,38 @@
             "classification": "platform_boundary",
             "coverage_mode": "rom_route_execution_hook",
             "expected_public_inputs": [],
-            "line": 1265,
+            "line": 2177,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.should_sack_hard",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_ShouldSackHard",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_ShouldSackHard",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.should_sack_hard"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 1657,
             "recommended_trace_mode": "rom_route_contribution_trace",
             "rule_id": "switch.should_sack_instead_of_switch",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
             "source_label": "BossAI_ShouldSackInsteadOfSwitch",
-            "suggested_generator": "mastery_policy"
+            "suggested_generator": "switch_sack"
           }
         ],
         "parent_label": "BossAI_ShouldSackInsteadOfSwitch",
@@ -892,7 +1675,32 @@
           "switch.should_sack_instead_of_switch"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_route_execution_hook",
+            "expected_public_inputs": [],
+            "line": 2064,
+            "recommended_trace_mode": "rom_route_contribution_trace",
+            "rule_id": "switch.switch_candidate_low_hpblock",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+            "source_label": "BossAI_SwitchCandidateLowHPBlock",
+            "suggested_generator": "switch_sack"
+          }
+        ],
+        "parent_label": "BossAI_SwitchCandidateLowHPBlock",
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "switch.switch_candidate_low_hpblock"
+        ],
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -903,111 +1711,310 @@
             "expected_public_inputs": [],
             "line": 17,
             "recommended_trace_mode": "rom_route_contribution_trace",
-            "rule_id": "switch.switch_or_try_item",
+            "rule_id": "switch.try_switch",
             "score_trace_target": false,
             "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-            "source_label": "BossAI_SwitchOrTryItem",
-            "suggested_generator": "mastery_policy"
+            "source_label": "BossAI_TrySwitch",
+            "suggested_generator": "switch_sack"
           }
         ],
-        "parent_label": "BossAI_SwitchOrTryItem",
+        "parent_label": "BossAI_TrySwitch",
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_count": 1,
         "rule_ids": [
-          "switch.switch_or_try_item"
+          "switch.try_switch"
         ],
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
-        "classification": "haki_exception",
+        "classification": "internal",
         "first_rules": [
           {
-            "classification": "haki_exception",
-            "coverage_mode": "rom_route_execution_hook",
+            "classification": "internal",
+            "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 111,
-            "recommended_trace_mode": "rom_route_contribution_trace",
-            "rule_id": "switch.try_morty_haki_oracle",
+            "line": 285,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank",
             "score_trace_target": false,
-            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-            "source_label": "BossAI_TryMortyHakiOracle",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": ".CurrentMoveDamageRank",
             "suggested_generator": "mastery_policy"
           },
           {
-            "classification": "haki_exception",
-            "coverage_mode": "rom_route_execution_hook",
+            "classification": "internal",
+            "coverage_mode": "rom_execution_hook",
             "expected_public_inputs": [],
-            "line": 160,
-            "recommended_trace_mode": "rom_route_contribution_trace",
-            "rule_id": "switch.try_morty_haki_oracle.find_destiny_bond_slot",
+            "line": 371,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank",
             "score_trace_target": false,
-            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-            "source_label": ".FindDestinyBondSlot",
-            "suggested_generator": "mastery_policy"
-          },
-          {
-            "classification": "haki_exception",
-            "coverage_mode": "rom_route_execution_hook",
-            "expected_public_inputs": [],
-            "line": 187,
-            "recommended_trace_mode": "rom_route_contribution_trace",
-            "rule_id": "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack",
-            "score_trace_target": false,
-            "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-            "source_label": ".PlayerSelectedStrongSuperEffectiveAttack",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": ".ApplySTABToRank",
             "suggested_generator": "mastery_policy"
           }
         ],
-        "parent_label": "BossAI_TryMortyHakiOracle",
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_count": 3,
+        "parent_label": "BossAI_ApplyDamageDominanceBias",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 2,
         "rule_ids": [
-          "switch.try_morty_haki_oracle",
-          "switch.try_morty_haki_oracle.find_destiny_bond_slot",
-          "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack"
+          "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank",
+          "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank"
         ],
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 200,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyDamageDominanceBias",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_ApplyDamageDominanceBias",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.apply_damage_dominance_bias"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 16,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.apply_koband_oracle_pressure",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyKOBandOraclePressure",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_ApplyKOBandOraclePressure",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.apply_koband_oracle_pressure"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 155,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.canonical_type_index",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_CanonicalTypeIndex",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CanonicalTypeIndex",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.canonical_type_index"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 39,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.current_slot_offensive_coverage_vs_player",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_CurrentSlotOffensiveCoverageVsPlayer",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CurrentSlotOffensiveCoverageVsPlayer",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.current_slot_offensive_coverage_vs_player"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 65,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.current_slot_offensive_coverage_vs_type",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_CurrentSlotOffensiveCoverageVsType",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_CurrentSlotOffensiveCoverageVsType",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.current_slot_offensive_coverage_vs_type"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "first_rules": [
+          {
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "expected_public_inputs": [],
+            "line": 88,
+            "recommended_trace_mode": "rom_contribution_trace",
+            "rule_id": "ko_band_oracle.get_current_enemy_matchup_slot",
+            "score_trace_target": false,
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_GetCurrentEnemyMatchupSlot",
+            "suggested_generator": "mastery_policy"
+          }
+        ],
+        "parent_label": "BossAI_GetCurrentEnemyMatchupSlot",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_count": 1,
+        "rule_ids": [
+          "ko_band_oracle.get_current_enemy_matchup_slot"
+        ],
+        "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
         "suggested_generator": "mastery_policy"
       }
     ],
-    "target_count": 39
+    "target_count": 77
   },
   "generated": {
     "condition_tag_counts": {
-      "active_ghost_spinblock": 43,
-      "active_pressure_before_status": 11,
-      "active_revealed_rapid_spin": 45,
-      "active_species_spin_prior": 46,
-      "bench_revealed_rapid_spin": 38,
-      "best_second_only": 19,
-      "blocked_score_ignored": 25,
-      "branch_action_after_naming": 10,
-      "cashout_boundary": 11,
-      "equal_scores": 19,
-      "foresight_identified_ghost": 22,
-      "hazard_loop_spin_window": 10,
-      "hidden_role_voluntary_entry": 10,
-      "immediate_pressure": 36,
+      "ace_preservation": 8,
+      "active_damage_misses_receiver": 6,
+      "active_ghost_spinblock": 9,
+      "active_pressure_before_status": 12,
+      "active_pressure_converts": 22,
+      "active_revealed_rapid_spin": 13,
+      "active_species_spin_prior": 11,
+      "bench_revealed_rapid_spin": 14,
+      "best_second_only": 6,
+      "blocked_score_ignored": 5,
+      "branch_action_after_naming": 12,
+      "branch_punish_available": 7,
+      "cashout_board_delta": 22,
+      "cashout_boundary": 12,
+      "cashout_immunity_guard": 5,
+      "coverage_into_named_receiver": 8,
+      "defensive_sack_for_safe_entry": 8,
+      "defensive_sack_owner": 8,
+      "delay_does_not_reset_target": 6,
+      "equal_scores": 6,
+      "explosion_into_ghost_branch": 5,
+      "foresight_identified_ghost": 5,
+      "handoff_after_support_lands": 8,
+      "hazard_loop_spin_window": 12,
+      "heal_only_when_it_preserves_route": 7,
+      "hidden_role_voluntary_entry": 11,
+      "immediate_pressure": 6,
+      "irreversible_converter_preserved": 6,
       "local_mechanics_firewall": 11,
-      "named_receiver_branch": 10,
-      "one_time_trade_named_converter": 11,
-      "reserve_ghost_available": 37,
+      "low_value_absorber_available": 5,
+      "named_current_owner": 21,
+      "named_next_board_owner": 16,
+      "named_receiver_branch": 35,
+      "near_tie_mix": 7,
+      "near_tie_mix_surface": 7,
+      "no_immediate_pressure": 7,
+      "one_time_trade_named_converter": 12,
+      "phaze_loop_live": 7,
+      "phaze_loop_over_generic_chip": 7,
+      "post_trade_owner_named": 6,
+      "prediction_branch_possible_only": 7,
+      "prediction_branch_supported": 15,
+      "prediction_ev_positive": 8,
+      "prediction_mix": 22,
+      "preserve_wincon_over_comfort_damage": 8,
+      "public_threat_to_active": 8,
+      "recovery_preserves_route": 7,
+      "reject_reckless_prediction": 7,
+      "reserve_ghost_available": 16,
+      "reset_loop_denied": 15,
+      "reset_loop_live": 8,
+      "resisted_explosion_free_owner": 6,
+      "revealed_ghost_absorber": 5,
+      "reversible_before_irreversible": 6,
+      "reversible_line_covers_active_and_branch": 11,
       "romhack_mechanics_firewall": 11,
-      "sleep_absorber_and_set_ambiguity": 10,
-      "sleep_clause_value_preserved": 10,
-      "spikes_layers_0": 17,
-      "spikes_layers_1": 17,
-      "spikes_layers_2": 26,
-      "spikes_layers_3": 23,
-      "spin_window_priced": 10,
-      "support_handoff_after_job": 10,
-      "support_job_completed": 10,
-      "third_slot_tied_second": 20,
-      "voluntary_entry_role_signal": 10,
-      "wide_gap": 20
+      "safe_entry_available": 16,
+      "self_ko_strong_prior": 5,
+      "setup_already_bankrolled": 8,
+      "setup_heal": 23,
+      "setup_once_in_real_window": 8,
+      "setup_window": 8,
+      "sleep_absorber_and_set_ambiguity": 11,
+      "sleep_clause_value_preserved": 11,
+      "sleep_move_revealed": 5,
+      "sleep_plus_cashout_package": 5,
+      "spikes_layers_0": 5,
+      "spikes_layers_1": 8,
+      "spikes_layers_2": 13,
+      "spikes_layers_3": 4,
+      "spin_window_priced": 12,
+      "status_absorber_branch_punish": 7,
+      "status_absorber_named": 7,
+      "stay_when_current_move_converts": 7,
+      "stop_setup_when_attack_converts": 8,
+      "support_handoff": 22,
+      "support_handoff_after_job": 11,
+      "support_job_completed": 27,
+      "switch_sack": 23,
+      "third_slot_tied_second": 7,
+      "timer_pressure": 8,
+      "voluntary_entry_role_signal": 11,
+      "wide_gap": 5,
+      "wincon_preservation": 8,
+      "worst_case_guarded": 23,
+      "worst_case_unguarded": 7
     },
     "evidence_refs": [
+      "docs\\pokemon_mastery\\heuristic_core\\branch_punish_ranking.md",
+      "docs\\pokemon_mastery\\heuristic_core\\converter_before_script.md",
+      "docs\\pokemon_mastery\\heuristic_core\\name_next_board_owner.md",
+      "docs\\pokemon_mastery\\heuristic_core\\public_info_tiers.md",
+      "docs\\pokemon_mastery\\heuristic_core\\reset_loop_denial.md",
+      "docs\\pokemon_mastery\\heuristic_core\\role_package_ledger.md",
+      "docs\\pokemon_mastery\\heuristic_core\\spend_or_save_piece.md",
       "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
       "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
       "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
@@ -1016,26 +2023,50 @@
       "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md",
       "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
       "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
-      "docs\\pokemon_mastery\\romhack_deltas\\spikes_and_rapid_spin.md"
+      "docs\\pokemon_mastery\\reviews\\training_method_review_004_2026-05-15.md",
+      "docs\\pokemon_mastery\\romhack_deltas\\spikes_and_rapid_spin.md",
+      "docs\\pokemon_mastery\\worked_examples\\misty_starmie_meganium_recover_tempo.md",
+      "docs\\pokemon_mastery\\workspace\\quick_tests\\branch_action_mixed_probe_001_2026-05-14.md",
+      "docs\\pokemon_mastery\\workspace\\quick_tests\\resisted_explosion_board_delta_drill_001_2026-05-15.md"
     ],
     "policy_tag_counts": {
-      "active_pressure": 11,
-      "branch_action": 10,
-      "cashout": 11,
-      "hazard_retention": 93,
-      "hidden_role": 10,
+      "ace_preservation": 8,
+      "active_pressure": 26,
+      "branch_action": 38,
+      "cashout": 42,
+      "converter": 7,
+      "defensive_sack": 8,
+      "hazard_retention": 42,
+      "healing": 7,
+      "hidden_role": 11,
+      "mixed_strategy": 7,
       "no_cheat_boundary": 11,
-      "public_info_gate": 10,
-      "rapid_spin": 93,
-      "receiver_pricing": 10,
+      "phazing": 7,
+      "prediction": 22,
+      "public_info_gate": 16,
+      "rapid_spin": 35,
+      "receiver_pricing": 35,
+      "recovery": 7,
+      "reset_loop_denial": 23,
+      "resisted_explosion_board_delta": 6,
+      "reversible_before_irreversible": 11,
+      "risk_control": 20,
+      "role_package_ledger": 5,
       "romhack_mechanics": 11,
-      "route_converter": 21,
-      "selector_surface": 84,
-      "set_ambiguity": 10,
-      "sleep_absorber": 10,
-      "spikes": 93,
-      "status_timing": 11,
-      "support_handoff": 10
+      "route_converter": 45,
+      "route_owner": 8,
+      "route_preservation": 7,
+      "safe_entry": 8,
+      "selector_surface": 23,
+      "set_ambiguity": 11,
+      "setup": 16,
+      "sleep_absorber": 11,
+      "sleep_plus_cashout_package": 5,
+      "spikes": 35,
+      "status_timing": 19,
+      "support_handoff": 19,
+      "switch_sack": 5,
+      "switching": 23
     }
   },
   "generated_count": 250,
@@ -1066,130 +2097,130 @@
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
+            "generated_mastery_policy_1_00000_active_pressure_before_status",
+            "generated_support_handoff_1_00001_status_absorber_branch_punish",
             "generated_mastery_policy_1_00008_active_pressure_before_status",
-            "generated_mastery_policy_1_00032_active_pressure_before_status",
-            "generated_mastery_policy_1_00056_active_pressure_before_status",
-            "generated_mastery_policy_1_00080_active_pressure_before_status",
-            "generated_mastery_policy_1_00104_active_pressure_before_status"
+            "generated_switch_sack_1_00002_stay_when_current_move_converts",
+            "generated_mastery_policy_1_00016_active_pressure_before_status"
           ],
-          "negative_scenario_count": 11,
+          "negative_scenario_count": 26,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\active_pressure_before_status.md",
           "positive_examples": [
+            "generated_mastery_policy_1_00000_active_pressure_before_status",
+            "generated_support_handoff_1_00001_status_absorber_branch_punish",
             "generated_mastery_policy_1_00008_active_pressure_before_status",
-            "generated_mastery_policy_1_00032_active_pressure_before_status",
-            "generated_mastery_policy_1_00056_active_pressure_before_status",
-            "generated_mastery_policy_1_00080_active_pressure_before_status",
-            "generated_mastery_policy_1_00104_active_pressure_before_status"
+            "generated_switch_sack_1_00002_stay_when_current_move_converts",
+            "generated_mastery_policy_1_00016_active_pressure_before_status"
           ],
-          "positive_scenario_count": 11,
-          "scenario_count": 11
+          "positive_scenario_count": 26,
+          "scenario_count": 26
         },
         {
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
-            "generated_mastery_policy_1_00017_branch_action_after_naming",
-            "generated_mastery_policy_1_00041_branch_action_after_naming",
-            "generated_mastery_policy_1_00065_branch_action_after_naming",
-            "generated_mastery_policy_1_00089_branch_action_after_naming",
-            "generated_mastery_policy_1_00113_branch_action_after_naming"
+            "generated_mastery_policy_1_00001_branch_action_after_naming",
+            "generated_setup_heal_1_00000_setup_once_in_real_window",
+            "generated_prediction_mix_1_00000_coverage_into_named_receiver",
+            "generated_setup_heal_1_00001_stop_setup_when_attack_converts",
+            "generated_prediction_mix_1_00001_reject_reckless_prediction"
           ],
-          "negative_scenario_count": 10,
+          "negative_scenario_count": 50,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\branch_action_after_naming.md",
           "positive_examples": [
-            "generated_mastery_policy_1_00017_branch_action_after_naming",
-            "generated_mastery_policy_1_00041_branch_action_after_naming",
-            "generated_mastery_policy_1_00065_branch_action_after_naming",
-            "generated_mastery_policy_1_00089_branch_action_after_naming",
-            "generated_mastery_policy_1_00113_branch_action_after_naming"
+            "generated_mastery_policy_1_00001_branch_action_after_naming",
+            "generated_setup_heal_1_00000_setup_once_in_real_window",
+            "generated_prediction_mix_1_00000_coverage_into_named_receiver",
+            "generated_setup_heal_1_00001_stop_setup_when_attack_converts",
+            "generated_prediction_mix_1_00001_reject_reckless_prediction"
           ],
-          "positive_scenario_count": 10,
-          "scenario_count": 10
+          "positive_scenario_count": 50,
+          "scenario_count": 50
         },
         {
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
             "generated_mastery_policy_1_00002_cashout_boundary",
-            "generated_mastery_policy_1_00026_cashout_boundary",
-            "generated_mastery_policy_1_00050_cashout_boundary",
-            "generated_mastery_policy_1_00074_cashout_boundary",
-            "generated_mastery_policy_1_00098_cashout_boundary"
+            "generated_cashout_board_delta_1_00000_reversible_before_irreversible",
+            "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+            "generated_cashout_board_delta_1_00001_resisted_explosion_free_owner",
+            "generated_mastery_policy_1_00010_cashout_boundary"
           ],
-          "negative_scenario_count": 11,
+          "negative_scenario_count": 42,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\cashout_boundary.md",
           "positive_examples": [
             "generated_mastery_policy_1_00002_cashout_boundary",
-            "generated_mastery_policy_1_00026_cashout_boundary",
-            "generated_mastery_policy_1_00050_cashout_boundary",
-            "generated_mastery_policy_1_00074_cashout_boundary",
-            "generated_mastery_policy_1_00098_cashout_boundary"
+            "generated_cashout_board_delta_1_00000_reversible_before_irreversible",
+            "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+            "generated_cashout_board_delta_1_00001_resisted_explosion_free_owner",
+            "generated_mastery_policy_1_00010_cashout_boundary"
+          ],
+          "positive_scenario_count": 42,
+          "scenario_count": 42
+        },
+        {
+          "has_negative": true,
+          "has_positive": true,
+          "negative_examples": [
+            "generated_spikes_spin_1_00000",
+            "generated_mastery_policy_1_00003_hazard_loop_spin_window",
+            "generated_spikes_spin_1_00002",
+            "generated_mastery_policy_1_00011_hazard_loop_spin_window",
+            "generated_support_handoff_1_00002_phaze_loop_over_generic_chip"
+          ],
+          "negative_scenario_count": 30,
+          "policy_card": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
+          "positive_examples": [
+            "generated_spikes_spin_1_00000",
+            "generated_mastery_policy_1_00003_hazard_loop_spin_window",
+            "generated_spikes_spin_1_00001",
+            "generated_spikes_spin_1_00002",
+            "generated_mastery_policy_1_00011_hazard_loop_spin_window"
+          ],
+          "positive_scenario_count": 42,
+          "scenario_count": 42
+        },
+        {
+          "has_negative": true,
+          "has_positive": true,
+          "negative_examples": [
+            "generated_mastery_policy_1_00004_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00012_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00020_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00028_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00036_hidden_role_voluntary_entry"
+          ],
+          "negative_scenario_count": 11,
+          "policy_card": "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
+          "positive_examples": [
+            "generated_mastery_policy_1_00004_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00012_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00020_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00028_hidden_role_voluntary_entry",
+            "generated_mastery_policy_1_00036_hidden_role_voluntary_entry"
           ],
           "positive_scenario_count": 11,
           "scenario_count": 11
-        },
-        {
-          "has_negative": true,
-          "has_positive": true,
-          "negative_examples": [
-            "generated_spikes_spin_1_00004",
-            "generated_spikes_spin_1_00007",
-            "generated_spikes_spin_1_00010",
-            "generated_mastery_policy_1_00011_hazard_loop_spin_window",
-            "generated_spikes_spin_1_00013"
-          ],
-          "negative_scenario_count": 61,
-          "policy_card": "docs\\pokemon_mastery\\policy_cards\\hazard_loop_spin_window.md",
-          "positive_examples": [
-            "generated_spikes_spin_1_00001",
-            "generated_spikes_spin_1_00004",
-            "generated_spikes_spin_1_00007",
-            "generated_spikes_spin_1_00010",
-            "generated_mastery_policy_1_00011_hazard_loop_spin_window"
-          ],
-          "positive_scenario_count": 93,
-          "scenario_count": 93
-        },
-        {
-          "has_negative": true,
-          "has_positive": true,
-          "negative_examples": [
-            "generated_mastery_policy_1_00020_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00044_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00068_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00092_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00116_hidden_role_voluntary_entry"
-          ],
-          "negative_scenario_count": 10,
-          "policy_card": "docs\\pokemon_mastery\\policy_cards\\hidden_role_voluntary_entry.md",
-          "positive_examples": [
-            "generated_mastery_policy_1_00020_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00044_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00068_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00092_hidden_role_voluntary_entry",
-            "generated_mastery_policy_1_00116_hidden_role_voluntary_entry"
-          ],
-          "positive_scenario_count": 10,
-          "scenario_count": 10
         },
         {
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
             "generated_mastery_policy_1_00005_romhack_mechanics_firewall",
+            "generated_mastery_policy_1_00013_romhack_mechanics_firewall",
+            "generated_mastery_policy_1_00021_romhack_mechanics_firewall",
             "generated_mastery_policy_1_00029_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00053_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00077_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00101_romhack_mechanics_firewall"
+            "generated_mastery_policy_1_00037_romhack_mechanics_firewall"
           ],
           "negative_scenario_count": 11,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\romhack_mechanics_firewall.md",
           "positive_examples": [
             "generated_mastery_policy_1_00005_romhack_mechanics_firewall",
+            "generated_mastery_policy_1_00013_romhack_mechanics_firewall",
+            "generated_mastery_policy_1_00021_romhack_mechanics_firewall",
             "generated_mastery_policy_1_00029_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00053_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00077_romhack_mechanics_firewall",
-            "generated_mastery_policy_1_00101_romhack_mechanics_firewall"
+            "generated_mastery_policy_1_00037_romhack_mechanics_firewall"
           ],
           "positive_scenario_count": 11,
           "scenario_count": 11
@@ -1198,52 +2229,52 @@
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
+            "generated_mastery_policy_1_00006_sleep_absorber_and_set_ambiguity",
             "generated_mastery_policy_1_00014_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00038_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00062_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00086_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00110_sleep_absorber_and_set_ambiguity"
+            "generated_mastery_policy_1_00022_sleep_absorber_and_set_ambiguity",
+            "generated_mastery_policy_1_00030_sleep_absorber_and_set_ambiguity",
+            "generated_mastery_policy_1_00038_sleep_absorber_and_set_ambiguity"
           ],
-          "negative_scenario_count": 10,
+          "negative_scenario_count": 11,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\sleep_absorber_and_set_ambiguity.md",
           "positive_examples": [
+            "generated_mastery_policy_1_00006_sleep_absorber_and_set_ambiguity",
             "generated_mastery_policy_1_00014_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00038_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00062_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00086_sleep_absorber_and_set_ambiguity",
-            "generated_mastery_policy_1_00110_sleep_absorber_and_set_ambiguity"
+            "generated_mastery_policy_1_00022_sleep_absorber_and_set_ambiguity",
+            "generated_mastery_policy_1_00030_sleep_absorber_and_set_ambiguity",
+            "generated_mastery_policy_1_00038_sleep_absorber_and_set_ambiguity"
           ],
-          "positive_scenario_count": 10,
-          "scenario_count": 10
+          "positive_scenario_count": 11,
+          "scenario_count": 11
         },
         {
           "has_negative": true,
           "has_positive": true,
           "negative_examples": [
-            "generated_mastery_policy_1_00023_support_handoff_after_job",
-            "generated_mastery_policy_1_00047_support_handoff_after_job",
-            "generated_mastery_policy_1_00071_support_handoff_after_job",
-            "generated_mastery_policy_1_00095_support_handoff_after_job",
-            "generated_mastery_policy_1_00119_support_handoff_after_job"
+            "generated_support_handoff_1_00000_handoff_after_support_lands",
+            "generated_mastery_policy_1_00007_support_handoff_after_job",
+            "generated_mastery_policy_1_00015_support_handoff_after_job",
+            "generated_support_handoff_1_00003_handoff_after_support_lands",
+            "generated_mastery_policy_1_00023_support_handoff_after_job"
           ],
-          "negative_scenario_count": 10,
+          "negative_scenario_count": 19,
           "policy_card": "docs\\pokemon_mastery\\policy_cards\\support_handoff_after_job.md",
           "positive_examples": [
-            "generated_mastery_policy_1_00023_support_handoff_after_job",
-            "generated_mastery_policy_1_00047_support_handoff_after_job",
-            "generated_mastery_policy_1_00071_support_handoff_after_job",
-            "generated_mastery_policy_1_00095_support_handoff_after_job",
-            "generated_mastery_policy_1_00119_support_handoff_after_job"
+            "generated_support_handoff_1_00000_handoff_after_support_lands",
+            "generated_mastery_policy_1_00007_support_handoff_after_job",
+            "generated_mastery_policy_1_00015_support_handoff_after_job",
+            "generated_support_handoff_1_00003_handoff_after_support_lands",
+            "generated_mastery_policy_1_00023_support_handoff_after_job"
           ],
-          "positive_scenario_count": 10,
-          "scenario_count": 10
+          "positive_scenario_count": 19,
+          "scenario_count": 19
         }
       ],
       "missing_negative": [],
       "missing_positive": []
     },
-    "quick_test_count": 195,
-    "review_count": 54,
+    "quick_test_count": 317,
+    "review_count": 122,
     "source_policy_count": 58,
     "uncovered_policy_cards": []
   },
@@ -1261,7 +2292,7 @@
     "predicate_branch_entry_count": 23,
     "public_read_probe_entry_count": 20,
     "snapshot_count": 43,
-    "target_rule_count": 33
+    "target_rule_count": 26
   },
   "rom_contribution_trace": {
     "artifact_count": 8,
@@ -3046,25 +4077,25 @@
   },
   "rule_map": {
     "classification_counts": {
-      "haki_exception": 3,
-      "internal": 62,
-      "platform_boundary": 76,
-      "public_info": 44
+      "haki_exception": 8,
+      "internal": 42,
+      "platform_boundary": 101,
+      "public_info": 40
     },
-    "dynamic_coverage_target_count": 160,
-    "dynamic_covered_rule_count": 121,
-    "dynamic_uncovered_rule_count": 39,
-    "executable_rule_count": 160,
+    "dynamic_coverage_target_count": 186,
+    "dynamic_covered_rule_count": 109,
+    "dynamic_uncovered_rule_count": 77,
+    "executable_rule_count": 186,
     "full_trace_rule_coverage_available": false,
-    "mapped_rule_count": 185,
-    "public_read_provenance_target_count": 33,
+    "mapped_rule_count": 191,
+    "public_read_provenance_target_count": 26,
     "rom_hook_score_trace_available": true,
     "rule_coverage_basis": "dynamic_rule_execution",
     "score_delta_rule_count": 15,
-    "score_trace_covered_rule_count": 58,
-    "score_trace_rule_coverage_available": true,
-    "score_trace_target_count": 58,
-    "score_trace_uncovered_rule_count": 0,
+    "score_trace_covered_rule_count": 46,
+    "score_trace_rule_coverage_available": false,
+    "score_trace_target_count": 51,
+    "score_trace_uncovered_rule_count": 5,
     "trace_artifact_count": 8,
     "trace_changed_event_count": 70,
     "trace_changed_rule_count": 15,
@@ -3289,7 +4320,7 @@
         "classification": "public_info",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 479,
+        "line": 512,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
         "score_trace_target": true,
@@ -3301,48 +4332,72 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 713,
+        "line": 756,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.enemy_status_move_type_misses_player",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".EnemyStatusMoveTypeMissesPlayer",
+        "suggested_generator": "support_handoff"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 949,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_cant_act_this_turn_publicly",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerCantActThisTurnPublicly",
         "suggested_generator": "mastery_policy"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 837,
+        "line": 1021,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_setup_punish_bias",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".ApplySetupPunishBias",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 853,
+        "line": 1037,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".ApplySetupDisciplineBias",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 866,
+        "line": 1050,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".ApplyStatusHardAnswerDiscipline",
+        "suggested_generator": "support_handoff"
+      },
+      {
+        "classification": "internal",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 1076,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.has_strong_matchup_damaging_move",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".HasStrongMatchupDamagingMove",
         "suggested_generator": "mastery_policy"
       },
       {
@@ -3352,13 +4407,13 @@
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 891,
+        "line": 1202,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_recovery_timing_discipline",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".ApplyRecoveryTimingDiscipline",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
@@ -3367,13 +4422,13 @@
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 902,
+        "line": 1213,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.is_current_enemy_recovery_move",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".IsCurrentEnemyRecoveryMove",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "public_info",
@@ -3382,7 +4437,7 @@
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 935,
+        "line": 1246,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_rapid_spin_bias",
         "score_trace_target": true,
@@ -3394,7 +4449,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 946,
+        "line": 1257,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_baton_pass_bias",
         "score_trace_target": true,
@@ -3408,25 +4463,25 @@
         "expected_public_inputs": [
           "wPlayerUsedMoves"
         ],
-        "line": 965,
+        "line": 1276,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_revealed_anti_setup_avoidance",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".ApplyRevealedAntiSetupAvoidance",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 978,
+        "line": 1289,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.is_boost_setup_move",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".IsBoostSetupMove",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "public_info",
@@ -3434,13 +4489,13 @@
         "expected_public_inputs": [
           "wPlayerUsedMoves"
         ],
-        "line": 1007,
+        "line": 1318,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_revealed_anti_setup",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".PlayerHasRevealedAntiSetup",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "public_info",
@@ -3448,7 +4503,7 @@
         "expected_public_inputs": [
           "wPlayerUsedMoves"
         ],
-        "line": 1014,
+        "line": 1325,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
         "score_trace_target": true,
@@ -3460,7 +4515,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1047,
+        "line": 1358,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_ramp_move_bias",
         "score_trace_target": true,
@@ -3472,7 +4527,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1076,
+        "line": 1387,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_charge_move_bias",
         "score_trace_target": true,
@@ -3484,7 +4539,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1090,
+        "line": 1401,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_poison_contact_risk_bias",
         "score_trace_target": true,
@@ -3496,7 +4551,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1115,
+        "line": 1426,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
         "score_trace_target": true,
@@ -3508,7 +4563,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1131,
+        "line": 1442,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
         "score_trace_target": true,
@@ -3520,7 +4575,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1145,
+        "line": 1456,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
         "score_trace_target": true,
@@ -3532,24 +4587,10 @@
         "classification": "public_info",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [
-          "wPlayerUsedMoves"
-        ],
-        "line": 1165,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_destiny_bond_avoidance",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedDestinyBondAvoidance",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 1219,
+        "line": 1515,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_category",
         "score_trace_target": true,
@@ -3558,40 +4599,10 @@
         "suggested_generator": "mastery_policy"
       },
       {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1266,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_counter_coat_avoidance",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedCounterCoatAvoidance",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1290,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_trap",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".PlayerHasRevealedCounterCoatTrap",
-        "suggested_generator": "mastery_policy"
-      },
-      {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1300,
+        "line": 1562,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_choice_first_lock_regret",
         "score_trace_target": true,
@@ -3603,15 +4614,14 @@
         "classification": "public_info",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 1379,
+        "line": 1660,
         "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_protect_commitment_risk",
+        "rule_id": "move.apply_move_model.apply_revealed_effect_matrix_bias",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedProtectCommitmentRisk",
+        "source_label": ".ApplyRevealedEffectMatrixBias",
         "suggested_generator": "mastery_policy"
       },
       {
@@ -3621,107 +4631,19 @@
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 1393,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.player_has_revealed_protect",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".PlayerHasRevealedProtect",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1397,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_recovery_denial_bias",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedRecoveryDenialBias",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1425,
+        "line": 1904,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_revealed_recovery",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".PlayerHasRevealedRecovery",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "wLastPlayerMove",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1454,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_fast_encore_avoidance",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedFastEncoreAvoidance",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "internal",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "wLastPlayerMove",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1493,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_last_move_encore_trap_bias",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyLastMoveEncoreTrapBias",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "wPlayerUsedMoves"
-        ],
-        "line": 1563,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.player_has_revealed_selfdestruct",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".PlayerHasRevealedSelfdestruct",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_score_execution_hook",
-        "expected_public_inputs": [
-          "wPlayerUsedMoves"
-        ],
-        "line": 1567,
-        "recommended_trace_mode": "rom_score_materialization",
-        "rule_id": "move.apply_move_model.apply_revealed_sleep_preempt_bias",
-        "score_trace_target": true,
-        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-        "source_label": ".ApplyRevealedSleepPreemptBias",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1607,
+        "line": 1999,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.enemy_move_makes_contact",
         "score_trace_target": true,
@@ -3733,7 +4655,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1628,
+        "line": 2020,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.enemy_can_be_poisoned_by_retaliation",
         "score_trace_target": true,
@@ -3745,7 +4667,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1651,
+        "line": 2043,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_poison_type_contribution",
         "score_trace_target": true,
@@ -3757,25 +4679,25 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1693,
+        "line": 2085,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_major_setup_boost",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".PlayerHasMajorSetupBoost",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "setup_heal"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1712,
+        "line": 2104,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_repeated_switch_pressure",
         "score_trace_target": true,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".PlayerHasRepeatedSwitchPressure",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "public_info",
@@ -3784,7 +4706,7 @@
           "wBossAITurnsElapsed",
           "wPlayerScreens"
         ],
-        "line": 1729,
+        "line": 2121,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_spikes_layer_bias",
         "score_trace_target": true,
@@ -3801,7 +4723,7 @@
           "wPlayerScreens",
           "wPlayerUsedMoves"
         ],
-        "line": 1827,
+        "line": 2217,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.apply_revealed_rapid_spin_spikes_risk",
         "score_trace_target": true,
@@ -3813,7 +4735,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 1877,
+        "line": 2260,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.boss_has_spinblock_available",
         "score_trace_target": true,
@@ -3828,7 +4750,7 @@
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 1882,
+        "line": 2265,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.enemy_active_blocks_rapid_spin",
         "score_trace_target": true,
@@ -3844,7 +4766,7 @@
           "wBossAISeenPlayerSpecies",
           "wPlayerUsedMoves"
         ],
-        "line": 1998,
+        "line": 2381,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_has_seen_bench_revealed_rapid_spin",
         "score_trace_target": true,
@@ -3856,10 +4778,25 @@
         "classification": "public_info",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "line": 2445,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_has_seen_alive_bench_ghost",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerHasSeenAliveBenchGhost",
+        "suggested_generator": "spikes_spin"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [
           "Moves + MOVE_EFFECT",
           "wPlayerUsedMoves"
         ],
-        "line": 2062,
+        "line": 2502,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.player_active_likely_can_rapid_spin",
         "score_trace_target": true,
@@ -3877,7 +4814,7 @@
           "wPlayerMonSpecies",
           "wPlayerUsedMoves"
         ],
-        "line": 2109,
+        "line": 2549,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.species_level_up_has_rapid_spin",
         "score_trace_target": true,
@@ -3889,7 +4826,7 @@
         "classification": "internal",
         "coverage_mode": "rom_score_execution_hook",
         "expected_public_inputs": [],
-        "line": 2506,
+        "line": 2678,
         "recommended_trace_mode": "rom_score_materialization",
         "rule_id": "move.apply_move_model.has_koline",
         "score_trace_target": true,
@@ -3899,26 +4836,107 @@
       },
       {
         "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 2723,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_public_threat_category",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerPublicThreatCategory",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [
           "wEnemyMonType1",
           "wEnemyMonType2"
         ],
-        "line": 2527,
+        "line": 2763,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.enemy_is_ghost_type",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": "BossAI_EnemyIsGhostType",
         "suggested_generator": "spikes_spin"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 2786,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.select_move",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_SelectMove",
+        "suggested_generator": "selector_edges"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 3011,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "line": 3069,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.player_has_revealed_priority_threat",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_PlayerHasRevealedPriorityThreat",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "line": 3086,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.player_has_revealed_priority_threat_uncached",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_PlayerHasRevealedPriorityThreatUncached",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 3152,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.current_enemy_move_has_kopressure",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CurrentEnemyMoveHasKOPressure",
+        "suggested_generator": "mastery_policy"
       }
     ],
     "suggested_generator_counts": {
-      "mastery_policy": 132,
-      "selector_edges": 5,
-      "spikes_spin": 8
+      "mastery_policy": 94,
+      "selector_edges": 6,
+      "setup_heal": 13,
+      "spikes_spin": 9,
+      "support_handoff": 3,
+      "switch_sack": 48
     },
-    "uncovered_rule_count": 145,
+    "uncovered_rule_count": 173,
     "uncovered_rule_ids": [
       "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
       "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
@@ -3926,9 +4944,11 @@
       "move.apply_move_model",
       "move.apply_move_model.utility_move_would_fail_publicly",
       "move.apply_move_model.enemy_status_move_type_misses_player",
+      "move.apply_move_model.player_cant_act_this_turn_publicly",
       "move.apply_move_model.apply_setup_punish_bias",
       "move.apply_move_model.apply_setup_discipline_bias",
       "move.apply_move_model.apply_status_hard_answer_discipline",
+      "move.apply_move_model.has_strong_matchup_damaging_move",
       "move.apply_move_model.apply_recovery_timing_discipline",
       "move.apply_move_model.is_current_enemy_recovery_move",
       "move.apply_move_model.apply_rapid_spin_bias",
@@ -3943,19 +4963,10 @@
       "move.apply_move_model.apply_dark_shield_chance_bias",
       "move.apply_move_model.apply_life_orb_recoil_bias",
       "move.apply_move_model.apply_destiny_bond_trade_bias",
-      "move.apply_move_model.apply_revealed_destiny_bond_avoidance",
       "move.apply_move_model.player_has_revealed_counter_coat_category",
-      "move.apply_move_model.apply_revealed_counter_coat_avoidance",
-      "move.apply_move_model.player_has_revealed_counter_coat_trap",
       "move.apply_move_model.apply_choice_first_lock_regret",
-      "move.apply_move_model.apply_revealed_protect_commitment_risk",
-      "move.apply_move_model.player_has_revealed_protect",
-      "move.apply_move_model.apply_revealed_recovery_denial_bias",
+      "move.apply_move_model.apply_revealed_effect_matrix_bias",
       "move.apply_move_model.player_has_revealed_recovery",
-      "move.apply_move_model.apply_revealed_fast_encore_avoidance",
-      "move.apply_move_model.apply_last_move_encore_trap_bias",
-      "move.apply_move_model.player_has_revealed_selfdestruct",
-      "move.apply_move_model.apply_revealed_sleep_preempt_bias",
       "move.apply_move_model.enemy_move_makes_contact",
       "move.apply_move_model.enemy_can_be_poisoned_by_retaliation",
       "move.apply_move_model.player_poison_type_contribution",
@@ -3966,9 +4977,11 @@
       "move.apply_move_model.boss_has_spinblock_available",
       "move.apply_move_model.enemy_active_blocks_rapid_spin",
       "move.apply_move_model.player_has_seen_bench_revealed_rapid_spin",
+      "move.apply_move_model.player_has_seen_alive_bench_ghost",
       "move.apply_move_model.player_active_likely_can_rapid_spin",
       "move.apply_move_model.species_level_up_has_rapid_spin",
       "move.apply_move_model.has_koline",
+      "move.apply_move_model.player_public_threat_category",
       "move.enemy_is_ghost_type",
       "move.select_move",
       "move.player_has_public_threat_vs_enemy_uncached",
@@ -3985,11 +4998,20 @@
       "move.dec_pressure_b",
       "move.enemy_below_one_third_hp",
       "move.public_enemy_faster",
+      "move.public_enemy_faster_uncached",
       "move.predict_player_switch",
       "move.has_revealed_super_effective_move",
       "move.seen_bench_threat_score",
       "move.select_plan_if_needed",
       "move.select_plan_if_needed.is_wincon_compromised",
+      "move.try_coach_plan_template",
+      "move.coach_plan_still_valid",
+      "move.current_plan_is_coach_template",
+      "move.find_coach_plan_template",
+      "move.coach_template_stop_condition_clear",
+      "move.coach_template_expected_move_from_hl",
+      "move.coach_expected_move_resisted_by_player",
+      "move.player_has_revealed_effect_a_coach",
       "move.find_party_mon_by_role",
       "move.is_setup_effect",
       "move.is_current_enemy_setup_move",
@@ -4012,6 +5034,7 @@
       "move.add_species_level_up_moves_to_mask",
       "move.add_species_level_up_moves_to_likely_mask",
       "move.add_species_egg_moves_to_mask",
+      "move.apply_coach_plan_move_bias",
       "move.apply_scout_move_bias",
       "move.apply_repeat_penalty",
       "move.apply_signed_delta_to_score",
@@ -4035,16 +5058,21 @@
       "move.should_scout",
       "move.mark_scouted_if_scout_move",
       "move.maybe_mark_scout_pivot",
-      "switch.switch_or_try_item",
-      "switch.try_morty_haki_oracle",
-      "switch.try_morty_haki_oracle.find_destiny_bond_slot",
-      "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack",
+      "switch.try_switch",
+      "switch.oracle_haki_read",
+      "switch.oracle_haki_after_player_action",
+      "switch.haki_reserve_ace_action",
+      "switch.haki_ready_common",
+      "switch.rebuild_haki_move_scores",
+      "switch.commit_haki_oracle_choice",
+      "switch.commit_haki_oracle_switch",
+      "switch.haki_find_immunity_switch",
+      "switch.choose_best_oracle_move",
       "switch.on_switch_executed",
       "switch.decay_switch_cooldown",
       "switch.check_able_to_switch_safe",
       "switch.find_first_alive_switch_candidate",
       "switch.get_switch_threshold",
-      "switch.get_switch_threshold.apply_class_switch_threshold_mod",
       "switch.needs_loop_penalty",
       "switch.is_imminent_koprevention",
       "switch.enemy_perish_escape_urgent",
@@ -4061,20 +5089,103 @@
       "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break",
       "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
       "switch.apply_plausible_risk_to_switch_confidence",
+      "switch.apply_role_package_switch_bias",
+      "switch.classify_active_player_role_package",
+      "switch.last_player_move_role_package_mask",
       "switch.apply_plan_switch_bias",
       "switch.apply_preservation_switch_bias",
       "switch.should_sack_instead_of_switch",
-      "switch.is_switching_into_wincon_risk"
+      "switch.pick_faint_replacement",
+      "switch.faint_repl_eval_candidate",
+      "switch.faint_repl_hpgate_and_pct",
+      "switch.faint_repl_candidate_has_real_coverage",
+      "switch.switch_candidate_low_hpblock",
+      "switch.candidate_immune_to_player_stab",
+      "switch.should_sack_hard",
+      "switch.is_switching_into_wincon_risk",
+      "ko_band_oracle.apply_koband_oracle_pressure",
+      "ko_band_oracle.current_slot_offensive_coverage_vs_player",
+      "ko_band_oracle.current_slot_offensive_coverage_vs_type",
+      "ko_band_oracle.get_current_enemy_matchup_slot",
+      "ko_band_oracle.canonical_type_index",
+      "ko_band_oracle.apply_damage_dominance_bias",
+      "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank",
+      "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank"
     ]
   },
   "seed": 1,
   "uncovered_rules": {
     "first_uncovered_rules": [
       {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 949,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_cant_act_this_turn_publicly",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerCantActThisTurnPublicly",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "internal",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 1076,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.has_strong_matchup_damaging_move",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".HasStrongMatchupDamagingMove",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [
+          "wPlayerUsedMoves"
+        ],
+        "line": 1660,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.apply_revealed_effect_matrix_bias",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".ApplyRevealedEffectMatrixBias",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "line": 2445,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_has_seen_alive_bench_ghost",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerHasSeenAliveBenchGhost",
+        "suggested_generator": "spikes_spin"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_score_execution_hook",
+        "expected_public_inputs": [],
+        "line": 2723,
+        "recommended_trace_mode": "rom_score_materialization",
+        "rule_id": "move.apply_move_model.player_public_threat_category",
+        "score_trace_target": true,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": ".PlayerPublicThreatCategory",
+        "suggested_generator": "mastery_policy"
+      },
+      {
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 3318,
+        "line": 3573,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.enemy_below_one_third_hp",
         "score_trace_target": false,
@@ -4085,10 +5196,22 @@
       {
         "classification": "public_info",
         "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 3670,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.public_enemy_faster_uncached",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_PublicEnemyFasterUncached",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [
           "wBossAISeenPlayerSpecies"
         ],
-        "line": 3585,
+        "line": 3868,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.seen_bench_threat_score",
         "score_trace_target": false,
@@ -4100,19 +5223,117 @@
         "classification": "internal",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 3815,
+        "line": 4128,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.select_plan_if_needed.is_wincon_compromised",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": ".IsWinconCompromised",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4169,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.try_coach_plan_template",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_TryCoachPlanTemplate",
         "suggested_generator": "mastery_policy"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 4196,
+        "line": 4202,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.coach_plan_still_valid",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CoachPlanStillValid",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4213,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.current_plan_is_coach_template",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CurrentPlanIsCoachTemplate",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4226,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.find_coach_plan_template",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_FindCoachPlanTemplate",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4269,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.coach_template_stop_condition_clear",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CoachTemplateStopConditionClear",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4303,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.coach_template_expected_move_from_hl",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CoachTemplateExpectedMoveFromHL",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4327,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.coach_expected_move_resisted_by_player",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_CoachExpectedMoveResistedByPlayer",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "public_info",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [
+          "wPlayerUsedMoves"
+        ],
+        "line": 4365,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.player_has_revealed_effect_a_coach",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 4734,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.is_denial_effect",
         "score_trace_target": false,
@@ -4124,7 +5345,19 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 4855,
+        "line": 5241,
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.apply_coach_plan_move_bias",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "BossAI_ApplyCoachPlanMoveBias",
+        "suggested_generator": "mastery_policy"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_execution_hook",
+        "expected_public_inputs": [],
+        "line": 5454,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.apply_signed_delta_to_score",
         "score_trace_target": false,
@@ -4136,7 +5369,7 @@
         "classification": "internal",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5149,
+        "line": 5760,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
         "score_trace_target": false,
@@ -4148,7 +5381,7 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5546,
+        "line": 6181,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.enemy_species_can_evolve",
         "score_trace_target": false,
@@ -4160,7 +5393,7 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5585,
+        "line": 6220,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.get_tier_plausible_risk_weight",
         "score_trace_target": false,
@@ -4172,7 +5405,7 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5598,
+        "line": 6233,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.get_speculative_plausible_risk_weight",
         "score_trace_target": false,
@@ -4184,7 +5417,7 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5606,
+        "line": 6241,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.get_scout_roll_threshold",
         "score_trace_target": false,
@@ -4196,13 +5429,13 @@
         "classification": "platform_boundary",
         "coverage_mode": "rom_execution_hook",
         "expected_public_inputs": [],
-        "line": 5679,
+        "line": 6354,
         "recommended_trace_mode": "rom_contribution_trace",
         "rule_id": "move.maybe_mark_scout_pivot",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
         "source_label": "BossAI_MaybeMarkScoutPivot",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -4210,119 +5443,179 @@
         "expected_public_inputs": [],
         "line": 17,
         "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.switch_or_try_item",
+        "rule_id": "switch.try_switch",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_SwitchOrTryItem",
-        "suggested_generator": "mastery_policy"
+        "source_label": "BossAI_TrySwitch",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "haki_exception",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 111,
+        "line": 147,
         "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.try_morty_haki_oracle",
+        "rule_id": "switch.oracle_haki_read",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_TryMortyHakiOracle",
-        "suggested_generator": "mastery_policy"
+        "source_label": "BossAI_OracleHakiRead",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "haki_exception",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 160,
+        "line": 177,
         "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.try_morty_haki_oracle.find_destiny_bond_slot",
+        "rule_id": "switch.oracle_haki_after_player_action",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": ".FindDestinyBondSlot",
-        "suggested_generator": "mastery_policy"
+        "source_label": "BossAI_OracleHakiAfterPlayerAction",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "haki_exception",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 187,
+        "line": 209,
         "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack",
+        "rule_id": "switch.haki_reserve_ace_action",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": ".PlayerSelectedStrongSuperEffectiveAttack",
-        "suggested_generator": "mastery_policy"
+        "source_label": "BossAI_HakiReserveAceAction",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 228,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.haki_ready_common",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_HakiReadyCommon",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 249,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.rebuild_haki_move_scores",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_RebuildHakiMoveScores",
+        "suggested_generator": "selector_edges"
+      },
+      {
+        "classification": "haki_exception",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 301,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.commit_haki_oracle_choice",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_CommitHakiOracleChoice",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 321,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.commit_haki_oracle_switch",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_CommitHakiOracleSwitch",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "haki_exception",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 344,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.haki_find_immunity_switch",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_HakiFindImmunitySwitch",
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 208,
+        "line": 448,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.choose_best_oracle_move",
+        "score_trace_target": false,
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": "BossAI_ChooseBestOracleMove",
+        "suggested_generator": "switch_sack"
+      },
+      {
+        "classification": "platform_boundary",
+        "coverage_mode": "rom_route_execution_hook",
+        "expected_public_inputs": [],
+        "line": 500,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.on_switch_executed",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_OnSwitchExecuted",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 232,
+        "line": 524,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.check_able_to_switch_safe",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_CheckAbleToSwitchSafe",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 296,
+        "line": 588,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.get_switch_threshold",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_GetSwitchThreshold",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "internal",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 311,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.get_switch_threshold.apply_class_switch_threshold_mod",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": ".ApplyClassSwitchThresholdMod",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 376,
+        "line": 603,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.needs_loop_penalty",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_NeedsLoopPenalty",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 425,
+        "line": 652,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.is_imminent_koprevention",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_IsImminentKOPrevention",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
@@ -4331,232 +5624,138 @@
           "wEnemyPerishCount",
           "wEnemySubStatus1"
         ],
-        "line": 439,
+        "line": 666,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.enemy_perish_escape_urgent",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_EnemyPerishEscapeUrgent",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 455,
+        "line": 682,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.should_respect_potential_player_revenge",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "public_info",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 491,
+        "line": 718,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.should_respect_potential_player_revenge.known_seen_revenge_threat",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": ".KnownSeenRevengeThreat",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 519,
+        "line": 746,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.is_scarf_swing_possible",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_IsScarfSwingPossible",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 525,
+        "line": 752,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.is_suspicious_switch_in",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_IsSuspiciousSwitchIn",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "internal",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 555,
+        "line": 782,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.is_suspicious_switch_in.is_type_not_very_effective",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": ".IsTypeNotVeryEffective",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 567,
+        "line": 794,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.is_immunity_pivot_opportunity",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_IsImmunityPivotOpportunity",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 639,
+        "line": 852,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.ace_timing_hook",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_AceTimingHook",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       },
       {
         "classification": "platform_boundary",
         "coverage_mode": "rom_route_execution_hook",
         "expected_public_inputs": [],
-        "line": 685,
+        "line": 898,
         "recommended_trace_mode": "rom_route_contribution_trace",
         "rule_id": "switch.compute_switch_confidence",
         "score_trace_target": false,
         "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
         "source_label": "BossAI_ComputeSwitchConfidence",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 765,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.refine_switch_candidate_for_plausible_risk",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_RefineSwitchCandidateForPlausibleRisk",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 848,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.compute_switch_candidate_risk",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_ComputeSwitchCandidateRisk",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "internal",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 988,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": ".ApplyPrimaryThreatImmunityTieBreak",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "public_info",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [
-          "Moves + MOVE_EFFECT",
-          "wPlayerUsedMoves"
-        ],
-        "line": 1021,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": ".ApplyRevealedPrioritySwitchInRisk",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 1148,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.apply_plausible_risk_to_switch_confidence",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 1201,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.apply_plan_switch_bias",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_ApplyPlanSwitchBias",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 1242,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.apply_preservation_switch_bias",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_ApplyPreservationSwitchBias",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 1265,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.should_sack_instead_of_switch",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_ShouldSackInsteadOfSwitch",
-        "suggested_generator": "mastery_policy"
-      },
-      {
-        "classification": "platform_boundary",
-        "coverage_mode": "rom_route_execution_hook",
-        "expected_public_inputs": [],
-        "line": 1283,
-        "recommended_trace_mode": "rom_route_contribution_trace",
-        "rule_id": "switch.is_switching_into_wincon_risk",
-        "score_trace_target": false,
-        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
-        "source_label": "BossAI_IsSwitchingIntoWinconRisk",
-        "suggested_generator": "mastery_policy"
+        "suggested_generator": "switch_sack"
       }
     ],
     "suggested_generator_counts": {
-      "mastery_policy": 37,
-      "selector_edges": 2
+      "mastery_policy": 29,
+      "selector_edges": 3,
+      "spikes_spin": 1,
+      "switch_sack": 44
     },
-    "uncovered_rule_count": 39,
+    "uncovered_rule_count": 77,
     "uncovered_rule_ids": [
+      "move.apply_move_model.player_cant_act_this_turn_publicly",
+      "move.apply_move_model.has_strong_matchup_damaging_move",
+      "move.apply_move_model.apply_revealed_effect_matrix_bias",
+      "move.apply_move_model.player_has_seen_alive_bench_ghost",
+      "move.apply_move_model.player_public_threat_category",
       "move.enemy_below_one_third_hp",
+      "move.public_enemy_faster_uncached",
       "move.seen_bench_threat_score",
       "move.select_plan_if_needed.is_wincon_compromised",
+      "move.try_coach_plan_template",
+      "move.coach_plan_still_valid",
+      "move.current_plan_is_coach_template",
+      "move.find_coach_plan_template",
+      "move.coach_template_stop_condition_clear",
+      "move.coach_template_expected_move_from_hl",
+      "move.coach_expected_move_resisted_by_player",
+      "move.player_has_revealed_effect_a_coach",
       "move.is_denial_effect",
+      "move.apply_coach_plan_move_bias",
       "move.apply_signed_delta_to_score",
       "move.apply_multi_turn_projection.is_under_pressure",
       "move.enemy_species_can_evolve",
@@ -4564,14 +5763,19 @@
       "move.get_speculative_plausible_risk_weight",
       "move.get_scout_roll_threshold",
       "move.maybe_mark_scout_pivot",
-      "switch.switch_or_try_item",
-      "switch.try_morty_haki_oracle",
-      "switch.try_morty_haki_oracle.find_destiny_bond_slot",
-      "switch.try_morty_haki_oracle.player_selected_strong_super_effective_attack",
+      "switch.try_switch",
+      "switch.oracle_haki_read",
+      "switch.oracle_haki_after_player_action",
+      "switch.haki_reserve_ace_action",
+      "switch.haki_ready_common",
+      "switch.rebuild_haki_move_scores",
+      "switch.commit_haki_oracle_choice",
+      "switch.commit_haki_oracle_switch",
+      "switch.haki_find_immunity_switch",
+      "switch.choose_best_oracle_move",
       "switch.on_switch_executed",
       "switch.check_able_to_switch_safe",
       "switch.get_switch_threshold",
-      "switch.get_switch_threshold.apply_class_switch_threshold_mod",
       "switch.needs_loop_penalty",
       "switch.is_imminent_koprevention",
       "switch.enemy_perish_escape_urgent",
@@ -4588,10 +5792,28 @@
       "switch.compute_switch_candidate_risk.apply_primary_threat_immunity_tie_break",
       "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
       "switch.apply_plausible_risk_to_switch_confidence",
+      "switch.apply_role_package_switch_bias",
+      "switch.classify_active_player_role_package",
+      "switch.last_player_move_role_package_mask",
       "switch.apply_plan_switch_bias",
       "switch.apply_preservation_switch_bias",
       "switch.should_sack_instead_of_switch",
-      "switch.is_switching_into_wincon_risk"
+      "switch.pick_faint_replacement",
+      "switch.faint_repl_eval_candidate",
+      "switch.faint_repl_hpgate_and_pct",
+      "switch.faint_repl_candidate_has_real_coverage",
+      "switch.switch_candidate_low_hpblock",
+      "switch.candidate_immune_to_player_stab",
+      "switch.should_sack_hard",
+      "switch.is_switching_into_wincon_risk",
+      "ko_band_oracle.apply_koband_oracle_pressure",
+      "ko_band_oracle.current_slot_offensive_coverage_vs_player",
+      "ko_band_oracle.current_slot_offensive_coverage_vs_type",
+      "ko_band_oracle.get_current_enemy_matchup_slot",
+      "ko_band_oracle.canonical_type_index",
+      "ko_band_oracle.apply_damage_dominance_bias",
+      "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank",
+      "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank"
     ]
   }
 }

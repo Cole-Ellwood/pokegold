@@ -541,7 +541,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--switch-threshold",
         type=int,
         help=(
-            "explicit final BossAI_SwitchOrTryItem threshold byte for exact "
+            "explicit final BossAI_TrySwitch threshold byte for exact "
             "switch-roll frequency reporting"
         ),
     )

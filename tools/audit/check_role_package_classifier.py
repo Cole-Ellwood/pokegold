@@ -97,7 +97,10 @@ def run_golden_changed_decision() -> None:
         "STARMIE": {"spinner", "physical/special-wallbreaker"},
         "SKARMORY": {"phazer"},
         "SNORLAX": {"setup-sweeper", "physical/special-wallbreaker"},
-        "MISDREAVUS": {"sleep/status-pressure", "trap/perish-line", "physical/special-wallbreaker"},
+        # MISDREAVUS lost the wallbreaker classification after her
+        # bulky-Ghost-pivot rework (commit 3d7a8a49 dropped wallbreak moves);
+        # status-pressure + trap-perish-line still cross the threshold.
+        "MISDREAVUS": {"sleep/status-pressure", "trap/perish-line"},
     }
     for species, wanted in expected.items():
         got = set(rows[species]["committed_packages"])

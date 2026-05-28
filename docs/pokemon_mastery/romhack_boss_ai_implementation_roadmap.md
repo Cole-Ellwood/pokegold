@@ -230,7 +230,7 @@ Core activation and tiering:
 - `engine/battle/ai/move.asm`: base path vs `BossAI_ApplyMoveModel` and
   `BossAI_SelectMove`.
 - `engine/battle/ai/items.asm`: base switch/item path vs
-  `BossAI_SwitchOrTryItem`.
+  `BossAI_TrySwitch`.
 
 Boss AI implementation:
 

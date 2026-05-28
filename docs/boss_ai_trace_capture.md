@@ -181,7 +181,7 @@ python -m tools.boss_ai_debugger rom-switch-materialize --scenarios .local\tmp\g
 
 `boss_ai_shared_switch_loop_fixture.py` saves both the snapshot capture
 `save_state` and a pre-dispatch `switch_materialization_state` at
-`BossAI_SwitchOrTryItem`. The materialization state carries row-specific trace
+`BossAI_TrySwitch`. The materialization state carries row-specific trace
 ROM/symbol hashes because it may be refreshed for switch proof before the full
 live-capture manifest is recaptured. Run `boss_ai_trace_batch.py --execute
 --only shared_switch_loop` only when the full manifest trace basis has also

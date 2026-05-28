@@ -202,7 +202,7 @@ All four caches preserve their `BOSS_AI_TRACE` writes:
 
 ### Cache reset coverage
 `BossAI_ResetTurnCaches` (called at the top of `BossAI_ApplyMoveModel` AND
-`BossAI_SwitchOrTryItem`) clears all 6 sentinels:
+`BossAI_TrySwitch`) clears all 6 sentinels:
 - `wBossAIPublicEnemyFasterCache`
 - `wBossAILookaheadDepthCache`
 - `wBossAILastMatchupType`

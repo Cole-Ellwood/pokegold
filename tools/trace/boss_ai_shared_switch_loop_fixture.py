@@ -201,9 +201,9 @@ def main() -> int:
 
     symbols = capture.parse_symbols(capture.DEFAULT_SYMBOLS)
     capture.require_symbols(symbols)
-    switch_entry = symbols.get("BossAI_SwitchOrTryItem")
+    switch_entry = symbols.get("BossAI_TrySwitch")
     if switch_entry is None:
-        fail("missing BossAI_SwitchOrTryItem symbol")
+        fail("missing BossAI_TrySwitch symbol")
     pyboy = trace_runtime.open_pyboy(capture.DEFAULT_ROM, "PyBoy is required to build the fixture")
     try:
         trace_runtime.disable_realtime(pyboy)
@@ -219,7 +219,7 @@ def main() -> int:
         prepare_repeated_switch_state(pyboy, symbols)
         advance_with_a_presses(pyboy, args.advance_frames)
         if not entry_capture.saved:
-            fail("BossAI_SwitchOrTryItem entry was not reached before fixture save")
+            fail("BossAI_TrySwitch entry was not reached before fixture save")
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with args.out.open("wb") as fh:
             pyboy.save_state(fh)

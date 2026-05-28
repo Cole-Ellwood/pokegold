@@ -10,7 +10,7 @@ Sourced from `engine/battle/ai/boss_policy_move.asm`,
 
 1. **`BossAI_ApplyMoveModel`** ([boss_policy_move.asm:172](../../engine/battle/ai/boss_policy_move.asm)) — score every enemy move via `.ScoreMove`.
 2. **`BossAI_SelectMove`** ([boss_policy_move.asm:2845](../../engine/battle/ai/boss_policy_move.asm)) — applies lookahead then two-pass best/second-best pick.
-3. **`BossAI_SwitchOrTryItem`** ([boss_policy_switch.asm:17](../../engine/battle/ai/boss_policy_switch.asm)) — switch-policy dispatch on switch turns (separate code path; less frequent).
+3. **`BossAI_TrySwitch`** ([boss_policy_switch.asm:17](../../engine/battle/ai/boss_policy_switch.asm)) — switch-policy dispatch on switch turns (separate code path; less frequent).
 
 Both `ApplyMoveModel` and `SelectMove` re-call `BossAI_SelectPlanIfNeeded` and `BossAI_ComputePlayerPlausibleTypeMask`, but both helpers self-guard against duplicate work within a turn (plan-phase bit 7 = "done this turn"; mask cache keyed on species+level). The cost of the second call is essentially the guard check itself, not the body — that path is not a hotspot.
 
@@ -57,7 +57,7 @@ The cleanest fix is to have `EvaluateActionLookahead` pass its already-computed 
 Or: extend the turn-level cache to memoize these per-move predicates (keyed on move id), since the same move is evaluated by both helpers.
 
 ### H4. Switch-policy path (only on switch turns)
-`BossAI_SwitchOrTryItem` ([boss_policy_switch.asm:17](../../engine/battle/ai/boss_policy_switch.asm)) calls 8–10 confidence helpers. The most expensive is `BossAI_CheckAbleToSwitchSafe` (line 310) which scans the OT party. Each subsequent helper (`RefineSwitchCandidateForPlausibleRisk`, `SwitchTargetSolvesDefensiveProblem`, `ComputeSwitchConfidence`) likely re-walks party state. Not measured here yet; defer to v15-block phase after measuring move-pick turns.
+`BossAI_TrySwitch` ([boss_policy_switch.asm:17](../../engine/battle/ai/boss_policy_switch.asm)) calls 8–10 confidence helpers. The most expensive is `BossAI_CheckAbleToSwitchSafe` (line 310) which scans the OT party. Each subsequent helper (`RefineSwitchCandidateForPlausibleRisk`, `SwitchTargetSolvesDefensiveProblem`, `ComputeSwitchConfidence`) likely re-walks party state. Not measured here yet; defer to v15-block phase after measuring move-pick turns.
 
 ## Optimizations not in scope (per PRD constraints)
 
@@ -162,7 +162,7 @@ All audits green (release_smoke, boss_ai_trace_invariants, boss_ai_no_cheat, bos
 - **MatchupVsPlayer cache**: writes the same `wTypeMatchup` value the uncached body would write. Same downstream behavior. Reset between turns ensures cross-turn changes invalidate the cache.
 - **ShouldScout cache**: only memoizes the deterministic prereq chain. `Random` still rolls per call, preserving RNG state across the rest of the battle. Result distribution is identical.
 
-Both caches are reset by `BossAI_ResetTurnCaches`, called at the top of `BossAI_ApplyMoveModel` and `BossAI_SwitchOrTryItem`.
+Both caches are reset by `BossAI_ResetTurnCaches`, called at the top of `BossAI_ApplyMoveModel` and `BossAI_TrySwitch`.
 
 ### What's left on the table (for a future pass)
 

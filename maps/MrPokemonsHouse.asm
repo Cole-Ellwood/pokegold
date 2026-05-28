@@ -50,8 +50,8 @@ MrPokemonsHouseMrPokemonEventScript:
 MrPokemonsHouse_MrPokemonScript:
 	faceplayer
 	opentext
-	checkitem RED_SCALE
-	iftrue .RedScale
+	checkitem GOLD_SCALE
+	iftrue .GoldScale
 	checkevent EVENT_GAVE_MYSTERY_EGG_TO_ELM
 	iftrue .AlwaysNewDiscoveries
 	writetext MrPokemonText_ImDependingOnYou
@@ -65,13 +65,13 @@ MrPokemonsHouse_MrPokemonScript:
 	closetext
 	end
 
-.RedScale:
+.GoldScale:
 	writetext MrPokemonText_GimmeTheScale
 	yesorno
 	iffalse .refused
 	verbosegiveitem EXP_SHARE
 	iffalse .full
-	takeitem RED_SCALE
+	takeitem GOLD_SCALE
 	sjump .AlwaysNewDiscoveries
 
 .refused
@@ -326,10 +326,10 @@ MrPokemonsHouse_OakText2:
 MrPokemonText_GimmeTheScale:
 	text "Hm? That SCALE!"
 	line "What's that?"
-	cont "A red GYARADOS?"
+	cont "A gold MAGIKARP?"
 
-	para "That's rare! "
-	line "I, I want it…"
+	para "That's strange…"
+	line "I want to study it."
 
 	para "<PLAYER>, would you"
 	line "care to trade it?"

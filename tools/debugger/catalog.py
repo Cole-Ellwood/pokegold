@@ -637,7 +637,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                     ),
                     evidence_standard=(
                         "The unified investigation packet embeds the Boss AI wrong-switch proof route.",
-                        "Replay/report output preserves BossAI_SwitchOrTryItem, switch WRAM targets, and rom-switch-materialize as the disproof path.",
+                        "Replay/report output preserves BossAI_TrySwitch, switch WRAM targets, and rom-switch-materialize as the disproof path.",
                     ),
                     disproof_standard=(
                         "If replay/report output loses the embedded route or routes to damage/banking fallbacks, this blocker action is not satisfied.",

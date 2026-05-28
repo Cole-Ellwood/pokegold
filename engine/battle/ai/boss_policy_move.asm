@@ -5332,9 +5332,13 @@ IF DEF(BOSS_AI_TRACE)
 	ld hl, wBossAITraceLookaheadBonusTop
 	ld [hli], a
 	ld [hli], a
+	ld [hli], a
 	ld [hl], a
 ENDC
 
+; Find the initial minimum non-blocked score (lower is better; scores >= 80
+; are blocked sentinel). Stored to wBossAILookaheadRunningBest as the
+; starting bound for the dynamic futility cutoff below.
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
@@ -5356,12 +5360,20 @@ ENDC
 	jr nz, .best_loop
 
 .best_done
+	ld a, b
+	ld [wBossAILookaheadRunningBest], a
+
+; Dynamic futility cutoff: skip candidate i if score[i] > running_best + CAP.
+; Maximum upside delta is -CAP, so candidate's best-case post-eval is
+; score - CAP; if that exceeds running_best the candidate cannot improve
+; on the current best. running_best is updated after each evaluator so the
+; bound tightens monotonically. Behavior delta vs the old static cutoff
+; (initial_best + CAP, never updated): in near-tie cases an earlier
+; candidate whose delta improves running_best can newly exclude later
+; candidates — same class as S4 in audit/boss_ai_perf/hotspots.md.
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
-	ld a, b
-	add BOSS_AI_LOOKAHEAD_BONUS_CAP
-	push af
 	ld b, 0
 .eval_loop
 	ld a, [de]
@@ -5370,9 +5382,12 @@ ENDC
 	ld a, [hl]
 	cp 80
 	jr nc, .eval_next
-	pop af
-	push af
-	cp [hl]
+	push bc
+	ld c, a
+	ld a, [wBossAILookaheadRunningBest]
+	add BOSS_AI_LOOKAHEAD_BONUS_CAP
+	cp c
+	pop bc
 	jr c, .eval_next
 	push hl
 	push de
@@ -5386,11 +5401,23 @@ ENDC
 	push bc
 	call BossAI_ApplySignedDeltaToScore
 	pop bc
+; Update running_best with the post-eval score if it improved. Use an hl
+; swap (smaller than push/pop bc + c-swap) to fit the bank-0E "Enemy
+; Trainers" budget. ApplySignedDeltaToScore saturates [hl] to [1, 79],
+; so reload via [hl] post-call.
+	push hl
+	ld a, [hl]
+	ld hl, wBossAILookaheadRunningBest
+	cp [hl]
+	jr nc, .no_update
+	ld [hl], a
+.no_update
+	pop hl
 IF DEF(BOSS_AI_TRACE)
 	push bc
 	push hl
 	ld a, b
-	cp 3
+	cp BOSS_AI_LOOKAHEAD_N
 	jr nc, .after_trace
 	ld c, a
 	ld b, 0
@@ -5405,9 +5432,15 @@ IF DEF(BOSS_AI_TRACE)
 	pop bc
 ENDC
 	inc b
+; The cp BOSS_AI_LOOKAHEAD_N early-exit is dead when N >= NUM_MOVES because
+; the .eval_next dec-c fallthrough already terminates after NUM_MOVES slots.
+; Compile it in only when N actually constrains the loop. Saves ~5 bytes in
+; the bank-0E "Enemy Trainers" budget when N == NUM_MOVES.
+IF BOSS_AI_LOOKAHEAD_N < NUM_MOVES
 	ld a, b
 	cp BOSS_AI_LOOKAHEAD_N
 	jr nc, .eval_done
+ENDC
 .eval_next
 	inc hl
 	inc de
@@ -5415,7 +5448,6 @@ ENDC
 	jr nz, .eval_loop
 	; fallthrough
 .eval_done
-	pop af
 	ret
 
 ; ai-layer: POLICY

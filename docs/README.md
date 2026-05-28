@@ -148,7 +148,7 @@ status prevent items, freeze/confusion held cures, Sleep Clause clearing from
 held sleep cures, non-paralyzed Electric speed passives, weather/time healing,
 drain effects outside selected EFFECT_LEECH_HIT
 moves, Heal Bell, RNG-consuming mechanics outside the listed branch points, live
-Boss AI scoring, Boss AI switch candidate/confidence generation, AI_TryItem, or
+Boss AI scoring, Boss AI switch candidate/confidence generation, or
 scripts until the simulator report and audit say that surface exists.
 
 ## Truth Precedence

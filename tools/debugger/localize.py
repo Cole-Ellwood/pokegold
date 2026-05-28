@@ -98,7 +98,7 @@ SYMPTOM_HINTS = {
         ("file", "engine/battle/ai/boss_policy_move.asm", 40),
     ),
     "score": (("symbol", "wEnemyAIMoveScores", 45),),
-    "switch": (("symbol", "BossAI_SwitchOrTryItem", 45),),
+    "switch": (("symbol", "BossAI_TrySwitch", 45),),
     "bank": (("symbol", "hROMBank", 45),),
     "farcall": (("symbol", "FarCall", 45),),
 }

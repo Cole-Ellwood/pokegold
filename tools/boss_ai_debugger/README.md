@@ -451,7 +451,7 @@ can shard cases across `--workers` independent PyBoy sessions for the
 high-throughput ROM-backed replay gate.
 
 `rom-switch-materialize` requires a current trace-ROM/symbol basis and a base
-state before the real `BossAI_SwitchOrTryItem` path reaches switch
+state before the real `BossAI_TrySwitch` path reaches switch
 confidence/proposal. When a manifest row provides `switch_materialization_state`,
 that pre-dispatch state is used; otherwise the legacy `save_state` is rejected
 if switch-confidence, switch-param, switch-index, or chosen-move outputs are

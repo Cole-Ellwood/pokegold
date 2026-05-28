@@ -38,13 +38,13 @@ SYMPTOM_SYMBOLS = {
     "boss": "BossAI_SelectMove",
     "ai": "BossAI_SelectMove",
     "score": "wEnemyAIMoveScores",
-    "switch": "BossAI_SwitchOrTryItem",
+    "switch": "BossAI_TrySwitch",
     "bank": "hROMBank",
     "farcall": "hROMBank",
 }
 NEXT_STEP_REPLAY_TARGETS_BY_CLASS = {
     "wrong_switch": {
-        "symbols": ("BossAI_SwitchOrTryItem",),
+        "symbols": ("BossAI_TrySwitch",),
         "watch_symbols": ("wEnemySwitchMonIndex", "wEnemySwitchMonParam", "wEnemyAIMoveScores"),
     },
     "wrong_move_score": {

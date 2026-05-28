@@ -34,7 +34,7 @@ SYMPTOM_SYMBOLS = {
     "boss": "BossAI_SelectMove",
     "ai": "BossAI_SelectMove",
     "score": "wEnemyAIMoveScores",
-    "switch": "BossAI_SwitchOrTryItem",
+    "switch": "BossAI_TrySwitch",
     "bank": "hROMBank",
     "farcall": "hROMBank",
 }

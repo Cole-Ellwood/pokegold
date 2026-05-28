@@ -134,7 +134,7 @@ AREAS: tuple[Area, ...] = (
             "BossAI_IncrementTurnsElapsed",
             "BossAI_RecordPlayerSwitch",
             "BossAI_SelectMove",
-            "BossAI_SwitchOrTryItem",
+            "BossAI_TrySwitch",
             "BossAI_ComputeSwitchConfidence",
             "BossAI_PredictPlayerSwitch",
             "BossAI_RecordRevealedPlayerMove",

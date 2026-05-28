@@ -617,7 +617,7 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             PreferenceDataError,
-            "already inside or past BossAI_SwitchOrTryItem",
+            "already inside or past BossAI_TrySwitch",
         ):
             validate_switch_materialization_base(values)
 

@@ -38,7 +38,7 @@ from _trace_helpers import (
 
 
 def audit_switch_loop(boss: str) -> None:
-    switch_entry = top_block(boss, "BossAI_SwitchOrTryItem")
+    switch_entry = top_block(boss, "BossAI_TrySwitch")
     require_order(
         switch_entry,
         [
@@ -86,7 +86,7 @@ def audit_switch_loop(boss: str) -> None:
     ):
         require_contains(block, call, "switch loop emergency exceptions")
 
-    dispatch = top_block(boss, "BossAI_SwitchOrTryItem")
+    dispatch = top_block(boss, "BossAI_TrySwitch")
     require_order(
         dispatch,
         [
@@ -97,11 +97,11 @@ def audit_switch_loop(boss: str) -> None:
             "jr c, .candidate_answers_threat",
             "xor a",
             "ld [wEnemySwitchMonParam], a",
-            "jp AI_TryItem",
+            "ret",
             ".candidate_answers_threat",
             "ld a, [wEnemySwitchMonParam]",
             "and a",
-            "jp z, AI_TryItem",
+            "ret z",
             "push af",
             "call BossAI_ComputeSwitchConfidence",
         ],

@@ -64,7 +64,7 @@ BASE_ROUTE_TRAINER_CLASS = {
 KNOWN_LIMITS = [
     (
         "Switch materialization requires a base state before the real "
-        "BossAI_SwitchOrTryItem path reaches switch confidence/param; stale "
+        "BossAI_TrySwitch path reaches switch confidence/param; stale "
         "snapshot states with already-populated switch outputs are rejected."
     ),
     (
@@ -632,7 +632,7 @@ def validate_switch_materialization_base(values: dict[str, list[int]]) -> None:
     if problems:
         raise PreferenceDataError(
             "switch materialization base state is already inside or past "
-            "BossAI_SwitchOrTryItem; use a pre-dispatch "
+            "BossAI_TrySwitch; use a pre-dispatch "
             "switch_materialization_state: "
             + "; ".join(problems)
         )

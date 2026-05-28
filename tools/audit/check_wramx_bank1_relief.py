@@ -11,8 +11,8 @@ from _common import fail, load
 
 ROOT = Path(__file__).resolve().parents[2]
 MAPS = (
-    ("normal", ROOT / "pokegold.map", 29),
-    ("trace", ROOT / "pokegold_trace.map", 2),
+    ("normal", ROOT / "pokegold.map", 28),
+    ("trace", ROOT / "pokegold_trace.map", 0),
 )
 WRAMX_BANK_SIZE = 0x1000
 MIN_FREE_BYTES = 410

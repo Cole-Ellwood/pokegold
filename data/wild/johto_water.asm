@@ -106,22 +106,22 @@ JohtoWaterWildMons:
 
 	def_water_wildmons DARK_CAVE_VIOLET_ENTRANCE
 	db 2 percent ; encounter rate
-	db 15, MAGIKARP
+	db 15, GOLDEEN
 	db 10, WOOPER
 	db 5, GOLDEEN
 	end_water_wildmons
 
 	def_water_wildmons DARK_CAVE_BLACKTHORN_ENTRANCE
 	db 2 percent ; encounter rate
-	db 15, MAGIKARP
+	db 15, GOLDEEN
 	db 10, GOLDEEN
 	db 5, SEAKING
 	end_water_wildmons
 
 	def_water_wildmons DRAGONS_DEN_B1F
 	db 4 percent ; encounter rate
-	db 15, MAGIKARP
-	db 10, MAGIKARP
+	db 15, GOLDEEN
+	db 10, GOLDEEN
 	db 10, DRATINI
 	end_water_wildmons
 
@@ -189,9 +189,9 @@ JohtoWaterWildMons:
 
 	def_water_wildmons ROUTE_43
 	db 2 percent ; encounter rate
-	db 20, MAGIKARP
+	db 20, GOLDEEN
 	db 15, GOLDEEN
-	db 15, MAGIKARP
+	db 15, POLIWAG
 	end_water_wildmons
 
 	def_water_wildmons ROUTE_44
@@ -203,7 +203,7 @@ JohtoWaterWildMons:
 
 	def_water_wildmons ROUTE_45
 	db 2 percent ; encounter rate
-	db 20, MAGIKARP
+	db 20, GOLDEEN
 	db 15, GOLDEEN
 	db 20, SEAKING
 	end_water_wildmons
@@ -256,14 +256,14 @@ JohtoWaterWildMons:
 	ELIF DEF(_SILVER)
 	db 6 percent ; encounter rate
 	ENDC
-	db 15, MAGIKARP
-	db 10, MAGIKARP
-	db 15, MAGIKARP
+	db 15, QUAGSIRE
+	db 10, SLOWPOKE
+	db 15, GOLDEEN
 	end_water_wildmons
 
 	def_water_wildmons BLACKTHORN_CITY
 	db 4 percent ; encounter rate
-	db 15, MAGIKARP
+	db 15, POLIWAG
 	db 10, POLIWAG
 	db 10, POLIWHIRL
 	end_water_wildmons

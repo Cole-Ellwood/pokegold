@@ -1,5 +1,7 @@
 # Codex Task — Boss AI ROM Expansion: 14 Empty Banks → Smarter Bosses
 
+**Superseded by [boss_ai_future_roadmap_2026-05-26.md](boss_ai_future_roadmap_2026-05-26.md) as of 2026-05-26.**
+
 **Status:** v0 spec, Cole-approved 2026-05-23 via /codex-pgoal Step 0 AskUserQuestion intake.
 **Pairing:** Claude (prompter, ~30%) + Codex (implementer, ~70%) under mutual approval, with the structural defenses below promoted to acceptance criteria (not advisory).
 **Artifact:** `claude/boss-ai-rom-expansion` branch off `codex/cleanup-gsc-rebalance-split`.

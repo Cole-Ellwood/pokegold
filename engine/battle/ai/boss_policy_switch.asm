@@ -14,7 +14,7 @@ if DEF(BOSSAI_EMIT_SWITCH_DISPATCH)
 ; Original lines: 168
 ; ============================================================
 ; ai-layer: POLICY
-BossAI_SwitchOrTryItem:
+BossAI_TrySwitch:
 	ld a, [wBossAITier]
 	and a
 	ret z
@@ -40,24 +40,24 @@ BossAI_SwitchOrTryItem:
 	call BossAI_CheckAbleToSwitchSafe
 	ld a, [wEnemySwitchMonParam]
 	and a
-	jp z, AI_TryItem
+	ret z
 	call BossAI_RefineSwitchCandidateForPlausibleRisk
 	ld a, [wEnemySwitchMonParam]
 	and a
-	jp z, AI_TryItem
+	ret z
 	call BossAI_GetPrimaryThreatType
 	jr nc, .candidate_answers_threat
 	call BossAI_IsImmunityPivotOpportunity
 	jr c, .candidate_answers_threat
 	xor a
 	ld [wEnemySwitchMonParam], a
-	jp AI_TryItem
+	ret
 
 .candidate_answers_threat
 
 	ld a, [wEnemySwitchMonParam]
 	and a
-	jp z, AI_TryItem
+	ret z
 	; LATE-tier categorical sack: dying low-speed non-wincon non-asleep mons
 	; stay in to use their last turn instead of letting the player get a free
 	; hit on the next mon. Soft +8 to threshold doesn't move the needle when
@@ -66,7 +66,7 @@ BossAI_SwitchOrTryItem:
 	jr nc, .no_hard_sack
 	xor a
 	ld [wEnemySwitchMonParam], a
-	jp AI_TryItem
+	ret
 .no_hard_sack
 	; Bug B fix: block switching INTO a low-HP candidate unless it's an
 	; immunity pivot. Without this, an AI seeing a "best-matchup" bench mon
@@ -76,7 +76,7 @@ BossAI_SwitchOrTryItem:
 	jr nc, .no_low_hp_block
 	xor a
 	ld [wEnemySwitchMonParam], a
-	jp AI_TryItem
+	ret
 .no_low_hp_block
 	push af
 	call BossAI_ComputeSwitchConfidence
@@ -141,7 +141,7 @@ ENDC
 
 .stay
 	pop af
-	jp AI_TryItem
+	ret
 
 ; ai-layer: POLICY
 BossAI_OracleHakiRead:
@@ -323,7 +323,7 @@ BossAI_CommitHakiOracleSwitch:
 ; slot picked by BossAI_HakiFindImmunitySwitch; convert to 1-based for
 ; wEnemySwitchMonIndex, queue the per-leader taunt, mark Haki spent,
 ; and tail-call AI_TrySwitch. AI_Switch ends with `scf; ret`, and the
-; carry survives through BossAI_SwitchOrTryItem's `ret nz` (the cp
+; carry survives through BossAI_TrySwitch's `ret nz` (the cp
 ; LINK_COLOSSEUM right before scf leaves NZ in non-link battles), so
 ; the core.asm caller sees `jr c, .switch_item` and routes through
 ; the switch handler.
