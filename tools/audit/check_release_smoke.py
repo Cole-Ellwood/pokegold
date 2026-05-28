@@ -1530,6 +1530,7 @@ def main() -> int:
         )
     print("PASS: QoL script flow checks")
 
+    check_branch_currency()
     check_save_format_version()
     check_no_stale_shipped_claims()
     check_vram_request_contract()
@@ -1543,9 +1544,9 @@ def main() -> int:
     return 0
 
 
-def _run_subaudit(script: str, label: str) -> None:
+def _run_subaudit(script: str, label: str, *args: str) -> None:
     proc = subprocess.run(
-        [sys.executable, str(ROOT / "tools/audit" / script)],
+        [sys.executable, str(ROOT / "tools/audit" / script), *args],
         cwd=ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -1559,6 +1560,13 @@ def _run_subaudit(script: str, label: str) -> None:
     if proc.returncode != 0:
         fail(f"{label} audit failed")
     print(f"PASS: {label} audit")
+
+
+def check_branch_currency() -> None:
+    # --strict: hard-fail the floor when this branch is behind canonical master
+    # on gameplay-critical paths, so a release smoke can't pass on a stale ROM
+    # that is missing already-landed fixes.
+    _run_subaudit("check_branch_currency.py", "branch currency", "--strict")
 
 
 def check_save_format_version() -> None:

@@ -148,6 +148,13 @@ ifeq (,$(filter clean tidy tools,$(MAKECMDGOALS)))
 
 tools_bootstrap := $(shell $(MAKE) -s -C tools)
 
+# Loud pre-build banner when this branch is behind canonical master on
+# gameplay paths: a ROM built here may be missing already-landed fixes, so
+# playtest "regressions" can be phantom. --warn prints to stderr (passes
+# through $(shell) with newlines intact) and exits 0, so it never blocks the
+# build; the release-smoke floor enforces currency with --strict instead.
+branch_currency_banner := $(shell $(PYTHON) tools/audit/check_branch_currency.py --warn)
+
 # The dep rules have to be explicit or else missing files won't be reported.
 # As a side effect, they're evaluated immediately instead of when the rule is invoked.
 # It doesn't look like $(shell) can be deferred so there might not be a better way.
