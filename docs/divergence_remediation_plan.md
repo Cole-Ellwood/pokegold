@@ -62,14 +62,15 @@ These are preservation snapshots, not finished work — triage and land delibera
     Windows path Linux git cannot resolve, so the Makefile banner degrades to
     a silent no-op there; the SessionStart + release-smoke layers run natively
     and are unaffected. [Agent 3]
-- [ ] **A1 — canonical-branch policy (CLAUDE.md).** Name `master` canonical +
-  integration; redefine "release" (roms.sha1 refresh + distribute, NOT "a
-  commit reached master"); sync-before-work and before any playtest build
-  (rebase for short session branches); merge-back-or-abandon. Fix the
-  self-contradictory "Merging to master. Release event" escalation bullet and
-  retarget "Recent work" from `codex/cleanup-gsc-rebalance-split` to
-  `git log master`. Drop-in text drafted by Agent 4. **GATED on the governance
-  decision below.**
+- [x] **A1 — canonical-branch policy (CLAUDE.md)** (DONE; governance resolved
+  below). Added a "Branches & releases" subsection naming `master` the
+  canonical integration branch, redefining "release" as distributing to players
+  (roms.sha1 refresh = delegated prep), and stating sync-before-work/playtest
+  (rebase short session branches) + merge-back-or-abandon. Made merging
+  finished/green work to master delegated in Authority, replaced the
+  self-contradictory "Merging to master = release event" escalation bullet with
+  "shipping a public release to players," and retargeted "Recent work" to
+  `git log master`.
 - [ ] **A3 — autonomous-loop sync hygiene** (biggest divergence *generator*).
   `tools/pokemon_mastery/loop_runner.py` has zero git awareness and pgoal is
   told "never leave your claude/ branch." Add `sync-preflight` (fetch + rebase
@@ -128,14 +129,18 @@ These are preservation snapshots, not finished work — triage and land delibera
   bytes → `make compare` safe. No in-ROM stamp on the four sha1-pinned targets.
   [Agent 5]
 
-## Open decision (gates A1 + every master landing)
+## Governance decision — RESOLVED 2026-05-28
 
-**Governance:** CLAUDE.md lists "Merging to master" as an escalation/release
+**Question (was):** CLAUDE.md listed "Merging to master" as an escalation/release
 event, yet master is demonstrably the active integration branch (full of merge
-commits; fixes land directly on it). Decision needed: **make merging finished
-work to master ordinary delegated execution, reserving escalation for actual
-public releases?** Until decided, all work stays on agent branches and
-master-landing waits for explicit user OK.
+commits; fixes land directly on it).
+
+**Decision (user, 2026-05-28):** merging finished, audit-passing work to master
+is **ordinary delegated execution**. The escalation is **shipping a public
+release to players** (roms.sha1 refresh + distribution), not a commit reaching
+master. Save-format changes shipping to players remain a user-approval item.
+Encoded in CLAUDE.md (A1). Master landings (B4, B5) no longer wait for a blanket
+OK — though per-item gameplay-taste calls in B5 still do.
 
 ## Where work lands
 

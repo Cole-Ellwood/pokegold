@@ -232,7 +232,8 @@ get one." See `engine/battle/ai/boss.asm` `.check_speed`.
 
 ## Recent work
 
-For a list of what changed lately, run `git log codex/cleanup-gsc-rebalance-split`.
+For a list of what changed lately, run `git log master` — master is the
+canonical integration branch (see Workflow → Branches & releases).
 This section used to enumerate "shipped on YYYY-MM-DD" entries with commit
 hashes; that pattern silently rotted (work moved to side branches, was
 rebased, was reverted) and had agents quoting stale claims as ground truth
@@ -264,11 +265,27 @@ and the playtest seat; he does not code. All technical decisions, git, and
 release execution are delegated to you. The Codex prompt-drafting workflow
 is **not** used here — you are the sole executor.
 
+### Branches & releases
+`master` is the canonical, always-buildable integration branch. Landing
+finished, audit-passing work on master is ordinary delegated execution, not a
+release. A **release** is the separate act of distributing a ROM/patch to
+players; reaching master is not a release. (Refreshing `roms.sha1` +
+`validation_report.md` is delegated release prep — see Authority — but the
+decision to ship to players is an escalation.)
+
+Keep master canonical and stop branch drift:
+- **Sync before work and before any playtest build.** Rebase a short-lived
+  session branch onto current `master` first; building stale resurfaces
+  already-fixed bugs as phantom "regressions." `check_branch_currency.py`
+  enforces this (release-smoke `--strict`, SessionStart banner, build banner).
+- **Merge back or abandon.** When a session's work is done and green, merge it
+  to `master`; if it is dead, delete the branch — do not leave it to drift.
+
 ### Authority
 - All technical decisions: architecture, file layout, audits, build steps,
   refactor scope, naming, asm/banking, doc edits, audit script changes.
-- Full git: commit, push, open PRs without confirmation when the work is
-  ready.
+- Full git: commit, push, merge finished/green work to `master`, open PRs
+  without confirmation when the work is ready.
 - Drive release passes: when audits are green, refresh `roms.sha1` and
   `validation_report.md` without asking. (`dist/*` BPS regen is no
   longer in scope — see "Never hand-edit these" for the retirement note.)
@@ -281,7 +298,9 @@ is **not** used here — you are the sole executor.
 - **Playtest tasks** — when human eyes on the ROM are needed, ask for a
   specific scenario.
 - **Save-format changes shipping to public release.**
-- **Merging to master.** Release event for this hack.
+- **Shipping a public release to players** — the decision to distribute a
+  ROM/patch (and any announcement). Merging finished work to `master` is
+  ordinary execution, *not* a release.
 - **Truly destructive irreversible actions.** Force-push to master,
   `rm -rf` outside scratch, deleting branches with unmerged work.
 
