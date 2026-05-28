@@ -6,11 +6,19 @@ from typing import Any
 from tools.trace import runtime as trace_runtime
 
 from .catalog import ROOT
+from .content_scenarios import (
+    PROOF_STATUS_PLANNED_ONLY,
+    PROOF_STATUS_READY_TO_RUN,
+    PROOF_STATUS_STATE_MATERIALIZED,
+)
 from .content_state import read_byte, write_byte
 from .localize import normalize_path
 from .minimize import unique_list
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .workflow import command_is_runnable
+
+
+STATE_SPACE_EXPECTED_PROOF_STATUS = "runtime_observed"
 
 
 def build_state_space_report(
@@ -80,9 +88,17 @@ def build_state_space_report(
             **patch,
             "executed": bool(execution.get("executed")),
             "applied": bool(patch.get("applied", False)),
+            "actual_proof_status": _resolve_actual_proof_status(
+                patch,
+                execution_executed=bool(execution.get("executed")),
+            ),
+            "expected_proof_status": STATE_SPACE_EXPECTED_PROOF_STATUS,
+            "observed_sinks": list(patch.get("observed_sinks", []) or []),
+            "expected_sinks": list(patch.get("expected_sinks", []) or [str(patch.get("base_symbol", ""))]),
         }
         for patch in (execution.get("applied_patches") or patch_records)
     ]
+    report_actual_proof_status = _aggregate_actual_proof_status(final_patches)
     commands = state_space_commands(
         patch_specs=patches,
         patch_records=patch_records,
@@ -124,6 +140,9 @@ def build_state_space_report(
             "watch_symbols": tuple_to_list(unique_list([*watch_symbols, *[patch["base_symbol"] for patch in final_patches if patch.get("base_symbol")]])),
             "base_save_state": display_path(base_state, root=root) if base_state is not None else "",
             "out_state": display_path(output_state, root=root) if output_state is not None else out_state,
+            "actual_proof_status": report_actual_proof_status,
+            "expected_proof_status": STATE_SPACE_EXPECTED_PROOF_STATUS,
+            "observed_sinks": [],
         },
         "execution": execution,
         "command_count": len(commands),
@@ -172,6 +191,10 @@ def build_patch_records(
                     "executed": False,
                     "applied": False,
                     "patch_spec": raw,
+                    "actual_proof_status": PROOF_STATUS_PLANNED_ONLY,
+                    "expected_proof_status": STATE_SPACE_EXPECTED_PROOF_STATUS,
+                    "observed_sinks": [],
+                    "expected_sinks": [str(spec["base_symbol"])],
                 }
             )
             errors.extend(record.get("errors", []))
@@ -293,17 +316,21 @@ def execute_state_space(
         for patch in patches:
             write_byte(pyboy, bank=int(patch["bank"]), address=int(patch["address"]), value=int(patch["value"]))
             observed = read_byte(pyboy, bank=int(patch["bank"]), address=int(patch["address"]))
+            verified = observed == int(patch["value"])
             applied.append(
                 {
                     **patch,
                     "observed": observed,
                     "observed_hex": f"{observed:02X}",
-                    "verified": observed == int(patch["value"]),
+                    "verified": verified,
                     "executed": True,
                     "applied": True,
                     "status": "applied",
                     "materialization_status": "applied",
                     "out_state": display_path(output_state, root=root),
+                    "actual_proof_status": (
+                        PROOF_STATUS_STATE_MATERIALIZED if verified else PROOF_STATUS_READY_TO_RUN
+                    ),
                 }
             )
         output_state.parent.mkdir(parents=True, exist_ok=True)
@@ -391,3 +418,40 @@ def state_space_commands(
 
 def tuple_to_list(values: list[str]) -> list[str]:
     return list(values)
+
+
+def _resolve_actual_proof_status(patch: dict[str, Any], *, execution_executed: bool) -> str:
+    """Return the current proof status for a state-space patch record.
+
+    Promotion rules mirror content_state:
+      - execution verified the patch -> state_materialized
+      - patch parsed cleanly, ready to write -> ready_to_run (after execute)
+        or planned_only (no execution yet)
+      - patch failed to resolve -> planned_only
+    """
+    if patch.get("errors"):
+        return PROOF_STATUS_PLANNED_ONLY
+    existing = str(patch.get("actual_proof_status", ""))
+    if existing == PROOF_STATUS_STATE_MATERIALIZED:
+        return PROOF_STATUS_STATE_MATERIALIZED
+    if execution_executed and patch.get("verified"):
+        return PROOF_STATUS_STATE_MATERIALIZED
+    if execution_executed:
+        return PROOF_STATUS_READY_TO_RUN
+    return PROOF_STATUS_PLANNED_ONLY
+
+
+def _aggregate_actual_proof_status(patches: list[dict[str, Any]]) -> str:
+    """Aggregate per-patch proof statuses into a single state-space status.
+
+    The aggregate floor is the lowest-progressed patch — a state-space report
+    is only state_materialized if every patch verified.
+    """
+    if not patches:
+        return PROOF_STATUS_PLANNED_ONLY
+    statuses = {str(patch.get("actual_proof_status", PROOF_STATUS_PLANNED_ONLY)) for patch in patches}
+    if statuses == {PROOF_STATUS_STATE_MATERIALIZED}:
+        return PROOF_STATUS_STATE_MATERIALIZED
+    if PROOF_STATUS_READY_TO_RUN in statuses or PROOF_STATUS_STATE_MATERIALIZED in statuses:
+        return PROOF_STATUS_READY_TO_RUN
+    return PROOF_STATUS_PLANNED_ONLY

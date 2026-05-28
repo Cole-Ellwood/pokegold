@@ -5,8 +5,22 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT, keyword_matches, triage_request
+from .content_scenarios import (
+    PROOF_STATUS_PLANNED_ONLY,
+    PROOF_STATUS_READY_TO_RUN,
+    PROOF_STATUS_STATE_MATERIALIZED,
+)
 from .provenance import build_provenance_report
 from .reporting import load_reports
+
+
+MIRROR_STATUS_NOT_RUN = "not_run"
+MIRROR_STATUS_PLANNED_ONLY = "planned_only"
+MIRROR_STATUS_READY_TO_RUN = "ready_to_run"
+MIRROR_STATUS_STATE_MATERIALIZED = "state_materialized"
+MIRROR_STATUS_INCONCLUSIVE = "inconclusive"
+MIRROR_STATUS_PASSED = "passed"
+MIRROR_STATUS_FAILED = "failed"
 
 
 @dataclass(frozen=True)
@@ -168,10 +182,15 @@ def build_compare_plan(
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     symptom: str = "",
+    runtime_observations: tuple[dict[str, Any], ...] = (),
     root: Path = ROOT,
 ) -> dict[str, Any]:
     loaded_reports, report_errors = load_reports(reports=reports, root=root)
-    matches = content_state_mirror_matches(loaded_reports)
+    observations = _collect_runtime_observations(
+        loaded_reports=loaded_reports,
+        runtime_observations=runtime_observations,
+    )
+    matches = content_state_mirror_matches(loaded_reports, runtime_observations=observations)
     matches.extend(match_mirrors(
         changed_files=changed_files,
         symbols=symbols,
@@ -239,7 +258,12 @@ def build_compare_plan(
     }
 
 
-def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def content_state_mirror_matches(
+    loaded_reports: list[dict[str, Any]],
+    *,
+    runtime_observations: dict[str, list[str]] | None = None,
+) -> list[dict[str, Any]]:
+    observations_by_scenario = runtime_observations or {}
     matches = []
     for loaded in loaded_reports:
         data = loaded.get("data", {})
@@ -269,6 +293,17 @@ def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[d
         execution = data.get("execution") if isinstance(data.get("execution"), dict) else {}
         out_state = str(execution.get("out_state") or data.get("out_state") or "")
         executed = bool(data.get("executed") or execution.get("executed"))
+        expected_sinks = _collect_expected_sinks(materializations)
+        observed_sinks = _collect_observed_sinks_for_scenarios(
+            scenario_ids,
+            observations_by_scenario=observations_by_scenario,
+        )
+        actual_proof_status_floor = _materialization_proof_status_floor(materializations, executed=executed)
+        mirror_status = _mirror_status_for(
+            expected_sinks=expected_sinks,
+            observed_sinks=observed_sinks,
+            actual_proof_status=actual_proof_status_floor,
+        )
         commands = [
             command
             for materialization in materializations[:6]
@@ -281,15 +316,30 @@ def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[d
             ],
             *content_state_watch_commands(out_state=out_state, patch_symbols=patch_symbols),
         ]
-        gaps = []
+        gaps: list[str] = []
         if not executed:
             gaps.append(
                 "Content-state patches are planned but no patched save state was executed; run the content-state --execute command before treating this as final emulator behavior."
             )
+        runtime_evidence_gaps: list[str] = []
+        if mirror_status != MIRROR_STATUS_PASSED:
+            missing = sorted(set(expected_sinks) - set(observed_sinks))
+            if missing:
+                runtime_evidence_gaps.append(
+                    "Runtime evidence missing for expected output sinks; supply replay/instruction-trace runtime_observations for "
+                    + ", ".join(missing[:6])
+                    + " before promoting this behavioral mirror to passed."
+                )
+            elif not observed_sinks:
+                runtime_evidence_gaps.append(
+                    "Runtime evidence missing; no observed_sinks were supplied for the content-state scenarios."
+                )
         evidence = [
             f"report={source}",
             f"scenarios={len(scenario_ids)}",
             f"patches={sum(len(item.get('patches', [])) for item in materializations)}",
+            f"actual_proof_status={actual_proof_status_floor}",
+            f"mirror_status={mirror_status}",
         ]
         if out_state:
             evidence.append(f"state={out_state}")
@@ -304,9 +354,175 @@ def content_state_mirror_matches(loaded_reports: list[dict[str, Any]]) -> list[d
                 "commands": unique_list(commands),
                 "materialization_commands": unique_list(materialization_commands),
                 "gaps": gaps,
+                "runtime_evidence_gaps": runtime_evidence_gaps,
+                "mirror_status": mirror_status,
+                "actual_proof_status": actual_proof_status_floor,
+                "expected_proof_status": "runtime_observed",
+                "expected_sinks": sorted(expected_sinks),
+                "observed_sinks": sorted(observed_sinks),
+                "scenario_ids": scenario_ids,
             }
         )
     return matches
+
+
+def _collect_runtime_observations(
+    *,
+    loaded_reports: list[dict[str, Any]],
+    runtime_observations: tuple[dict[str, Any], ...],
+) -> dict[str, list[str]]:
+    """Aggregate observed sinks per scenario from reports and explicit args.
+
+    Observations may arrive two ways:
+      - As an explicit kwarg on build_compare_plan (`runtime_observations`).
+      - As a top-level `runtime_observations` list on any loaded report
+        (e.g. a replay report or an instruction-trace report can append
+        observed sinks per scenario_id).
+
+    Both shapes collapse into the same per-scenario-id dictionary.
+    """
+    by_scenario: dict[str, set[str]] = {}
+    sources: list[Any] = list(runtime_observations)
+    for loaded in loaded_reports:
+        data = loaded.get("data", {})
+        if not isinstance(data, dict):
+            continue
+        report_observations = data.get("runtime_observations")
+        if isinstance(report_observations, list):
+            sources.extend(item for item in report_observations if isinstance(item, dict))
+    for entry in sources:
+        if not isinstance(entry, dict):
+            continue
+        scenario_id = str(entry.get("scenario_id", ""))
+        if not scenario_id:
+            continue
+        observed = entry.get("observed_sinks") or []
+        if not isinstance(observed, list):
+            continue
+        bucket = by_scenario.setdefault(scenario_id, set())
+        for sink in observed:
+            bucket.add(str(sink))
+    return {scenario_id: sorted(sinks) for scenario_id, sinks in by_scenario.items()}
+
+
+def _collect_expected_sinks(materializations: list[dict[str, Any]]) -> list[str]:
+    """Return the union of expected_sinks across every materialization route."""
+    sinks: list[str] = []
+    seen: set[str] = set()
+    for materialization in materializations:
+        route = materialization.get("event_runtime_materialization") if isinstance(materialization, dict) else None
+        if isinstance(route, dict):
+            for sink in route.get("expected_sinks") or []:
+                text = str(sink)
+                if text and text not in seen:
+                    seen.add(text)
+                    sinks.append(text)
+            continue
+        # Fallback for reports without the explicit route: derive sinks from patch
+        # symbols so older content_state JSON still aggregates the right floor.
+        for patch in dict_items(materialization.get("patches")):
+            base_symbol = str(patch.get("base_symbol") or patch.get("symbol") or "")
+            if base_symbol and base_symbol not in seen:
+                seen.add(base_symbol)
+                sinks.append(base_symbol)
+    return sinks
+
+
+def _collect_observed_sinks_for_scenarios(
+    scenario_ids: list[str],
+    *,
+    observations_by_scenario: dict[str, list[str]],
+) -> list[str]:
+    if not scenario_ids:
+        flat: list[str] = []
+        seen: set[str] = set()
+        for sinks in observations_by_scenario.values():
+            for sink in sinks:
+                if sink not in seen:
+                    seen.add(sink)
+                    flat.append(sink)
+        return flat
+    seen: set[str] = set()
+    out: list[str] = []
+    for scenario_id in scenario_ids:
+        for sink in observations_by_scenario.get(scenario_id, []):
+            if sink not in seen:
+                seen.add(sink)
+                out.append(sink)
+    return out
+
+
+def _materialization_proof_status_floor(
+    materializations: list[dict[str, Any]],
+    *,
+    executed: bool,
+) -> str:
+    """Return the lowest actual_proof_status across the materializations.
+
+    The mirror's overall status is gated by the weakest link — any
+    planned_only materialization keeps the floor at planned_only.
+    """
+    if not materializations:
+        return PROOF_STATUS_PLANNED_ONLY
+    statuses: set[str] = set()
+    for materialization in materializations:
+        status = str(
+            materialization.get("actual_proof_status")
+            or _infer_status_from_materialization(materialization, executed=executed)
+        )
+        statuses.add(status)
+    if statuses == {PROOF_STATUS_STATE_MATERIALIZED}:
+        return PROOF_STATUS_STATE_MATERIALIZED
+    if PROOF_STATUS_PLANNED_ONLY in statuses:
+        return PROOF_STATUS_PLANNED_ONLY
+    if PROOF_STATUS_READY_TO_RUN in statuses:
+        return PROOF_STATUS_READY_TO_RUN
+    return PROOF_STATUS_STATE_MATERIALIZED
+
+
+def _infer_status_from_materialization(
+    materialization: dict[str, Any],
+    *,
+    executed: bool,
+) -> str:
+    """Back-fill actual_proof_status for older content_state payloads."""
+    if not isinstance(materialization, dict):
+        return PROOF_STATUS_PLANNED_ONLY
+    status = str(materialization.get("status", ""))
+    if status == "ready":
+        return PROOF_STATUS_STATE_MATERIALIZED if executed else PROOF_STATUS_READY_TO_RUN
+    return PROOF_STATUS_PLANNED_ONLY
+
+
+def _mirror_status_for(
+    *,
+    expected_sinks: list[str],
+    observed_sinks: list[str],
+    actual_proof_status: str,
+) -> str:
+    """Map the collected evidence onto the mirror_status vocabulary.
+
+    Passing requires the floor to be at least state_materialized AND every
+    expected sink to be observed. Anything weaker stays at one of the
+    interim statuses so consumers know exactly what evidence is missing.
+    """
+    expected_set = set(expected_sinks)
+    observed_set = set(observed_sinks)
+    if actual_proof_status == PROOF_STATUS_PLANNED_ONLY:
+        if observed_set and expected_set.issubset(observed_set):
+            return MIRROR_STATUS_INCONCLUSIVE
+        return MIRROR_STATUS_PLANNED_ONLY
+    if not expected_set:
+        if observed_set:
+            return MIRROR_STATUS_INCONCLUSIVE
+        return MIRROR_STATUS_READY_TO_RUN if actual_proof_status == PROOF_STATUS_READY_TO_RUN else MIRROR_STATUS_STATE_MATERIALIZED
+    if observed_set and expected_set.issubset(observed_set):
+        return MIRROR_STATUS_PASSED
+    if observed_set:
+        return MIRROR_STATUS_INCONCLUSIVE
+    if actual_proof_status == PROOF_STATUS_READY_TO_RUN:
+        return MIRROR_STATUS_READY_TO_RUN
+    return MIRROR_STATUS_STATE_MATERIALIZED
 
 
 def content_state_expect_commands(*, source: str, materialization: dict[str, Any]) -> list[str]:

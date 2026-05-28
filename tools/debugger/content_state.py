@@ -7,6 +7,13 @@ from typing import Any
 from tools.trace import runtime as trace_runtime
 
 from .catalog import ROOT
+from .content_scenarios import (
+    EVENT_RUNTIME_ROUTE_KIND,
+    PROOF_STATUS_PLANNED_ONLY,
+    PROOF_STATUS_READY_TO_RUN,
+    PROOF_STATUS_STATE_MATERIALIZED,
+    event_runtime_materialization_route,
+)
 from .ingest import sha256_file
 from .localize import normalize_path
 from .minimize import load_scenario_files, unique_list
@@ -120,6 +127,7 @@ def build_content_state_report(
     ) if execute and executable else skipped_execution(execute=execute, out_state=out_state)
     errors.extend(execution.get("errors", []))
     warnings.extend(execution.get("warnings", []))
+    materializations = promote_route_after_execution(materializations, execution=execution)
     commands = materialization_commands(
         reports=reports,
         scenarios=scenarios,
@@ -213,48 +221,177 @@ def materializations_for_scenario(
         if kind != "map_position":
             if kind == "script_entry":
                 out.append(
-                    script_entry_materialization(
-                        scenario=scenario,
+                    attach_event_runtime_route(
+                        script_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                            symbol_table=symbol_table,
+                            symbols_path=symbols_path,
+                            root=root,
+                        ),
                         precondition=precondition,
                         scenario_id=scenario_id,
-                        symbol_table=symbol_table,
-                        symbols_path=symbols_path,
-                        root=root,
                     )
                 )
                 continue
             if kind == "movement_entry":
                 out.append(
-                    movement_entry_materialization(
-                        scenario=scenario,
+                    attach_event_runtime_route(
+                        movement_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                            symbol_table=symbol_table,
+                            symbols_path=symbols_path,
+                            root=root,
+                        ),
                         precondition=precondition,
                         scenario_id=scenario_id,
-                        symbol_table=symbol_table,
-                        symbols_path=symbols_path,
-                        root=root,
                     )
                 )
                 continue
             if kind == "audio_engine_entry":
-                out.append(audio_engine_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
+                out.append(
+                    attach_event_runtime_route(
+                        audio_engine_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id),
+                        precondition=precondition,
+                        scenario_id=scenario_id,
+                    )
+                )
                 continue
             if kind == "asset_loader_entry":
-                out.append(asset_loader_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
+                out.append(
+                    attach_event_runtime_route(
+                        asset_loader_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id),
+                        precondition=precondition,
+                        scenario_id=scenario_id,
+                    )
+                )
                 continue
-            out.append(non_patch_materialization(scenario, precondition, reason=f"unsupported precondition kind: {kind}"))
+            out.append(
+                attach_event_runtime_route(
+                    non_patch_materialization(scenario, precondition, reason=f"unsupported precondition kind: {kind}"),
+                    precondition=precondition,
+                    scenario_id=scenario_id,
+                )
+            )
             continue
         out.append(
-            map_position_materialization(
-                scenario=scenario,
+            attach_event_runtime_route(
+                map_position_materialization(
+                    scenario=scenario,
+                    precondition=precondition,
+                    scenario_id=scenario_id,
+                    map_index=map_index,
+                    symbol_table=symbol_table,
+                    symbols_path=symbols_path,
+                    root=root,
+                ),
                 precondition=precondition,
                 scenario_id=scenario_id,
-                map_index=map_index,
-                symbol_table=symbol_table,
-                symbols_path=symbols_path,
-                root=root,
             )
         )
     return out
+
+
+def attach_event_runtime_route(
+    materialization: dict[str, Any],
+    *,
+    precondition: dict[str, Any],
+    scenario_id: str,
+) -> dict[str, Any]:
+    """Attach (or rebuild) the event-runtime materialization route to a record.
+
+    The materialization's `event_runtime_materialization` is preserved if the
+    upstream content-scenarios pass already attached it; otherwise it is built
+    on the fly from precondition data so reports loaded from older or
+    hand-crafted scenarios still surface the same proof-state vocabulary.
+
+    `actual_proof_status` is initialized from the materialization's `status`:
+    `ready` -> `ready_to_run`, anything else -> `planned_only`. Execution
+    evidence promotes this further in `promote_route_after_execution`.
+    """
+    route = precondition.get("event_runtime_materialization") if isinstance(precondition, dict) else None
+    if not isinstance(route, dict):
+        route = event_runtime_materialization_route(
+            precondition_kind=str(precondition.get("kind", "") if isinstance(precondition, dict) else ""),
+            precondition_id=str(precondition.get("id", "") if isinstance(precondition, dict) else ""),
+            watch_symbols=tuple(precondition.get("watch_symbols", []) if isinstance(precondition, dict) else ()),
+            values=precondition.get("values", {}) if isinstance(precondition, dict) and isinstance(precondition.get("values"), dict) else {},
+            scenario_id=scenario_id,
+            source_file=str(materialization.get("source_file", "")),
+            actual_proof_status=PROOF_STATUS_PLANNED_ONLY,
+        )
+    else:
+        route = dict(route)
+        route.setdefault("kind", EVENT_RUNTIME_ROUTE_KIND)
+        route.setdefault("expected_sinks", list(precondition.get("watch_symbols", [])))
+        route.setdefault("observed_sinks", [])
+        route.setdefault("required_inputs", ["base_save_state", "scenario_id", "symbol_table"])
+        route.setdefault("expected_proof_commands", [])
+        route.setdefault("expected_proof_status", "runtime_observed")
+        route["scenario_id"] = scenario_id or route.get("scenario_id", "")
+    status = str(materialization.get("status", ""))
+    has_errors = bool(materialization.get("errors"))
+    if status == "ready" and not has_errors:
+        proof_status = PROOF_STATUS_READY_TO_RUN
+    else:
+        proof_status = PROOF_STATUS_PLANNED_ONLY
+    route["actual_proof_status"] = proof_status
+    materialization = dict(materialization)
+    materialization["event_runtime_materialization"] = route
+    materialization["actual_proof_status"] = proof_status
+    return materialization
+
+
+def promote_route_after_execution(
+    materializations: list[dict[str, Any]],
+    *,
+    execution: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Bump each materialization's proof status to state_materialized when verified.
+
+    Only materializations that were ready_to_run *and* whose patches all
+    verified during execution earn `state_materialized`. Materializations that
+    were planned_only stay planned_only; verification failures stay
+    ready_to_run. The route's `actual_proof_status` mirrors the materialization
+    field, so consumers can read either.
+    """
+    if not isinstance(execution, dict) or not execution.get("executed"):
+        return materializations
+    applied = {
+        (str(patch.get("symbol", "")), int(patch.get("address", 0))): bool(patch.get("verified"))
+        for patch in dict_items(execution.get("applied_patches"))
+    }
+    if not applied:
+        return materializations
+    promoted: list[dict[str, Any]] = []
+    for materialization in materializations:
+        record = dict(materialization)
+        if record.get("actual_proof_status") != PROOF_STATUS_READY_TO_RUN:
+            promoted.append(record)
+            continue
+        patches = dict_items(record.get("patches"))
+        if not patches:
+            promoted.append(record)
+            continue
+        all_verified = True
+        for patch in patches:
+            key = (str(patch.get("symbol", "")), int(patch.get("address", 0)))
+            if not applied.get(key, False):
+                all_verified = False
+                break
+        if not all_verified:
+            promoted.append(record)
+            continue
+        record["actual_proof_status"] = PROOF_STATUS_STATE_MATERIALIZED
+        route = dict(record.get("event_runtime_materialization") or {})
+        if route:
+            route["actual_proof_status"] = PROOF_STATUS_STATE_MATERIALIZED
+            record["event_runtime_materialization"] = route
+        promoted.append(record)
+    return promoted
 
 
 def selected_precondition_kinds(scenarios: list[dict[str, Any]]) -> set[str]:

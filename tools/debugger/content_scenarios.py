@@ -61,6 +61,203 @@ SCENARIO_TRACE_HELPERS = {
     "asset_materialization": ("Request2bpp", "Get1bpp", "Decompress"),
 }
 
+# Explicit proof-status vocabulary used by every content scenario, content-state
+# materialization, generic state-space patch, and compare/mirror match. The
+# progression is monotonic: planned_only -> ready_to_run -> state_materialized
+# -> executed -> observed. Compare/mirror only marks a behavioral mirror passed
+# from the observed end of this progression.
+PROOF_STATUS_PLANNED_ONLY = "planned_only"
+PROOF_STATUS_READY_TO_RUN = "ready_to_run"
+PROOF_STATUS_STATE_MATERIALIZED = "state_materialized"
+PROOF_STATUS_EXECUTED = "executed"
+PROOF_STATUS_OBSERVED = "observed"
+
+PROOF_STATUS_PROGRESSION = (
+    PROOF_STATUS_PLANNED_ONLY,
+    PROOF_STATUS_READY_TO_RUN,
+    PROOF_STATUS_STATE_MATERIALIZED,
+    PROOF_STATUS_EXECUTED,
+    PROOF_STATUS_OBSERVED,
+)
+
+EVENT_RUNTIME_ROUTE_KIND = "event_runtime_materialization"
+
+RUNTIME_ROUTE_PROFILES: dict[str, dict[str, Any]] = {
+    "script_entry": {
+        "runtime_route": "script_engine",
+        "expected_proof_status": "instruction_observed",
+        "expected_sinks": ("wScriptPos", "wScriptVar", "wScriptBank", "wScriptRunning", "wScriptMode"),
+        "trace_symbols": ("ScriptEvents", "RunScriptCommand", "CallScript"),
+        "required_inputs": ("base_save_state", "scenario_id", "symbol_table"),
+        "evidence_kinds": ("instruction_trace", "watch"),
+    },
+    "movement_entry": {
+        "runtime_route": "movement_engine",
+        "expected_proof_status": "instruction_observed",
+        "expected_sinks": (
+            "wMovementDataAddress",
+            "wMovementPointer",
+            "wMovementObject",
+            "wMovementDataBank",
+            "wScriptMode",
+        ),
+        "trace_symbols": ("ApplyMovement", "GetMovementData", "HandleMovementData", "WaitScriptMovement"),
+        "required_inputs": ("base_save_state", "scenario_id", "symbol_table"),
+        "evidence_kinds": ("instruction_trace", "watch"),
+    },
+    "map_position": {
+        "runtime_route": "overworld_event_engine",
+        "expected_proof_status": "runtime_observed",
+        "expected_sinks": ("wMapGroup", "wMapNumber", "wXCoord", "wYCoord"),
+        "trace_symbols": (
+            "WarpCheck",
+            "CheckCurrentMapCoordEvents",
+            "CheckFacingBGEvent",
+            "TryObjectEvent",
+            "ReadMapEvents",
+            "CallScript",
+        ),
+        "required_inputs": ("base_save_state", "scenario_id", "symbol_table"),
+        "evidence_kinds": ("watch", "instruction_trace"),
+    },
+    "audio_engine_entry": {
+        "runtime_route": "audio_engine",
+        "expected_proof_status": "runtime_observed",
+        "expected_sinks": (
+            "wMusicID",
+            "wMusicBank",
+            "wChannel1Flags1",
+            "wChannel2Flags1",
+            "wChannel3Flags1",
+            "wChannel4Flags1",
+        ),
+        "trace_symbols": ("PlayMusic", "_PlayMusic"),
+        "required_inputs": ("base_save_state", "scenario_id", "symbol_table"),
+        "evidence_kinds": ("watch", "instruction_trace"),
+    },
+    "asset_loader_entry": {
+        "runtime_route": "asset_loader",
+        "expected_proof_status": "runtime_observed",
+        "expected_sinks": (
+            "wRequested2bppSource",
+            "wRequested2bppDest",
+            "wRequested2bppSize",
+            "wRequested1bppSource",
+            "wRequested1bppDest",
+            "wRequested1bppSize",
+        ),
+        "trace_symbols": ("Request2bpp", "Get1bpp", "Decompress"),
+        "required_inputs": ("base_save_state", "scenario_id", "symbol_table"),
+        "evidence_kinds": ("watch", "instruction_trace"),
+    },
+}
+
+
+def event_runtime_materialization_route(
+    *,
+    precondition_kind: str,
+    precondition_id: str,
+    watch_symbols: tuple[str, ...] | list[str],
+    values: dict[str, Any],
+    scenario_id: str = "",
+    source_file: str = "",
+    actual_proof_status: str = PROOF_STATUS_PLANNED_ONLY,
+    observed_sinks: tuple[str, ...] | list[str] = (),
+) -> dict[str, Any]:
+    """Build the event-runtime materialization route record for a precondition.
+
+    The route names the runtime engine that must be re-entered after WRAM
+    patches are applied, lists the required inputs, expected proof commands,
+    and the sink watch symbols whose observation closes the route.
+
+    The returned dict is JSON-safe. `actual_proof_status` always starts at
+    planned_only; content-state and runtime evidence callers update it as
+    evidence accumulates.
+    """
+    profile = RUNTIME_ROUTE_PROFILES.get(precondition_kind, {})
+    runtime_route = str(profile.get("runtime_route", precondition_kind or "content_runtime"))
+    expected_proof_status = str(profile.get("expected_proof_status", "runtime_observed"))
+    profile_sinks = tuple(profile.get("expected_sinks") or ())
+    expected_sinks = unique_list([*profile_sinks, *watch_symbols])
+    trace_symbols = tuple(profile.get("trace_symbols") or ())
+    required_inputs = list(profile.get("required_inputs") or ("base_save_state", "scenario_id", "symbol_table"))
+    evidence_kinds = list(profile.get("evidence_kinds") or ("watch",))
+    proof_commands = build_runtime_proof_commands(
+        scenario_id=scenario_id,
+        source_file=source_file,
+        precondition_kind=precondition_kind,
+        watch_symbols=expected_sinks,
+        trace_symbols=trace_symbols,
+    )
+    return {
+        "kind": EVENT_RUNTIME_ROUTE_KIND,
+        "runtime_route": runtime_route,
+        "precondition_id": precondition_id,
+        "precondition_kind": precondition_kind,
+        "scenario_id": scenario_id,
+        "source_file": source_file,
+        "required_inputs": required_inputs,
+        "state_preconditions": [
+            {
+                "id": precondition_id,
+                "kind": precondition_kind,
+                "watch_symbols": list(watch_symbols),
+                "values": dict(values),
+            }
+        ],
+        "expected_proof_commands": list(proof_commands),
+        "expected_proof_status": expected_proof_status,
+        "actual_proof_status": actual_proof_status,
+        "expected_sinks": list(expected_sinks),
+        "observed_sinks": list(observed_sinks),
+        "evidence_kinds": list(evidence_kinds),
+    }
+
+
+def build_runtime_proof_commands(
+    *,
+    scenario_id: str,
+    source_file: str,
+    precondition_kind: str,
+    watch_symbols: list[str],
+    trace_symbols: tuple[str, ...],
+) -> list[str]:
+    scenario_arg = f" --scenario-id {scenario_id}" if scenario_id else ""
+    source_arg = f" --changed-file {source_file}" if source_file else ""
+    watch_args = " ".join(f"--watch-symbol {symbol}" for symbol in watch_symbols[:6])
+    trace_args = " ".join(f"--symbol {symbol}" for symbol in trace_symbols[:4])
+    materialize_args = (
+        f" --scenario-id {scenario_id}" if scenario_id else ""
+    ) + (
+        f" --base-save-state <base_state>"
+    )
+    state_report = (
+        f".local\\tmp\\debugger_content_state_{scenario_id}.json"
+        if scenario_id else "<state-report.json>"
+    )
+    state_path = (
+        f".local\\tmp\\debugger_content_state_{scenario_id}.state"
+        if scenario_id else "<patched-state>"
+    )
+    commands: list[str] = []
+    commands.append(
+        "python -m tools.debugger content-state"
+        f"{materialize_args} --out-state {state_path} --execute --json-out {state_report}"
+    )
+    if trace_args:
+        commands.append(
+            "python -m tools.debugger trace-instructions "
+            f"--report {state_report}{scenario_arg} {trace_args} {watch_args} "
+            f"--save-state {state_path} --execute --require-hit"
+        )
+    if watch_args:
+        commands.append(
+            "python -m tools.debugger replay "
+            f"--report {state_report}{scenario_arg}{source_arg} {watch_args} "
+            f"--save-state {state_path} --execute-watch"
+        )
+    return [" ".join(command.split()) for command in commands if command.strip()]
+
 
 def build_content_scenario_report(
     *,
@@ -428,6 +625,7 @@ def scenario_record(
         source_file=source_file,
         label=label,
         trigger=trigger,
+        scenario_id=scenario_id,
     )
     return {
         "id": scenario_id,
@@ -460,6 +658,7 @@ def state_preconditions_for_scenario(
     source_file: str,
     label: str,
     trigger: dict[str, Any],
+    scenario_id: str = "",
 ) -> list[dict[str, Any]]:
     if scenario_type.startswith("map_"):
         values = {
@@ -470,95 +669,146 @@ def state_preconditions_for_scenario(
             if trigger.get(key) not in {"", None}:
                 values[key] = trigger[key]
         return [
-            {
-                "id": f"{scenario_type}_position",
-                "surface": "content_static",
-                "kind": "map_position",
-                "status": "planned",
-                "values": values,
-                "watch_symbols": list(MAP_STATE_WATCH_SYMBOLS),
-                "notes": [
-                    "Load or synthesize an overworld state on the source map before firing the trigger.",
-                    "Use wMapGroup/wMapNumber plus wXCoord/wYCoord watches to prove the positioned state and transition.",
-                ],
-            }
+            _with_event_runtime_route(
+                {
+                    "id": f"{scenario_type}_position",
+                    "surface": "content_static",
+                    "kind": "map_position",
+                    "status": "planned",
+                    "values": values,
+                    "watch_symbols": list(MAP_STATE_WATCH_SYMBOLS),
+                    "notes": [
+                        "Load or synthesize an overworld state on the source map before firing the trigger.",
+                        "Use wMapGroup/wMapNumber plus wXCoord/wYCoord watches to prove the positioned state and transition.",
+                    ],
+                },
+                scenario_id=scenario_id,
+                source_file=source_file,
+            )
         ]
     if scenario_type == "audio_channel_block":
         return [
-            {
-                "id": "audio_channel_runtime",
-                "surface": "content_static",
-                "kind": "audio_engine_entry",
-                "status": "planned",
-                "values": {
-                    "music_label": label,
-                    "source_file": source_file,
-                    "channel_count": trigger.get("channel_count", ""),
+            _with_event_runtime_route(
+                {
+                    "id": "audio_channel_runtime",
+                    "surface": "content_static",
+                    "kind": "audio_engine_entry",
+                    "status": "planned",
+                    "values": {
+                        "music_label": label,
+                        "source_file": source_file,
+                        "channel_count": trigger.get("channel_count", ""),
+                    },
+                    "watch_symbols": list(AUDIO_STATE_WATCH_SYMBOLS),
+                    "notes": [
+                        "Route PlayMusic or the owning caller to this channel block before treating source checks as audio runtime proof.",
+                    ],
                 },
-                "watch_symbols": list(AUDIO_STATE_WATCH_SYMBOLS),
-                "notes": [
-                    "Route PlayMusic or the owning caller to this channel block before treating source checks as audio runtime proof.",
-                ],
-            }
+                scenario_id=scenario_id,
+                source_file=source_file,
+            )
         ]
     if scenario_type == "asset_materialization":
         return [
-            {
-                "id": "asset_loader_runtime",
-                "surface": "content_static",
-                "kind": "asset_loader_entry",
-                "status": "planned",
-                "values": {
-                    "asset": trigger.get("asset", ""),
-                    "source_file": source_file,
-                    "label": label,
+            _with_event_runtime_route(
+                {
+                    "id": "asset_loader_runtime",
+                    "surface": "content_static",
+                    "kind": "asset_loader_entry",
+                    "status": "planned",
+                    "values": {
+                        "asset": trigger.get("asset", ""),
+                        "source_file": source_file,
+                        "label": label,
+                    },
+                    "watch_symbols": list(ASSET_REQUEST_WATCH_SYMBOLS),
+                    "notes": [
+                        "Route the appropriate graphics/data loader to this INCBIN payload before treating the scenario as runtime materialized.",
+                    ],
                 },
-                "watch_symbols": list(ASSET_REQUEST_WATCH_SYMBOLS),
-                "notes": [
-                    "Route the appropriate graphics/data loader to this INCBIN payload before treating the scenario as runtime materialized.",
-                ],
-            }
+                scenario_id=scenario_id,
+                source_file=source_file,
+            )
         ]
     if scenario_type == "script_command_stream":
         return [
-            {
-                "id": "script_engine_entry",
-                "surface": "content_static",
-                "kind": "script_entry",
-                "status": "planned",
-                "values": {
-                    "script_label": trigger.get("script", label),
-                    "source_file": source_file,
-                    "command_count": trigger.get("command_count", ""),
+            _with_event_runtime_route(
+                {
+                    "id": "script_engine_entry",
+                    "surface": "content_static",
+                    "kind": "script_entry",
+                    "status": "planned",
+                    "values": {
+                        "script_label": trigger.get("script", label),
+                        "source_file": source_file,
+                        "command_count": trigger.get("command_count", ""),
+                    },
+                    "watch_symbols": ["wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptVar"],
+                    "notes": [
+                        "Patch the script engine entry state so ScriptEvents starts reading from this script label.",
+                        "Use RunScriptCommand instruction tracing plus wScriptPos/wScriptVar watches to prove semantic command execution.",
+                    ],
                 },
-                "watch_symbols": ["wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptVar"],
-                "notes": [
-                    "Patch the script engine entry state so ScriptEvents starts reading from this script label.",
-                    "Use RunScriptCommand instruction tracing plus wScriptPos/wScriptVar watches to prove semantic command execution.",
-                ],
-            }
+                scenario_id=scenario_id,
+                source_file=source_file,
+            )
         ]
     if scenario_type == "movement_data":
         return [
-            {
-                "id": "movement_engine_entry",
-                "surface": "content_static",
-                "kind": "movement_entry",
-                "status": "planned",
-                "values": {
-                    "movement_label": trigger.get("movement", label),
-                    "source_file": source_file,
-                    "command_count": trigger.get("command_count", ""),
-                    "object_id": 0,
+            _with_event_runtime_route(
+                {
+                    "id": "movement_engine_entry",
+                    "surface": "content_static",
+                    "kind": "movement_entry",
+                    "status": "planned",
+                    "values": {
+                        "movement_label": trigger.get("movement", label),
+                        "source_file": source_file,
+                        "command_count": trigger.get("command_count", ""),
+                        "object_id": 0,
+                    },
+                    "watch_symbols": list(MOVEMENT_STATE_WATCH_SYMBOLS),
+                    "notes": [
+                        "Patch the movement engine pointer state so movement playback can read from this movement label.",
+                        "Use ApplyMovement/GetMovementData/HandleMovementData tracing plus movement WRAM watches to prove command execution.",
+                    ],
                 },
-                "watch_symbols": list(MOVEMENT_STATE_WATCH_SYMBOLS),
-                "notes": [
-                    "Patch the movement engine pointer state so movement playback can read from this movement label.",
-                    "Use ApplyMovement/GetMovementData/HandleMovementData tracing plus movement WRAM watches to prove command execution.",
-                ],
-            }
+                scenario_id=scenario_id,
+                source_file=source_file,
+            )
         ]
     return []
+
+
+def _with_event_runtime_route(
+    precondition: dict[str, Any],
+    *,
+    scenario_id: str,
+    source_file: str,
+) -> dict[str, Any]:
+    """Attach the explicit event-runtime materialization route to a precondition.
+
+    The precondition is returned with two added keys:
+
+    - `event_runtime_materialization`: the full route record (kind, runtime_route,
+      required_inputs, state_preconditions, expected_proof_commands,
+      expected_proof_status, actual_proof_status, expected_sinks, observed_sinks).
+    - `actual_proof_status`: mirrors the route's status, so downstream consumers
+      can read the proof state directly off the precondition.
+    """
+    route = event_runtime_materialization_route(
+        precondition_kind=str(precondition.get("kind", "")),
+        precondition_id=str(precondition.get("id", "")),
+        watch_symbols=tuple(precondition.get("watch_symbols", [])),
+        values=precondition.get("values", {}) if isinstance(precondition.get("values"), dict) else {},
+        scenario_id=scenario_id,
+        source_file=source_file,
+        actual_proof_status=PROOF_STATUS_PLANNED_ONLY,
+    )
+    precondition = dict(precondition)
+    precondition["event_runtime_materialization"] = route
+    precondition["actual_proof_status"] = route["actual_proof_status"]
+    return precondition
 
 
 def attach_behavioral_probes(
