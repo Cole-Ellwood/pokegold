@@ -52,6 +52,24 @@ DEF V2_WPOKEDEXCAUGHT_OFF EQU $0a43
 
 DEF V2_BOX_NAMES_IN_PLAYERDATA3 EQU V2_WBOXNAMES_OFF - V2_WPLAYERDATA3_OFF
 
+; --- v2 save-format layout guards (link-time) ------------------------------
+; The v2 save image pins every field at a fixed offset (V2_*_OFF) so WRAM can
+; shrink without moving fields in the save file (old saves stay readable).
+; These asserts catch the failure mode that has no other tripwire: a region's
+; live WRAM content growing past its pinned save allocation, which would
+; overlap the next region and silently corrupt saves. The full per-field byte
+; offset map is verified post-build by check_boss_ai_memory_budget.py.
+ASSERT V2_WPLAYERDATA2_OFF == V2_WPLAYERDATA1_OFF + V2_PLAYER_DATA1_SIZE
+ASSERT V2_WPLAYERDATA3_OFF == V2_WPLAYERDATA2_OFF + V2_PLAYER_DATA2_SIZE
+ASSERT V2_WCURMAPDATA_OFF  == V2_WPLAYERDATA3_OFF + V2_PLAYER_DATA3_SIZE
+ASSERT V2_WPOKEMONDATA_OFF == V2_WCURMAPDATA_OFF  + V2_CUR_MAP_DATA_SIZE
+ASSERT V2_GAME_DATA_SIZE   == V2_WPOKEMONDATA_OFF + V2_POKEMON_DATA_SIZE
+ASSERT wPlayerData1End - wPlayerData1 <= V2_PLAYER_DATA1_SIZE
+ASSERT wPlayerData2End - wPlayerData2 <= V2_PLAYER_DATA2_SIZE
+ASSERT wPlayerData3End - wPlayerData3 <= V2_PLAYER_DATA3_SIZE
+ASSERT wCurMapDataEnd  - wCurMapData  <= V2_CUR_MAP_DATA_SIZE
+ASSERT wPokemonDataEnd - wPokemonData <= V2_POKEMON_DATA_SIZE
+
 MACRO copy_v2_save_chunk
 	ld hl, \1 + \2
 	ld de, \3
