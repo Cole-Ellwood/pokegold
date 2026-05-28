@@ -30,6 +30,24 @@ that were already fixed on master.
 - The release-smoke floor currently runs **no boss-AI behavioral check** —
   which is why these regressions were invisible.
 
+## Preservation log (2026-05-27)
+
+Spot-checking remembered work (the shiny-Gyarados→Magikarp conversion) found it
+was never committed — it had accumulated as uncommitted changes across worktrees
+and was at risk. All at-risk uncommitted work is now snapshotted into git
+(faithful as-is; rewrite + marker pre-commit guards bypassed for preservation
+only; master's committed tip `4e34e777` untouched):
+
+- `wip/master-worktree-snapshot-2026-05-27` @ `d74c3f24` — 92 files, +8,843/−3,216:
+  the Gyarados→Magikarp pass (maps/dialogue/NPCs/items/sprites/wild) plus boss-AI,
+  debugger, headless-battle, lookahead-research, and RAM-relief work. Excludes the
+  regenerable `docs/boss_ai_architecture.pdf`.
+- `claude/upbeat-williamson-ed7924` @ `768ba16a` — 12 files: boss-AI preference
+  fixtures/labels/reports, `boss_policy_move.asm`, trace-invariants audit.
+- `claude/upbeat-khorana-77400d` @ `533987d7` — 5 files: `tools/debugger` work.
+
+These are preservation snapshots, not finished work — triage and land deliberately.
+
 ## Tier A — Prevention (stop the bleeding)
 
 - **A2 — branch-currency guardrail.** `tools/audit/check_branch_currency.py`
@@ -56,6 +74,14 @@ that were already fixed on master.
   one shared integration line) to `loop_runner.py`; wire
   `tools/pokemon_mastery/pgoal_spec/{constraints,verify}.txt` and
   `C:/Users/lolno/Downloads/codex-supervisor/supervisor.ps1`. [Agent 7]
+- [ ] **A4 — uncommitted-work tripwire** (the gap this incident exposed).
+  Branch-currency (A2) checks commits-*behind*, not *dirty* worktrees — yet the
+  near-loss on 2026-05-27 was ~2,900 lines sitting uncommitted in the master
+  worktree, plus two other dirty worktrees. Add a check that warns when a
+  worktree carries significant uncommitted changes, plus a SessionEnd /
+  loop-iteration hook that commits-or-snapshots before a session or iteration
+  ends, so work cannot accumulate unprotected. Pairs with A3 (loops must `land`
+  each iteration).
 
 ## Tier B — Recover & reconcile (one-time)
 
