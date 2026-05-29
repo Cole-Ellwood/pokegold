@@ -1073,7 +1073,9 @@ def main() -> int:
         'INCLUDE "engine/battle/ai/boss_thunks.asm"',
     ):
         require_text(ROOT / "main.asm", include)
-    require_text(ROOT / "data/events/special_pointers.asm", "add_special MoveReminder")
+    # The move relearner is now the MEMO HERB item (HP_UP), not a Day-Care NPC
+    # special. Guard that the item effect still routes to the shared core.
+    require_text(ROOT / "engine/items/item_effects.asm", "farcall MoveReminderForSelectedMon")
     print("PASS: core module integration checks")
 
     require_text(ROOT / "home/region.asm", "\tld a, [wPlayerMapY]\n\tadd $4\n\tld e, a")
