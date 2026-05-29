@@ -53,7 +53,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Maps, events, and QoL scripts
 - Intent: Map scripts, specials, NPC events, progression, and reminders.
 - Start here: `maps`, `data/maps`, `data/events/special_pointers.asm`, `engine/events/move_reminder.asm`, `engine/overworld`
-- Anchors: `Special` (03:422b, `engine/events/specials.asm:1`); `SpecialsPointers` (03:4239, `data/events/special_pointers.asm:14`); `MoveReminder` (0b:444e, `engine/events/move_reminder.asm:8`)
+- Anchors: `Special` (03:422b, `engine/events/specials.asm:1`); `SpecialsPointers` (03:4239, `data/events/special_pointers.asm:14`)
 
 ### RAM, saves, and temporary battle state
 - Intent: WRAM, SRAM, VRAM, HRAM, save data, and low-memory pressure points.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 15721 | 663 |  |
-| ROMX | 1148519 | 932249 | 127 |
+| ROMX | 1148301 | 932467 | 127 |
 | SRAM | 31419 | 1349 | 4 |
 | WRAM0 | 4024 | 72 |  |
 | WRAMX | 3712 | 4480 | 2 |
@@ -150,7 +150,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3e40 | 15601 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
-| `bankB` | ROMX | 0b:4000-4b6c | 2925 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
+| `bankB` | ROMX | 0b:4000-4ac9 | 2762 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
 | `Effect Commands` | ROMX | 0d:4000-7f53 | 16212 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7e94 | 16021 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +6 more |
 | `Battle Core` | ROMX | 0f:4000-7ae0 | 15073 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
@@ -188,7 +188,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Map Scripts 19` | ROMX | 54:4000-5aa2 | 6819 | ROMX 54 | `data/maps/scripts.asm`, `maps/BillsHouse.asm`, `maps/CeruleanGym.asm`, `maps/CeruleanGymBadgeSpeechHouse.asm`, +8 more |
 | `Map Scripts 20` | ROMX | 55:4000-5567 | 5480 | ROMX 55 | `data/maps/scripts.asm`, `maps/AzaleaGym.asm`, `maps/AzaleaMart.asm`, `maps/AzaleaPokecenter1F.asm`, +2 more |
 | `Map Scripts 21` | ROMX | 56:4000-756e | 13679 | ROMX 56 | `data/maps/scripts.asm`, `maps/EarlsPokemonAcademy.asm`, `maps/Route32Pokecenter1F.asm`, `maps/Route32RuinsOfAlphGate.asm`, +9 more |
-| `Map Scripts 22` | ROMX | 57:4000-70b1 | 12466 | ROMX 57 | `data/maps/scripts.asm`, `maps/BillsFamilysHouse.asm`, `maps/DayCare.asm`, `maps/GoldenrodBikeShop.asm`, +17 more |
+| `Map Scripts 22` | ROMX | 57:4000-707d | 12414 | ROMX 57 | `data/maps/scripts.asm`, `maps/BillsFamilysHouse.asm`, `maps/DayCare.asm`, `maps/GoldenrodBikeShop.asm`, +17 more |
 | `Map Scripts 23` | ROMX | 59:4000-5fc6 | 8135 | ROMX 59 | `data/maps/scripts.asm`, `maps/BluesHouse.asm`, `maps/OaksLab.asm`, `maps/PokemonFanClub.asm`, +11 more |
 | `Map Scripts 24` | ROMX | 5a:4000-5f84 | 8069 | ROMX 5a | `data/maps/scripts.asm`, `maps/BrunosRoom.asm`, `maps/HallOfFame.asm`, `maps/IndigoPlateauPokecenter1F.asm`, +10 more |
 | `Map Scripts 25` | ROMX | 5b:4000-695c | 10589 | ROMX 5b | `data/maps/scripts.asm`, `maps/FastShip1F.asm`, `maps/FastShipB1F.asm`, `maps/FastShipCabins_NNW_NNE_NE.asm`, +9 more |
@@ -220,8 +220,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:7722 | `engine/battle/ai/boss_policy_switch.asm:1218` |
 | `BossAITierMap` | 0e:7dcf | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:49e5 | `engine/battle/ai/switch.asm:1` |
-| `AICompareSpeed` | 0b:78d8 | `engine/battle/ai/scoring.asm:2650` |
-| `AIDamageCalc` | 0b:7a8d | `engine/battle/ai/scoring.asm:2977` |
+| `AICompareSpeed` | 0b:7835 | `engine/battle/ai/scoring.asm:2650` |
+| `AIDamageCalc` | 0b:79ea | `engine/battle/ai/scoring.asm:2977` |
 | `TypePassive_ApplyDamageModifiers_Far` | 11:6b32 | `engine/battle/type_passive_damage_mods.asm:44` |
 | `TypePassive_TryDarkStatusShield_Far` | 11:70b7 | `engine/battle/type_passive_damage_mods.asm:1069` |
 | `TypePassive_MaybePoisonRetaliation_Far` | 11:7114 | `engine/battle/type_passive_damage_mods.asm:1135` |
@@ -243,7 +243,6 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `EggMovePointers` | 08:79f0 | `data/pokemon/egg_move_pointers.asm:1` |
 | `Special` | 03:422b | `engine/events/specials.asm:1` |
 | `SpecialsPointers` | 03:4239 | `data/events/special_pointers.asm:14` |
-| `MoveReminder` | 0b:444e | `engine/events/move_reminder.asm:8` |
 | `wBattleMode` | 01:d116 | `ram/wram.asm:2010` |
 | `wEnemyMon` | 01:d0ef | `ram/wram.asm:2003` |
 | `wBattleMon` | 00:cafc | `ram/wram.asm:661` |

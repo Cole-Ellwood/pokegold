@@ -5,51 +5,13 @@ DEF MOVE_REMINDER_PAGE_SIZE EQU 4
 DEF MOVE_REMINDER_MENU_NEXT EQU $ff
 DEF MOVE_REMINDER_MENU_CANCEL EQU $fe
 
-MoveReminder:
-; Day-Care relearner NPC. Handles the yes/no + mon-select framing, then hands
-; off to the shared relearn core (also used by the MEMO HERB item effect).
-	ld hl, .IntroText
-	call PrintText
-	call YesNoBox
-	jr c, .declined
-
-	ld hl, .AskMonText
-	call PrintText
-	farcall SelectMonFromParty
-	jr c, .declined
-
-	call MoveReminderForSelectedMon
-	ret
-
-.declined
-	ld hl, .DeclinedText
-	call PrintText
-	ret
-
-.IntroText:
-	text "I can help your"
-	line "#MON remember"
-	cont "moves for free."
-
-	para "Want me to help?"
-	done
-
-.AskMonText:
-	text "Which #MON needs"
-	line "a memory jog?"
-	done
-
-.DeclinedText:
-	text "All right."
-	line "Come back anytime."
-	done
-
 MoveReminderForSelectedMon::
 ; Relearn a level-up move for the mon already selected in wCurPartyMon /
-; wCurPartySpecies (NPC select or item-use select). Returns c = 1 if a move
-; was actually relearned, c = 0 otherwise (egg / no eligible moves / backed
-; out). Item callers reach this via farcall and read the result in a, since
-; after farcall caller a = this routine's exit c (see home/farcall.asm).
+; wCurPartySpecies. The MEMO HERB item (MoveReminderItemEffect) selects the mon
+; first, then farcalls here. Returns c = 1 if a move was actually relearned,
+; c = 0 otherwise (egg / no eligible move / player backed out). The caller reads
+; the result in a, since after farcall caller a = this routine's exit c (see
+; home/farcall.asm).
 	ld a, [wCurPartySpecies]
 	cp EGG
 	jr z, .egg
