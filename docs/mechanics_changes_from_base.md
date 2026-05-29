@@ -263,7 +263,7 @@ Changes:
 ### 2.2 Boss Move Selection Model
 
 Files:
-- `engine/battle/ai/boss.asm`
+- `engine/battle/ai/boss_policy_move.asm`
 - `engine/battle/ai/move.asm`
 - `constants/battle_constants.asm`
 
@@ -284,7 +284,7 @@ Changes:
 ### 2.3 Boss Switching Logic
 
 Files:
-- `engine/battle/ai/boss.asm`
+- `engine/battle/ai/boss_policy_switch.asm`
 - `engine/battle/ai/items.asm`
 - `constants/battle_constants.asm`
 
@@ -301,7 +301,7 @@ Changes:
 ### 2.4 Boss Knowledge Model (No Hidden Party Reads)
 
 Files:
-- `engine/battle/ai/boss.asm`
+- `engine/battle/ai/boss_platform.asm`
 - `engine/battle/used_move_text.asm`
 - `engine/battle/core.asm`
 
@@ -456,7 +456,7 @@ Build integration:
 - `data/text/battle.asm`
 - `data/trainers/ai_tiers.asm`
 - `data/types/type_boost_items.asm`
-- `engine/battle/ai/boss.asm`
+- `engine/battle/ai/boss_platform.asm`
 - `engine/battle/ai/items.asm`
 - `engine/battle/ai/move.asm`
 - `engine/battle/ai/redundant.asm`

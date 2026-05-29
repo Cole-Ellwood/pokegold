@@ -1273,8 +1273,10 @@ rather than apply general rules:
   names, never raw `db` opcodes.
 - **Graphics / palette pipeline** — `home/gfx.asm`, `home/palettes.asm`,
   `gfx/`. Specialized; ask the user before refactoring.
-- **Boss AI architecture** — see `docs/boss_ai_spec.md` and
-  `engine/battle/ai/boss.asm`. Read those before touching that code.
+- **Boss AI architecture** — see `docs/boss_ai_spec.md` and the split boss
+  source (`engine/battle/ai/boss_platform.asm`, `boss_policy_move.asm`,
+  `boss_policy_switch.asm`, `boss_thunks.asm`). Read those before touching
+  that code.
 
 If you finish reading and immediately want to write `LDIR` or `EX DE,HL`,
 re-read §2.

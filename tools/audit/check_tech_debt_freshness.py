@@ -110,7 +110,27 @@ def check_folder_present() -> bool:
     return TECH_DEBT.is_dir() and REPORT.is_file() and FINDINGS.is_file()
 
 
-def check_file_citations(doc_path: Path, report: Report) -> None:
+def parse_superseded_citations() -> set[str]:
+    """Citations the ADDENDUM records as superseded (source split/moved/shrunk).
+
+    Lines of the form `SUPERSEDED-CITATION: path[:line]` in
+    TECH_DEBT_REPORT_ADDENDUM.md. The immutable REPORT/FINDINGS cite source
+    that has since changed and cannot be edited in place, so the supersession
+    is recorded append-only per the workflow and this freshness audit honors
+    it instead of hard-failing forever. A bare `path` supersedes every citation
+    to that path; `path:line` supersedes only that exact line citation, so
+    other live citations to the same file are still verified.
+    """
+    if not ADDENDUM.exists():
+        return set()
+    text = ADDENDUM.read_text(encoding="utf-8", errors="replace")
+    return {
+        m.group(1).replace("\\", "/")
+        for m in re.finditer(r"^SUPERSEDED-CITATION:\s*(\S+)", text, re.M)
+    }
+
+
+def check_file_citations(doc_path: Path, report: Report, superseded: set[str]) -> None:
     """Walk every path-like reference in `doc_path`, verify against ROOT."""
     if not doc_path.exists():
         report.add(
@@ -139,6 +159,18 @@ def check_file_citations(doc_path: Path, report: Report) -> None:
         # Skip generated docs — they get regenerated and may legitimately
         # have shifted line numbers; freshness here is a category error.
         if rel_path.startswith("docs/generated/"):
+            continue
+
+        # Skip citations the ADDENDUM records as superseded (source split,
+        # moved, or shrunk; the immutable REPORT/FINDINGS can't be edited).
+        cite_key = (
+            rel_path
+            if line_start is None
+            else f"{rel_path}:{line_start}-{line_end}"
+            if line_end is not None
+            else f"{rel_path}:{line_start}"
+        )
+        if rel_path in superseded or cite_key in superseded:
             continue
 
         target = ROOT / rel_path
@@ -298,9 +330,10 @@ def main() -> int:
         return 0
 
     report = Report()
+    superseded = parse_superseded_citations()
 
     for doc in (REPORT, FINDINGS):
-        check_file_citations(doc, report)
+        check_file_citations(doc, report, superseded)
 
     check_status_consistency(report)
     check_addendum_coverage(report)

@@ -263,7 +263,9 @@ Read:
 
 Inspect:
 
-- `engine/battle/ai/boss.asm`
+- `engine/battle/ai/boss_platform.asm`
+- `engine/battle/ai/boss_policy_move.asm`
+- `engine/battle/ai/boss_policy_switch.asm`
 - `engine/battle/ai/move.asm`
 - `engine/battle/ai/items.asm`
 - `engine/battle/ai/switch.asm`

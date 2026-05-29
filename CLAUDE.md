@@ -85,9 +85,9 @@ For non-trivial changes, run relevant scripts in `tools/audit/` before
 reporting work done. The verification floor, not optional. The most useful:
 - `check_release_smoke.py` — broad release sanity
 - `check_cross_bank_call.py` — plain `call` to a label in a different bank
-  (the May 2026 type-immunity softlock class). 39 hits in
-  `engine/battle/ai/boss.asm` were thunked through 7 hl-preserving wrappers
-  (`AIxxx_HL`) at the bottom of `boss.asm` that route via `farcall` to the
+  (the May 2026 type-immunity softlock class). 39 hits in the boss-AI policy
+  code were thunked through 7 hl-preserving wrappers (`AIxxx_HL`) in
+  `engine/battle/ai/boss_thunks.asm` that route via `farcall` to the
   bank-0x0b scoring helpers (commit `f2e18554`). Audit currently PASS.
   Promotion to release-smoke floor is **gated on trace-ROM verification** —
   the fix changes pokegold_trace.gbc bytes; manifest hashes
@@ -215,7 +215,7 @@ too. Base 50 at +2 Speed beats base 100 at +0 Speed at level 50.
 | ≤ 59 | +3 | 2 |
 
 The effective discrimination is "≤59 base gets a second Agility, the rest
-get one." See `engine/battle/ai/boss.asm` `.check_speed`.
+get one." See `engine/battle/ai/boss_policy_move.asm` `.check_speed`.
 
 ## RAM rules
 

@@ -507,3 +507,18 @@ only.)
 - **Bank impact:** N/A.
 - **Issues / followups:** None. The Python helpers are explicit about what they do (single-file copy, ordered binary concat, byte filter) — clearer at the Makefile site than the bash trio they replaced. Future Makefile shell hacks should default to the `tools/*.py` form.
 - **Verifier check:** `python3 tools/verify_sha1.py roms.sha1` passes after a clean rebuild. `grep -E 'cp -f|cat \$\^ > \$@|tr.*-d.*\000' Makefile` returns 0 hits.
+
+---
+
+## 2026-05-28 — TD-004 — done (boss.asm split shipped; recorded during board refresh)
+
+- **Agent / session:** Opus 4.7 (1M context) / repo audit fix roadmap
+- **State:** done
+- **Branch / commit:** split shipped earlier in `3ca2ecf6` ("bossai: split boss source for navigation"); this entry records the closure during the 2026-05-28 tech-debt board refresh (STATUS had drifted, still showing TD-004 open from 2026-05-03).
+- **Files touched:** tech_debt/AGENT_LOG.md, tech_debt/STATUS.md, tech_debt/TECH_DEBT_REPORT_ADDENDUM.md (TD-A16 supersession)
+- **Summary:** TD-004 ("`engine/battle/ai/boss.asm` is 7,006 lines, monolithic") is resolved: `boss.asm` no longer exists; the boss-AI source now lives in `boss_platform.asm` (1,420), `boss_policy_move.asm` (6,417), `boss_policy_switch.asm` (2,253), and `boss_thunks.asm` (82), split by responsibility for navigation. The whole-file monolith the finding flagged is gone. `boss_policy_move.asm` is still large (6,417 lines); if its size becomes a concern that is a fresh finding, not TD-004's everything-in-one-file premise.
+- **Verification run:**
+  - `engine/battle/ai/boss.asm` absent; four split files present (confirmed on this branch).
+  - `python3 tools/audit/check_tech_debt_freshness.py` → PASS (boss.asm citations recorded superseded in ADDENDUM TD-A16).
+  - `python3 tools/audit/check_boss_ai_no_cheat.py`, `check_boss_ai_trace_invariants.py` → PASS (behavior unchanged by the split).
+- **Issues / followups:** Stale source citations to the old `engine/battle/ai/boss.asm` path live across several docs; the live-doc sweep is part of the same 2026-05-28 roadmap, and the immutable REPORT/FINDINGS citations are handled via ADDENDUM TD-A16 (SUPERSEDED-CITATION).

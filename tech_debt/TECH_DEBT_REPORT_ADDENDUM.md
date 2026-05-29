@@ -546,6 +546,46 @@ session).
 
 ---
 
+## 2026-05-28 — TD-A16 source supersession: boss.asm split + sram.asm shrink
+
+**Source:** repo audit fix roadmap (2026-05-28); confirmed against current
+source (`engine/battle/ai/boss_platform.asm` + `boss_policy_move.asm` +
+`boss_policy_switch.asm` + `boss_thunks.asm` exist, `engine/battle/ai/boss.asm`
+does not; `ram/sram.asm` is 171 lines).
+
+**Supersedes citations in:** `TECH_DEBT_REPORT.md` TD-001 / TD-002 / TD-004,
+`FINDINGS_DETAIL.md` TD-004.
+
+### What changed under the immutable docs
+
+1. **`engine/battle/ai/boss.asm` was split.** The monolithic boss-AI file
+   (TD-004; also named in TD-001's bank-0x0e framing) no longer exists. Its
+   contents now live in `boss_platform.asm`, `boss_policy_move.asm`,
+   `boss_policy_switch.asm`, and `boss_thunks.asm`. Every citation of the old
+   path is therefore historical — it describes the pre-split state the finding
+   was written against. TD-004 (the "7,006-line monolith" finding) is resolved
+   by this split; see the STATUS row.
+
+2. **`ram/sram.asm` shrank to 171 lines.** TD-002's `ram/sram.asm:175`
+   ("related comments") citation now points past end-of-file. The legacy
+   `$FF`-accept locations TD-002 tracks are still real (the finding stays
+   `pending-trigger` on the `SAVE_FORMAT_VERSION` bump); only the trailing
+   line-175 comment reference drifted. The still-valid `ram/sram.asm:105`
+   citation is unaffected and continues to be verified.
+
+### Freshness-audit handling
+
+`tools/audit/check_tech_debt_freshness.py` cannot edit the immutable REPORT /
+FINDINGS to fix these citations, so the supersession is recorded here and the
+audit honors the markers below (see the audit's `parse_superseded_citations`).
+This is the same "teach the check about an expected, documented state" pattern
+as TD-A14. New, undocumented citation drift still fails the audit.
+
+SUPERSEDED-CITATION: engine/battle/ai/boss.asm
+SUPERSEDED-CITATION: ram/sram.asm:175
+
+---
+
 ## How this file is structured
 
 - **Append-only.** Never edit a prior entry. Add a new dated entry if
