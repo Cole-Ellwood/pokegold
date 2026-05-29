@@ -40,11 +40,11 @@ ItemEffects:
 	dw NoEffect            ; WATER_STONE (removed 2026-05-24)
 	dw NoEffect            ; ITEM_19
 	dw VitaminEffect       ; HP_UP
-	dw VitaminEffect       ; PROTEIN
-	dw VitaminEffect       ; IRON
-	dw VitaminEffect       ; CARBOS
+	dw RestorePPEffect     ; PROTEIN (now PP RESTORE)
+	dw CureAllEffect       ; IRON (now CURE-ALL)
+	dw RepelCubeEffect     ; CARBOS (now REPEL CUBE)
 	dw NoEffect            ; LUCKY_PUNCH
-	dw VitaminEffect       ; CALCIUM
+	dw NoEffect            ; CALCIUM (now SILVERNUGGET, sell-only)
 	dw RareCandyEffect     ; RARE_CANDY
 	dw NoEffect            ; X_ACCURACY (removed 2026-05-24)
 	dw NoEffect            ; LEAF_STONE (removed 2026-05-24)
@@ -2065,6 +2065,11 @@ MaxRepelEffect:
 	ld b, 250
 	jr UseRepel
 
+RepelCubeEffect:
+; Repurposed CARBOS ("REPEL CUBE"): top-tier repel duration.
+	ld b, 255
+	jr UseRepel
+
 RepelEffect:
 	ld b, 100
 
@@ -2081,6 +2086,34 @@ UseRepel:
 RepelUsedEarlierIsStillInEffectText:
 	text_far _RepelUsedEarlierIsStillInEffectText
 	text_end
+
+CureAllEffect:
+; Repurposed IRON ("CURE-ALL"): clear status from every party member.
+; Field-only (see attributes.asm). No mon selection - it heals the whole party.
+	ld a, [wPartyCount]
+	ld d, a
+	ld hl, wPartyMon1Status
+	ld bc, PARTYMON_STRUCT_LENGTH
+.check
+	ld a, [hl]
+	and a
+	jr nz, .cure
+	add hl, bc
+	dec d
+	jr nz, .check
+	jp NoEffectMessage ; nobody is statused
+
+.cure
+	ld a, [wPartyCount]
+	ld d, a
+	ld hl, wPartyMon1Status
+	xor a
+.clear
+	ld [hl], a
+	add hl, bc
+	dec d
+	jr nz, .clear
+	jp UseItemText
 
 ; XAccuracyEffect, GuardSpecEffect, DireHitEffect, XItemEffect, and the
 ; XItemStats include were removed 2026-05-24 alongside the X items they
@@ -2241,6 +2274,8 @@ RestorePPEffect:
 	cp MAX_ELIXER
 	jp z, Elixer_RestorePPofAllMoves
 	cp ELIXER
+	jp z, Elixer_RestorePPofAllMoves
+	cp PROTEIN ; repurposed: PP RESTORE behaves like an Elixer (all moves)
 	jp z, Elixer_RestorePPofAllMoves
 
 	ld hl, RaiseThePPOfWhichMoveText

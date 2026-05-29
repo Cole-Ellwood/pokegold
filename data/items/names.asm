@@ -26,11 +26,11 @@ ItemNames::
 	li "?????" ; was WATER STONE; removed 2026-05-24
 	li "TERU-SAMA"
 	li "HP UP"
-	li "PROTEIN"
-	li "IRON"
-	li "CARBOS"
+	li "PP RESTORE" ; was PROTEIN; vitamins repurposed (stat exp removed). Item id constants unchanged.
+	li "CURE-ALL" ; was IRON
+	li "REPEL CUBE" ; was CARBOS
 	li "LUCKY PUNCH"
-	li "CALCIUM"
+	li "SILVERNUGGET" ; was CALCIUM; sell-only (kept out of marts)
 	li "RARE CANDY"
 	li "?????" ; was X ACCURACY; removed 2026-05-24
 	li "?????" ; was LEAF STONE; removed 2026-05-24
