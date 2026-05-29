@@ -6,6 +6,8 @@ DEF MOVE_REMINDER_MENU_NEXT EQU $ff
 DEF MOVE_REMINDER_MENU_CANCEL EQU $fe
 
 MoveReminder:
+; Day-Care relearner NPC. Handles the yes/no + mon-select framing, then hands
+; off to the shared relearn core (also used by the MEMO HERB item effect).
 	ld hl, .IntroText
 	call PrintText
 	call YesNoBox
@@ -16,6 +18,38 @@ MoveReminder:
 	farcall SelectMonFromParty
 	jr c, .declined
 
+	call MoveReminderForSelectedMon
+	ret
+
+.declined
+	ld hl, .DeclinedText
+	call PrintText
+	ret
+
+.IntroText:
+	text "I can help your"
+	line "#MON remember"
+	cont "moves for free."
+
+	para "Want me to help?"
+	done
+
+.AskMonText:
+	text "Which #MON needs"
+	line "a memory jog?"
+	done
+
+.DeclinedText:
+	text "All right."
+	line "Come back anytime."
+	done
+
+MoveReminderForSelectedMon::
+; Relearn a level-up move for the mon already selected in wCurPartyMon /
+; wCurPartySpecies (NPC select or item-use select). Returns c = 1 if a move
+; was actually relearned, c = 0 otherwise (egg / no eligible moves / backed
+; out). Item callers reach this via farcall and read the result in a, since
+; after farcall caller a = this routine's exit c (see home/farcall.asm).
 	ld a, [wCurPartySpecies]
 	cp EGG
 	jr z, .egg
@@ -29,28 +63,29 @@ MoveReminder:
 	ld hl, .AskMoveText
 	call PrintText
 	call .ChooseMoveFromList
-	jr nc, .declined
+	jr nc, .not_relearned
 
 	ld [wPutativeTMHMMove], a
 	ld [wNamedObjectIndex], a
 	call GetMoveName
 	call CopyName1
 	predef LearnMove
+	; LearnMove returns b = 1 if the move was actually learned, b = 0 if the
+	; player backed out of the forget step. Mirror it into c for the caller.
+	ld c, b
 	ret
 
 .egg
 	ld hl, .EggText
 	call PrintText
-	ret
+	jr .not_relearned
 
 .no_moves
 	ld hl, .NoMovesText
 	call PrintText
-	ret
 
-.declined
-	ld hl, .DeclinedText
-	call PrintText
+.not_relearned
+	ld c, 0
 	ret
 
 .BuildMoveList
@@ -363,19 +398,6 @@ MoveReminder:
 .CancelText:
 	db "CANCEL@"
 
-.IntroText:
-	text "I can help your"
-	line "#MON remember"
-	cont "moves for free."
-
-	para "Want me to help?"
-	done
-
-.AskMonText:
-	text "Which #MON needs"
-	line "a memory jog?"
-	done
-
 .AskMoveText:
 	text "Which move should"
 	line "it remember?"
@@ -390,9 +412,4 @@ MoveReminder:
 .EggText:
 	text "An EGG won't"
 	line "remember moves."
-	done
-
-.DeclinedText:
-	text "All right."
-	line "Come back anytime."
 	done

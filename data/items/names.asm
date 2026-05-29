@@ -25,7 +25,7 @@ ItemNames::
 	li "?????" ; was THUNDERSTONE; removed 2026-05-24
 	li "?????" ; was WATER STONE; removed 2026-05-24
 	li "TERU-SAMA"
-	li "HP UP"
+	li "MEMO HERB" ; was HP UP; relearns a level-up move. Item id constants unchanged.
 	li "PP RESTORE" ; was PROTEIN; vitamins repurposed (stat exp removed). Item id constants unchanged.
 	li "CURE-ALL" ; was IRON
 	li "REPEL CUBE" ; was CARBOS

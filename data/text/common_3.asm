@@ -276,14 +276,6 @@ _AskGiveNicknameText::
 	text "?"
 	done
 
-_ItemStatRoseText::
-	text_ram wStringBuffer1
-	text "'s"
-	line "@"
-	text_ram wStringBuffer2
-	text " rose."
-	prompt
-
 _ItemCantUseOnMonText::
 	text "That can't be used"
 	line "on this #MON."
