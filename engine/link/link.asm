@@ -800,7 +800,7 @@ Link_PrepPartyData_Gen1:
 	ld hl, MON_STAT_EXP - 1
 	add hl, bc
 	ld c, STAT_SATK
-	ld b, TRUE
+	ld b, FALSE
 	predef CalcMonStatC
 
 	pop bc
@@ -1049,7 +1049,7 @@ Link_ConvertPartyStruct1to2:
 	ld hl, MON_STAT_EXP - 1
 	add hl, bc
 	ld c, STAT_SATK
-	ld b, TRUE
+	ld b, FALSE
 	predef CalcMonStatC
 	pop bc
 	pop hl
@@ -1062,7 +1062,7 @@ Link_ConvertPartyStruct1to2:
 	ld hl, MON_STAT_EXP - 1
 	add hl, bc
 	ld c, STAT_SDEF
-	ld b, TRUE
+	ld b, FALSE
 	predef CalcMonStatC
 	pop bc
 	pop hl

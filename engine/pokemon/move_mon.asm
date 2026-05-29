@@ -659,7 +659,7 @@ SendGetMonIntoFromBox:
 	add hl, bc
 
 	push bc
-	ld b, TRUE
+	ld b, FALSE
 	call CalcMonStats
 	pop bc
 
@@ -867,7 +867,7 @@ RetrieveBreedmon:
 	ld hl, MON_EXP + 2
 	add hl, bc
 	push bc
-	ld b, TRUE
+	ld b, FALSE
 	call CalcMonStats
 	ld hl, wPartyMon1Moves
 	ld a, [wPartyCount]
@@ -1399,7 +1399,7 @@ ComputeNPCTrademonStats:
 	push de
 	ld a, MON_STAT_EXP - 1
 	call GetPartyParamLocation
-	ld b, TRUE
+	ld b, FALSE
 	call CalcMonStats
 	pop de
 	ld a, MON_HP
@@ -1413,9 +1413,13 @@ ComputeNPCTrademonStats:
 
 CalcMonStats:
 ; Calculates all 6 Stats of a mon
-; b: Take into account stat EXP if TRUE
+; b: historically "take stat EXP into account if TRUE". Stat experience has been
+;    removed from this hack: it gave the player a hidden, level-scaled stat edge
+;    that trainer/boss mons (always built with b=FALSE) could never have, which
+;    undercut the fair-fight design. Every caller now passes FALSE, so the
+;    stat-EXP path in CalcMonStatC is unreached. Do NOT reintroduce a TRUE caller.
 ; 'c' counts from 1-6 and points with 'wBaseStats' to the base value
-; hl is the path to the Stat EXP
+; hl is the path to the Stat EXP (anchors the DV lookup; stat EXP itself is unused)
 ; de points to where the final stats will be saved
 
 	ld c, STAT_HP - 1 ; first stat

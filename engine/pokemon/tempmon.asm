@@ -50,7 +50,7 @@ _TempMonStatsCalculation:
 	ld hl, MON_STAT_EXP - 1
 	add hl, bc
 	push bc
-	ld b, TRUE
+	ld b, FALSE
 	predef CalcMonStats
 	pop bc
 	ld hl, MON_HP
