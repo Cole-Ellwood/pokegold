@@ -1199,7 +1199,7 @@ UpdateStatsAfterItem:
 	ld e, l
 	ld a, MON_STAT_EXP - 1
 	call GetPartyParamLocation
-	ld b, TRUE
+	ld b, FALSE
 	predef_jump CalcMonStats
 
 RareCandy_StatBooster_ExitMenu:

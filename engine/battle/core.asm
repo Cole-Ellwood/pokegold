@@ -7116,7 +7116,7 @@ GiveExperiencePoints:
 	ld hl, MON_STAT_EXP - 1
 	add hl, bc
 	push bc
-	ld b, TRUE
+	ld b, FALSE
 	predef CalcMonStats
 	pop bc
 	pop de

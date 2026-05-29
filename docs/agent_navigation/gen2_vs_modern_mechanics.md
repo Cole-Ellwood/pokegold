@@ -161,28 +161,33 @@ Boss AI reads the chart at runtime via the shared damage path; matchup
 scoring auto-adapts. There are no hardcoded matchup assumptions in
 `engine/battle/ai/` for the 15 edits.
 
-## 3. Stats system: DVs, Stat Exp, no natures
+## 3. Stats system: DVs, no Stat Exp, no natures
 
 - **DVs**, not IVs. Range 0..15 per stat (4 bits), not 0..31. Hidden
   Power type and BP are computed from DVs (see § 9).
-- **Stat Exp** ("EVs"), per-stat 0..65535. Stat Exp contributes via
-  `floor(sqrt(StatExp)) / 4` into the standard Gen 2 stat formula. No
-  252/252/4 spread, no 510 cap, no Hyper Training.
+- **Stat Exp is removed.** Vanilla Gen 2 awards per-stat Stat Exp (0..65535,
+  contributing `floor(sqrt(StatExp) / 4)` to each stat). This hack disables it
+  for **every** Pokémon: the player's party is now built with the same
+  `b=FALSE` stat calculation that trainer/boss mons always used, so nobody
+  gains a stat-exp bonus. This closes the hidden, level-scaled stat edge the
+  player used to carry into every fight — it undercut the fair-fight design.
+  Battles now turn on level, DV, team, moveset, and AI, not invisible grind.
 - **No natures.** No nature-based ±10% stat shift. No `+Atk -SpA` etc.
 - **No abilities.** Don't propose ability-based identities (Intimidate,
   Levitate, Lightning Rod, Sand Stream, Drought, etc.). Don't propose
   ability-as-identity for any species; the closest hack mechanism is the
   type-passive system (§ 14).
 
-### Stat formulas (this hack uses vanilla Gen 2 formulas)
+### Stat formulas (Gen 2 formulas, stat-exp term removed)
 
 ```
-ComputedStat (non-HP) = floor(((2 * (base + DV)) + floor(sqrt(StatExp) / 4)) * level / 100) + 5
-ComputedHP            = floor(((2 * (base + HP_DV)) + floor(sqrt(HPStatExp) / 4)) * level / 100) + level + 10
+ComputedStat (non-HP) = floor((2 * (base + DV)) * level / 100) + 5
+ComputedHP            = floor((2 * (base + HP_DV)) * level / 100) + level + 10
 ```
 
-Source: `CalcMonStatC` in `engine/pokemon/move_mon.asm`. Do not use
-Gen 3+ EVs or 0..31 IVs here.
+Source: `CalcMonStatC` in `engine/pokemon/move_mon.asm`; the stat-exp path
+there is unreached (every caller passes `b=FALSE`). Do not use Gen 3+ EVs or
+0..31 IVs here.
 
 ### Stat-stage multipliers (Gen 2)
 
