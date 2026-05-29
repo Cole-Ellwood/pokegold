@@ -1297,7 +1297,7 @@ protocol is a useful schema.
 
 ---
 
-### P15a. Static register-flow analyzer (shipped 2026-05-22)
+### P15a. Static register-flow analyzer
 
 **Objective**: a static SM83 walker that parses an asm function from its label,
 identifies per-instruction register writes/reads, calls, branches, conditional
