@@ -39,7 +39,7 @@ ItemEffects:
 	dw NoEffect            ; THUNDERSTONE (removed 2026-05-24)
 	dw NoEffect            ; WATER_STONE (removed 2026-05-24)
 	dw NoEffect            ; ITEM_19
-	dw VitaminEffect       ; HP_UP
+	dw MoveReminderItemEffect ; HP_UP (now MEMO HERB)
 	dw RestorePPEffect     ; PROTEIN (now PP RESTORE)
 	dw CureAllEffect       ; IRON (now CURE-ALL)
 	dw RepelCubeEffect     ; CARBOS (now REPEL CUBE)
@@ -1144,48 +1144,24 @@ EvoStoneEffect:
 	ld [wItemEffectSucceeded], a
 	ret
 
-VitaminEffect:
+MoveReminderItemEffect:
+; Repurposed HP_UP ("MEMO HERB"): relearn one of the chosen mon's level-up
+; moves. Shares the Day-Care relearner core in move_reminder.asm. Consumes the
+; item only when a move is actually relearned.
 	ld b, PARTYMENUACTION_HEALING_ITEM
 	call UseItem_SelectMon
-
 	jp c, RareCandy_StatBooster_ExitMenu
 
-	call RareCandy_StatBooster_GetParameters
+	farcall MoveReminderForSelectedMon
+	; After farcall, a = the core's exit c: 1 if a move was relearned, else 0
+	; (no eligible move, or the player backed out). MoveReminderForSelectedMon
+	; takes no hl input, so the farcall hl clobber is harmless.
+	and a
+	jp nz, UseDisposableItem
 
-	call GetStatExpRelativePointer
-
-	ld a, MON_STAT_EXP
-	call GetPartyParamLocation
-
-	add hl, bc
-	ld a, [hl]
-	cp 100
-	jr nc, NoEffectMessage
-
-	add 10
-	ld [hl], a
-	call UpdateStatsAfterItem
-
-	call GetStatExpRelativePointer
-
-	ld hl, StatStrings
-	add hl, bc
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
-	ld de, wStringBuffer2
-	ld bc, ITEM_NAME_LENGTH
-	call CopyBytes
-
-	call Play_SFX_FULL_HEAL
-
-	ld hl, ItemStatRoseText
-	call PrintText
-
-	ld c, HAPPINESS_USEDITEM
-	farcall ChangeHappiness
-
-	jp UseDisposableItem
+	; Nothing relearned: leave the item in the bag. Clear the success flag set
+	; by _DoItemEffect and bail.
+	jp RareCandy_StatBooster_ExitMenu
 
 NoEffectMessage:
 	ld hl, ItemWontHaveEffectText
@@ -1206,46 +1182,6 @@ RareCandy_StatBooster_ExitMenu:
 	xor a
 	ld [wItemEffectSucceeded], a
 	jp ClearPalettes
-
-ItemStatRoseText:
-	text_far _ItemStatRoseText
-	text_end
-
-StatStrings:
-	dw .health
-	dw .attack
-	dw .defense
-	dw .speed
-	dw .special
-
-.health  db "HEALTH@"
-.attack  db "ATTACK@"
-.defense db "DEFENSE@"
-.speed   db "SPEED@"
-.special db "SPECIAL@"
-
-GetStatExpRelativePointer:
-	ld a, [wCurItem]
-	ld hl, StatExpItemPointerOffsets
-.next
-	cp [hl]
-	inc hl
-	jr z, .got_it
-	inc hl
-	jr .next
-
-.got_it
-	ld a, [hl]
-	ld c, a
-	ld b, 0
-	ret
-
-StatExpItemPointerOffsets:
-	db HP_UP,    MON_HP_EXP - MON_STAT_EXP
-	db PROTEIN, MON_ATK_EXP - MON_STAT_EXP
-	db IRON,    MON_DEF_EXP - MON_STAT_EXP
-	db CARBOS,  MON_SPD_EXP - MON_STAT_EXP
-	db CALCIUM, MON_SPC_EXP - MON_STAT_EXP
 
 RareCandy_StatBooster_GetParameters:
 	ld a, [wCurPartySpecies]

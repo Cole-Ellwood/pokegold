@@ -170,6 +170,11 @@ ALLOWLIST: dict[str, str] = {
     # a short note about why caller consuming `a` post-farcall is correct
     # (e.g. target intentionally returns the value in c, and caller is reading
     # that c-value via its post-farcall `a` -- see home/farcall.asm:13-28).
+    "MoveReminderForSelectedMon": (
+        "Returns success in c (1 = move relearned, 0 = not). MoveReminderItemEffect "
+        "deliberately reads that c-value as its post-farcall a to decide whether to "
+        "consume the MEMO HERB."
+    ),
 }
 
 

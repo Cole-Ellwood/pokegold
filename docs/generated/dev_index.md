@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 15721 | 663 |  |
-| ROMX | 1148625 | 932143 | 127 |
+| ROMX | 1148491 | 932277 | 127 |
 | SRAM | 31419 | 1349 | 4 |
 | WRAM0 | 4024 | 72 |  |
 | WRAMX | 3711 | 4481 | 2 |
@@ -150,7 +150,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | Section | Region | Bank/range | Size | Layout constraint | Source hints |
 | --- | --- | --- | ---: | --- | --- |
 | `Home` | ROM0 | 00:0150-3e40 | 15601 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
-| `bankB` | ROMX | 0b:4000-4b64 | 2917 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
+| `bankB` | ROMX | 0b:4000-4b6c | 2925 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
 | `Effect Commands` | ROMX | 0d:4000-7f53 | 16212 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
 | `Enemy Trainers` | ROMX | 0e:4000-7e94 | 16021 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +6 more |
 | `Battle Core` | ROMX | 0f:4000-7ae0 | 15073 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
@@ -220,8 +220,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:7722 | `engine/battle/ai/boss_policy_switch.asm:1218` |
 | `BossAITierMap` | 0e:7dcf | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:49e5 | `engine/battle/ai/switch.asm:1` |
-| `AICompareSpeed` | 0b:78d0 | `engine/battle/ai/scoring.asm:2650` |
-| `AIDamageCalc` | 0b:7a85 | `engine/battle/ai/scoring.asm:2977` |
+| `AICompareSpeed` | 0b:78d8 | `engine/battle/ai/scoring.asm:2650` |
+| `AIDamageCalc` | 0b:7a8d | `engine/battle/ai/scoring.asm:2977` |
 | `TypePassive_ApplyDamageModifiers_Far` | 11:6b32 | `engine/battle/type_passive_damage_mods.asm:44` |
 | `TypePassive_TryDarkStatusShield_Far` | 11:70b7 | `engine/battle/type_passive_damage_mods.asm:1069` |
 | `TypePassive_MaybePoisonRetaliation_Far` | 11:7114 | `engine/battle/type_passive_damage_mods.asm:1135` |

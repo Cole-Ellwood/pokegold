@@ -58,7 +58,7 @@ ItemAttributes:
 	item_attribute 0, HELD_NONE, 0, CANT_SELECT, ITEM, ITEMMENU_NOUSE, ITEMMENU_NOUSE
 ; ITEM_19
 	item_attribute $9999, HELD_NONE, 0, NO_LIMITS, ITEM, ITEMMENU_NOUSE, ITEMMENU_NOUSE
-; HP_UP
+; HP_UP (now MEMO HERB): relearns a level-up move for a chosen party mon
 	item_attribute 9800, HELD_NONE, 0, CANT_SELECT, ITEM, ITEMMENU_PARTY, ITEMMENU_NOUSE
 ; PROTEIN (now PP RESTORE): restores all PP of a chosen mon's moves
 	item_attribute 2000, HELD_NONE, 0, CANT_SELECT, ITEM, ITEMMENU_PARTY, ITEMMENU_NOUSE
