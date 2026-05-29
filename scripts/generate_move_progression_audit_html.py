@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import date
 from html import escape
 from pathlib import Path
+import argparse
 import json
 import re
 
@@ -797,17 +798,52 @@ def render_report(findings: list[Finding], raw_species_hits: list[tuple[str, Lea
 """
 
 
-def main() -> int:
+def build_report_html() -> str:
     moves = parse_moves()
     species_order = parse_pokemon_order()
     label_to_species = parse_label_species_map(species_order)
     evolutions, learnsets = parse_evos_and_learnsets(label_to_species)
     findings, raw_species_hits = find_issues(species_order, moves, evolutions, learnsets)
     html = render_report(findings, raw_species_hits, moves)
-    html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(html, encoding="utf-8", newline="\n")
-    print(f"wrote {OUTPUT_PATH}")
+    return "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
+
+
+def _strip_generated_date(html: str) -> str:
+    """Blank the volatile generated-on date so --check tracks content, not the run day."""
+    html = re.sub(r'"generated":"\d{4}-\d{2}-\d{2}"', '"generated":"<date>"', html)
+    return re.sub(r"Generated \d{4}-\d{2}-\d{2}", "Generated <date>", html)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=OUTPUT_PATH,
+        help=f"output path (default: {OUTPUT_PATH.relative_to(ROOT).as_posix()})",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify the output is current (ignoring the generated-on date) and exit non-zero if stale, without writing",
+    )
+    args = parser.parse_args(argv)
+
+    html = build_report_html()
+    if args.check:
+        if not args.out.exists():
+            print(f"FAIL: {args.out} does not exist; run without --check to generate it")
+            return 1
+        current = args.out.read_text(encoding="utf-8")
+        if _strip_generated_date(current) != _strip_generated_date(html):
+            print(f"FAIL: {args.out} is stale; regenerate with scripts/generate_move_progression_audit_html.py")
+            return 1
+        print(f"OK: {args.out} is current")
+        return 0
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(html, encoding="utf-8", newline="\n")
+    print(f"wrote {args.out}")
     return 0
 
 

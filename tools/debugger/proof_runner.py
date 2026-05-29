@@ -155,6 +155,11 @@ def execute_command(command: str, *, root: Path, timeout_seconds: int) -> dict[s
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
+            # Detach from the parent's stdin: under pytest's stdin capture on
+            # Windows the inherited handle is invalid and child processes that
+            # touch stdin fail spuriously. An empty stdin is correct here anyway
+            # since proof commands are non-interactive.
+            stdin=subprocess.DEVNULL,
         )
     except subprocess.TimeoutExpired as exc:
         return {

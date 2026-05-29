@@ -37,8 +37,10 @@ Usage (from repo root, Windows or WSL):
     python scripts/generate_trainer_dossier_pdf.py
 
 The script auto-resolves repo root from its own location, so it works from any
-cwd. There is no config or CLI flag — the trainer list is hard-coded near the
-top of this file. Edit the meta lists (JOHTO_GYMS / ELITE_FOUR / KANTO_GYMS /
+cwd. Flags: `--out PATH` writes elsewhere than docs/trainer_dossier.pdf, and
+`--check` rebuilds in a temp file and exits non-zero if the tracked PDF is
+stale (without overwriting it). The trainer list is hard-coded near the top of
+this file. Edit the meta lists (JOHTO_GYMS / ELITE_FOUR / KANTO_GYMS /
 RIVAL_FIGHTS / ROCKET_ADMINS / RED_FIGHT) if a future hack adds or reorders
 trainers.
 
@@ -52,14 +54,23 @@ The PDF is plain Python + reportlab; rebuilding does not require a ROM build.
 
 from __future__ import annotations
 
+import argparse
+import os
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+from reportlab import rl_config
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
+
+# Deterministic output: pin reportlab's PDF timestamp and document id so the
+# same source builds byte-identical PDFs. This is what makes `--check` a real
+# staleness test instead of a timestamp false-positive.
+rl_config.invariant = 1
 
 ROOT = Path(__file__).resolve().parents[1]
 PARTIES = ROOT / "data" / "trainers" / "parties.asm"
@@ -1112,10 +1123,10 @@ def draw_page_footer(c: canvas.Canvas, page_no: int):
     c.drawRightString(PAGE_W - MARGIN, MARGIN / 2, f"{page_no}")
 
 
-def main() -> None:
+def build_pdf(out_path: Path) -> None:
     trainers = load_trainers()
 
-    c = canvas.Canvas(str(OUT_PDF), pagesize=letter)
+    c = canvas.Canvas(str(out_path), pagesize=letter)
     c.setTitle("Pokemon Gold Hack — Trainer Dossier")
     c.setAuthor("Pokemon Gold Hack")
 
@@ -1168,8 +1179,46 @@ def main() -> None:
     # PDF deterministic — the section titles already orient the reader.)
 
     c.save()
-    print(f"wrote {OUT_PDF}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Generate the trainer dossier PDF.")
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=OUT_PDF,
+        help=f"output path (default: {OUT_PDF.relative_to(ROOT).as_posix()})",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="rebuild in a temp file and exit non-zero if the tracked PDF is stale, without writing",
+    )
+    args = parser.parse_args(argv)
+
+    if args.check:
+        if not args.out.exists():
+            print(f"FAIL: {args.out} does not exist; run without --check to generate it")
+            return 1
+        fd, tmp_name = tempfile.mkstemp(suffix=".pdf")
+        os.close(fd)  # mkstemp leaves the fd open; close it so Windows can unlink
+        tmp = Path(tmp_name)
+        try:
+            build_pdf(tmp)
+            stale = tmp.read_bytes() != args.out.read_bytes()
+        finally:
+            tmp.unlink(missing_ok=True)
+        if stale:
+            print(f"FAIL: {args.out} is stale; regenerate with scripts/generate_trainer_dossier_pdf.py")
+            return 1
+        print(f"OK: {args.out} is current")
+        return 0
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    build_pdf(args.out)
+    print(f"wrote {args.out}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

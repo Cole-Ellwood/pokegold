@@ -21,7 +21,10 @@
 
 # Denote all files that are truly binary and should not be modified.
 *.png binary diff=hex
-*.pdf binary diff=hex
+# Pure binary, no hex diff: a PDF's xref table has format-mandated trailing
+# whitespace, and `diff=hex` (the driver is not configured) makes git text-diff
+# it, so `git diff --check` false-positives on every PDF change.
+*.pdf binary
 *.lz.* binary diff=hex
 *.bin binary diff=hex
 *.blk binary diff=hex

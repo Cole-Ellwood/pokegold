@@ -1,0 +1,19 @@
+# Python dev/tooling dependencies for the pokegold hack.
+#
+# The ROM build itself uses the native RGBDS toolchain via WSL (see CLAUDE.md
+# "Build & verification"); these packages back the Python tooling around it.
+#
+#   pytest      - test runner (tools/**/tests, scripts)
+#   hypothesis  - property-based fuzzing (damage debugger, boss-AI oracle)
+#   pyboy       - emulator backend for ROM-backed trace/damage tooling
+#   pyyaml      - config/data parsing in tooling
+#   reportlab   - trainer-dossier PDF generation (scripts/)
+#   Pillow      - image handling for sprite/asset tooling and PDFs
+#
+# Install with: python -m pip install -r requirements-dev.txt
+hypothesis
+Pillow
+pyboy
+pytest
+pyyaml
+reportlab
