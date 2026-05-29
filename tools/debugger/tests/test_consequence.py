@@ -57,6 +57,20 @@ class ConsequenceReportTests(unittest.TestCase):
         gate_ids = {gate["id"] for gate in gates}
         self.assertIn("farcall_clobber", gate_ids)
 
+    def test_file_target_closure_counts_real_callers(self) -> None:
+        # Regression (golden lived-bug smoke): a --file target must aggregate the
+        # slice/provenance .source_files records, not only the symbol-keyed .targets,
+        # or it misleadingly reports 0 callers for a heavily-referenced file.
+        report = consequence.build_consequence_report(
+            file="engine/battle/late_gen_held_items.asm"
+        )
+        closure = report["reference_closure"]
+        self.assertGreater(
+            closure["incoming_refs"],
+            0,
+            "file-mode reference closure should count incoming callers",
+        )
+
     def test_balance_data_file_reports_data_delta(self) -> None:
         report = consequence.build_consequence_report(
             file="data/pokemon/base_stats/gyarados.asm"

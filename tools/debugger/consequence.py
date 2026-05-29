@@ -309,14 +309,17 @@ def _reference_closure(
     prov_report = provenance.build_provenance_report(
         symbols_path=symbols_path, symbols=symbols, source_files=source_files, root=root
     )
-    provenance_symbols = prov_report.get("symbols") or []
-    slice_targets = slice_report.get("targets") or []
+    # A --symbol query populates slice.targets / provenance.symbols; a --file query
+    # populates slice.source_files / provenance.source_files instead. Aggregate both
+    # so a file-mode consequence report shows its real callers, not zeros.
+    slice_units = (slice_report.get("targets") or []) + (slice_report.get("source_files") or [])
+    provenance_units = (prov_report.get("symbols") or []) + (prov_report.get("source_files") or [])
     return {
-        "source_references": sum(_count(s.get("source_hit_count")) for s in provenance_symbols),
-        "related_files": sum(_count(s.get("related_files")) for s in provenance_symbols),
-        "incoming_refs": sum(_count(t.get("incoming")) for t in slice_targets),
-        "outgoing_refs": sum(_count(t.get("outgoing")) for t in slice_targets),
-        "impact_files": sum(_count(t.get("impact_files")) for t in slice_targets),
+        "source_references": sum(_count(u.get("source_hit_count")) for u in provenance_units),
+        "related_files": sum(_count(u.get("related_files")) for u in provenance_units),
+        "incoming_refs": sum(_count(u.get("incoming")) for u in slice_units),
+        "outgoing_refs": sum(_count(u.get("outgoing")) for u in slice_units),
+        "impact_files": sum(_count(u.get("impact_files")) for u in slice_units),
         "slice": slice_report,
         "provenance": prov_report,
     }
