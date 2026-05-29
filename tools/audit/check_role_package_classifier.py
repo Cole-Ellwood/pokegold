@@ -89,10 +89,15 @@ def role_bonus(packages: list[str], *, tier: str) -> int:
     return min(sum(SWITCH_WEIGHTS[pkg] for pkg in packages), 18)
 
 
+# UNOWN is the unclassified control: it only ever learns Hidden Power, so it
+# carries no role-package bits and is a stable below-threshold baseline.
+# (MAGIKARP used to be the control, but the Lake of Rage shiny-Gyarados ->
+# Magikarp rework gave it Dragon Dance + speed 100, so it now legitimately
+# classifies as a setup-sweeper.)
 def run_golden_changed_decision() -> None:
-    rows = {row["species"]: row for row in describe_species(["MAGIKARP", "MISDREAVUS", "SKARMORY", "STARMIE", "SNORLAX"])}
-    if rows["MAGIKARP"]["committed_packages"]:
-        fail("golden control MAGIKARP should be unclassified")
+    rows = {row["species"]: row for row in describe_species(["UNOWN", "MISDREAVUS", "SKARMORY", "STARMIE", "SNORLAX"])}
+    if rows["UNOWN"]["committed_packages"]:
+        fail("golden control UNOWN should be unclassified")
     expected = {
         "STARMIE": {"spinner", "physical/special-wallbreaker"},
         "SKARMORY": {"phazer"},
@@ -109,7 +114,7 @@ def run_golden_changed_decision() -> None:
 
     base_confidence = 60
     threshold = 70
-    control = base_confidence + role_bonus(rows["MAGIKARP"]["committed_packages"], tier="mid")
+    control = base_confidence + role_bonus(rows["UNOWN"]["committed_packages"], tier="mid")
     changed = base_confidence + role_bonus(rows["MISDREAVUS"]["committed_packages"], tier="mid")
     early = base_confidence + role_bonus(rows["MISDREAVUS"]["committed_packages"], tier="early")
     if control >= threshold:

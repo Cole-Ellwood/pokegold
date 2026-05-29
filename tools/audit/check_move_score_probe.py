@@ -7,11 +7,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from _trace_artifacts import require_manifest_basis
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def main() -> int:
+    require_manifest_basis()
     proc = subprocess.run(
         [sys.executable, "-m", "tools.boss_ai_debugger", "move-score-probe", "--self-test"],
         cwd=ROOT,

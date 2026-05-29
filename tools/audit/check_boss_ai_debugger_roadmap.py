@@ -40,6 +40,8 @@ from tools.boss_ai_debugger.state_schema import (
     validate_trace_dir,
 )
 
+from _trace_artifacts import require_manifest_basis
+
 
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "roadmap_audit.json"
 PERFORMANCE_REPORT_PATH = (
@@ -77,6 +79,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    require_manifest_basis()
     report = build_roadmap_audit(
         generated_count=args.generated_count,
         seed=args.seed,

@@ -100,7 +100,7 @@ BossAIRolePackageBySpecies::
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_TRAP_PERISH_MASK ; GASTLY: sleep/status-pressure, trap/perish-line
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_TRAP_PERISH_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; HAUNTER: sleep/status-pressure, trap/perish-line, physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; GENGAR: setup-sweeper, sleep/status-pressure, physical/special-wallbreaker
-	db BOSS_AI_ROLEPKG_PHAZER_MASK ; ONIX: phazer
+	db BOSS_AI_ROLEPKG_PHAZER_MASK | BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK ; ONIX: phazer, setup-sweeper
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK ; DROWZEE: sleep/status-pressure
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK ; HYPNO: sleep/status-pressure
 	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; KRABBY: setup-sweeper, physical/special-wallbreaker
@@ -134,7 +134,7 @@ BossAIRolePackageBySpecies::
 	db BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; MAGMAR: physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; PINSIR: setup-sweeper, physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; TAUROS: physical/special-wallbreaker
-	db 0 ; MAGIKARP: none
+	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK ; MAGIKARP: setup-sweeper
 	db BOSS_AI_ROLEPKG_PHAZER_MASK | BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; GYARADOS: phazer, setup-sweeper, physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_TRAP_PERISH_MASK ; LAPRAS: sleep/status-pressure, trap/perish-line
 	db 0 ; DITTO: none

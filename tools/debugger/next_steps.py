@@ -631,7 +631,7 @@ SOURCE_REFS = {
         "CLAUDE.md",
     ],
     "content_mirror_state": [
-        "tools/debugger/content_mirror.py",
+        "tools/debugger/content_mirror/",
         "tools/debugger/content_scenarios.py",
         "tools/debugger/content_state.py",
         "tools/debugger/state_space.py",

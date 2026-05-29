@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 from _common import fail
+from _trace_artifacts import require_manifest_basis
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -320,6 +321,7 @@ def audit_manifest(expected_rows: dict[str, tuple[str, str]]) -> dict[str, str]:
 
 
 def main() -> int:
+    require_manifest_basis()
     if not LEDGER.exists():
         fail(f"missing live capture ledger: {rel(LEDGER)}")
 

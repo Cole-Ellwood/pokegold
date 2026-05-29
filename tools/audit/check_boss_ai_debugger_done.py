@@ -15,6 +15,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "done_gate.json"
 
+from _trace_artifacts import require_manifest_basis
+
 
 @dataclass(frozen=True)
 class GateCommand:
@@ -109,6 +111,7 @@ def main() -> int:
     parser.add_argument("--skip-changed-ai-suite", action="store_true")
     args = parser.parse_args()
 
+    require_manifest_basis()
     report = build_done_gate_report(
         generated_count=args.generated_count,
         skip_slow_replay=args.skip_slow_replay,

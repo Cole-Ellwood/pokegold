@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from _common import fail, load
+from _trace_artifacts import skip
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -189,8 +190,25 @@ def audit_dev_index(
 
 def main() -> int:
     normal_enemy, normal_core = audit_map(NORMAL_MAP, trace=False)
-    trace_enemy, _ = audit_map(TRACE_MAP, trace=True)
     normal_wram = audit_symbols(NORMAL_SYM, trace=False)
+
+    # The trace map/sym are gitignored build outputs. When they are not built,
+    # skip the trace-budget + dev_index trace-row cross-check rather than
+    # hard-failing; the normal build budget above is still verified, and the
+    # normal dev_index rows are covered by check_docs_navigation.
+    if not TRACE_MAP.exists() or not TRACE_SYM.exists():
+        print(
+            "Normal Boss AI memory budget audit passed:"
+            f" used={normal_wram[1] - normal_wram[0]},"
+            f" free={normal_wram[2] - normal_wram[1]}."
+        )
+        skip(
+            "pokegold_trace.{map,sym} not built; skipping the trace-budget + "
+            "dev_index trace-row cross-check (build the trace ROM per "
+            "docs/boss_ai_trace_capture.md to run it)"
+        )
+
+    trace_enemy, _ = audit_map(TRACE_MAP, trace=True)
     trace_wram = audit_symbols(TRACE_SYM, trace=True)
     audit_dev_index(normal_enemy, normal_core, normal_wram, trace_wram)
 

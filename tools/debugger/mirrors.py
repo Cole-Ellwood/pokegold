@@ -134,7 +134,7 @@ MIRROR_RULES = (
         symbols=("hROMBank", "FarCall", "Bankswitch"),
         symptom_keywords=("bank", "farcall", "layout", "graphics", "audio", "map", "text"),
         evidence=(
-            "tools/debugger/content_mirror.py",
+            "tools/debugger/content_mirror/",
             "tools/audit/check_release_smoke.py",
             "tools/audit/check_cross_bank_call.py",
             "tools/audit/check_layout_orgs.py",

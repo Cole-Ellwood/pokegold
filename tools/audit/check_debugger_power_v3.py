@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 
+from _trace_artifacts import require_manifest_basis
+
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CASES = ROOT / "audit" / "debugger_power_v3" / "questions.jsonl"
 DEFAULT_OUT = ROOT / ".local" / "tmp" / "debugger_power_v3.json"
@@ -81,6 +83,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-seconds", type=float, default=90.0)
     parser.add_argument("--max-commands", type=int, default=50)
     args = parser.parse_args(argv)
+
+    # The proof campaign includes a ROM-backed rom-switch-materialize proof
+    # whose expected discrepancy_found disposition needs the trace ROM; without
+    # a canonical trace build, skip rather than hard-fail. (check_debugger_power_v2
+    # runs standalone, so godmode coverage is unaffected.)
+    require_manifest_basis()
 
     cases_path = args.cases if args.cases.is_absolute() else ROOT / args.cases
     out_path = args.out if args.out.is_absolute() else ROOT / args.out

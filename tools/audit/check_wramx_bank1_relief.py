@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 from _common import fail, load
+from _trace_artifacts import skip
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -90,8 +91,15 @@ def audit_map(name: str, path: Path, expected_boss_pad: int) -> tuple[int, int, 
 
 
 def main() -> int:
+    audited = 0
     for name, path, expected_boss_pad in MAPS:
+        if not path.exists():
+            print(f"SKIP: {path.name} not built; skipping {name} WRAMX bank 1 row")
+            continue
         audit_map(name, path, expected_boss_pad)
+        audited += 1
+    if audited == 0:
+        skip("no linker map present; build pokegold.gbc to run the WRAMX bank 1 relief audit")
     print("WRAMX bank 1 relief audit passed.")
     return 0
 

@@ -306,8 +306,11 @@ def main() -> int:
     morty_species = available_species_for_checkpoint(checkpoint_for_leader("Morty"))
     chuck_species = available_species_for_checkpoint(checkpoint_for_leader("Chuck"))
     if "MAGIKARP" in falkner_species:
-        raise SystemExit("Falkner checkpoint must not expose rod/Surf-only Magikarp")
-    if "old_rod_fishing" not in bugsy_species.get("MAGIKARP", set()):
+        raise SystemExit("Falkner checkpoint must not expose Lake-of-Rage-only Magikarp")
+    # Magikarp was pulled from every rod table by the Lake of Rage
+    # shiny-Gyarados -> Magikarp rework, so it is no longer an Old Rod catch;
+    # Poliwag is the stable Route 32 Old Rod fish used to prove the source.
+    if "old_rod_fishing" not in bugsy_species.get("POLIWAG", set()):
         raise SystemExit("Bugsy checkpoint should expose Old Rod fishing after Route 32")
     if "DRATINI" not in whitney_species:
         raise SystemExit("Whitney checkpoint should source Goldenrod Game Corner prize Pokemon")

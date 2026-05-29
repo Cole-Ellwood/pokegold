@@ -20,6 +20,8 @@ if str(ROOT) not in sys.path:
 from tools.boss_ai_debugger.trace_replay import parse_trace_file, replay_trace_paths
 from tools.trace.runtime import sha256_file
 
+from _trace_artifacts import require_manifest_basis
+
 
 MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 STATE_REPLAY = ROOT / "tools" / "trace" / "boss_ai_state_replay.py"
@@ -188,6 +190,7 @@ def compare_replay_to_baseline(entry: dict[str, Any], replay_path: Path) -> None
 
 
 def main() -> int:
+    require_manifest_basis()
     manifest = load_manifest(MANIFEST)
     rom_path, symbols_path = validate_hashes(manifest)
     entries = move_choice_entries(manifest)

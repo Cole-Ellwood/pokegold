@@ -720,7 +720,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             scope="Compare ROM behavior against high-level expectations and Python mirrors.",
             evidence=(
                 "tools/debugger/mirrors.py",
-                "tools/debugger/content_mirror.py",
+                "tools/debugger/content_mirror/",
                 "tools/debugger/content_scenarios.py",
                 "tools/debugger/expect.py",
                 "tools/damage_debugger/oracle.py",

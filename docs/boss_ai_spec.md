@@ -784,7 +784,7 @@ Reserved block:
   `wBossAIStateEnd = 01:d6fe`, so normal state uses `112` bytes and leaves `28`
   reserved bytes.
 - Current trace field set adds `28` bytes under `BOSS_AI_TRACE`, so trace state
-  uses `140` bytes and leaves `0` reserved bytes — the trace reserve is fully
+  would use `140` bytes and leave `0` reserved bytes — the trace reserve is fully
   consumed and any further trace-only growth must trade against the normal-build
   fields or expand the reserved block.
 

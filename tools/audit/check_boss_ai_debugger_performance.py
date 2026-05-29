@@ -16,6 +16,8 @@ from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_score_materialize import run_rom_score_materialization
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 
+from _trace_artifacts import require_manifest_basis
+
 
 SCENARIO_COUNT = 5000
 ROM_REPLAY_SCENARIO_COUNT = 1000
@@ -30,6 +32,7 @@ REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "performance_report
 
 
 def main() -> int:
+    require_manifest_basis()
     scenarios = generate_scenarios(family="all", count=SCENARIO_COUNT, seed=SEED)
     batch = evaluate_batch(scenarios)
 

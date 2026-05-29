@@ -27,6 +27,8 @@ from tools.boss_ai_debugger.rom_contribution_trace import apply_memory_patches
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
+from _trace_artifacts import require_manifest_basis
+
 
 TRACE_ROM = ROOT / "pokegold_trace.gbc"
 TRACE_SYM = ROOT / "pokegold_trace.sym"
@@ -172,9 +174,7 @@ def main() -> int:
         for problem in static_problems:
             print(f"FAIL: {problem}")
         return 1
-    if not TRACE_ROM.exists() or not TRACE_SYM.exists():
-        print("FAIL: pokegold_trace.gbc/pokegold_trace.sym are required")
-        return 1
+    require_manifest_basis()
     _trainer_classes, trainer_ids = parse_trainer_constants()
     valid = run_oracle_helper(trainer_id=trainer_ids["KOGA1"])
     missing = run_oracle_helper(trainer_id=MISSING_TRAINER_ID)

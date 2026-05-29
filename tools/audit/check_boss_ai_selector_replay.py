@@ -17,6 +17,8 @@ if str(ROOT) not in sys.path:
 from tools.boss_ai_debugger.trace_replay import replay_trace_paths
 from tools.trace.runtime import display_path, sha256_file
 
+from _trace_artifacts import require_manifest_basis
+
 
 TRACE_DIR = ROOT / "audit" / "boss_ai_trace"
 MANIFEST = TRACE_DIR / "live_capture_manifest.json"
@@ -81,6 +83,7 @@ def validate_trace_basis(paths: list[Path], basis: dict[str, str]) -> None:
 
 
 def main() -> int:
+    require_manifest_basis()
     paths = sorted(TRACE_DIR.glob("*_live.txt"))
     if not paths:
         fail(f"no live trace files found in {TRACE_DIR}")
