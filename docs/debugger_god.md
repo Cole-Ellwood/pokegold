@@ -84,16 +84,20 @@ honestly names the rest.
 
 ---
 
-## Honest gaps (deferred, not hidden)
+## Honest gaps
 
-- **Dropped CLI verbs from the dev-tip debugger**, pending a re-wire slice:
-  `party-inspect`, `learnset-inspect`, `grass-regrowth` (`pokemon_semantics`),
-  `script-resume-gate`, `wram-ownership` / `wram-lifetime` / `wram-bank-hazards`,
-  `repro-recipe`. `state-inspect` is **not** dropped — it is superseded by
-  `save-state-lab`. The `wram-*` analyses overlap partially with `register-flow` /
-  `clobber-chain` / `consequence`. These library functions were removed by the harvested
-  branch; restoring them needs subparser wiring in `__main__`, deferred to avoid dead
-  code or front-door risk.
+- **Dev-tip verbs: all restored.** The harvest initially dropped 9 dev-tip verbs;
+  they are now re-wired and working: `party-inspect`, `learnset-inspect`,
+  `grass-regrowth`, `script-resume-gate` (post-battle/evolution freeze detector),
+  `wram-ownership` / `wram-lifetime` / `wram-bank-hazards`, `repro-recipe`, and
+  `next` (proof-step routing). `state-inspect` is superseded by `save-state-lab`;
+  `prove` was a master-lineage verb never on this dev tip. So God is a superset of
+  the dev-tip debugger plus the ~25 masterpiece verbs.
+- **Two packages kept at dev-tip level on purpose:** `tools/trace` (`read_word`
+  endianness) and `tools/damage_debugger` (taint) — masterpiece improved both, but
+  those packages stay matched to the live ROM (a ROM-mismatched debugger lies).
+  Two tests are skipped with that documented reason; they re-enable if those
+  packages are harvested.
 - **Branch state.** This lives on `claude/debugger-god-integration` (off the dev tip),
   unmerged. Merging to the dev line is a release-class event and stays a manual gate.
 

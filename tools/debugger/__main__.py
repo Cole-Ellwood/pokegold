@@ -54,6 +54,17 @@ from .type_matchup import build_type_matchup_report, format_text as format_type_
 from .visual_snapshot import build_visual_snapshot_report
 from .visualization import build_visualization_report, write_visualization
 from .workflow import build_gate_plan, command_is_runnable
+from .pokemon_semantics import (
+    build_grass_regrowth_report,
+    build_learnset_inspection_report,
+    build_party_inspection_report,
+)
+from .script_resume_gate import build_script_resume_gate_report
+from .repro_recipes import build_repro_recipe_report
+from .wram_bank_hazards import build_wram_bank_hazard_report
+from .wram_lifetime import build_wram_lifetime_report
+from .wram_ownership import build_wram_ownership_report
+from .next_steps import build_next_step
 
 
 FRONT_DOOR_HINT = """Start here:
@@ -670,6 +681,61 @@ def build_parser() -> argparse.ArgumentParser:
     clobber_chain.add_argument("--max-depth", type=int, default=8)
     add_output_args(clobber_chain)
     clobber_chain.set_defaults(func=cmd_clobber_chain)
+
+    learnset_inspect = subparsers.add_parser("learnset-inspect")
+    learnset_inspect.add_argument("--species", required=True)
+    learnset_inspect.add_argument("--level", type=int, required=True)
+    add_output_args(learnset_inspect)
+    learnset_inspect.set_defaults(func=cmd_learnset_inspect)
+
+    party_inspect = subparsers.add_parser("party-inspect")
+    party_inspect.add_argument("--save", required=True)
+    party_inspect.add_argument("--slot", type=int, action="append", default=[])
+    party_inspect.add_argument("--rom", default="pokegold.gbc")
+    party_inspect.add_argument("--symbols", default="pokegold.sym")
+    add_output_args(party_inspect)
+    party_inspect.set_defaults(func=cmd_party_inspect)
+
+    grass_regrowth = subparsers.add_parser("grass-regrowth")
+    grass_regrowth.add_argument("--max-total-hp", type=int, default=300)
+    add_output_args(grass_regrowth)
+    grass_regrowth.set_defaults(func=cmd_grass_regrowth)
+
+    wram_bank_hazards = subparsers.add_parser("wram-bank-hazards")
+    wram_bank_hazards.add_argument("--source-file", action="append", default=[])
+    add_output_args(wram_bank_hazards)
+    wram_bank_hazards.set_defaults(func=cmd_wram_bank_hazards)
+
+    script_resume_gate = subparsers.add_parser("script-resume-gate")
+    script_resume_gate.add_argument("--report", action="append", default=[])
+    add_output_args(script_resume_gate)
+    script_resume_gate.set_defaults(func=cmd_script_resume_gate)
+
+    wram_ownership = subparsers.add_parser("wram-ownership")
+    wram_ownership.add_argument("--symbol", action="append", default=[])
+    wram_ownership.add_argument("--source-file", default="ram/wram.asm")
+    add_output_args(wram_ownership)
+    wram_ownership.set_defaults(func=cmd_wram_ownership)
+
+    wram_lifetime = subparsers.add_parser("wram-lifetime")
+    wram_lifetime.add_argument("--symbol", action="append", default=[])
+    wram_lifetime.add_argument("--through", default="Script_startbattle")
+    wram_lifetime.add_argument("--source-file", default="engine/overworld/scripting.asm")
+    wram_lifetime.add_argument("--symbols", default="pokegold.sym")
+    add_output_args(wram_lifetime)
+    wram_lifetime.set_defaults(func=cmd_wram_lifetime)
+
+    repro_recipe = subparsers.add_parser("repro-recipe")
+    repro_recipe.add_argument("--id", action="append", default=[])
+    repro_recipe.add_argument("--symptom", default="")
+    add_output_args(repro_recipe)
+    repro_recipe.set_defaults(func=cmd_repro_recipe)
+
+    next_step = subparsers.add_parser("next")
+    next_step.add_argument("--changed-file", action="append", default=[])
+    next_step.add_argument("--symptom", default="")
+    add_output_args(next_step)
+    next_step.set_defaults(func=cmd_next)
 
     # Omni-debugger v2 surfaces. Each subparser captures trailing argv
     # via REMAINDER and delegates to the module's existing main() so
@@ -1522,6 +1588,86 @@ def cmd_clobber_chain(args: argparse.Namespace) -> int:
     return 0 if report.get("valid") else 1
 
 
+def cmd_learnset_inspect(args: argparse.Namespace) -> int:
+    report = build_learnset_inspection_report(
+        species=args.species,
+        level=args.level,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_party_inspect(args: argparse.Namespace) -> int:
+    report = build_party_inspection_report(
+        save=args.save,
+        slots=tuple(args.slot),
+        rom=args.rom,
+        symbols=args.symbols,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_grass_regrowth(args: argparse.Namespace) -> int:
+    report = build_grass_regrowth_report(max_total_hp=args.max_total_hp)
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_wram_bank_hazards(args: argparse.Namespace) -> int:
+    report = build_wram_bank_hazard_report(
+        source_files=tuple(args.source_file),
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] and report["passed"] else 1
+
+
+def cmd_script_resume_gate(args: argparse.Namespace) -> int:
+    report = build_script_resume_gate_report(
+        reports=tuple(args.report),
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] and report["passed"] else 1
+
+
+def cmd_wram_ownership(args: argparse.Namespace) -> int:
+    report = build_wram_ownership_report(
+        symbols=tuple(args.symbol),
+        source_file=args.source_file,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_wram_lifetime(args: argparse.Namespace) -> int:
+    report = build_wram_lifetime_report(
+        symbols=tuple(args.symbol),
+        through=args.through,
+        source_file=args.source_file,
+        symbols_path=args.symbols,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] and report["passed"] else 1
+
+
+def cmd_repro_recipe(args: argparse.Namespace) -> int:
+    report = build_repro_recipe_report(
+        ids=tuple(args.id),
+        symptom=args.symptom,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_next(args: argparse.Namespace) -> int:
+    report = build_next_step(
+        changed_files=tuple(args.changed_file),
+        symptom=args.symptom,
+    )
+    emit_report(report, args)
+    return 0
+
+
 def _delegate_to_module_main(module_name: str, argv: Sequence[str]) -> int:
     """Import the named module's ``main`` and call it with ``argv``.
 
@@ -1639,6 +1785,24 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_instruction_trace(report))
     elif report["kind"] == "unified_debugger_effect_trace":
         print(format_effect_trace(report))
+    elif report["kind"] == "unified_debugger_next_step":
+        print(format_next_step(report))
+    elif report["kind"] == "unified_debugger_learnset_inspection":
+        print(format_learnset_inspection(report))
+    elif report["kind"] == "unified_debugger_party_inspection":
+        print(format_party_inspection(report))
+    elif report["kind"] == "unified_debugger_grass_regrowth_report":
+        print(format_grass_regrowth(report))
+    elif report["kind"] == "unified_debugger_script_resume_gate":
+        print(format_script_resume_gate(report))
+    elif report["kind"] == "unified_debugger_wram_ownership":
+        print(format_wram_ownership(report))
+    elif report["kind"] == "unified_debugger_wram_lifetime_report":
+        print(format_wram_lifetime(report))
+    elif report["kind"] == "unified_debugger_wram_bank_hazard_report":
+        print(format_wram_bank_hazards(report))
+    elif report["kind"] == "unified_debugger_repro_recipe_report":
+        print(format_repro_recipe(report))
     elif report["kind"] == "unified_debugger_reverse_query":
         print(format_reverse_query(report))
     elif report["kind"] == "unified_debugger_hardware_regression_gate":
@@ -2748,6 +2912,270 @@ def format_effect_trace(report: dict[str, Any]) -> str:
             )
     for limit in report.get("known_limits", [])[:3]:
         lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_next_step(report: dict[str, Any]) -> str:
+    rec = report["recommendation"]
+    lines = [
+        "Unified Pokemon Gold romhack debugger next step",
+        f"matched_lane={report['matched_lane']} symptom_class={rec['symptom_class']}",
+    ]
+    if report["symptom"]:
+        lines.append(f"symptom={report['symptom']}")
+    if report["changed_files"]:
+        lines.append("changed_files=" + ", ".join(report["changed_files"]))
+    lines.extend(
+        [
+            "",
+            f"First command: {rec['first_command']}",
+            "Required inputs:",
+        ]
+    )
+    for item in rec["required_inputs"]:
+        lines.append(f"  - {item}")
+    lines.extend(
+        [
+            f"Proof limit: {rec['proof_limit']}",
+            f"Escalation command: {rec['escalation_command']}",
+        ]
+    )
+    if rec.get("repro_recipes"):
+        lines.append("Repro recipes:")
+        for recipe in rec["repro_recipes"]:
+            lines.append(f"  - {recipe}: python -m tools.debugger repro-recipe --id {recipe}")
+    if len(report["candidates"]) > 1:
+        lines.extend(["", "Other matching paths:"])
+        for item in report["candidates"][1:]:
+            lines.append(
+                f"  - {item['symptom_class']}: {item['first_command']}"
+            )
+    if report["triage_match_ids"]:
+        lines.append("triage=" + ", ".join(report["triage_match_ids"]))
+    return "\n".join(lines)
+
+
+def format_learnset_inspection(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger learnset inspection",
+        f"valid={report['valid']} species={report.get('species')} level={report.get('level')}",
+        "current_moves=" + ", ".join(report.get("current_moves", [])),
+    ]
+    available = report.get("available_level_up_moves", [])
+    if available:
+        lines.append("learned_up_to_level:")
+        for row in available[-10:]:
+            lines.append(f"  - L{row['level']}: {row['move']}")
+    future = report.get("future_level_up_moves", [])
+    if future:
+        lines.append("next_moves:")
+        for row in future[:5]:
+            lines.append(f"  - L{row['level']}: {row['move']}")
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        for command in report["commands"][:4]:
+            lines.append(f"  - {command}")
+    return "\n".join(lines)
+
+
+def format_party_inspection(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger party inspection",
+        f"valid={report['valid']} save={report.get('save')} slots={report.get('slots')}",
+    ]
+    for mon in report.get("party", []):
+        lines.append(
+            f"  - {mon['species']} L{mon['level']} HP={mon['current_hp']}/{mon['max_hp']} "
+            f"moves={', '.join(mon['move_names'])}"
+        )
+    for error in report.get("errors", []):
+        lines.append(f"error slot {error.get('slot')}: {error.get('error')}")
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        for command in report["commands"][:4]:
+            lines.append(f"  - {command}")
+    return "\n".join(lines)
+
+
+def format_grass_regrowth(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger Grass regrowth table",
+        f"valid={report['valid']} max_total_hp={report.get('max_total_hp')}",
+        f"full_grass={report['formula']['full_grass']}",
+        f"half_grass={report['formula']['half_grass']}",
+    ]
+    for key, title in (("full_grass", "Full Grass"), ("half_grass", "Half Grass")):
+        lines.append(f"{title} cutoffs:")
+        for row in report["cutoffs"][key]:
+            lines.append(f"  - {row['min_hp']}-{row['max_hp']}: {row['heals']}")
+    return "\n".join(lines)
+
+
+def format_script_resume_gate(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger script-resume gate",
+        (
+            f"valid={report['valid']} passed={report.get('passed')} "
+            f"findings={report.get('finding_count', 0)} "
+            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
+        ),
+    ]
+    if report.get("input_reports"):
+        lines.append("reports=" + ", ".join(report["input_reports"][:6]))
+    if report.get("findings"):
+        lines.extend(["", "Findings:"])
+        for item in report["findings"][:20]:
+            lines.append(
+                f"  - {str(item.get('severity', '')).upper()} "
+                f"{item.get('id')}: {item.get('summary') or item.get('title')}"
+            )
+            source = item.get("source")
+            if source:
+                lines.append(f"      source: {source}")
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        for command in report["commands"][:6]:
+            runnable = "runnable" if command_is_runnable(command) else "needs-input"
+            lines.append(f"  - {command} ({runnable})")
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_wram_ownership(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger WRAM ownership",
+        (
+            f"valid={report['valid']} symbols={len(report.get('symbols', []))} "
+            f"unions={report.get('union_count', 0)} errors={report.get('error_count', 0)} "
+            f"warnings={report.get('warning_count', 0)}"
+        ),
+        f"source={report.get('source_file', '')}",
+    ]
+    for item in report.get("ownership", [])[:20]:
+        same_arm = ", ".join(item.get("same_arm_labels", [])[:8])
+        overlaps: list[str] = []
+        for arm in item.get("other_union_arms", [])[:8]:
+            overlaps.extend(str(label) for label in arm.get("labels", [])[:3])
+        lines.extend(
+            [
+                "",
+                (
+                    f"{item.get('symbol')}: status={item.get('status')} risk={item.get('risk')} "
+                    f"line={item.get('line')} union={item.get('union_start_line')}-{item.get('union_end_line')}"
+                ),
+                f"  owner arm: {same_arm}",
+            ]
+        )
+        if overlaps:
+            lines.append("  overlaps: " + ", ".join(overlaps[:16]))
+    if report.get("commands"):
+        lines.extend(["", "Follow-up commands:"])
+        for command in report["commands"][:6]:
+            lines.append(f"  - {command}")
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_wram_lifetime(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger WRAM lifetime",
+        (
+            f"valid={report['valid']} passed={report.get('passed')} "
+            f"symbols={len(report.get('symbols', []))} findings={report.get('finding_count', 0)} "
+            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
+        ),
+        f"through={report.get('through')} source={report.get('source_file', '')}",
+    ]
+    routine = report.get("routine") if isinstance(report.get("routine"), dict) else {}
+    if routine:
+        lines.append(
+            f"barrier={routine.get('barrier', '')} "
+            f"protected={routine.get('trainer_context_protected')}"
+        )
+    for item in report.get("findings", [])[:12]:
+        lines.extend(
+            [
+                "",
+                f"S{item.get('severity')} {item.get('id')}: {item.get('title')}",
+                f"  range: {item.get('range')} {item.get('address_range')}",
+                f"  barrier: {', '.join(item.get('barriers', []))}",
+            ]
+        )
+        overlaps = item.get("overlap_labels", [])
+        if overlaps:
+            lines.append("  overlaps: " + ", ".join(overlaps[:16]))
+        protection = item.get("protection") if isinstance(item.get("protection"), dict) else {}
+        if protection:
+            lines.append(
+                "  protection: "
+                + ", ".join(f"{key}={value}" for key, value in protection.items())
+            )
+    if report.get("commands"):
+        lines.extend(["", "Follow-up commands:"])
+        for command in report["commands"][:6]:
+            runnable = "runnable" if command_is_runnable(command) else "needs-input"
+            lines.append(f"  - {command} ({runnable})")
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_wram_bank_hazards(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger WRAM bank/stack hazard scan",
+        (
+            f"valid={report['valid']} passed={report['passed']} "
+            f"files={report['source_file_count']} findings={report['finding_count']} "
+            f"errors={report['error_count']} warnings={report['warning_count']}"
+        ),
+    ]
+    if report.get("source_files"):
+        lines.append("source_files=" + ", ".join(report["source_files"][:8]))
+    if report.get("findings"):
+        lines.extend(["", "Findings:"])
+        for item in report["findings"][:30]:
+            lines.append(
+                f"  - S{item['severity']} {item['type']} "
+                f"{item['source_file']}:{item['line']} {item['routine']}"
+            )
+            lines.append(f"      {item['title']}")
+            for evidence in item.get("evidence", [])[:2]:
+                lines.append(f"      evidence: {evidence}")
+    if report.get("commands"):
+        lines.extend(["", "Follow-up commands:"])
+        for command in report["commands"][:6]:
+            lines.append(f"  - {command}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_repro_recipe(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger repro recipes",
+        f"valid={report['valid']} recipes={report['recipe_count']}",
+    ]
+    if report.get("symptom"):
+        lines.append(f"symptom={report['symptom']}")
+    for recipe in report.get("recipes", []):
+        lines.extend(["", f"{recipe['id']}: {recipe['title']}", f"  purpose: {recipe['purpose']}"])
+        lines.append("  inputs:")
+        for item in recipe.get("inputs", [])[:6]:
+            lines.append(f"    - {item}")
+        lines.append("  commands:")
+        for command in recipe.get("commands", [])[:8]:
+            lines.append(f"    - {command}")
+        lines.append(f"  proof limit: {recipe['proof_limit']}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
     return "\n".join(lines)
 
 
