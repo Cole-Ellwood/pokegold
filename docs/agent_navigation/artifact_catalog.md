@@ -58,3 +58,49 @@ Bad:
 - "Boss AI is proven fair" from static audits alone.
 - "Morty proof exists" from old RAM that does not load a current boss decision.
 - "The game is done" without naming build, audit, and playtest gaps.
+
+## Orphan / Uncatalogued Docs
+
+Real, tracked docs that no other tracked file links to — listed here so they
+are discoverable without a blind search. Not part of the routing floor; consult
+the relevant group only when its topic is in play.
+
+### Boss-AI debugger module references
+
+Component-level docs for the `tools/boss_ai_debugger` / `tools/debugger`
+toolchain. Read alongside the module they describe.
+
+- [Scenario generators](../boss_ai_debugger_generators.md)
+- [Mastery and coverage indexes](../boss_ai_debugger_mastery_coverage.md)
+- [Mutation and invariant tools](../boss_ai_debugger_mutation_invariants.md)
+- [Metamorphic checks](../boss_ai_debugger_metamorphic.md)
+- [Differential runner (ROM vs Python)](../boss_ai_debugger_differential.md)
+- [Rule map](../boss_ai_debugger_rule_map.md)
+- [Route evaluation (multi-turn)](../boss_ai_debugger_route_eval.md)
+- [Analysis tools](../boss_ai_debugger_analysis_tools.md)
+- [Run store](../boss_ai_debugger_run_store.md)
+
+### Boss-AI plans and task specs
+
+Planning / handoff specs (historical intent, not current state — cross-check
+against `docs/project_roadmap.md` and the code before acting).
+
+- [Preference regression runner plan](../boss_ai_regression_runner_plan.md)
+- [Debugger closed-loop alignment plan (2026-05-15)](../boss_ai_debugger_closed_loop_alignment_plan_2026-05-15.md)
+- [Trace-capture refresh — Codex task spec](../boss_ai_trace_refresh_codex_task.md)
+- [boss.asm repartition — Codex task spec](../boss_asm_repartition_codex_task.md)
+- [Sleep clause — Codex task spec](../sleep_clause_codex_task.md)
+- [Voucher removal + TM swap plan](../voucher_removal_and_tm_swap_plan.md)
+
+### Dated snapshots and reviews
+
+Point-in-time records; the data underneath drifts.
+
+- [Boss AI decision flowchart by tier (2026-05-27)](../boss_ai_flowchart_2026-05-27.md)
+- [RAM pressure findings (2026-05-26)](../ram_pressure_findings_2026-05-26.md)
+- [Codex review request — Claude session (2026-05-10)](../codex_review_2026-05-10.md)
+
+### Reference and checklists
+
+- [Type Passives V1 smoke tests](../type_passives_smoketests.md)
+- [Boss authoring checklist](../boss_authoring_checklist.md)
