@@ -240,11 +240,15 @@ def normalize_legacy_row(row: dict[str, Any]) -> dict[str, Any]:
     if model in LEGACY_MODEL_MAP:
         row["model"] = LEGACY_MODEL_MAP[model]
     legacy_status_map = {
-        "slice_accepted_partial_P0": "slice_accepted",
         "ready_for_claude_review": "ready_for_review",
         "ready_for_codex_review": "ready_for_review",
     }
     status = row.get("status", "")
+    if status == "slice_accepted_partial_P0":
+        row["legacy_status"] = status
+        row["legacy_partial_phase"] = True
+        row["status"] = "slice_accepted"
+        return row
     if status in legacy_status_map:
         row["status"] = legacy_status_map[status]
     return row
@@ -287,12 +291,21 @@ def rows_for_phase(rows: Sequence[dict[str, Any]], phase: str) -> list[dict[str,
     return [row for row in rows if row.get("phase") == phase]
 
 
+def is_phase_abandoned(rows: Sequence[dict[str, Any]], phase: str) -> bool:
+    return any(
+        row.get("event") == "slice_update" and row.get("status") == "abandoned"
+        for row in rows_for_phase(rows, phase)
+    )
+
+
 def is_mutual_verified(rows: Sequence[dict[str, Any]], phase: str) -> tuple[bool, list[str]]:
     """Return (verified, reasons). reasons is non-empty when not verified."""
 
     phase_rows = rows_for_phase(rows, phase)
     if not phase_rows:
         return False, [f"no rows for phase {phase!r}"]
+    if is_phase_abandoned(rows, phase):
+        return False, [f"phase {phase!r} marked abandoned"]
     primary_models = {row.get("primary", "") for row in phase_rows if row.get("primary")}
     if len(primary_models) > 1:
         return False, [
@@ -325,18 +338,25 @@ def is_mutual_verified(rows: Sequence[dict[str, Any]], phase: str) -> tuple[bool
             f"phase {phase!r} missing slice_update status=ready_for_review "
             f"from primary={primary!r}"
         ]
-    other_signed = any(
-        row.get("event") == "slice_review"
+    accepted_review_rows = [
+        row
+        for row in phase_rows
+        if row.get("event") == "slice_review"
         and row.get("model") != primary
         and row.get("status") in ACCEPT_STATUSES
         and row.get("confidence") in GATE_VALID_LABELS
-        for row in phase_rows
-    )
+    ]
+    other_signed = any(not row.get("legacy_partial_phase") for row in accepted_review_rows)
     if not other_signed:
-        return False, [
+        reasons = [
             f"phase {phase!r} missing repo-proven slice_review with "
             f"status in {sorted(ACCEPT_STATUSES)} from non-primary model"
         ]
+        if accepted_review_rows:
+            reasons.append(
+                "accepted legacy review rows are marked partial and do not satisfy the full phase gate"
+            )
+        return False, reasons
     return True, []
 
 
@@ -351,9 +371,11 @@ def audit_store(store: Path = DEFAULT_STORE, root: Path = ROOT) -> dict[str, Any
     phases = sorted({row.get("phase", "") for row in rows if row.get("phase")})
     phase_status = {}
     for phase in phases:
+        abandoned = is_phase_abandoned(rows, phase)
         verified, reasons = is_mutual_verified(rows, phase)
         phase_status[phase] = {
             "mutual_verified": verified,
+            "abandoned": abandoned,
             "reasons": reasons,
         }
     return {

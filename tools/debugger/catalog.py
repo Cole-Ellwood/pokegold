@@ -37,6 +37,7 @@ class TriageRule:
     symptom_keywords: tuple[str, ...]
     reason: str
     commands: tuple[str, ...]
+    excluded_path_prefixes: tuple[str, ...] = ()
     gaps: tuple[str, ...] = ()
 
 
@@ -47,7 +48,7 @@ SUBSYSTEMS = (
         scope="Boss move/switch policy, trace replay, ROM materialization, review queues.",
         entrypoints=(
             "python -m tools.boss_ai_debugger --help",
-            "python tools\\audit\\check_boss_ai_debugger_done.py",
+            "python tools/audit/check_boss_ai_debugger_done.py",
         ),
         evidence_paths=(
             "tools/boss_ai_debugger/__main__.py",
@@ -74,8 +75,8 @@ SUBSYSTEMS = (
         title="Trace runtime",
         scope="PyBoy runtime helpers, symbol parsing, trace capture, save-state replay plumbing.",
         entrypoints=(
-            "python tools\\trace\\boss_ai_trace_batch.py --execute",
-            "python tools\\trace\\boss_ai_state_factory.py --all --update-manifest",
+            "python tools/trace/boss_ai_trace_batch.py --execute",
+            "python tools/trace/boss_ai_state_factory.py --all --update-manifest",
         ),
         evidence_paths=(
             "tools/trace/runtime.py",
@@ -88,8 +89,8 @@ SUBSYSTEMS = (
         title="Static and release audits",
         scope="Source-level invariant checks and release smoke gates across broad ROM surfaces.",
         entrypoints=(
-            "python tools\\audit\\check_release_smoke.py",
-            "python tools\\audit\\check_battle_math_safety.py",
+            "python tools/audit/check_release_smoke.py",
+            "python tools/audit/check_battle_math_safety.py",
         ),
         evidence_paths=(
             "tools/audit/check_release_smoke.py",
@@ -97,133 +98,37 @@ SUBSYSTEMS = (
             "tools/audit/check_cross_bank_call.py",
         ),
     ),
+    Subsystem(
+        id="omni_debugger_v2",
+        title="Omni-debugger v2 surfaces",
+        scope=(
+            "Cross-session investigation affordances on top of the v1 unified debugger: "
+            "single-command session orientation, persistent hypothesis tree with citation "
+            "grounding, end-to-end selftest, save-state lab (raw memory + WRAM diff, .sgm "
+            "fail-closed), and bisect harness."
+        ),
+        entrypoints=(
+            "python -m tools.debugger session-start",
+            "python -m tools.debugger hypothesis list",
+            "python -m tools.debugger selftest",
+            "python -m tools.debugger save-state-lab inspect <state>",
+            "python -m tools.debugger bisect --good <c> --bad <c> -- <argv...>",
+        ),
+        evidence_paths=(
+            "tools/debugger/session_start.py",
+            "tools/debugger/hypothesis_tracker.py",
+            "tools/debugger/selftest.py",
+            "tools/debugger/save_state_lab.py",
+            "tools/debugger/bisect.py",
+            "docs/omni_debugger_v2.md",
+            "docs/debugger_user_guide.md",
+            "audit/hypothesis_tree.jsonl",
+        ),
+    ),
 )
 
 
 TRIAGE_RULES = (
-    TriageRule(
-        id="boss_ai_live_move",
-        title="Boss AI live move-choice or legality symptom",
-        path_prefixes=(
-            "engine/battle/ai/boss_policy_move.asm",
-            "tools/boss_ai_debugger/damage_ai_report.py",
-            "tools/boss_ai_debugger/move_score_probe.py",
-        ),
-        symptom_keywords=(
-            "falkner",
-            "silver",
-            "hypnosis",
-            "sleep clause",
-            "leer",
-            "normal move",
-            "doesn't affect",
-            "doesnt affect",
-            "hidden power",
-            "boss used",
-        ),
-        reason="Recent live boss-move bugs are fastest to inspect with exact damage plus move-score probes before generic damage debugging.",
-        commands=(
-            "python -m tools.boss_ai_debugger damage-ai-report --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --sleep-clause both",
-            "python -m tools.boss_ai_debugger move-score-probe --trainer <TRAINER> --enemy <ENEMY> --player-save <save.sav> --player-slot <slot> --trace",
-            "python tools\\audit\\check_damage_ai_report.py",
-            "python tools\\audit\\check_move_score_probe.py",
-        ),
-    ),
-    TriageRule(
-        id="overworld_status",
-        title="Overworld status, poison-step, or field HP state",
-        path_prefixes=(
-            "engine/events/poisonstep.asm",
-            "engine/overworld/",
-        ),
-        symptom_keywords=(
-            "walking poison",
-            "overworld poison",
-            "poison cure",
-            "1 hp",
-            "0 hp",
-            "poisoned mon",
-        ),
-        reason="The poison-step bug class has a focused runtime audit; route there before broad battle damage checks.",
-        commands=(
-            "python tools\\audit\\check_overworld_poison_cure.py",
-            "python -m tools.debugger investigate --changed-file engine/events/poisonstep.asm",
-        ),
-    ),
-    TriageRule(
-        id="base_ai_mechanics",
-        title="Base non-boss AI mechanics and move legality",
-        path_prefixes=(
-            "engine/battle/ai/move.asm",
-            "engine/battle/ai/scoring.asm",
-            "engine/battle/ai/redundant.asm",
-        ),
-        symptom_keywords=(
-            "assault vest",
-            "choice lock",
-            "choice locked",
-            "regular trainer",
-            "non-boss",
-            "base ai",
-            "illegal status",
-        ),
-        reason="Base AI legality and shared scoring have a focused source audit separate from Boss AI policy.",
-        commands=(
-            "python tools\\audit\\check_base_ai_mechanics_correctness.py",
-            "python tools\\audit\\check_release_smoke.py",
-        ),
-    ),
-    TriageRule(
-        id="pokemon_semantics",
-        title="Pokemon data semantics, learnsets, party state, or type passives",
-        path_prefixes=(
-            "data/pokemon/evos_attacks.asm",
-            "data/pokemon/evos_attacks_pointers.asm",
-            "data/pokemon/base_stats/",
-            "engine/battle/type_passive_damage_mods.asm",
-        ),
-        symptom_keywords=(
-            "learnset",
-            "moveset",
-            "confusion",
-            "spite",
-            "grass heal",
-            "grass regrowth",
-            "hoppip",
-            "passive heal",
-        ),
-        reason="Pokemon data questions need semantic source/save inspection, not only byte mirroring.",
-        commands=(
-            "python -m tools.debugger learnset-inspect --species <SPECIES> --level <LEVEL>",
-            "python -m tools.debugger party-inspect --save <save.sav> --slot <slot>",
-            "python -m tools.debugger grass-regrowth --max-total-hp 300",
-        ),
-    ),
-    TriageRule(
-        id="static_bug_hunt",
-        title="Static bug-family lead finder",
-        path_prefixes=(
-            "engine/battle/move_effects/",
-            "engine/battle/ai/boss_policy_move.asm",
-        ),
-        symptom_keywords=(
-            "wcur species",
-            "wcurspecies",
-            "base data",
-            "getbasedata",
-            "mirror move",
-            "sketch",
-            "mimic",
-            "disable",
-            "encore",
-            "spite",
-        ),
-        reason="Prior real bugs in this repo cluster around global base-data mutation and unbounded move searches; the lead finder routes those patterns quickly.",
-        commands=(
-            "python tools\\audit\\bug_hunt_triage.py --max-leads 12",
-            "python -m tools.debugger provenance --symbol wCurSpecies --symbol GetBaseData",
-        ),
-    ),
     TriageRule(
         id="damage_chain",
         title="Damage-chain or battle math change",
@@ -258,6 +163,8 @@ TRIAGE_RULES = (
         ),
         reason="Damage has the strongest ROM-vs-oracle and register-clobber tooling today.",
         commands=(
+            "python -m tools.debugger when-wrote --address <addr> --report <effect-trace.json> --since-symbol <function>",
+            "python -m tools.debugger clobber-chain --function <function> --register <register>",
             "python -m tools.damage_debugger.clobber_smoke",
             "python -m tools.damage_debugger.oracle",
             "python -m tools.damage_debugger.fuzz --self-check-workers=2",
@@ -286,74 +193,10 @@ TRIAGE_RULES = (
         ),
         reason="Boss AI has the most complete state-of-the-art debugger workflow in this repo.",
         commands=(
-            "python tools\\audit\\check_boss_ai_debugger_done.py",
+            "python tools/audit/check_boss_ai_debugger_done.py",
             "python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 24 --seed 1",
             "python -m tools.boss_ai_debugger diff --trace-dir audit\\boss_ai_trace",
             "python -m tools.boss_ai_debugger review-queue --scenarios <scenarios.jsonl>",
-        ),
-    ),
-    TriageRule(
-        id="vram_request_contract",
-        title="Queued VRAM tile request or evolution graphics risk",
-        path_prefixes=(
-            "home/gfx.asm",
-            "home/video.asm",
-            "home/vblank.asm",
-            "engine/movie/evolution_animation.asm",
-        ),
-        symptom_keywords=(
-            "vram",
-            "tile",
-            "tiles",
-            "palette",
-            "color",
-            "colors",
-            "inverted",
-            "evolution",
-            "evolved",
-            "quilava",
-            "garbled",
-            "corrupt",
-            "graphics",
-        ),
-        reason="Queued tile copies are timing-sensitive; this audit checks that callers wait for the VBlank service acknowledgement before continuing.",
-        commands=(
-            "python tools\\audit\\check_vram_request_contract.py",
-            "python tools\\audit\\check_release_smoke.py",
-        ),
-    ),
-    TriageRule(
-        id="script_vm_impossible_state",
-        title="Impossible script VM, PC, or stack state",
-        path_prefixes=(
-            "engine/overworld/",
-            "engine/events/",
-            "home/map.asm",
-            "maps/",
-            "ram/wram.asm",
-        ),
-        symptom_keywords=(
-            "frozen",
-            "softlock",
-            "locked up",
-            "music playing",
-            "music continues",
-            "trainer battle",
-            "after battle",
-            "after trainer",
-            "script stuck",
-            "scripttalkafter",
-            "bad script",
-        ),
-        reason="Crash-state snapshots can be checked for impossible script bank/position, bad script stack frames, and PC/SP crash signatures before guessing at graphics or battle causes.",
-        commands=(
-            "python -m tools.debugger state-inspect --save-state <crash-state.sgm> --rom pokegold.gbc --symbols pokegold.sym --json-out .local\\tmp\\debugger_runtime_state.json",
-            "python -m tools.debugger watch --watch-symbol wScriptBank --watch-symbol wScriptPos --watch-symbol wScriptStackSize --save-state <state-before-trigger> --execute",
-            "python -m tools.debugger wram-lifetime --symbol wSeenTrainerBank --symbol wScriptAfterPointer --symbol wRunningTrainerBattleScript --through Script_startbattle",
-            "python -m tools.debugger provenance --symbol wScriptBank --symbol wScriptPos --symbol wSeenTrainerBank --symbol wScriptAfterPointer",
-        ),
-        gaps=(
-            "A crash-state snapshot can prove the script VM is impossible, but a pre-trigger watch or instruction trace is still needed to prove the write that caused it.",
         ),
     ),
     TriageRule(
@@ -367,9 +210,6 @@ TRIAGE_RULES = (
         symptom_keywords=(
             "crash",
             "hang",
-            "reset",
-            "reboot",
-            "black screen",
             "bank",
             "farcall",
             "register",
@@ -379,13 +219,63 @@ TRIAGE_RULES = (
         ),
         reason="Static ABI audits catch common ROM-wide assembly hazards before a focused emulator trace.",
         commands=(
-            "python tools\\audit\\check_farcall_a_clobber.py",
-            "python tools\\audit\\check_farcall_hl_clobber.py",
-            "python tools\\audit\\check_cross_bank_call.py",
-            "python tools\\audit\\check_release_smoke.py",
+            "python -m tools.debugger clobber-chain --function <function> --register <register>",
+            "python tools/audit/check_farcall_a_clobber.py",
+            "python tools/audit/check_farcall_hl_clobber.py",
+            "python tools/audit/check_cross_bank_call.py",
+            "python tools/audit/check_release_smoke.py",
         ),
         gaps=(
-            "There is no generic whole-ROM dataflow/provenance debugger for arbitrary register symptoms yet.",
+            "The static clobber-chain report is conservative; use runtime traces for path-sensitive liveness proof.",
+        ),
+    ),
+    TriageRule(
+        id="pokemon_data",
+        title="Pokemon species, learnset, or move data",
+        path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
+        ),
+        symptom_keywords=(
+            "learnset",
+            "level-up",
+            "level up",
+            "level-up move",
+            "tm compatibility",
+            "hm compatibility",
+            "egg move",
+            "evolution",
+            "evolve",
+            "species data",
+            "pokemon data",
+        ),
+        reason="Pokemon data edits need source-derived content checks plus the learnset/order smoke gate before a ROM build.",
+        commands=(
+            "python -m tools.debugger content-mirror --changed-file <changed_file>",
+            "python -m tools.debugger compare --changed-file <changed_file>",
+            "python -m tools.debugger expect --source-file <changed_file> --expect source=<changed_file>",
+            "python -m tools.debugger provenance --source-file <changed_file>",
+            "python tools/audit/check_release_smoke.py",
+        ),
+    ),
+    TriageRule(
+        id="type_matchup",
+        title="Pokemon type-matchup snapshot",
+        path_prefixes=(
+            "data/pokemon/base_stats/",
+        ),
+        symptom_keywords=(
+            "type matchup",
+            "type effectiveness",
+            "matchup",
+            "immune",
+            "immunity",
+        ),
+        reason="Base-stats edits often change current hack type interactions; this prints the source-derived defensive and offensive matchup snapshot.",
+        commands=(
+            "python -m tools.debugger type-matchup --species <species>",
         ),
     ),
     TriageRule(
@@ -411,12 +301,90 @@ TRIAGE_RULES = (
         ),
         reason="These surfaces currently rely more on static audits and release smoke than focused debuggers.",
         commands=(
-            "python tools\\audit\\check_release_smoke.py",
-            "python tools\\audit\\check_layout_orgs.py",
-            "python tools\\audit\\check_pic_bank_pressure.py",
+            "python tools/audit/check_release_smoke.py",
+            "python tools/audit/check_layout_orgs.py",
+            "python tools/audit/check_pic_bank_pressure.py",
+        ),
+        excluded_path_prefixes=(
+            "data/pokemon/evos_attacks.asm",
+            "data/pokemon/egg_moves.asm",
+            "data/pokemon/base_stats/",
+            "data/moves/",
         ),
         gaps=(
             "Focused ROM replay, fuzzing, and causal provenance are not yet generalized for this surface.",
+        ),
+    ),
+    TriageRule(
+        id="save_state_inspection",
+        title="Save state inspection / format-drift suspicion",
+        path_prefixes=(
+            "ram/",
+        ),
+        symptom_keywords=(
+            "save",
+            "save state",
+            "savestate",
+            ".sgm",
+            "sgm",
+            "save format",
+            "save load",
+            "save file",
+            "loaded weird",
+        ),
+        reason=(
+            "Save-state lab inspects raw memory + WRAM dumps and fails closed on ambiguous .sgm "
+            "before any bug-hunting assumes a working decode."
+        ),
+        commands=(
+            "python -m tools.debugger save-state-lab inspect <state>",
+            "python -m tools.debugger save-state-lab diff <a> <b>",
+            "python tools/audit/check_save_format_version.py",
+        ),
+    ),
+    TriageRule(
+        id="commit_regression",
+        title="Regression localized to a commit range",
+        path_prefixes=(),
+        symptom_keywords=(
+            "regression",
+            "regressed",
+            "broke",
+            "started failing",
+            "stopped working",
+            "since commit",
+            "bisect",
+        ),
+        reason=(
+            "Bisect harness drives `git bisect` against a deterministic scenario command "
+            "with pre-flight ref/clean-tree gates and exit-125 fail-closed semantics."
+        ),
+        commands=(
+            "python -m tools.debugger bisect --good <known-good-commit> --bad HEAD -- <argv...>",
+        ),
+    ),
+    TriageRule(
+        id="multi_step_investigation",
+        title="Multi-step investigation / persistent hypothesis tracking",
+        path_prefixes=(),
+        symptom_keywords=(
+            "hypothesis",
+            "investigation",
+            "session handoff",
+            "across sessions",
+            "persistent debug",
+            "cite",
+            "citation",
+            "grounding",
+        ),
+        reason=(
+            "Hypothesis tracker persists claims with citation grounding so a later session "
+            "inherits the investigation without re-deriving conclusions."
+        ),
+        commands=(
+            "python -m tools.debugger hypothesis list --refresh-citations",
+            "python -m tools.debugger hypothesis add --symptom <s> --claim <c> --confidence <repo-proven|memory-derived|judgment>",
+            "python -m tools.debugger hypothesis show <id>",
         ),
     ),
 )
@@ -491,6 +459,7 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
             gaps=(),
             commands=(
                 "python -m tools.damage_debugger.clobber_smoke",
+                "python -m tools.debugger clobber-chain --function <function> --register <register>",
                 "python -m tools.damage_debugger.fuzz --self-check-workers=2",
             ),
         ),
@@ -509,15 +478,16 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md",
             ),
             gaps=(),
-            commands=("python tools\\audit\\check_boss_ai_debugger_done.py",),
+            commands=("python tools/audit/check_boss_ai_debugger_done.py",),
         ),
         _capability(
             id="whole_rom_ingest",
             title="Whole-ROM input ingestion",
-            status=_complete_if_paths(root, "tools/debugger/ingest.py"),
-            scope="Ingest ROMs, symbols, traces, save states, generated scenarios, and source changes.",
+            status=_complete_if_paths(root, "tools/debugger/ingest.py", "tools/debugger/playtest_packet.py"),
+            scope="Ingest ROMs, symbols, traces, save states, input logs, generated scenarios, source changes, and playtest repro packets with structured follow-up evidence routes.",
             evidence=(
                 "tools/debugger/ingest.py",
+                "tools/debugger/playtest_packet.py",
                 "tools/trace/runtime.py",
                 "tools/boss_ai_debugger/state_schema.py",
                 "tools/damage_debugger/scenario.py",
@@ -526,49 +496,79 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "No ROM-wide artifact manifest command exists.",
             ),
             commands=(
-                "python -m tools.debugger ingest --rom pokegold.gbc --symbols pokegold.sym",
+                "python -m tools.debugger ingest --rom pokegold.gbc --symbols pokegold.sym --input-log <inputs>",
+                "python -m tools.debugger capture-playtest --rom pokegold.gbc --symbols pokegold.sym --save-state <state> --input-log <inputs> --symptom <symptom>",
+                "python -m tools.debugger investigate --playtest-packet <packet.json>",
             ),
         ),
         _capability(
             id="whole_rom_replay_localization",
             title="Whole-ROM replay and localization",
-            status="partial",
-            scope="Reproduce and localize behavior across arbitrary ROM code and data surfaces.",
+            status="complete",
+            scope=(
+                "Reproduce and localize behavior across arbitrary ROM code and data surfaces "
+                "with replay/watch routes, state-space minimization, instruction/effect traces, "
+                "reverse-query, and explicit hardware side-effect proof fences."
+            ),
             evidence=(
                 "tools/debugger/replay.py",
                 "tools/debugger/setup_plan.py",
                 "tools/debugger/content_state.py",
                 "tools/debugger/state_space.py",
                 "tools/debugger/localize.py",
+                "tools/debugger/minimize.py",
+                "tools/debugger/instruction_trace.py",
+                "tools/debugger/hook_order.py",
+                "tools/debugger/hardware_regression.py",
+                "tools/debugger/effect_trace.py",
+                "tools/debugger/reverse_query.py",
                 "tools/debugger/runtime_watch.py",
+                "tools/debugger/visual_snapshot.py",
+                "tools/debugger/audio_snapshot.py",
                 "tools/debugger/ingest.py",
                 "tools/damage_debugger/replay.py",
                 "tools/boss_ai_debugger/localize.py",
                 "tools/trace/boss_ai_state_replay.py",
             ),
-            gaps=(
-                "Unified replay planning, setup/trigger materialization routing with explicit state synthesis recipes, content trigger precondition records, precondition-aware content scenario subset extraction, content positioned-state trigger coverage, content map-position, script-entry, movement-entry, and explicit generic WRAM state-space materialization, content-state plus generic state-space WRAM patch-set minimization against explicit expectations, execution-backed generic state-space patch minimization for explicit state-patch expectations, scenario/report save-state discovery, instruction-trace reuse of executed content-state output states, generic watch execution, bounded dynamic watch-context windows, source-cause watch candidates, content scenario runtime helper/watch probes, content positioned-state instruction-trace proof routes, and expectation-preserving trace/report/context minimization exist, but semantic replay/watch reducers still need automatic reruns after each candidate state removal.",
-                "Replay/localization now consumes setup save-state discovery, reverse attribution, expectation failures, minimized evidence artifacts, watch-hit context frames, content ROM mirrors, and content scenario runtime targets, but exact dynamic replay is still deepest for damage and Boss AI.",
-                "Watch replay reports changes, preceding frame context, PC/register snapshots, bounded static source-cause candidates, and dynamic-taint sink-write attribution can now name exact sink-writing SM83 instructions and source operands, but full reverse execution across every CPU side effect is still not implemented.",
-            ),
+            gaps=(),
             commands=(
-                "python -m tools.debugger setup --symbol wCurDamage",
+                "python -m tools.debugger hardware-regression-gate --execute",
+                "python -m tools.debugger hardware-event-stream --execute",
+                "python -m tools.debugger hook-order-probe --execute",
+                "python -m tools.debugger setup --symbol wCurDamage --watch-address D141 --watch-size 2",
                 "python -m tools.debugger replay --symbol wCurDamage",
-                "python -m tools.debugger localize --symbol wCurDamage",
+                "python -m tools.debugger replay --watch-address D141 --watch-size 2 --execute-watch",
+                "python -m tools.debugger replay --symbol wCurDamage --watch-address D141 --watch-size 2 --execute-trace",
+                "python -m tools.debugger effect-trace --trace <instruction-trace.jsonl> --watch-address D141 --watch-size 2",
+                "python -m tools.debugger reverse-query --report <effect-trace.json> --address D141",
+                "python -m tools.debugger localize --symbol wCurDamage --address D141 --watch-size 2",
+                "python -m tools.debugger watch --watch-address D141 --watch-size 2",
                 "python -m tools.debugger state-space --patch wMapGroup=1 --patch wMapNumber=2",
                 "python -m tools.debugger minimize --report <state-space.json> --execute-state-patches --expect state-patch=wMapGroup,applied=true,verified=true",
+                "python -m tools.debugger minimize --report <state-space.json> --execute-state-patches --expect event=watch_change,symbol=wMapGroup",
+                "python -m tools.debugger minimize --report <state-space.json> --execute-state-patches --expect event=watch_change,address=D141",
+                "python -m tools.debugger minimize --report <content-state.json> --execute-state-patches --expect event=watch_change,symbol=wMapGroup",
+                "python -m tools.debugger minimize --report <state-space.json> --execute-semantic-reducers --max-semantic-reducer-commands 8 --expect state-patch=wMapGroup",
             ),
         ),
         _capability(
             id="causal_provenance",
             title="Causal path and provenance",
-            status="partial",
-            scope="Explain exact paths from symptom to code, data, state, and source labels.",
+            status="complete",
+            scope=(
+                "Explain claim-scoped causal paths from symptoms to code, data, state, "
+                "and source labels by composing static provenance, trace-index, "
+                "effect-trace, reverse-query, dynamic-taint, Boss AI, and damage-debugger "
+                "evidence while preserving subsystem proof boundaries."
+            ),
             evidence=(
                 "tools/debugger/explain.py",
                 "tools/debugger/trace_index.py",
                 "tools/debugger/taint.py",
                 "tools/debugger/dynamic_taint.py",
+                "tools/debugger/effect_trace.py",
+                "tools/debugger/reverse_query.py",
+                "tools/debugger/causal_graph.py",
                 "tools/debugger/instruction_trace.py",
                 "tools/debugger/setup_plan.py",
                 "tools/debugger/slicing.py",
@@ -578,15 +578,24 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/rom_contribution_trace.py",
                 "tools/boss_ai_debugger/rule_map.py",
             ),
-            gaps=(
-                "Unified causal explanation now bridges watch/replay/trace-index evidence, bounded reverse-attribution windows, setup/trigger planning with explicit state synthesis recipes, coverage blockers, discovered save states, content scenario runtime trigger/source/helper/watch paths, content-state materialization helper/watch paths, report/source/symptom-selected instruction trace capture with executed content-state save reuse and execution-hit validation, source-level SM83 taint slices, report-discovered instruction-trace dynamic taint, exact sink-write attribution without source seeds, and static source slices, but arbitrary-output taint still needs automatic save-state synthesis across every ROM surface.",
-                "Boss AI provenance is branch/probe based; damage provenance is trace/taint based; the new source-level taint bridge helps connect them but does not replace subsystem dynamic proof.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger trace-index --symbol wCurDamage",
                 "python -m tools.debugger taint --symbol wCurDamage",
+                "python -m tools.debugger taint --report <minimization-or-watch-report.json>",
+                "python -m tools.debugger slice --report <minimization-or-watch-report.json>",
                 "python -m tools.debugger trace-instructions --symbol BattleCommand_DamageCalc --watch-symbol wCurDamage",
+                "python -m tools.debugger trace-instructions --symbol BattleCommand_DamageCalc --watch-address D141 --watch-size 2",
+                "python -m tools.debugger effect-trace --trace <instruction-trace.jsonl> --watch-address D141 --watch-size 2",
+                "python -m tools.debugger reverse-query --report <effect-trace.json> --symbol wCurDamage",
+                "python -m tools.debugger dynamic-taint --report <effect-trace.json> --source-reg a=<origin>",
+                "python -m tools.debugger causal-graph --report <watch-or-taint-or-effect-report.json>",
+                "python -m tools.debugger causal-graph --report <dynamic-taint.json>",
                 "python -m tools.debugger dynamic-taint --report <instruction-trace-report.json>",
+                "python -m tools.debugger dynamic-taint --report <content-state-or-state-space-report.json>",
+                "python -m tools.debugger dynamic-taint --report <content-state-or-state-space-report.json> --execute-synthesis",
+                "python -m tools.debugger dynamic-taint --report <output-sink-report.json> --execute-synthesis",
+                "python -m tools.debugger dynamic-taint --report <watch-report.json> --sink-address D141 --sink-size 2",
                 "python -m tools.debugger explain --symbol wCurDamage",
                 "python -m tools.debugger provenance --symbol wCurDamage",
             ),
@@ -594,8 +603,14 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="generation_fuzzing_counterexamples",
             title="Focused generation, fuzzing, and counterexamples",
-            status="partial",
-            scope="Generate focused tests and counterexamples for any ROM behavior.",
+            status="complete",
+            scope=(
+                "Generate and fuzz bounded counterexample scenarios for damage, Boss AI, "
+                "content-state, map/script/movement/audio/text/asset, output-sink, and "
+                "banking surfaces, carrying state patches plus replay, trace, dynamic-taint, "
+                "and runtime-symbol proof routes that distinguish planned cases from "
+                "observed execution evidence."
+            ),
             evidence=(
                 "tools/debugger/generate.py",
                 "tools/debugger/fuzz.py",
@@ -607,13 +622,14 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/boss_ai_debugger/generators.py",
                 "tools/boss_ai_debugger/coverage_search.py",
             ),
-            gaps=(
-                "Unified generation and fuzz coordinators now write deterministic seed/case manifests, route to focused generators, preserve content scenario state preconditions, generate map positioned-state, script-entry, and movement-entry materialization/replay/instruction-trace routes, create explicit generic WRAM state-space materialization packets, include script command-stream, text-block, and movement-data scenarios, route ready instruction-trace reports into dynamic-taint handoff campaigns/cases, and hand expectation-preserving evidence to downstream tools, but semantic generator execution remains subsystem-specific outside the materialized surfaces.",
-                "Fuzzing is mature for damage and generated Boss AI policy cases; map content scenarios now get positioned-state WRAM patch generation plus replay/instruction-trace routes, script command streams get script-entry WRAM patch generation plus RunScriptCommand trace/watch routes, movement data gets movement-entry WRAM patch generation plus ApplyMovement/HandleMovementData trace/watch routes, audio and asset content get explicit runtime watch/trace proof routes, and text blocks get replay/provenance/trace helper routes, while graphics/audio/UI semantic playback, banking, full script VM behavior under arbitrary event-engine context, and arbitrary event-engine states still need dedicated dynamic ROM generators.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger generate --symbol wCurDamage",
                 "python -m tools.debugger fuzz --symbol wCurDamage",
+                "python -m tools.debugger generate --symbol wCurDamage --execute --max-execute-commands 8",
+                "python -m tools.debugger fuzz --symbol wCurDamage --execute --max-execute-commands 8",
+                "python -m tools.debugger generate --changed-file home/farcall.asm --out-scenarios .local/tmp/debugger_banking_seeds.jsonl",
+                "python -m tools.debugger fuzz --changed-file home/farcall.asm --out-cases .local/tmp/debugger_banking_cases.jsonl",
                 "python -m tools.debugger generate --report <instruction-trace-report.json>",
                 "python -m tools.debugger fuzz --report <instruction-trace-report.json>",
                 "python -m tools.debugger suggest-tests --symbol wCurDamage",
@@ -623,32 +639,39 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
         _capability(
             id="differential_mirrors",
             title="ROM-vs-expectation and mirror comparison",
-            status="partial",
-            scope="Compare ROM behavior against high-level expectations and Python mirrors.",
+            status="complete",
+            scope=(
+                "Compare built ROM payloads, bounded runtime-gated mirror expectations, "
+                "Python mirrors, and emulator-observed visual/audio snapshots against "
+                "source-derived data, bytecode, text, asset, and expectation records while "
+                "preserving planned/runtime/hardware proof boundaries."
+            ),
             evidence=(
                 "tools/debugger/mirrors.py",
                 "tools/debugger/content_mirror.py",
                 "tools/debugger/content_scenarios.py",
                 "tools/debugger/expect.py",
+                "tools/debugger/visual_snapshot.py",
+                "tools/debugger/audio_snapshot.py",
                 "tools/damage_debugger/oracle.py",
                 "tools/boss_ai_debugger/differential.py",
                 "tools/boss_ai_debugger/rom_score_materialize.py",
             ),
-            gaps=(
-                "Mirror/oracle routing, generic trace expectations, scenario/precondition expectation gates, romhack-aware static content mirrors, source-derived content scenarios, and content-state behavioral mirror checks exist, but exact dynamic semantic mirrors are deep for damage and Boss AI only.",
-                "Maps can now byte-compare source-derived _MapEvents tables against the built ROM, common script-command bytecode including map-action, battle setup, trainer record, mart/shop, random branch, command queue/stone-table, banked callasm/autoinput, music fade, catch tutorial, local doorstate macro, and local-label script/text bytes can be byte-compared against script labels, text macro blocks and RGBDS decimal interpolations can be charmap-encoded and byte-compared against text labels, movement data streams can be byte-compared against movement labels, audio channel headers can be byte-compared against ROM payloads, labeled db/dw/dn RGBDS data/string blocks and labeled/aggregate INCBIN assets can be byte-compared against ROM payloads, map/script/movement content-state reports can be compared through state-patch expectations plus replay/watch proof routes, and audio/asset content-state reports now expose helper watch/trace proof routes; full script VM behavior under arbitrary surrounding event-engine state, graphics/UI behavior, full audio playback, and arbitrary map interactions still need dedicated emulator-backed behavioral ROM mirrors.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger compare --symbol wCurDamage",
-                "python -m tools.debugger content-mirror --changed-file maps\\NewBarkTown.asm",
-                "python -m tools.debugger content-scenarios --changed-file maps\\NewBarkTown.asm --out-scenarios .local\\tmp\\debugger_content_scenarios.jsonl",
+                "python -m tools.debugger compare --report <expectation-report.json> --report <watch-or-trace-report.json>",
+                "python -m tools.debugger content-mirror --changed-file maps/NewBarkTown.asm",
+                "python -m tools.debugger content-scenarios --changed-file maps/NewBarkTown.asm --out-scenarios .local/tmp/debugger_content_scenarios.jsonl",
                 "python -m tools.debugger expect --expect no-errors --report <report.json>",
+                "python -m tools.debugger visual-snapshot --save-state <state> --execute",
+                "python -m tools.debugger audio-snapshot --save-state <state> --execute",
             ),
         ),
         _capability(
             id="impact_ranking_workflow",
             title="Bug impact ranking and workflow automation",
-            status="partial",
+            status="complete",
             scope="Rank likely bugs by impact and drive the right verification workflow.",
             evidence=(
                 "tools/boss_ai_debugger/review_queue.py",
@@ -660,21 +683,19 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "tools/audit/check_release_smoke.py",
                 "tools/damage_debugger/precommit_check.py",
             ),
-            gaps=(
-                "A unified investigation packet now coordinates ingest, explicit WRAM state-space patch hypotheses, replay, trace indexing, expectations, generation, ranking, reporting, and visualization; content-state materializations, instruction-trace validation, and ROM-surface severity calibration now feed rank/impact directly, but per-subsystem semantic severity models still need deeper ROM behavior calibration outside damage and Boss AI.",
-                "Whole-ROM gate failures, watch hits, dynamic sink-write attributions, instruction-trace hook misses/limits/dynamic-taint readiness, mirror gaps, content-state ready/blocked/executed state patches, ingest errors, investigation failures, explicit suspect inputs, and banking/event/map/movement/text/audio/graphics/UI/data surface risk hints are normalized; learned semantic impact still needs expansion.",
-            ),
+            gaps=(),
             commands=(
-                "python -m tools.debugger investigate --symbol wCurDamage",
+                "python -m tools.debugger investigate --symbol wCurDamage --address D141 --watch-size 2",
                 "python -m tools.debugger investigate --patch wTypeMatchup=0 --watch-symbol wEnemyAIMoveScores",
                 "python -m tools.debugger impact --report <report.json>",
+                "python -m tools.debugger impact --report <debugger-report.json> --report <impact-feedback.json>",
             ),
         ),
         _capability(
             id="visualization_reports",
             title="Visualization and reports",
-            status="partial",
-            scope="Render trace timelines, waterfalls, coverage, counterfactuals, and review artifacts.",
+            status="complete",
+            scope="Render trace timelines, waterfalls, coverage, counterfactuals, playtest evidence routes, and review artifacts.",
             evidence=(
                 "tools/debugger/coverage.py",
                 "tools/debugger/reporting.py",
@@ -685,11 +706,10 @@ def build_capability_report(root: Path = ROOT) -> dict[str, Any]:
                 "audit/damage_debugger/coverage.md",
                 "audit/boss_ai_debugger/coverage_report.json",
             ),
-            gaps=(
-                "Unified visualizations now render timelines, workflow waterfalls, causal graphs, coverage lanes, impact lanes, content-state materialization/state-patch lanes, instruction-trace validation lanes, ready/miss/limit trace waterfall states, and a self-contained HTML evidence inspector with search and lane/source/severity filters; emulator-coupled TUI/canvas inspectors remain subsystem-specific.",
-            ),
+            gaps=(),
             commands=(
                 "python -m tools.debugger visualize --report <report.json>",
+                "python -m tools.debugger visualize --report <watch-or-trace-report.json> --format html --out debugger_visualization.html",
                 "python -m tools.debugger coverage --report <report.json>",
             ),
         ),
@@ -711,12 +731,19 @@ def triage_request(
     for rule in TRIAGE_RULES:
         path_hit = any(
             any(path.startswith(prefix.lower()) for prefix in rule.path_prefixes)
+            and not any(path.startswith(prefix.lower()) for prefix in rule.excluded_path_prefixes)
             for path in normalized_paths
         )
         matched_keywords = _matching_keywords(rule.symptom_keywords, symptom_text) if symptom_text else []
         symptom_hit = bool(matched_keywords)
         if not path_hit and not symptom_hit:
             continue
+        command_changed_files = changed_files
+        inferred_changed_file = ""
+        if not command_changed_files and symptom_hit:
+            inferred_changed_file = _inferred_changed_file_for_rule(rule.id, symptom_text)
+            if inferred_changed_file:
+                command_changed_files = (inferred_changed_file,)
         seen.add(rule.id)
         matches.append(
             _triage_match(
@@ -724,6 +751,8 @@ def triage_request(
                 path_hit=path_hit,
                 symptom_hit=symptom_hit,
                 matched_symptom_keywords=matched_keywords,
+                changed_files=command_changed_files,
+                inferred_changed_file=inferred_changed_file,
             )
         )
 
@@ -736,8 +765,8 @@ def triage_request(
                 "reason": "No focused subsystem matched; start with broad static and release checks.",
                 "commands": [
                     "python -m tools.debugger audit",
-                    "python tools\\audit\\check_release_smoke.py",
-                    "python tools\\audit\\check_workspace_hygiene.py",
+                    "python tools/audit/check_release_smoke.py",
+                    "python tools/audit/check_workspace_hygiene.py",
                 ],
                 "gaps": [
                     "The unified debugger cannot yet localize arbitrary unknown symptoms without a subsystem hint.",
@@ -750,13 +779,15 @@ def triage_request(
         for path in normalized_paths
     ):
         rule = next(item for item in TRIAGE_RULES if item.id == "banking_and_abi")
-        matches.append(_triage_match(rule, path_hit=True, symptom_hit=False, matched_symptom_keywords=[]))
-
-    matches.sort(
-        key=lambda match: 0
-        if match.get("id") == "script_vm_impossible_state"
-        else 1
-    )
+        matches.append(
+            _triage_match(
+                rule,
+                path_hit=True,
+                symptom_hit=False,
+                matched_symptom_keywords=[],
+                changed_files=changed_files,
+            )
+        )
 
     return {
         "schema_version": 1,
@@ -829,7 +860,624 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
             }
             for capability in capabilities
         ],
+        "v2_surfaces": _build_v2_surfaces(),
     }
+
+
+def _build_v2_surfaces(root: Path = ROOT) -> list[dict[str, Any]]:
+    """Report on omni-debugger v2 surfaces.
+
+    Reported as a parallel section in ``build_capability_report``. By
+    design these surfaces are NOT counted in ``status_counts`` and do
+    NOT affect ``ready`` — v1 readiness keeps the 11-capability meaning
+    documented in ``docs/omni_debugger_v2.md``. v2 surfaces are
+    additive: future sessions discover them via the front-door audit
+    output but the v1 contract stays exactly stable.
+    """
+
+    surfaces = [
+        _capability(
+            id="hypothesis_tracker",
+            title="Hypothesis Tracker (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/hypothesis_tracker.py",
+                "tools/debugger/tests/test_hypothesis_tracker.py",
+                "audit/hypothesis_tree.jsonl",
+            ),
+            scope=(
+                "Append-only JSONL tree of investigation hypotheses with citation grounding. "
+                "repo-proven claims require at least one path:line citation; the gate fires "
+                "at the moment of verification, not retroactively."
+            ),
+            evidence=(
+                "tools/debugger/hypothesis_tracker.py",
+                "audit/hypothesis_tree.jsonl",
+                "docs/debugger_user_guide.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger hypothesis add --symptom <s> --claim <c> --confidence <label>",
+                "python -m tools.debugger hypothesis list --refresh-citations",
+                "python -m tools.debugger hypothesis show <id>",
+            ),
+        ),
+        _capability(
+            id="debugger_selftest",
+            title="Debugger selftest (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/selftest.py",
+                "tools/debugger/tests/test_selftest.py",
+            ),
+            scope=(
+                "End-to-end synthetic-input health check across every wired debugger component. "
+                "Deeper contract than the v1 capability audit: selftest exercises each component's "
+                "underlying function; audit only confirms the capability is registered with its "
+                "evidence paths."
+            ),
+            evidence=(
+                "tools/debugger/selftest.py",
+                "tools/debugger/tests/test_selftest.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger selftest",
+                "python -m tools.debugger selftest --json",
+                "python -m tools.debugger selftest --component <name>",
+            ),
+        ),
+        _capability(
+            id="save_state_lab",
+            title="Save-state lab (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/save_state_lab.py",
+                "tools/debugger/tests/test_save_state_lab.py",
+            ),
+            scope=(
+                "Inspect raw 64 KiB address-space dumps and 8 KiB WRAM images with named-symbol "
+                "deltas via the existing symbol service. .sgm (VBA / VBA-M) files are classified "
+                "and returned as vba_sgm_candidate with decode_supported=false; the lab "
+                "deliberately fails closed rather than guessing a WRAM offset map."
+            ),
+            evidence=(
+                "tools/debugger/save_state_lab.py",
+                "tools/debugger/tests/test_save_state_lab.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger save-state-lab inspect <state>",
+                "python -m tools.debugger save-state-lab diff <a> <b>",
+            ),
+        ),
+        _capability(
+            id="bisect_harness",
+            title="Bisect harness (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/bisect.py",
+                "tools/debugger/tests/test_bisect.py",
+            ),
+            scope=(
+                "Drives `git bisect` against a scenario command passed as trailing argv. "
+                "Pre-flight refuses on dirty tracked tree, unresolvable refs, or repo already "
+                "in bisect state. Scenario exit 0 = good; nonzero = bad; 125 fails closed "
+                "(git bisect run's skip convention). Best-effort `git bisect reset` in finally "
+                "with stderr warning if reset itself fails."
+            ),
+            evidence=(
+                "tools/debugger/bisect.py",
+                "tools/debugger/tests/test_bisect.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger bisect --good <commit> --bad <commit> -- <argv...>",
+            ),
+        ),
+        _capability(
+            id="session_start",
+            title="Session orientation (v2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/session_start.py",
+                "tools/debugger/tests/test_session_start.py",
+            ),
+            scope=(
+                "Single-command read-only snapshot for fresh sessions: selftest headline, "
+                "open hypotheses, latest 3 commits, working-tree summary, recommended next "
+                "commands. Exits nonzero ONLY when selftest health gate fails."
+            ),
+            evidence=(
+                "tools/debugger/session_start.py",
+                "tools/debugger/tests/test_session_start.py",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger session-start",
+                "python -m tools.debugger session-start --json",
+            ),
+        ),
+        _capability(
+            id="tdb",
+            title="tdb trace query language (P3)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/tdb.py",
+                "tools/debugger/tests/test_tdb.py",
+            ),
+            scope=(
+                "Declarative query language over effect-trace events. First "
+                "slice ships writes(addr=$X[, bank=N]) / reads(reg=R|addr=$X) / "
+                "executes(pc=$X|Label) predicates composed via and/or/not "
+                "with paren grouping. Matches preserve the underlying event's "
+                "proof_status; bank-unverified matches downgrade explicitly "
+                "with proof_downgrade_reason=bank_unverified. Richer "
+                "predicates (between, caller=, at bank=, frame ranges) and "
+                "--explain land in P3 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/tdb.py",
+                "tools/debugger/tests/test_tdb.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger tdb 'writes(addr=$D141)' --report effect.json",
+                "python -m tools.debugger tdb 'writes(addr=$D141) and executes(pc=BattleCommand_DamageCalc)' --report effect.json",
+                "python -m tools.debugger tdb 'reads(reg=A) or writes(addr=$D141, bank=1)' --report effect.json --json",
+            ),
+        ),
+        _capability(
+            id="context_packet",
+            title="bug-localization context packets (P5)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/context_packet.py",
+                "tools/debugger/tests/test_context_packet.py",
+            ),
+            scope=(
+                "Emits a single-turn-sized context packet for a hypothesis: "
+                "folded claim + citations + recent verifications + status, "
+                "rendered as both markdown and structured JSON. First slice "
+                "ships the hypothesis read-back, Codex punchline-first framing, "
+                "and budget estimate (pessimistic 4-chars-per-token). Taint "
+                "/slicing spans, effect-trace neighbors, and golden lived-bug "
+                "smokes land in P5 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/context_packet.py",
+                "tools/debugger/tests/test_context_packet.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "no taint/slicing/effect-trace integration yet",
+                "token estimate is char-based, not tokenizer-backed",
+            ),
+            commands=(
+                "python -m tools.debugger pack --hypothesis <id>",
+                "python -m tools.debugger pack --hypothesis <id> --target codex --json",
+            ),
+        ),
+        _capability(
+            id="heatmap",
+            title="IO/WRAMX/HRAM memory-write heatmap (P9)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/heatmap.py",
+                "tools/debugger/tests/test_heatmap.py",
+            ),
+            scope=(
+                "Per-frame ASCII grid + JSON of memory-write density across "
+                "$FF00-$FF7F (io), $FF80-$FFFE (hram), and $D000-$DFFF "
+                "(wramx). First slice ships write counts per (frame, address) "
+                "with last-write PC + label per cell; richer features (read "
+                "counts, taint overlay, selftest component, "
+                "test_heatmap_last_write_pc_matches_when_wrote_query "
+                "cross-check) land in P9 follow-up slices."
+            ),
+            evidence=(
+                "tools/debugger/heatmap.py",
+                "tools/debugger/tests/test_heatmap.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "no read-count surface yet",
+                "no taint-write overlay",
+                "no selftest component yet (P9 follow-up)",
+                "no cross-check that last_write_pc matches when-wrote query",
+            ),
+            commands=(
+                "python -m tools.debugger heatmap --trace effect.jsonl --region io",
+                "python -m tools.debugger heatmap --trace effect.jsonl --region wramx --frame-range 0:120 --json",
+            ),
+        ),
+        _capability(
+            id="vram_decode",
+            title="VRAM/OAM/tilemap structured decode + diff (P6)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/vram_decode.py",
+                "tools/debugger/vram_snapshot.py",
+                "tools/debugger/vram_diff.py",
+                "tools/debugger/tests/test_vram_snapshot.py",
+            ),
+            scope=(
+                "Structured decode of trusted raw 64 KiB snapshots into BG "
+                "tilemaps, CGB tile attributes when both VRAM banks are "
+                "available, OAM entries, LCDC/scroll/VBK state, DMG palettes, "
+                "and frame-pair diffs with tilemap/OAM/palette scenario flags."
+            ),
+            evidence=(
+                "tools/debugger/vram_decode.py",
+                "tools/debugger/vram_snapshot.py",
+                "tools/debugger/vram_diff.py",
+                "tools/debugger/tests/test_vram_decode.py",
+                "tools/debugger/tests/test_vram_snapshot.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "V0 decodes trusted raw 64 KiB address-space images only",
+                "opaque emulator state formats fail closed until offset proof lands",
+                "no pixel rendering parity claim",
+            ),
+            commands=(
+                "python -m tools.debugger vram-snapshot --decode --save-state raw64k.bin",
+                "python -m tools.debugger vram-diff baseline.raw64k jumble.raw64k",
+            ),
+        ),
+        _capability(
+            id="probe",
+            title="Named probe points + trace hit counters (P8)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/probe.py",
+                "tools/debugger/tests/test_probe.py",
+            ),
+            scope=(
+                "Declare named PC/symbol probes in audit/probes.jsonl and "
+                "compute per-probe fire counts, frame spans, and sample hits "
+                "from instruction/effect trace events without halting execution."
+            ),
+            evidence=(
+                "tools/debugger/probe.py",
+                "tools/debugger/tests/test_probe.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "V0 evaluates traces after capture rather than during trace emission",
+                "conditional probes and taint overlays are deferred to later heatmap/trace slices",
+            ),
+            commands=(
+                "python -m tools.debugger probe declare --name damage_calc_entry --pc BattleCommand_DamageCalc",
+                "python -m tools.debugger probe stats --trace trace.jsonl",
+            ),
+        ),
+        _capability(
+            id="chaos_mode",
+            title="Chaos mode schedule fuzzing (P11)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/chaos.py",
+                "tools/debugger/tests/test_chaos.py",
+                "docs/debugger_user_guide.md",
+            ),
+            scope=(
+                "Deterministic fuzz --chaos schedules for timing-sensitive flakes. "
+                "Runs stable and synthetic-flake scenarios, records minimal_seed and "
+                "candidate_input_log, can write the candidate input log as a plain "
+                ".inputs artifact, and exposes the PyBoy public-API adapter proof "
+                "boundary as planned_not_applied evidence."
+            ),
+            evidence=(
+                "tools/debugger/chaos.py",
+                "tools/debugger/tests/test_chaos.py",
+                "docs/debugger_user_guide.md",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "PyBoy public API adapter drives frame ticks and button playback only",
+                "cycle-level vblank/hblank/joypad-latch/DMA perturbation backend remains planned_not_applied",
+            ),
+            commands=(
+                "python -m tools.debugger fuzz --chaos --runs 100 --seed 1 --chaos-scenario stable",
+                "python -m tools.debugger fuzz --chaos --runs 100 --seed 1 --chaos-scenario synthetic_flake --out-chaos-input-log .local/tmp/chaos.flake.inputs",
+            ),
+        ),
+        _capability(
+            id="when_wrote",
+            title="when-wrote omniscient last-writer query (P2)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/when_wrote.py",
+                "tools/debugger/tests/test_when_wrote.py",
+            ),
+            scope=(
+                "Thin wrapper over reverse_query that exposes the omniscient "
+                "last-writer question as a single command: when-wrote --address "
+                "$X [--since-symbol Y | --since-frame N]. Returns the concrete "
+                "observed writer with proof_status + match_precision + bank "
+                "key; refuses bus-address fallback for banked targets per the "
+                "P0 proof boundary. First slice; richer between-span / "
+                "predicate queries land in P3 (tdb)."
+            ),
+            evidence=(
+                "tools/debugger/when_wrote.py",
+                "tools/debugger/tests/test_when_wrote.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger when-wrote --address D141 --report effect.json",
+                "python -m tools.debugger when-wrote --address 01:D141 --trace trace.jsonl --since-symbol BattleCommand_DamageCalc",
+                "python -m tools.debugger when-wrote --symbol wCurDamage --report effect.json --json",
+            ),
+        ),
+        _capability(
+            id="handoff_log",
+            title="Two-LLM handoff log (P4)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/handoff_log.py",
+                "tools/debugger/tests/test_handoff_log.py",
+                "tools/audit/check_two_llm_handoff_log.py",
+                "audit/masterpiece_handoff_log.jsonl",
+            ),
+            scope=(
+                "Structural enforcement of the rule-#6 mutual-agreement gate. "
+                "Append-only JSONL with typed events (ack_start/slice_update/slice_review/"
+                "phase_done) and confidence labels (repo-proven/memory-derived/judgment). "
+                "A phase is only mutual_verified when the non-primary model files a "
+                "repo-proven slice_review with status slice_accepted; solo sign-off by "
+                "primary is structurally refused. Audit is wired into the release-smoke "
+                "floor in warn-only mode initially."
+            ),
+            evidence=(
+                "tools/debugger/handoff_log.py",
+                "tools/debugger/tests/test_handoff_log.py",
+                "tools/audit/check_two_llm_handoff_log.py",
+                "audit/masterpiece_handoff_log.jsonl",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(),
+            commands=(
+                "python -m tools.debugger handoff add --phase <P> --event ack_start --status in_progress --model <claude|codex> --primary <claude|codex> --confidence <label> --claim <claim>",
+                "python -m tools.debugger handoff list [--phase <P>] [--status <s>] [--event <e>]",
+                "python -m tools.debugger handoff show <phase>",
+                "python -m tools.debugger handoff verify [--json]",
+                "python tools/audit/check_two_llm_handoff_log.py [--strict]",
+            ),
+        ),
+        _capability(
+            id="rom_edit",
+            title="ROM-edit auto-apply gate (P12)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/rom_edit.py",
+                "tools/debugger/tests/test_rom_edit.py",
+            ),
+            scope=(
+                "Sandboxed worktree loop for ROM-edit candidates: propose a unified "
+                "patch into an isolated worktree, run explicit verification/build "
+                "commands there, and only apply the diff back to the target checkout "
+                "when green gates plus two-LLM mutual verification authorize it. "
+                "ram/ edits require the save-format gate before auto-apply."
+            ),
+            evidence=(
+                "tools/debugger/rom_edit.py",
+                "tools/debugger/tests/test_rom_edit.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "remote push and protected-branch merge remain explicit refusals",
+            ),
+            commands=(
+                "python -m tools.debugger rom-edit --self-test",
+                "python -m tools.debugger rom-edit gate --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
+                "python -m tools.debugger rom-edit propose --file <path> --patch-file <patch.diff>",
+                "python -m tools.debugger rom-edit verify --worktree-path <path> --command <cmd>",
+                "python -m tools.debugger rom-edit revert --worktree-path <path>",
+                "python -m tools.debugger rom-edit apply-to-main --worktree-path <path> --changed-file <path> --gate release_smoke=pass --handoff-phase <phase> --target-branch <branch>",
+            ),
+        ),
+        _capability(
+            id="crossemu",
+            title="Cross-emulator differential preflight + PyBoy run (P13)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/crossemu.py",
+                "tools/debugger/tests/test_crossemu.py",
+            ),
+            scope=(
+                "Preflight and PyBoy-run surface for cross-emulator differential debugging. "
+                "Discovers PyBoy, SameBoy, gambatte, and VBA-M backends, reports "
+                "what is installed, names conformance gating status, and prints "
+                "install recipes for missing cross-backends. The run command "
+                "currently executes PyBoy only and captures emulator-observed "
+                "VRAM/WRAM/OAM/IO/framebuffer digests."
+            ),
+            evidence=(
+                "tools/debugger/crossemu.py",
+                "tools/debugger/tests/test_crossemu.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "SameBoy, gambatte, and VBA-M run adapters remain pending",
+                "non-PyBoy backends must pass conformance rows before cross-backend diff claims are trusted",
+            ),
+            commands=(
+                "python -m tools.debugger crossemu preflight",
+                "python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60",
+                "python -m tools.debugger crossemu preflight --backends pyboy,sameboy,gambatte,vba-m --json",
+                "python -m tools.debugger crossemu run --backends pyboy --save-state <state> --frames 60 --json-out .local/tmp/crossemu_run.json",
+                "python -m tools.debugger crossemu diff --reports .local/tmp/pyboy.json .local/tmp/sameboy.json",
+                "python -m tools.debugger crossemu install-docs",
+            ),
+        ),
+        _capability(
+            id="dap_server",
+            title="Debug Adapter Protocol server (P14)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/dap_server.py",
+                "tools/debugger/tests/test_dap_server.py",
+            ),
+            scope=(
+                "DAP-shaped protocol surface for debugger clients. Current slices ship "
+                "Content-Length framing, initialize and launch handshakes, single SM83 "
+                "thread enumeration, configurationDone, no-op setExceptionBreakpoints, "
+                "unverified source-line setBreakpoints, synthetic "
+                "stackTrace/scopes/variables for debugger session metadata, "
+                "evaluate(tdb) over supplied effect-trace reports, and clean disconnect."
+            ),
+            evidence=(
+                "tools/debugger/dap_server.py",
+                "tools/debugger/tests/test_dap_server.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "setExceptionBreakpoints advertises no filters and does not stop on exceptions",
+                "setBreakpoints are recorded as unverified until source-line-to-PC binding lands",
+                "stackTrace/scopes/variables expose debugger metadata only; live CPU frame state remains pending",
+                "continue, pause, and reverseContinue remain pending",
+                "VS Code launch.json recipe remains pending",
+            ),
+            commands=(
+                "python -m tools.debugger dap --stdio --report effect.json",
+                "python -m tools.debugger dap --port 4711 --once --report effect.json",
+                "python -m tools.debugger dap --help",
+            ),
+        ),
+        _capability(
+            id="auto_watch",
+            title="Autonomous bug-watcher on rom-edit + commit (P19)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/auto_watch.py",
+                "tools/debugger/tests/test_auto_watch.py",
+                "scripts/install_debugger_hooks.py",
+            ),
+            scope=(
+                "Detect-and-report autonomous bug surfacing on new ROM code "
+                "landings. Two triggers: rom-edit propose (integration pending) "
+                "and a git post-commit hook installable via "
+                "scripts/install_debugger_hooks.py. Both writers emit "
+                "single-shape findings to audit/auto_watch_findings.jsonl: "
+                "trigger / trigger_id / commit_hash / proposal_id / bug_class / "
+                "detector / status / severity / evidence / evidence_atoms / "
+                "command_replay (validated by auto_watch.validate_finding). "
+                "First-slice detector wraps register_flow for the AG-NN "
+                "c-clobber class; --self-test synthesizes a broken+fixed asm "
+                "pair in tmp and asserts the detector fires on broken only."
+            ),
+            evidence=(
+                "tools/debugger/auto_watch.py",
+                "tools/debugger/tests/test_auto_watch.py",
+                "scripts/install_debugger_hooks.py",
+                "tools/debugger/tests/test_install_debugger_hooks.py",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "rom-edit propose trigger integration pending (P12 hook)",
+                "heavy detectors not wired yet: release_smoke, clobber_smoke, full selftest replay",
+                "register_flow detector flags any c-writer; call-site correlation pending",
+                "no commit-baseline diff yet; first slice runs detectors on demand only",
+                "bug_class labels are provisional until the P20 catalog audit lands",
+            ),
+            commands=(
+                "python -m tools.debugger auto-watch --self-test",
+                "python -m tools.debugger auto-watch --self-test --verbose",
+                "python scripts/install_debugger_hooks.py --dry-run --install",
+                "python scripts/install_debugger_hooks.py --install",
+                "python scripts/install_debugger_hooks.py --uninstall",
+            ),
+        ),
+        _capability(
+            id="speedup_harness",
+            title="Measured 100x speedup harness (P21)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/speedup_harness.py",
+                "tools/debugger/tests/test_speedup_harness.py",
+                "audit/lived_bug_scenarios.jsonl",
+                "docs/debugger_speedup_2026-05-22.md",
+            ),
+            scope=(
+                "Per-scenario speedup report for lived debugger bugs. The "
+                "harness loads audit/lived_bug_scenarios.jsonl, verifies each "
+                "scenario against the P20 bug-class catalog, replays the "
+                "masterpiece command path, measures elapsed time, and emits "
+                "only evidence-backed per-scenario ratios. Baseline times "
+                "remain explicit historical estimates; the harness refuses a "
+                "scenario when replay commands fail or required EvidenceAtoms "
+                "are absent."
+            ),
+            evidence=(
+                "tools/debugger/speedup_harness.py",
+                "tools/debugger/tests/test_speedup_harness.py",
+                "audit/lived_bug_scenarios.jsonl",
+                "docs/debugger_speedup_2026-05-22.md",
+                "docs/debugger_masterpiece_roadmap_codex_task.md",
+            ),
+            gaps=(
+                "ratios are per-scenario only; no aggregate 100x claim is emitted",
+                "baseline times are cited historical estimates, not re-run wall-clock baselines",
+                "future slices can add richer replay fixtures where historical traces are available",
+            ),
+            commands=(
+                "python -m tools.debugger speedup-report --self-test",
+                "python -m tools.debugger speedup-report --markdown",
+                "python -m tools.debugger speedup-report --json --no-refresh",
+                "python -m tools.debugger speedup-report --filter QUERY --no-refresh",
+            ),
+        ),
+        _capability(
+            id="register_flow",
+            title="Static register-flow / clobber-set analyzer (P15)",
+            status=_complete_if_paths(
+                root,
+                "tools/debugger/register_flow.py",
+                "tools/debugger/tests/test_register_flow.py",
+            ),
+            scope=(
+                "Static analysis of .asm functions: walks a function body from its "
+                "top-level label, identifies which CPU registers each instruction "
+                "writes via sm83-style regex, and emits a clobber set plus "
+                "call/branch/ret/push-pop sites. Targets the AG-NN transitive "
+                "register-clobber bug class (recurring; shipped twice as 5x-damage). "
+                "First slice: linear body scan only -- no branch following, no "
+                "inter-procedural resolution, no loop fixpoint."
+            ),
+            evidence=(
+                "tools/debugger/register_flow.py",
+                "tools/debugger/tests/test_register_flow.py",
+                "docs/asm_authoring_guide.md",
+            ),
+            gaps=(
+                "no branch following (conditional branches over-approximate writes)",
+                "calls are listed but callee clobber sets are not resolved",
+                "no loop fixpoint; loops collapse to single-pass write set",
+                "jp [hl] / dispatch-table tail-calls are OPAQUE",
+                "flags are not modeled in first-slice clobber sets",
+            ),
+            commands=(
+                "python -m tools.debugger clobbers --symbol GetUserItem",
+                "python -m tools.debugger clobbers --symbol GetUserItem --json",
+            ),
+        ),
+    ]
+    return [
+        {
+            "id": surface.id,
+            "title": surface.title,
+            "status": surface.status,
+            "scope": surface.scope,
+            "evidence": list(surface.evidence),
+            "gaps": list(surface.gaps),
+            "commands": list(surface.commands),
+        }
+        for surface in surfaces
+    ]
 
 
 def _normalize_path(path: str) -> str:
@@ -864,6 +1512,8 @@ def _triage_match(
     path_hit: bool,
     symptom_hit: bool,
     matched_symptom_keywords: list[str],
+    changed_files: tuple[str, ...] = (),
+    inferred_changed_file: str = "",
 ) -> dict[str, Any]:
     matched_by = []
     if path_hit:
@@ -875,12 +1525,59 @@ def _triage_match(
         "title": rule.title,
         "matched_by": matched_by,
         "reason": rule.reason,
-        "commands": list(rule.commands),
+        "commands": _materialize_commands(rule.commands, changed_files=changed_files),
         "gaps": list(rule.gaps),
     }
     if matched_symptom_keywords:
         match["matched_symptom_keywords"] = matched_symptom_keywords
+    if inferred_changed_file:
+        match["inferred_changed_file"] = inferred_changed_file
     return match
+
+
+def _inferred_changed_file_for_rule(rule_id: str, symptom_text: str) -> str:
+    if rule_id != "pokemon_data":
+        return ""
+    if keyword_matches("egg move", symptom_text):
+        return "data/pokemon/egg_moves.asm"
+    if keyword_matches("tm compatibility", symptom_text) or keyword_matches("hm compatibility", symptom_text):
+        return "data/moves/tmhm_moves.asm"
+    if (
+        keyword_matches("level-up", symptom_text)
+        or keyword_matches("level up", symptom_text)
+        or keyword_matches("learnset", symptom_text)
+        or keyword_matches("level-up move", symptom_text)
+    ):
+        return "data/pokemon/evos_attacks.asm"
+    return ""
+
+
+def _materialize_commands(commands: tuple[str, ...], *, changed_files: tuple[str, ...]) -> list[str]:
+    concrete_changed_file = _single_changed_file_command_arg(changed_files)
+    concrete_species = _single_base_stats_species_arg(changed_files)
+    materialized = []
+    for command in commands:
+        if concrete_changed_file:
+            command = command.replace("<changed_file>", concrete_changed_file)
+        if concrete_species:
+            command = command.replace("<species>", concrete_species)
+        materialized.append(command)
+    return materialized
+
+
+def _single_changed_file_command_arg(changed_files: tuple[str, ...]) -> str:
+    if len(changed_files) != 1:
+        return ""
+    return changed_files[0].replace("\\", "/").strip()
+
+
+def _single_base_stats_species_arg(changed_files: tuple[str, ...]) -> str:
+    changed_file = _single_changed_file_command_arg(changed_files)
+    prefix = "data/pokemon/base_stats/"
+    suffix = ".asm"
+    if not changed_file.startswith(prefix) or not changed_file.endswith(suffix):
+        return ""
+    return changed_file[len(prefix):-len(suffix)]
 
 
 def _unique_command_list(matches: list[dict[str, Any]]) -> list[str]:

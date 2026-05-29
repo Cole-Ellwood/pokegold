@@ -6,12 +6,12 @@ from typing import Any
 
 from .catalog import ROOT
 from .coverage import load_traces
-from .explain import SYMPTOM_SYMBOLS, base_label, looks_like_source_path
+from .explain import SYMPTOM_SYMBOLS, base_label, looks_like_source_path, runtime_symbol_items
 from .localize import normalize_path
 from .provenance import parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .slicing import build_slice_report
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 WRITE_EVENT_TYPES = {"memory_write", "score_delta", "watch_change", "memory_patch"}
@@ -26,7 +26,11 @@ REVERSE_ATTRIBUTION_RELATIONS = {
 }
 SYMBOL_KEYS = (
     "watch",
+    "watch_symbol",
     "symbol",
+    "state_symbol",
+    "source_symbol",
+    "pc_symbol",
     "full_symbol",
     "pc_label",
     "source_label",
@@ -207,6 +211,13 @@ def extract_trace_events(
     symbol_by_address: dict[str, str],
 ) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
+    events.extend(
+        state_patch_minimization_events(
+            data,
+            source=source,
+            symbol_by_address=symbol_by_address,
+        )
+    )
     walk_trace_data(
         data,
         source=source,
@@ -216,6 +227,81 @@ def extract_trace_events(
         symbol_by_address=symbol_by_address,
     )
     return events
+
+
+def state_patch_minimization_events(
+    data: Any,
+    *,
+    source: str,
+    symbol_by_address: dict[str, str],
+) -> list[dict[str, Any]]:
+    if not isinstance(data, dict) or data.get("kind") != "unified_debugger_minimization_plan":
+        return []
+    minimization = data.get("state_patch_minimization")
+    if not isinstance(minimization, dict) or not minimization.get("attempted"):
+        return []
+    source_symbols = runtime_symbol_items(minimization.get("source_symbols"))
+    source_files = [
+        normalize_path(path)
+        for path in string_items(minimization.get("source_files"))
+        if looks_like_source_path(path)
+    ]
+    source_mem_by_address = {
+        normalize_address(address)["address"]: origin
+        for address, origin in source_mem_parts(minimization)
+        if normalize_address(address)["address"]
+    }
+    addresses = state_patch_minimization_addresses(minimization)
+    out: list[dict[str, Any]] = []
+    for index, address_text in enumerate(addresses):
+        address = normalize_address(address_text)
+        if not address["address"]:
+            continue
+        state_symbol = (
+            source_mem_by_address.get(address["address"])
+            or symbol_by_address.get(address["bank_address"])
+            or symbol_by_address.get(address["address"])
+            or ""
+        )
+        out.append(
+            {
+                "id": "",
+                "source": source,
+                "json_path": f"$.state_patch_minimization.watch_addresses[{index}]",
+                "event_type": "memory_patch",
+                "order": 0,
+                "frame": None,
+                "index": index,
+                "operation": "state_patch_minimization",
+                "address": address["address"],
+                "bank": address["bank"],
+                "bank_address": address["bank_address"],
+                "state_symbol": base_label(state_symbol) or state_symbol,
+                "source_symbol": source_symbols[0] if source_symbols else "",
+                "pc_symbol": source_symbols[0] if source_symbols else "",
+                "pc_bank_address": "",
+                "rule_id": "state_patch_minimization",
+                "source_file": source_files[0] if source_files else "",
+                "before": "",
+                "after": "",
+                "delta": "",
+                "value": str(minimization.get("minimized_patch_count", "")),
+                "registers": {},
+                "candidate": str(minimization.get("out_report", "")),
+                "source_mems": string_items(minimization.get("source_mems")),
+                "watch_size": positive_int(minimization.get("watch_size")) or 1,
+                "confidence": 0.82 if minimization.get("preserved") else 0.62,
+                "evidence": [
+                    "state_patch_minimization preserved"
+                    if minimization.get("preserved")
+                    else "state_patch_minimization attempted",
+                    f"{minimization.get('original_patch_count', 0)} -> {minimization.get('minimized_patch_count', 0)} patches",
+                    "source_mems=" + ",".join(string_items(minimization.get("source_mems"))[:4]),
+                    f"out_report={minimization.get('out_report', '')}",
+                ],
+            }
+        )
+    return out
 
 
 def walk_trace_data(
@@ -238,6 +324,15 @@ def walk_trace_data(
         )
         if event:
             events.append(event)
+        events.extend(
+            watch_value_events(
+                data,
+                source=source,
+                path=path,
+                context=local_context,
+                symbol_by_address=symbol_by_address,
+            )
+        )
         events.extend(public_read_events(data, source=source, path=path, context=local_context, symbol_by_address=symbol_by_address))
         for key, value in data.items():
             walk_trace_data(
@@ -410,8 +505,71 @@ def public_read_events(
     return out
 
 
+def watch_value_events(
+    data: dict[str, Any],
+    *,
+    source: str,
+    path: str,
+    context: dict[str, Any],
+    symbol_by_address: dict[str, str],
+) -> list[dict[str, Any]]:
+    watch_values = data.get("watch_values")
+    if not isinstance(watch_values, dict):
+        return []
+    if context.get("watch"):
+        return []
+    pc_symbol = base_label(str(data.get("pc_label") or context.get("pc_label") or first_symbol(data, context)))
+    pc_address = normalize_address(data.get("pc"), bank=data.get("bank") or context.get("bank"))
+    out: list[dict[str, Any]] = []
+    for index, (raw_key, raw_value) in enumerate(watch_values.items()):
+        key_text = str(raw_key)
+        address = normalize_address(key_text)
+        state_symbol = (
+            symbol_by_address.get(address["bank_address"])
+            or symbol_by_address.get(address["address"])
+            or (base_label(key_text) if not address["address"] else "")
+            or key_text
+        )
+        value = stringify(raw_value)
+        out.append(
+            {
+                "id": "",
+                "source": source,
+                "json_path": f"{path}.watch_values[{index}]",
+                "event_type": "memory_read",
+                "order": 0,
+                "frame": data.get("frame"),
+                "index": data.get("index", data.get("seq")),
+                "operation": "watch_values_snapshot",
+                "address": address["address"],
+                "bank": address["bank"],
+                "bank_address": address["bank_address"],
+                "state_symbol": state_symbol,
+                "source_symbol": pc_symbol,
+                "pc_symbol": pc_symbol,
+                "pc_bank_address": first_string(data, ("pc_bank_address",)) or pc_address["bank_address"],
+                "rule_id": first_string(context, RULE_KEYS),
+                "source_file": normalize_path(first_source_file(data, context)) if first_source_file(data, context) else "",
+                "before": "",
+                "after": value,
+                "delta": "",
+                "value": value,
+                "registers": registers_from_record(data),
+                "candidate": "",
+                "confidence": 0.78 if address["address"] or state_symbol else 0.58,
+                "evidence": [
+                    "instruction trace watch_values snapshot",
+                    f"watch_values[{key_text}]={value}",
+                ],
+            }
+        )
+    return out
+
+
 def classify_event(data: dict[str, Any]) -> str:
     raw_type = str(data.get("event_type", "")).lower()
+    if raw_type in WRITE_EVENT_TYPES or raw_type in READ_EVENT_TYPES or raw_type in FLOW_EVENT_TYPES:
+        return raw_type
     if raw_type == "score_delta" or has_any(data, ("score_before", "score_after", "score_pointer")):
         return "score_delta"
     if data.get("kind") == "memory_patch" or has_any(data, ("patch_address", "patched_value")):
@@ -476,6 +634,42 @@ def hex_text(value: Any, *, width: int = 4) -> str:
     return text.upper().rjust(min(width, len(text)), "0")
 
 
+def state_patch_minimization_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *source_mem_addresses(item),
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(source_mem_addresses(result))
+    return unique_list(addresses)
+
+
+def source_mem_addresses(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            address
+            for address, _ in source_mem_parts(route)
+            if address
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
 def state_symbol_for(
     data: dict[str, Any],
     *,
@@ -506,6 +700,8 @@ def first_symbol(data: dict[str, Any], context: dict[str, Any]) -> str:
 def source_symbol_for(data: dict[str, Any], context: dict[str, Any]) -> str:
     nested_source = data.get("source") if isinstance(data.get("source"), dict) else {}
     source_keys = (
+        "source_symbol",
+        "pc_symbol",
         "pc_label",
         "source_label",
         "full_symbol",
@@ -1090,6 +1286,9 @@ def build_commands(
         commands.append(f"python -m tools.debugger explain --trace {trace}")
     for report in reports[:4]:
         commands.append(f"python -m tools.debugger explain --report {report}")
+        commands.append(f"python -m tools.debugger provenance --report {report}")
+        commands.append(f"python -m tools.debugger taint --report {report}")
+        commands.append(f"python -m tools.debugger slice --report {report}")
         commands.append(f"python -m tools.debugger rank --report {report}")
     for symbol in symbols[:6]:
         commands.append(f"python -m tools.debugger replay --symbol {symbol}")
@@ -1097,7 +1296,7 @@ def build_commands(
         commands.append(f"python -m tools.debugger slice --symbol {symbol}")
         commands.append(f"python -m tools.debugger provenance --symbol {symbol}")
     for address in addresses[:6]:
-        commands.append(f"python -m tools.debugger trace-index --address {address}")
+        commands.append(f"python -m tools.debugger trace-index --address {command_address_arg(address)}")
     for rule in rules[:6]:
         commands.append(f"python -m tools.debugger coverage --rule {rule}")
     for path in source_files[:6]:
@@ -1120,7 +1319,29 @@ def commands_for_event(
         commands.append(f"python -m tools.debugger taint --symbol {symbol}")
         commands.append(f"python -m tools.debugger slice --symbol {symbol}")
     if event.get("address"):
-        commands.append(f"python -m tools.debugger trace-index --address {event.get('address')}")
+        address = str(event.get("address"))
+        watch_size = positive_int(event.get("watch_size")) or positive_int(event.get("sink_size")) or 1
+        watch_size_arg = f" --watch-size {watch_size}" if watch_size != 1 else ""
+        sink_size_arg = f" --sink-size {watch_size}" if watch_size != 1 else ""
+        source_mem_args = " ".join(
+            f"--source-mem {source_mem}"
+            for source_mem in string_items(event.get("source_mems"))[:4]
+        )
+        command_address = command_address_arg(address)
+        commands.append(f"python -m tools.debugger trace-index --address {command_address}")
+        commands.append(f"python -m tools.debugger replay --watch-address {command_address}{watch_size_arg} --execute-watch")
+        commands.append(f"python -m tools.debugger watch --watch-address {command_address}{watch_size_arg} --execute")
+        commands.append(
+            "python -m tools.debugger dynamic-taint "
+            + " ".join(
+                part
+                for part in [
+                    source_mem_args,
+                    f"--sink-address {command_address_arg(address)}{sink_size_arg}",
+                ]
+                if part
+            )
+        )
     if event.get("rule_id"):
         commands.append(f"python -m tools.debugger coverage --rule {event.get('rule_id')}")
     for path in related_files[:3]:
@@ -1183,6 +1404,14 @@ def stringify(value: Any) -> str:
         return json.dumps(value, sort_keys=True)
     except TypeError:
         return str(value)
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
 
 
 def registers_from_record(data: dict[str, Any]) -> dict[str, str]:
@@ -1325,6 +1554,18 @@ def dict_items(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list | tuple):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [nested for item in value for nested in string_items(item)]
+    if isinstance(value, dict):
+        return [nested for item in value.values() for nested in string_items(item)]
+    return [str(value)] if value else []
 
 
 def unique_list(values: Any) -> list[str]:

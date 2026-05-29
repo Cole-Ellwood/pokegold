@@ -6,6 +6,7 @@ from typing import Any
 
 from .catalog import ROOT, triage_request
 from .ingest import sha256_file
+from .reporting import load_reports
 
 
 SOURCE_ROOTS = (
@@ -25,6 +26,7 @@ LABEL_DEF_RE = re.compile(r"^\s*(?P<label>[A-Za-z_.$][A-Za-z0-9_.$]*)(?P<global>
 def build_provenance_report(
     *,
     symbols_path: str = "pokegold.sym",
+    reports: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     source_files: tuple[str, ...] = (),
     include_docs: bool = False,
@@ -37,13 +39,23 @@ def build_provenance_report(
     symbol_table: dict[str, dict[str, Any]] = {}
     if sym_path.exists():
         symbol_table = parse_symbol_table(sym_path)
-    else:
-        errors.append(f"missing symbol file: {symbols_path}")
+
+    loaded_reports, report_errors = load_reports(reports=reports, root=root)
+    errors.extend(report_errors)
+    derived_inputs = derive_report_provenance_inputs(loaded_reports)
+    effective_symbols = tuple(unique_list([*symbols, *derived_inputs["symbols"]]))
+    effective_source_files = tuple(unique_list([*source_files, *derived_inputs["source_files"]]))
+    if not sym_path.exists():
+        missing_symbol_file = f"missing symbol file: {symbols_path}"
+        if effective_symbols:
+            errors.append(missing_symbol_file)
+        else:
+            warnings.append(missing_symbol_file)
 
     source_paths = collect_source_paths(
         root=root,
         include_docs=include_docs,
-        explicit_paths=source_files,
+        explicit_paths=effective_source_files,
     )
     symbol_reports = [
         describe_symbol(
@@ -53,7 +65,7 @@ def build_provenance_report(
             max_hits=max_hits,
             root=root,
         )
-        for symbol in symbols
+        for symbol in effective_symbols
     ]
     source_reports = [
         describe_source_file(
@@ -61,7 +73,7 @@ def build_provenance_report(
             symbol_table=symbol_table,
             root=root,
         )
-        for source_file in source_files
+        for source_file in effective_source_files
     ]
     warnings.extend(
         warning
@@ -92,6 +104,11 @@ def build_provenance_report(
         "warning_count": len(warnings),
         "errors": errors,
         "warnings": warnings,
+        "input_reports": [item["source"] for item in loaded_reports],
+        "input_symbols": list(symbols),
+        "input_source_files": list(source_files),
+        "derived_report_symbols": derived_inputs["symbols"],
+        "derived_report_source_files": derived_inputs["source_files"],
         "symbols": symbol_reports,
         "source_files": source_reports,
         "triage": triage,
@@ -151,6 +168,81 @@ def describe_symbol(
         "suggested_commands": triage["commands"] if triage else [],
         "warnings": warnings,
     }
+
+
+def derive_report_provenance_inputs(loaded_reports: list[dict[str, Any]]) -> dict[str, list[str]]:
+    symbols: list[str] = []
+    source_files: list[str] = []
+    for loaded in loaded_reports:
+        data = loaded.get("data")
+        if not isinstance(data, dict):
+            continue
+        collect_report_provenance_inputs(data, symbols=symbols, source_files=source_files)
+    return {
+        "symbols": unique_list(symbols),
+        "source_files": unique_list(source_files),
+    }
+
+
+def collect_report_provenance_inputs(value: Any, *, symbols: list[str], source_files: list[str]) -> None:
+    if isinstance(value, dict):
+        minimization = value.get("state_patch_minimization")
+        if isinstance(minimization, dict) and minimization.get("attempted"):
+            symbols.extend(state_patch_minimization_symbols(minimization))
+            source_files.extend(string_items(minimization.get("source_files")))
+        for key, nested in value.items():
+            lowered = str(key).lower()
+            if lowered in {"source_file", "path"}:
+                for item in string_items(nested):
+                    if looks_like_source_path(item):
+                        source_files.append(normalize_source_path(item))
+            elif lowered in {
+                "source_symbol",
+                "source_symbols",
+                "state_symbol",
+                "watch_symbol",
+                "watch_symbols",
+                "related_symbols",
+            }:
+                for item in string_items(nested):
+                    if looks_like_symbol(item):
+                        symbols.append(item)
+            collect_report_provenance_inputs(nested, symbols=symbols, source_files=source_files)
+    elif isinstance(value, list | tuple):
+        for item in value:
+            collect_report_provenance_inputs(item, symbols=symbols, source_files=source_files)
+
+
+def state_patch_minimization_symbols(item: dict[str, Any]) -> list[str]:
+    symbols = [
+        *string_items(item.get("source_symbols")),
+        *string_items(item.get("watch_symbols")),
+        *string_items(item.get("semantic_watch_symbols")),
+    ]
+    for _address, origin in source_mem_parts(item):
+        if origin:
+            symbols.append(origin)
+    for result in dict_items(item.get("results")):
+        symbols.extend(string_items(result.get("source_symbols")))
+        symbols.extend(string_items(result.get("semantic_watch_symbols")))
+        for _address, origin in source_mem_parts(result):
+            if origin:
+                symbols.append(origin)
+    return unique_list(symbol for symbol in symbols if looks_like_symbol(symbol))
+
+
+def source_mem_parts(item: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for raw in string_items(item.get("source_mems")):
+        text = str(raw).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
 
 
 def find_source_hits(
@@ -239,6 +331,52 @@ def extract_labels(path: Path, *, root: Path) -> list[dict[str, Any]]:
             }
         )
     return labels
+
+
+def dict_items(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list | tuple):
+        return []
+    return [item for item in value if isinstance(item, dict)]
+
+
+def string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list | tuple | set):
+        return [nested for item in value for nested in string_items(item)]
+    if isinstance(value, dict):
+        return [nested for item in value.values() for nested in string_items(item)]
+    return [str(value)] if value else []
+
+
+def unique_list(values: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value).strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+def looks_like_source_path(value: str) -> bool:
+    normalized = normalize_source_path(value)
+    return "/" in normalized and Path(normalized).suffix.lower() in SOURCE_SUFFIXES
+
+
+def normalize_source_path(value: str) -> str:
+    return str(value).strip().replace("\\", "/")
+
+
+def looks_like_symbol(value: str) -> bool:
+    text = str(value).strip()
+    if not text or "/" in text or "\\" in text or "=" in text:
+        return False
+    return bool(re.match(r"^[A-Za-z_.$][A-Za-z0-9_.$]*$", text))
 
 
 def collect_source_paths(

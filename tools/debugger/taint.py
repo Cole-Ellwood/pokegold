@@ -7,10 +7,12 @@ from .catalog import ROOT
 from .ingest import sha256_file
 from .provenance import (
     collect_source_paths,
+    derive_report_provenance_inputs,
     display_path,
     parse_symbol_table,
     resolve_path,
 )
+from .reporting import load_reports
 from .slicing import (
     IGNORED_TOKENS,
     TOKEN_RE,
@@ -58,6 +60,7 @@ MUTATING_OPS = {"inc", "dec", "set", "res", "sla", "sra", "srl", "swap", "rl", "
 def build_taint_report(
     *,
     symbols_path: str = "pokegold.sym",
+    reports: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     source_files: tuple[str, ...] = (),
     max_depth: int = 80,
@@ -67,8 +70,15 @@ def build_taint_report(
     sym_path = resolve_path(symbols_path, root=root)
     errors: list[str] = []
     warnings: list[str] = []
-    if not symbols:
-        errors.append("at least one --symbol is required")
+
+    loaded_reports, report_errors = load_reports(reports=reports, root=root)
+    errors.extend(report_errors)
+    derived_inputs = derive_report_provenance_inputs(loaded_reports)
+    effective_symbols = tuple(unique_list([*symbols, *derived_inputs["symbols"]]))
+    effective_source_files = tuple(unique_list([*source_files, *derived_inputs["source_files"]]))
+
+    if not effective_symbols:
+        errors.append("at least one --symbol or report-derived symbol is required")
     if max_depth < 1:
         errors.append("--max-depth must be positive")
     if max_paths < 1:
@@ -80,7 +90,7 @@ def build_taint_report(
     else:
         errors.append(f"missing symbol file: {symbols_path}")
 
-    source_paths, source_errors = select_source_paths(source_files=source_files, root=root)
+    source_paths, source_errors = select_source_paths(source_files=effective_source_files, root=root)
     errors.extend(source_errors)
     routines = parse_source_routines(source_paths=source_paths, symbol_table=symbol_table, root=root)
     known_symbols = set(symbol_table) | set(routines)
@@ -93,7 +103,7 @@ def build_taint_report(
             max_depth=max(1, max_depth),
             max_paths=max(1, max_paths),
         )
-        for symbol in symbols
+        for symbol in effective_symbols
     ]
     warnings.extend(
         warning
@@ -120,8 +130,15 @@ def build_taint_report(
         "warning_count": len(warnings),
         "errors": errors,
         "warnings": warnings,
+        "input_reports": [item["source"] for item in loaded_reports],
+        "input_symbols": list(symbols),
+        "input_source_files": list(source_files),
+        "derived_report_symbols": derived_inputs["symbols"],
+        "derived_report_source_files": derived_inputs["source_files"],
         "symbols_path": display_path(sym_path, root=root),
         "symbols_sha256": sha256_file(sym_path) if sym_path.exists() else "",
+        "symbols": list(effective_symbols),
+        "source_files": list(effective_source_files),
         "source_file_count": len(source_paths),
         "routine_count": len(routines),
         "target_count": len(targets),

@@ -6,16 +6,29 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
+from .audio_snapshot import build_audio_snapshot_report
+from .causal_graph import build_causal_graph_report
 from .catalog import build_capability_report, build_inventory, triage_request
+from .chaos import (
+    CHAOS_SCENARIOS,
+    format_report as format_chaos_report,
+    run_named_chaos_scenario,
+    write_candidate_input_log,
+)
+from .clobber_chain import build_clobber_chain_report, format_text as format_clobber_chain
 from .content_mirror import build_content_mirror_report
 from .content_scenarios import build_content_scenario_report
 from .content_state import build_content_state_report
 from .coverage import build_coverage_report
 from .dynamic_taint import build_dynamic_taint_report
+from .effect_trace import build_effect_trace_report
 from .explain import build_explanation_report
 from .expect import build_expectation_report
 from .fuzz import build_fuzz_plan
 from .generate import build_generation_plan
+from .hardware_event_stream import build_hardware_event_stream_report
+from .hardware_regression import build_hardware_regression_report
+from .hook_order import build_hook_order_probe_report
 from .impact import build_impact_report
 from .ingest import ingest_artifacts
 from .instruction_trace import build_instruction_trace_report
@@ -23,35 +36,70 @@ from .investigate import build_investigation_run
 from .localize import build_localization_plan
 from .minimize import build_minimization_plan
 from .mirrors import build_compare_plan
-from .next_steps import build_next_step, symptom_only_investigation_note
-from .pokemon_semantics import (
-    build_grass_regrowth_report,
-    build_learnset_inspection_report,
-    build_party_inspection_report,
-)
+from .playtest_packet import build_playtest_packet
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
-from .repro_recipes import build_repro_recipe_report
-from .reporting import build_static_report, write_static_report
-from .runtime_state import build_runtime_state_report
+from .reporting import build_static_report, format_counts, write_static_report
+from .reverse_query import build_reverse_query_report
 from .runtime_watch import build_watch_report
-from .save_state_inspect import build_save_state_inspection_report
-from .script_resume_gate import build_script_resume_gate_report
 from .setup_plan import build_setup_plan
 from .state_space import build_state_space_report
 from .slicing import build_slice_report
 from .testgen import suggest_tests
 from .taint import build_taint_report
+from .stat_at import build_stat_at_report, format_text as format_stat_at
 from .trace_index import build_trace_index_report
+from .type_matchup import build_type_matchup_report, format_text as format_type_matchup
+from .visual_snapshot import build_visual_snapshot_report
 from .visualization import build_visualization_report, write_visualization
-from .wram_bank_hazards import build_wram_bank_hazard_report
-from .wram_lifetime import build_wram_lifetime_report
-from .wram_ownership import build_wram_ownership_report
 from .workflow import build_gate_plan, command_is_runnable
 
 
+FRONT_DOOR_HINT = """Start here:
+  Fresh session orientation: python -m tools.debugger session-start
+  I'm changing a file: python -m tools.debugger triage --changed-file path/to/file.asm
+  Validate that change: python -m tools.debugger gate --changed-file path/to/file.asm --execute
+  I have a symptom: python -m tools.debugger investigate --symptom "what the player noticed"
+"""
+
+
+V2_PASSTHROUGH_MODULES = {
+    "hypothesis": "tools.debugger.hypothesis_tracker",
+    "selftest": "tools.debugger.selftest",
+    "save-state-lab": "tools.debugger.save_state_lab",
+    "bisect": "tools.debugger.bisect",
+    "session-start": "tools.debugger.session_start",
+    "handoff": "tools.debugger.handoff_log",
+    "when-wrote": "tools.debugger.when_wrote",
+    "tdb": "tools.debugger.tdb",
+    "pack": "tools.debugger.context_packet",
+    "heatmap": "tools.debugger.heatmap",
+    "vram-snapshot": "tools.debugger.vram_snapshot",
+    "vram-diff": "tools.debugger.vram_diff",
+    "probe": "tools.debugger.probe",
+    "rom-edit": "tools.debugger.rom_edit",
+    "crossemu": "tools.debugger.crossemu",
+    "dap": "tools.debugger.dap_server",
+    "clobbers": "tools.debugger.register_flow",
+    "auto-watch": "tools.debugger.auto_watch",
+    "speedup-report": "tools.debugger.speedup_harness",
+}
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if not argv:
+        build_parser().print_help()
+        return 0
+    # v2 passthrough: detected before the outer argparse runs so that
+    # `--help` and other tokens reach the module's own parser cleanly
+    # (argparse REMAINDER on a subparser positional interacts badly
+    # with the outer parser's built-in --help action).
+    if argv[0] in V2_PASSTHROUGH_MODULES:
+        module_name = V2_PASSTHROUGH_MODULES[argv[0]]
+        return _delegate_to_module_main(module_name, argv[1:])
     parser = build_parser()
     args = parser.parse_args(argv)
     return int(args.func(args))
@@ -61,6 +109,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger",
         description="Unified Pokemon Gold romhack debugger inventory, audit, and triage front door.",
+        epilog=FRONT_DOOR_HINT,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -83,21 +133,34 @@ def build_parser() -> argparse.ArgumentParser:
     add_output_args(triage)
     triage.set_defaults(func=cmd_triage)
 
-    next_step = subparsers.add_parser("next")
-    next_step.add_argument("--changed-file", action="append", default=[])
-    next_step.add_argument("--symptom", default="")
-    add_output_args(next_step)
-    next_step.set_defaults(func=cmd_next)
-
     ingest = subparsers.add_parser("ingest")
     ingest.add_argument("--rom", action="append", default=[])
     ingest.add_argument("--symbols", action="append", default=[])
     ingest.add_argument("--trace", action="append", default=[])
     ingest.add_argument("--save-state", action="append", default=[])
+    ingest.add_argument("--input-log", action="append", default=[])
     ingest.add_argument("--scenario", action="append", default=[])
     ingest.add_argument("--changed-file", action="append", default=[])
     add_output_args(ingest)
     ingest.set_defaults(func=cmd_ingest)
+
+    capture_playtest = subparsers.add_parser("capture-playtest")
+    capture_playtest.add_argument("--rom", default="")
+    capture_playtest.add_argument("--symbols", default="pokegold.sym")
+    capture_playtest.add_argument("--save-state", default="")
+    capture_playtest.add_argument("--input-log", default="")
+    capture_playtest.add_argument("--screenshot", default="")
+    capture_playtest.add_argument("--trace", action="append", default=[])
+    capture_playtest.add_argument("--report", action="append", default=[])
+    capture_playtest.add_argument("--scenario", action="append", default=[])
+    capture_playtest.add_argument("--changed-file", action="append", default=[])
+    capture_playtest.add_argument("--symbol", action="append", default=[])
+    capture_playtest.add_argument("--watch-symbol", action="append", default=[])
+    capture_playtest.add_argument("--address", action="append", default=[])
+    capture_playtest.add_argument("--symptom", default="")
+    capture_playtest.add_argument("--note", action="append", default=[])
+    add_output_args(capture_playtest)
+    capture_playtest.set_defaults(func=cmd_capture_playtest)
 
     gate = subparsers.add_parser("gate")
     gate.add_argument("--changed-file", action="append", default=[])
@@ -116,9 +179,11 @@ def build_parser() -> argparse.ArgumentParser:
     investigate.add_argument("--rom", default="")
     investigate.add_argument("--symbols", default="pokegold.sym")
     investigate.add_argument("--save-state", default="")
+    investigate.add_argument("--input-log", action="append", default=[])
     investigate.add_argument("--trace", action="append", default=[])
     investigate.add_argument("--scenario", action="append", default=[])
     investigate.add_argument("--report", action="append", default=[])
+    investigate.add_argument("--playtest-packet", action="append", default=[])
     investigate.add_argument("--patch", action="append", default=[])
     investigate.add_argument("--changed-file", action="append", default=[])
     investigate.add_argument("--symbol", action="append", default=[])
@@ -131,6 +196,10 @@ def build_parser() -> argparse.ArgumentParser:
     investigate.add_argument("--symptom", default="")
     investigate.add_argument("--out-dir", default=".local\\tmp\\debugger_investigation")
     investigate.add_argument("--execute-watch", action="store_true")
+    investigate.add_argument("--execute-snapshots", action="store_true")
+    investigate.add_argument("--execute-attribution", action="store_true")
+    investigate.add_argument("--execute-runtime-evidence", action="store_true")
+    investigate.add_argument("--watch-size", type=int, default=1)
     investigate.add_argument("--frames", type=int, default=300)
     investigate.add_argument("--context-frames", type=int, default=12)
     investigate.add_argument("--max-targets", type=int, default=24)
@@ -143,6 +212,8 @@ def build_parser() -> argparse.ArgumentParser:
     localize = subparsers.add_parser("localize")
     localize.add_argument("--changed-file", action="append", default=[])
     localize.add_argument("--symbol", action="append", default=[])
+    localize.add_argument("--address", action="append", default=[])
+    localize.add_argument("--watch-size", type=int, default=1)
     localize.add_argument("--symptom", default="")
     localize.add_argument("--report", action="append", default=[])
     localize.add_argument("--symbols", default="pokegold.sym")
@@ -177,8 +248,10 @@ def build_parser() -> argparse.ArgumentParser:
     trace_index.set_defaults(func=cmd_trace_index)
 
     minimize = subparsers.add_parser("minimize")
+    minimize.add_argument("--domain", action="append", choices=("input_log", "battle", "map_script"), default=[])
     minimize.add_argument("--report", action="append", default=[])
     minimize.add_argument("--trace", action="append", default=[])
+    minimize.add_argument("--input-log", action="append", default=[])
     minimize.add_argument("--scenario", action="append", default=[])
     minimize.add_argument("--scenario-id", action="append", default=[])
     minimize.add_argument("--bug-id", action="append", default=[])
@@ -193,8 +266,13 @@ def build_parser() -> argparse.ArgumentParser:
     minimize.add_argument("--symptom", default="")
     minimize.add_argument("--out-scenarios", default="")
     minimize.add_argument("--out-trace", default="")
+    minimize.add_argument("--out-input-log", default="")
+    minimize.add_argument("--out-shrunk-scenario-dir", default="")
     minimize.add_argument("--out-state-report", default="")
     minimize.add_argument("--execute-state-patches", action="store_true")
+    minimize.add_argument("--execute-semantic-reducers", action="store_true")
+    minimize.add_argument("--max-semantic-reducer-commands", type=int, default=8)
+    minimize.add_argument("--semantic-reducer-timeout-seconds", type=int, default=600)
     minimize.add_argument("--symbols", default="pokegold.sym")
     minimize.add_argument("--max-scenarios", type=int, default=20)
     minimize.add_argument("--max-trace-records", type=int, default=200)
@@ -211,6 +289,9 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--out-scenarios", default="")
     generate.add_argument("--max-cases", type=int, default=64)
     generate.add_argument("--seed", type=int, default=1)
+    generate.add_argument("--execute", action="store_true")
+    generate.add_argument("--max-execute-commands", type=int, default=8)
+    generate.add_argument("--execute-timeout-seconds", type=int, default=600)
     add_output_args(generate)
     generate.set_defaults(func=cmd_generate)
 
@@ -224,11 +305,20 @@ def build_parser() -> argparse.ArgumentParser:
     fuzz.add_argument("--out-cases", default="")
     fuzz.add_argument("--max-cases", type=int, default=64)
     fuzz.add_argument("--seed", type=int, default=1)
+    fuzz.add_argument("--chaos", action="store_true")
+    fuzz.add_argument("--runs", type=int, default=100)
+    fuzz.add_argument("--chaos-frames", type=int, default=8)
+    fuzz.add_argument("--chaos-scenario", choices=CHAOS_SCENARIOS, default="stable")
+    fuzz.add_argument("--out-chaos-input-log", default="")
+    fuzz.add_argument("--execute", action="store_true")
+    fuzz.add_argument("--max-execute-commands", type=int, default=8)
+    fuzz.add_argument("--execute-timeout-seconds", type=int, default=600)
     add_output_args(fuzz)
     fuzz.set_defaults(func=cmd_fuzz)
 
     provenance = subparsers.add_parser("provenance")
     provenance.add_argument("--symbols", default="pokegold.sym")
+    provenance.add_argument("--report", action="append", default=[])
     provenance.add_argument("--symbol", action="append", default=[])
     provenance.add_argument("--source-file", action="append", default=[])
     provenance.add_argument("--include-docs", action="store_true")
@@ -236,8 +326,19 @@ def build_parser() -> argparse.ArgumentParser:
     add_output_args(provenance)
     provenance.set_defaults(func=cmd_provenance)
 
+    causal_graph = subparsers.add_parser("causal-graph")
+    causal_graph.add_argument("--report", action="append", default=[])
+    causal_graph.add_argument("--trace", action="append", default=[])
+    causal_graph.add_argument("--symbol", action="append", default=[])
+    causal_graph.add_argument("--address", action="append", default=[])
+    causal_graph.add_argument("--max-nodes", type=int, default=240)
+    causal_graph.add_argument("--max-edges", type=int, default=480)
+    add_output_args(causal_graph)
+    causal_graph.set_defaults(func=cmd_causal_graph)
+
     slice_parser = subparsers.add_parser("slice")
     slice_parser.add_argument("--symbols", default="pokegold.sym")
+    slice_parser.add_argument("--report", action="append", default=[])
     slice_parser.add_argument("--symbol", action="append", default=[])
     slice_parser.add_argument("--source-file", action="append", default=[])
     slice_parser.add_argument("--depth", type=int, default=2)
@@ -247,6 +348,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     taint = subparsers.add_parser("taint")
     taint.add_argument("--symbols", default="pokegold.sym")
+    taint.add_argument("--report", action="append", default=[])
     taint.add_argument("--symbol", action="append", default=[])
     taint.add_argument("--source-file", action="append", default=[])
     taint.add_argument("--max-depth", type=int, default=80)
@@ -265,19 +367,74 @@ def build_parser() -> argparse.ArgumentParser:
     dynamic_taint.add_argument("--sink-address", action="append", default=[])
     dynamic_taint.add_argument("--sink-size", type=int, default=1)
     dynamic_taint.add_argument("--max-paths", type=int, default=40)
+    dynamic_taint.add_argument("--execute-synthesis", action="store_true")
     add_output_args(dynamic_taint)
     dynamic_taint.set_defaults(func=cmd_dynamic_taint)
+
+    effect_trace = subparsers.add_parser("effect-trace")
+    effect_trace.add_argument("--trace", action="append", default=[])
+    effect_trace.add_argument("--report", action="append", default=[])
+    effect_trace.add_argument("--symbols", default="pokegold.sym")
+    effect_trace.add_argument("--watch-symbol", action="append", default=[])
+    effect_trace.add_argument("--watch-address", action="append", default=[])
+    effect_trace.add_argument("--watch-size", type=int, default=1)
+    effect_trace.add_argument("--out-effects", default="")
+    effect_trace.add_argument("--max-events", type=int, default=5000)
+    effect_trace.add_argument("--checkpoint-interval", type=int, default=16)
+    effect_trace.add_argument("--max-checkpoints", type=int, default=128)
+    add_output_args(effect_trace)
+    effect_trace.set_defaults(func=cmd_effect_trace)
+
+    reverse_query = subparsers.add_parser("reverse-query")
+    reverse_query.add_argument("--report", action="append", default=[])
+    reverse_query.add_argument("--trace", action="append", default=[])
+    reverse_query.add_argument("--symbols", default="pokegold.sym")
+    reverse_query.add_argument("--symbol", action="append", default=[])
+    reverse_query.add_argument("--address", action="append", default=[])
+    reverse_query.add_argument("--watch-size", type=int, default=1)
+    reverse_query.add_argument("--max-history", type=int, default=12)
+    add_output_args(reverse_query)
+    reverse_query.set_defaults(func=cmd_reverse_query)
+
+    hook_order_probe = subparsers.add_parser("hook-order-probe")
+    hook_order_probe.add_argument("--execute", action="store_true")
+    hook_order_probe.add_argument("--frames", type=int, default=90)
+    add_output_args(hook_order_probe)
+    hook_order_probe.set_defaults(func=cmd_hook_order_probe)
+
+    hardware_event_stream = subparsers.add_parser("hardware-event-stream")
+    hardware_event_stream.add_argument("--execute", action="store_true")
+    hardware_event_stream.add_argument("--rom", default="pokegold.gbc")
+    hardware_event_stream.add_argument("--frames", type=int, default=90)
+    add_output_args(hardware_event_stream)
+    hardware_event_stream.set_defaults(func=cmd_hardware_event_stream)
+
+    hardware_regression = subparsers.add_parser("hardware-regression-gate")
+    hardware_regression.add_argument("--report", action="append", default=[])
+    hardware_regression.add_argument("--execute", action="store_true")
+    hardware_regression.add_argument("--bootrom", default="")
+    hardware_regression.add_argument("--rom", default="pokegold.gbc")
+    hardware_regression.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit nonzero while any Pan Docs hardware regression gate is not proven",
+    )
+    add_output_args(hardware_regression)
+    hardware_regression.set_defaults(func=cmd_hardware_regression_gate)
 
     trace_instructions = subparsers.add_parser("trace-instructions")
     trace_instructions.add_argument("--rom", default="pokegold.gbc")
     trace_instructions.add_argument("--symbols", default="pokegold.sym")
     trace_instructions.add_argument("--save-state", default="")
+    trace_instructions.add_argument("--input-log", action="append", default=[])
     trace_instructions.add_argument("--report", action="append", default=[])
     trace_instructions.add_argument("--scenario-id", action="append", default=[])
     trace_instructions.add_argument("--changed-file", action="append", default=[])
     trace_instructions.add_argument("--symptom", default="")
     trace_instructions.add_argument("--symbol", action="append", default=[])
     trace_instructions.add_argument("--watch-symbol", action="append", default=[])
+    trace_instructions.add_argument("--watch-address", action="append", default=[])
+    trace_instructions.add_argument("--watch-size", type=int, default=1)
     trace_instructions.add_argument("--sink-symbol", action="append", default=[])
     trace_instructions.add_argument("--frames", type=int, default=300)
     trace_instructions.add_argument("--max-bytes", type=lambda value: int(value, 0), default=0x800)
@@ -293,104 +450,54 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--rom", default="pokegold.gbc")
     watch.add_argument("--symbols", default="pokegold.sym")
     watch.add_argument("--save-state", default="")
-    watch.add_argument("--battery-save", default="")
-    watch.add_argument("--boot-continue", action="store_true")
-    watch.add_argument("--input", action="append", default=[])
-    watch.add_argument("--out-initial-state", default="")
+    watch.add_argument("--input-log", action="append", default=[])
     watch.add_argument("--watch-symbol", action="append", default=[])
+    watch.add_argument("--watch-address", action="append", default=[])
+    watch.add_argument("--watch-size", type=int, default=1)
     watch.add_argument("--frames", type=int, default=60)
     watch.add_argument("--context-frames", type=int, default=12)
     watch.add_argument("--execute", action="store_true")
-    watch.add_argument("--reset-sentinel", action="store_true")
-    watch.add_argument("--sentinel-symbol", action="append", default=[])
     add_output_args(watch)
     watch.set_defaults(func=cmd_watch)
 
-    state_inspect = subparsers.add_parser("state-inspect")
-    state_inspect.add_argument("--rom", default="pokegold.gbc")
-    state_inspect.add_argument("--symbols", default="pokegold.sym")
-    state_inspect.add_argument("--save-state", required=True)
-    add_output_args(state_inspect)
-    state_inspect.set_defaults(func=cmd_state_inspect)
+    visual_snapshot = subparsers.add_parser("visual-snapshot")
+    visual_snapshot.add_argument("--rom", default="pokegold.gbc")
+    visual_snapshot.add_argument("--symbols", default="pokegold.sym")
+    visual_snapshot.add_argument("--save-state", default="")
+    visual_snapshot.add_argument("--frames", type=int, default=0)
+    visual_snapshot.add_argument("--max-bytes", type=int, default=512)
+    visual_snapshot.add_argument("--execute", action="store_true")
+    add_output_args(visual_snapshot)
+    visual_snapshot.set_defaults(func=cmd_visual_snapshot)
 
-    inspect_state = subparsers.add_parser("inspect-state")
-    inspect_state.add_argument("--rom", default="pokegold.gbc")
-    inspect_state.add_argument("--symbols", default="pokegold.sym")
-    inspect_state.add_argument("--save-state", required=True)
-    add_output_args(inspect_state)
-    inspect_state.set_defaults(func=cmd_save_state_inspect)
-
-    save_state_inspect = subparsers.add_parser("save-state-inspect")
-    save_state_inspect.add_argument("--rom", default="pokegold.gbc")
-    save_state_inspect.add_argument("--symbols", default="pokegold.sym")
-    save_state_inspect.add_argument("--save-state", required=True)
-    add_output_args(save_state_inspect)
-    save_state_inspect.set_defaults(func=cmd_save_state_inspect)
-
-    learnset_inspect = subparsers.add_parser("learnset-inspect")
-    learnset_inspect.add_argument("--species", required=True)
-    learnset_inspect.add_argument("--level", type=int, required=True)
-    add_output_args(learnset_inspect)
-    learnset_inspect.set_defaults(func=cmd_learnset_inspect)
-
-    party_inspect = subparsers.add_parser("party-inspect")
-    party_inspect.add_argument("--save", required=True)
-    party_inspect.add_argument("--slot", type=int, action="append", default=[])
-    party_inspect.add_argument("--rom", default="pokegold.gbc")
-    party_inspect.add_argument("--symbols", default="pokegold.sym")
-    add_output_args(party_inspect)
-    party_inspect.set_defaults(func=cmd_party_inspect)
-
-    grass_regrowth = subparsers.add_parser("grass-regrowth")
-    grass_regrowth.add_argument("--max-total-hp", type=int, default=300)
-    add_output_args(grass_regrowth)
-    grass_regrowth.set_defaults(func=cmd_grass_regrowth)
-
-    wram_bank_hazards = subparsers.add_parser("wram-bank-hazards")
-    wram_bank_hazards.add_argument("--source-file", action="append", default=[])
-    add_output_args(wram_bank_hazards)
-    wram_bank_hazards.set_defaults(func=cmd_wram_bank_hazards)
-
-    script_resume_gate = subparsers.add_parser("script-resume-gate")
-    script_resume_gate.add_argument("--report", action="append", default=[])
-    add_output_args(script_resume_gate)
-    script_resume_gate.set_defaults(func=cmd_script_resume_gate)
-
-    wram_ownership = subparsers.add_parser("wram-ownership")
-    wram_ownership.add_argument("--symbol", action="append", default=[])
-    wram_ownership.add_argument("--source-file", default="ram/wram.asm")
-    add_output_args(wram_ownership)
-    wram_ownership.set_defaults(func=cmd_wram_ownership)
-
-    wram_lifetime = subparsers.add_parser("wram-lifetime")
-    wram_lifetime.add_argument("--symbol", action="append", default=[])
-    wram_lifetime.add_argument("--through", default="Script_startbattle")
-    wram_lifetime.add_argument("--source-file", default="engine/overworld/scripting.asm")
-    wram_lifetime.add_argument("--symbols", default="pokegold.sym")
-    add_output_args(wram_lifetime)
-    wram_lifetime.set_defaults(func=cmd_wram_lifetime)
-
-    repro_recipe = subparsers.add_parser("repro-recipe")
-    repro_recipe.add_argument("--id", action="append", default=[])
-    repro_recipe.add_argument("--symptom", default="")
-    add_output_args(repro_recipe)
-    repro_recipe.set_defaults(func=cmd_repro_recipe)
+    audio_snapshot = subparsers.add_parser("audio-snapshot")
+    audio_snapshot.add_argument("--rom", default="pokegold.gbc")
+    audio_snapshot.add_argument("--symbols", default="pokegold.sym")
+    audio_snapshot.add_argument("--save-state", default="")
+    audio_snapshot.add_argument("--frames", type=int, default=0)
+    audio_snapshot.add_argument("--execute", action="store_true")
+    add_output_args(audio_snapshot)
+    audio_snapshot.set_defaults(func=cmd_audio_snapshot)
 
     replay = subparsers.add_parser("replay")
     replay.add_argument("--rom", default="")
     replay.add_argument("--symbols", default="")
     replay.add_argument("--save-state", default="")
+    replay.add_argument("--input-log", action="append", default=[])
     replay.add_argument("--trace", action="append", default=[])
     replay.add_argument("--scenario", action="append", default=[])
     replay.add_argument("--scenario-id", action="append", default=[])
     replay.add_argument("--report", action="append", default=[])
     replay.add_argument("--watch-symbol", action="append", default=[])
+    replay.add_argument("--watch-address", action="append", default=[])
+    replay.add_argument("--watch-size", type=int, default=1)
     replay.add_argument("--symbol", action="append", default=[])
     replay.add_argument("--changed-file", action="append", default=[])
     replay.add_argument("--symptom", default="")
     replay.add_argument("--frames", type=int, default=300)
     replay.add_argument("--context-frames", type=int, default=12)
     replay.add_argument("--execute-watch", action="store_true")
+    replay.add_argument("--execute-trace", action="store_true")
     replay.add_argument("--max-targets", type=int, default=12)
     add_output_args(replay)
     replay.set_defaults(func=cmd_replay)
@@ -405,6 +512,8 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument("--changed-file", action="append", default=[])
     setup.add_argument("--symbol", action="append", default=[])
     setup.add_argument("--watch-symbol", action="append", default=[])
+    setup.add_argument("--watch-address", action="append", default=[])
+    setup.add_argument("--watch-size", type=int, default=1)
     setup.add_argument("--symptom", default="")
     setup.add_argument("--frames", type=int, default=300)
     setup.add_argument("--out-scenarios", default="")
@@ -425,6 +534,7 @@ def build_parser() -> argparse.ArgumentParser:
     explain.set_defaults(func=cmd_explain)
 
     tests = subparsers.add_parser("suggest-tests")
+    tests.add_argument("--report", action="append", default=[])
     tests.add_argument("--changed-file", action="append", default=[])
     tests.add_argument("--symbol", action="append", default=[])
     tests.add_argument("--symptom", default="")
@@ -538,6 +648,190 @@ def build_parser() -> argparse.ArgumentParser:
     add_output_args(visualize)
     visualize.set_defaults(func=cmd_visualize)
 
+    type_matchup = subparsers.add_parser("type-matchup")
+    type_matchup.add_argument("--species", required=True)
+    add_output_args(type_matchup)
+    type_matchup.set_defaults(func=cmd_type_matchup)
+
+    stat_at = subparsers.add_parser("stat-at")
+    stat_at.add_argument("--species", required=True)
+    stat_at.add_argument("--stat", required=True, help="hp/atk/def/spd/sat/sdf")
+    stat_at.add_argument("--level", type=int, default=50)
+    stat_at.add_argument("--modifier", type=int, default=0, help="stat-stage modifier -6..+6")
+    stat_at.add_argument("--iv", type=int, default=15)
+    stat_at.add_argument("--ev", type=int, default=65_535)
+    add_output_args(stat_at)
+    stat_at.set_defaults(func=cmd_stat_at)
+
+    clobber_chain = subparsers.add_parser("clobber-chain")
+    clobber_chain.add_argument("--function", required=True)
+    clobber_chain.add_argument("--register", default="")
+    clobber_chain.add_argument("--max-depth", type=int, default=8)
+    add_output_args(clobber_chain)
+    clobber_chain.set_defaults(func=cmd_clobber_chain)
+
+    # Omni-debugger v2 surfaces. Each subparser captures trailing argv
+    # via REMAINDER and delegates to the module's existing main() so
+    # the top-level CLI doesn't have to duplicate every module's flags.
+    # Module-level CLI (`python -m tools.debugger.<module>`) keeps
+    # working unchanged.
+    hypothesis = subparsers.add_parser(
+        "hypothesis",
+        add_help=False,
+        description=(
+            "Persistent debugging-hypothesis tracker (v2). "
+            "Delegates to `python -m tools.debugger.hypothesis_tracker`. "
+            "Pass `--help` to see its subcommands."
+        ),
+    )
+    hypothesis.add_argument("argv", nargs=argparse.REMAINDER)
+    hypothesis.set_defaults(func=cmd_hypothesis)
+
+    selftest = subparsers.add_parser(
+        "selftest",
+        add_help=False,
+        description=(
+            "End-to-end synthetic-input health check (v2). "
+            "Delegates to `python -m tools.debugger.selftest`. "
+            "Pass `--help` for options."
+        ),
+    )
+    selftest.add_argument("argv", nargs=argparse.REMAINDER)
+    selftest.set_defaults(func=cmd_selftest)
+
+    save_state_lab = subparsers.add_parser(
+        "save-state-lab",
+        add_help=False,
+        description=(
+            "Save-state inspect / diff (v2). "
+            "Delegates to `python -m tools.debugger.save_state_lab`. "
+            "Pass `--help` for options."
+        ),
+    )
+    save_state_lab.add_argument("argv", nargs=argparse.REMAINDER)
+    save_state_lab.set_defaults(func=cmd_save_state_lab)
+
+    bisect = subparsers.add_parser(
+        "bisect",
+        add_help=False,
+        description=(
+            "Git-bisect harness (v2). "
+            "Delegates to `python -m tools.debugger.bisect`. "
+            "Pass `--help` for options."
+        ),
+    )
+    bisect.add_argument("argv", nargs=argparse.REMAINDER)
+    bisect.set_defaults(func=cmd_bisect)
+
+    session_start = subparsers.add_parser(
+        "session-start",
+        add_help=False,
+        description=(
+            "Read-only session-orientation snapshot (v2): selftest + open "
+            "hypotheses + recent commits + working-tree summary. "
+            "Delegates to `python -m tools.debugger.session_start`. "
+            "Pass `--help` for options."
+        ),
+    )
+    session_start.add_argument("argv", nargs=argparse.REMAINDER)
+    session_start.set_defaults(func=cmd_session_start)
+
+    handoff = subparsers.add_parser(
+        "handoff",
+        add_help=False,
+        description=(
+            "Two-LLM handoff log (v2). Structural enforcement of the "
+            "rule-#6 mutual-agreement gate. Delegates to "
+            "`python -m tools.debugger.handoff_log`. Pass `--help` to "
+            "see add/list/show/verify subcommands."
+        ),
+    )
+    handoff.add_argument("argv", nargs=argparse.REMAINDER)
+    handoff.set_defaults(func=cmd_handoff)
+
+    when_wrote = subparsers.add_parser(
+        "when-wrote",
+        add_help=False,
+        description=(
+            "Omniscient last-writer query (P2). Asks who last wrote a "
+            "watched address before an optional anchor. Delegates to "
+            "`python -m tools.debugger.when_wrote`. Pass `--help` for "
+            "address/symbol/anchor/trace options."
+        ),
+    )
+    when_wrote.add_argument("argv", nargs=argparse.REMAINDER)
+    when_wrote.set_defaults(func=cmd_when_wrote)
+
+    tdb = subparsers.add_parser(
+        "tdb",
+        add_help=False,
+        description=(
+            "Trace query language (P3). Predicate expressions over effect "
+            "trace events with AND/OR/NOT composition. Delegates to "
+            "`python -m tools.debugger.tdb`. Pass `--help` for syntax."
+        ),
+    )
+    tdb.add_argument("argv", nargs=argparse.REMAINDER)
+    tdb.set_defaults(func=cmd_tdb)
+
+    pack = subparsers.add_parser(
+        "pack",
+        add_help=False,
+        description=(
+            "Bug-localization context packet (P5). Emits a single-turn-sized "
+            "markdown+JSON packet for a given hypothesis id. Delegates to "
+            "`python -m tools.debugger.context_packet`. Pass `--help` for syntax."
+        ),
+    )
+    pack.add_argument("argv", nargs=argparse.REMAINDER)
+    pack.set_defaults(func=cmd_pack)
+
+    heatmap = subparsers.add_parser(
+        "heatmap",
+        add_help=False,
+        description=(
+            "IO heatmap + per-frame memory-write timeline (P9). ASCII grid + "
+            "JSON for $FF00-$FF7F, $FF80-$FFFE, $D000-$DFFF write density. "
+            "Delegates to `python -m tools.debugger.heatmap`. Pass `--help` "
+            "for syntax."
+        ),
+    )
+    heatmap.add_argument("argv", nargs=argparse.REMAINDER)
+    heatmap.set_defaults(func=cmd_heatmap)
+
+    vram_snapshot = subparsers.add_parser(
+        "vram-snapshot",
+        add_help=False,
+        description=(
+            "Structured VRAM/OAM/tilemap snapshot decode (P6). Delegates to "
+            "`python -m tools.debugger.vram_snapshot`. Pass `--help` for syntax."
+        ),
+    )
+    vram_snapshot.add_argument("argv", nargs=argparse.REMAINDER)
+    vram_snapshot.set_defaults(func=cmd_vram_snapshot)
+
+    vram_diff = subparsers.add_parser(
+        "vram-diff",
+        add_help=False,
+        description=(
+            "Structured VRAM/OAM/tilemap diff (P6). Delegates to "
+            "`python -m tools.debugger.vram_diff`. Pass `--help` for syntax."
+        ),
+    )
+    vram_diff.add_argument("argv", nargs=argparse.REMAINDER)
+    vram_diff.set_defaults(func=cmd_vram_diff)
+
+    probe = subparsers.add_parser(
+        "probe",
+        add_help=False,
+        description=(
+            "Named probe declarations and trace hit counts (P8). Delegates to "
+            "`python -m tools.debugger.probe`. Pass `--help` for syntax."
+        ),
+    )
+    probe.add_argument("argv", nargs=argparse.REMAINDER)
+    probe.set_defaults(func=cmd_probe)
+
     return parser
 
 
@@ -569,23 +863,37 @@ def cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_next(args: argparse.Namespace) -> int:
-    report = build_next_step(
-        changed_files=tuple(args.changed_file),
-        symptom=args.symptom,
-    )
-    emit_report(report, args)
-    return 0
-
-
 def cmd_ingest(args: argparse.Namespace) -> int:
     report = ingest_artifacts(
         roms=tuple(args.rom),
         symbols=tuple(args.symbols),
         traces=tuple(args.trace),
         save_states=tuple(args.save_state),
+        input_logs=tuple(args.input_log),
         scenarios=tuple(args.scenario),
         changed_files=tuple(args.changed_file),
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_capture_playtest(args: argparse.Namespace) -> int:
+    report = build_playtest_packet(
+        rom_path=args.rom,
+        symbols_path=args.symbols,
+        save_state=args.save_state,
+        input_log=args.input_log,
+        screenshot=args.screenshot,
+        traces=tuple(args.trace),
+        reports=tuple(args.report),
+        scenarios=tuple(args.scenario),
+        changed_files=tuple(args.changed_file),
+        symbols=tuple(args.symbol),
+        watch_symbols=tuple(args.watch_symbol),
+        addresses=tuple(args.address),
+        symptom=args.symptom,
+        notes=tuple(args.note),
+        packet_path=args.json_out,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
@@ -610,9 +918,10 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         rom_path=args.rom,
         symbols_path=args.symbols,
         save_state=args.save_state,
+        input_logs=tuple(args.input_log),
         traces=tuple(args.trace),
         scenarios=tuple(args.scenario),
-        reports=tuple(args.report),
+        reports=tuple([*args.report, *args.playtest_packet]),
         patches=tuple(args.patch),
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
@@ -624,7 +933,10 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         families=tuple(args.family),
         symptom=args.symptom,
         out_dir=args.out_dir,
-        execute_watch=args.execute_watch,
+        execute_watch=args.execute_watch or args.execute_runtime_evidence,
+        execute_snapshots=args.execute_snapshots or args.execute_runtime_evidence,
+        execute_attribution=args.execute_attribution or args.execute_runtime_evidence,
+        watch_size=args.watch_size,
         frames=args.frames,
         context_frames=args.context_frames,
         max_targets=args.max_targets,
@@ -632,37 +944,16 @@ def cmd_investigate(args: argparse.Namespace) -> int:
         max_cases=args.max_cases,
         seed=args.seed,
     )
-    if args.symptom and not investigation_args_have_anchor(args):
-        report["symptom_only_next_step_note"] = symptom_only_investigation_note(report)
     emit_report(report, args)
     return 0 if report["valid"] and report["passed"] else 1
-
-
-def investigation_args_have_anchor(args: argparse.Namespace) -> bool:
-    return any(
-        (
-            args.rom,
-            args.save_state,
-            args.trace,
-            args.scenario,
-            args.report,
-            args.patch,
-            args.changed_file,
-            args.symbol,
-            args.watch_symbol,
-            args.rule,
-            args.address,
-            args.expect,
-            args.expect_file,
-            args.family,
-        )
-    )
 
 
 def cmd_localize(args: argparse.Namespace) -> int:
     report = build_localization_plan(
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
+        addresses=tuple(args.address),
+        watch_size=args.watch_size,
         symptom=args.symptom,
         reports=tuple(args.report),
         symbols_path=args.symbols,
@@ -707,7 +998,9 @@ def cmd_trace_index(args: argparse.Namespace) -> int:
 def cmd_minimize(args: argparse.Namespace) -> int:
     report = build_minimization_plan(
         reports=tuple(args.report),
+        domains=tuple(args.domain),
         traces=tuple(args.trace),
+        input_logs=tuple(args.input_log),
         scenarios=tuple(args.scenario),
         scenario_ids=tuple(args.scenario_id),
         bug_ids=tuple(args.bug_id),
@@ -722,8 +1015,13 @@ def cmd_minimize(args: argparse.Namespace) -> int:
         symptom=args.symptom,
         out_scenarios=args.out_scenarios,
         out_trace=args.out_trace,
+        out_input_log=args.out_input_log,
+        out_shrunk_scenario_dir=args.out_shrunk_scenario_dir,
         out_state_report=args.out_state_report,
         execute_state_patches=args.execute_state_patches,
+        execute_semantic_reducers=args.execute_semantic_reducers,
+        max_semantic_reducer_commands=args.max_semantic_reducer_commands,
+        semantic_reducer_timeout_seconds=args.semantic_reducer_timeout_seconds,
         symbols_path=args.symbols,
         max_scenarios=args.max_scenarios,
         max_trace_records=args.max_trace_records,
@@ -743,12 +1041,27 @@ def cmd_generate(args: argparse.Namespace) -> int:
         out_scenarios=args.out_scenarios,
         max_cases=args.max_cases,
         seed=args.seed,
+        execute=args.execute,
+        max_execute_commands=args.max_execute_commands,
+        execute_timeout_seconds=args.execute_timeout_seconds,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
 
 
 def cmd_fuzz(args: argparse.Namespace) -> int:
+    if args.chaos:
+        report = run_named_chaos_scenario(
+            scenario=args.chaos_scenario,
+            runs=args.runs,
+            seed=args.seed,
+            frames=args.chaos_frames,
+        )
+        if args.out_chaos_input_log:
+            write_candidate_input_log(report, args.out_chaos_input_log)
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
+
     report = build_fuzz_plan(
         reports=tuple(args.report),
         scenarios=tuple(args.scenario),
@@ -759,6 +1072,9 @@ def cmd_fuzz(args: argparse.Namespace) -> int:
         out_cases=args.out_cases,
         max_cases=args.max_cases,
         seed=args.seed,
+        execute=args.execute,
+        max_execute_commands=args.max_execute_commands,
+        execute_timeout_seconds=args.execute_timeout_seconds,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
@@ -767,6 +1083,7 @@ def cmd_fuzz(args: argparse.Namespace) -> int:
 def cmd_provenance(args: argparse.Namespace) -> int:
     report = build_provenance_report(
         symbols_path=args.symbols,
+        reports=tuple(args.report),
         symbols=tuple(args.symbol),
         source_files=tuple(args.source_file),
         include_docs=args.include_docs,
@@ -776,9 +1093,23 @@ def cmd_provenance(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_causal_graph(args: argparse.Namespace) -> int:
+    report = build_causal_graph_report(
+        reports=tuple(args.report),
+        traces=tuple(args.trace),
+        symbols=tuple(args.symbol),
+        addresses=tuple(args.address),
+        max_nodes=args.max_nodes,
+        max_edges=args.max_edges,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
 def cmd_slice(args: argparse.Namespace) -> int:
     report = build_slice_report(
         symbols_path=args.symbols,
+        reports=tuple(args.report),
         symbols=tuple(args.symbol),
         source_files=tuple(args.source_file),
         max_depth=args.depth,
@@ -791,6 +1122,7 @@ def cmd_slice(args: argparse.Namespace) -> int:
 def cmd_taint(args: argparse.Namespace) -> int:
     report = build_taint_report(
         symbols_path=args.symbols,
+        reports=tuple(args.report),
         symbols=tuple(args.symbol),
         source_files=tuple(args.source_file),
         max_depth=args.max_depth,
@@ -812,6 +1144,70 @@ def cmd_dynamic_taint(args: argparse.Namespace) -> int:
         sink_addresses=tuple(args.sink_address),
         sink_size=args.sink_size,
         max_paths=args.max_paths,
+        execute_synthesis=args.execute_synthesis,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_effect_trace(args: argparse.Namespace) -> int:
+    report = build_effect_trace_report(
+        traces=tuple(args.trace),
+        reports=tuple(args.report),
+        symbols_path=args.symbols,
+        watch_symbols=tuple(args.watch_symbol),
+        watch_addresses=tuple(args.watch_address),
+        watch_size=args.watch_size,
+        out_effects=args.out_effects,
+        max_events=args.max_events,
+        checkpoint_interval=args.checkpoint_interval,
+        max_checkpoints=args.max_checkpoints,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_reverse_query(args: argparse.Namespace) -> int:
+    report = build_reverse_query_report(
+        reports=tuple(args.report),
+        traces=tuple(args.trace),
+        symbols=tuple(args.symbol),
+        addresses=tuple(args.address),
+        symbols_path=args.symbols,
+        watch_size=args.watch_size,
+        max_history=args.max_history,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_hardware_regression_gate(args: argparse.Namespace) -> int:
+    report = build_hardware_regression_report(
+        reports=tuple(args.report),
+        execute=args.execute,
+        bootrom=args.bootrom,
+        rom_path=args.rom,
+    )
+    emit_report(report, args)
+    if args.strict and not report["passed"]:
+        return 1
+    return 0 if report["valid"] else 1
+
+
+def cmd_hook_order_probe(args: argparse.Namespace) -> int:
+    report = build_hook_order_probe_report(
+        execute=args.execute,
+        frames=args.frames,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_hardware_event_stream(args: argparse.Namespace) -> int:
+    report = build_hardware_event_stream_report(
+        execute=args.execute,
+        rom_path=args.rom,
+        frames=args.frames,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
@@ -821,6 +1217,8 @@ def cmd_trace_instructions(args: argparse.Namespace) -> int:
     report = build_instruction_trace_report(
         function_symbols=tuple(args.symbol),
         watch_symbols=tuple(args.watch_symbol),
+        watch_addresses=tuple(args.watch_address),
+        watch_size=args.watch_size,
         reports=tuple(args.report),
         scenario_ids=tuple(args.scenario_id),
         changed_files=tuple(args.changed_file),
@@ -829,6 +1227,7 @@ def cmd_trace_instructions(args: argparse.Namespace) -> int:
         rom_path=args.rom,
         symbols_path=args.symbols,
         save_state=args.save_state,
+        input_logs=tuple(args.input_log),
         frames=args.frames,
         max_bytes=args.max_bytes,
         max_frames=args.max_frames,
@@ -844,109 +1243,40 @@ def cmd_trace_instructions(args: argparse.Namespace) -> int:
 def cmd_watch(args: argparse.Namespace) -> int:
     report = build_watch_report(
         watch_symbols=tuple(args.watch_symbol),
+        watch_addresses=tuple(args.watch_address),
+        watch_size=args.watch_size,
         rom_path=args.rom,
         symbols_path=args.symbols,
         save_state=args.save_state,
-        battery_save=args.battery_save,
-        boot_continue=args.boot_continue,
-        input_events=tuple(args.input),
-        out_initial_state=args.out_initial_state,
+        input_logs=tuple(args.input_log),
         frames=args.frames,
         context_frames=args.context_frames,
         execute=args.execute,
-        reset_sentinel=args.reset_sentinel,
-        sentinel_symbols=tuple(args.sentinel_symbol),
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
 
 
-def cmd_state_inspect(args: argparse.Namespace) -> int:
-    report = build_runtime_state_report(
+def cmd_visual_snapshot(args: argparse.Namespace) -> int:
+    report = build_visual_snapshot_report(
         rom_path=args.rom,
         symbols_path=args.symbols,
         save_state=args.save_state,
+        frames=args.frames,
+        execute=args.execute,
+        max_bytes=args.max_bytes,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
 
 
-def cmd_save_state_inspect(args: argparse.Namespace) -> int:
-    report = build_save_state_inspection_report(
-        save_state=args.save_state,
+def cmd_audio_snapshot(args: argparse.Namespace) -> int:
+    report = build_audio_snapshot_report(
         rom_path=args.rom,
         symbols_path=args.symbols,
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] else 1
-
-
-def cmd_learnset_inspect(args: argparse.Namespace) -> int:
-    report = build_learnset_inspection_report(
-        species=args.species,
-        level=args.level,
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] else 1
-
-
-def cmd_party_inspect(args: argparse.Namespace) -> int:
-    report = build_party_inspection_report(
-        save=args.save,
-        slots=tuple(args.slot),
-        rom=args.rom,
-        symbols=args.symbols,
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] else 1
-
-
-def cmd_grass_regrowth(args: argparse.Namespace) -> int:
-    report = build_grass_regrowth_report(max_total_hp=args.max_total_hp)
-    emit_report(report, args)
-    return 0 if report["valid"] else 1
-
-
-def cmd_wram_bank_hazards(args: argparse.Namespace) -> int:
-    report = build_wram_bank_hazard_report(
-        source_files=tuple(args.source_file),
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] and report["passed"] else 1
-
-
-def cmd_script_resume_gate(args: argparse.Namespace) -> int:
-    report = build_script_resume_gate_report(
-        reports=tuple(args.report),
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] and report["passed"] else 1
-
-
-def cmd_wram_ownership(args: argparse.Namespace) -> int:
-    report = build_wram_ownership_report(
-        symbols=tuple(args.symbol),
-        source_file=args.source_file,
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] else 1
-
-
-def cmd_wram_lifetime(args: argparse.Namespace) -> int:
-    report = build_wram_lifetime_report(
-        symbols=tuple(args.symbol),
-        through=args.through,
-        source_file=args.source_file,
-        symbols_path=args.symbols,
-    )
-    emit_report(report, args)
-    return 0 if report["valid"] and report["passed"] else 1
-
-
-def cmd_repro_recipe(args: argparse.Namespace) -> int:
-    report = build_repro_recipe_report(
-        ids=tuple(args.id),
-        symptom=args.symptom,
+        save_state=args.save_state,
+        frames=args.frames,
+        execute=args.execute,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1
@@ -957,17 +1287,21 @@ def cmd_replay(args: argparse.Namespace) -> int:
         rom_path=args.rom,
         symbols_path=args.symbols,
         save_state=args.save_state,
+        input_logs=tuple(args.input_log),
         traces=tuple(args.trace),
         scenarios=tuple(args.scenario),
         scenario_ids=tuple(args.scenario_id),
         reports=tuple(args.report),
         watch_symbols=tuple(args.watch_symbol),
+        watch_addresses=tuple(args.watch_address),
+        watch_size=args.watch_size,
         symbols=tuple(args.symbol),
         changed_files=tuple(args.changed_file),
         symptom=args.symptom,
         frames=args.frames,
         context_frames=args.context_frames,
         execute_watch=args.execute_watch,
+        execute_trace=args.execute_trace,
         max_targets=args.max_targets,
     )
     emit_report(report, args)
@@ -985,6 +1319,8 @@ def cmd_setup(args: argparse.Namespace) -> int:
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
         watch_symbols=tuple(args.watch_symbol),
+        watch_addresses=tuple(args.watch_address),
+        watch_size=args.watch_size,
         symptom=args.symptom,
         frames=args.frames,
         out_scenarios=args.out_scenarios,
@@ -1011,6 +1347,7 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 def cmd_suggest_tests(args: argparse.Namespace) -> int:
     report = suggest_tests(
+        reports=tuple(args.report),
         changed_files=tuple(args.changed_file),
         symbols=tuple(args.symbol),
         symptom=args.symptom,
@@ -1155,6 +1492,105 @@ def cmd_visualize(args: argparse.Namespace) -> int:
     return 0 if report["valid"] else 1
 
 
+def cmd_type_matchup(args: argparse.Namespace) -> int:
+    report = build_type_matchup_report(species=args.species)
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
+def cmd_stat_at(args: argparse.Namespace) -> int:
+    report = build_stat_at_report(
+        species=args.species,
+        stat=args.stat,
+        level=args.level,
+        modifier=args.modifier,
+        iv=args.iv,
+        ev=args.ev,
+    )
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
+def cmd_clobber_chain(args: argparse.Namespace) -> int:
+    report = build_clobber_chain_report(
+        function=args.function,
+        register=args.register or None,
+        max_depth=args.max_depth,
+    )
+    emit_report(report, args)
+    return 0 if report.get("valid") else 1
+
+
+def _delegate_to_module_main(module_name: str, argv: Sequence[str]) -> int:
+    """Import the named module's ``main`` and call it with ``argv``.
+
+    Strips a leading literal ``--`` token from ``argv`` because
+    argparse REMAINDER includes the separator when ``--`` is used to
+    end option parsing in the parent CLI; the module's parser does not
+    expect it.
+    """
+
+    args = list(argv or [])
+    if args and args[0] == "--":
+        args = args[1:]
+    import importlib
+
+    module = importlib.import_module(module_name)
+    return int(module.main(args))
+
+
+def cmd_hypothesis(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.hypothesis_tracker", args.argv)
+
+
+def cmd_selftest(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.selftest", args.argv)
+
+
+def cmd_save_state_lab(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.save_state_lab", args.argv)
+
+
+def cmd_bisect(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.bisect", args.argv)
+
+
+def cmd_session_start(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.session_start", args.argv)
+
+
+def cmd_handoff(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.handoff_log", args.argv)
+
+
+def cmd_when_wrote(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.when_wrote", args.argv)
+
+
+def cmd_tdb(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.tdb", args.argv)
+
+
+def cmd_pack(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.context_packet", args.argv)
+
+
+def cmd_heatmap(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.heatmap", args.argv)
+
+
+def cmd_vram_snapshot(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.vram_snapshot", args.argv)
+
+
+def cmd_vram_diff(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.vram_diff", args.argv)
+
+
+def cmd_probe(args: argparse.Namespace) -> int:
+    return _delegate_to_module_main("tools.debugger.probe", args.argv)
+
+
 def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
     if args.json_out:
         write_json(report, Path(args.json_out))
@@ -1166,10 +1602,10 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_audit(report))
     elif report["kind"] == "unified_debugger_triage":
         print(format_triage(report))
-    elif report["kind"] == "unified_debugger_next_step":
-        print(format_next_step(report))
     elif report["kind"] == "unified_debugger_ingest_manifest":
         print(format_ingest(report))
+    elif report["kind"] == "unified_debugger_playtest_packet":
+        print(format_playtest_packet(report))
     elif report["kind"] == "unified_debugger_gate_plan":
         print(format_gate(report))
     elif report["kind"] == "unified_debugger_investigation_run":
@@ -1186,8 +1622,12 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_generation_plan(report))
     elif report["kind"] == "unified_debugger_fuzz_plan":
         print(format_fuzz_plan(report))
+    elif report["kind"] == "unified_debugger_chaos_campaign":
+        print(format_chaos_report(report))
     elif report["kind"] == "unified_debugger_provenance_report":
         print(format_provenance(report))
+    elif report["kind"] == "unified_debugger_causal_graph":
+        print(format_causal_graph(report))
     elif report["kind"] == "unified_debugger_causal_slice":
         print(format_slice(report))
     elif report["kind"] == "unified_debugger_taint_report":
@@ -1196,28 +1636,22 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_dynamic_taint(report))
     elif report["kind"] == "unified_debugger_instruction_trace":
         print(format_instruction_trace(report))
+    elif report["kind"] == "unified_debugger_effect_trace":
+        print(format_effect_trace(report))
+    elif report["kind"] == "unified_debugger_reverse_query":
+        print(format_reverse_query(report))
+    elif report["kind"] == "unified_debugger_hardware_regression_gate":
+        print(format_hardware_regression_gate(report))
+    elif report["kind"] == "unified_debugger_hardware_event_stream":
+        print(format_hardware_event_stream(report))
+    elif report["kind"] == "unified_debugger_hook_order_probe":
+        print(format_hook_order_probe(report))
     elif report["kind"] == "unified_debugger_watch_report":
         print(format_watch(report))
-    elif report["kind"] == "unified_debugger_save_state_inspection":
-        print(format_save_state_inspection(report))
-    elif report["kind"] == "unified_debugger_runtime_state_report":
-        print(format_runtime_state(report))
-    elif report["kind"] == "unified_debugger_learnset_inspection":
-        print(format_learnset_inspection(report))
-    elif report["kind"] == "unified_debugger_party_inspection":
-        print(format_party_inspection(report))
-    elif report["kind"] == "unified_debugger_grass_regrowth_report":
-        print(format_grass_regrowth(report))
-    elif report["kind"] == "unified_debugger_script_resume_gate":
-        print(format_script_resume_gate(report))
-    elif report["kind"] == "unified_debugger_wram_ownership":
-        print(format_wram_ownership(report))
-    elif report["kind"] == "unified_debugger_wram_lifetime_report":
-        print(format_wram_lifetime(report))
-    elif report["kind"] == "unified_debugger_wram_bank_hazard_report":
-        print(format_wram_bank_hazards(report))
-    elif report["kind"] == "unified_debugger_repro_recipe_report":
-        print(format_repro_recipe(report))
+    elif report["kind"] == "unified_debugger_visual_snapshot":
+        print(format_visual_snapshot(report))
+    elif report["kind"] == "unified_debugger_audio_snapshot":
+        print(format_audio_snapshot(report))
     elif report["kind"] == "unified_debugger_replay_plan":
         print(format_replay_plan(report))
     elif report["kind"] == "unified_debugger_setup_plan":
@@ -1246,6 +1680,12 @@ def emit_report(report: dict[str, Any], args: argparse.Namespace) -> None:
         print(format_static_report(report))
     elif report["kind"] == "unified_debugger_visualization":
         print(format_visualization(report))
+    elif report["kind"] == "unified_debugger_type_matchup":
+        print(format_type_matchup(report))
+    elif report["kind"] == "unified_debugger_stat_at":
+        print(format_stat_at(report))
+    elif report["kind"] == "unified_debugger_clobber_chain":
+        print(format_clobber_chain(report))
     else:
         print(json.dumps(report, indent=2, sort_keys=True))
 
@@ -1282,6 +1722,24 @@ def format_audit(report: dict[str, Any]) -> str:
         lines.extend(["", "Top gaps:"])
         for gap in report["blocking_gaps"][:8]:
             lines.append(f"  - {gap}")
+    v2_surfaces = report.get("v2_surfaces") or []
+    if v2_surfaces:
+        complete = sum(1 for surface in v2_surfaces if surface.get("status") == "complete")
+        lines.extend(
+            [
+                "",
+                (
+                    f"Omni-debugger v2 surfaces ({complete}/{len(v2_surfaces)} complete; "
+                    "additive, not counted toward v1 readiness):"
+                ),
+            ]
+        )
+        for surface in v2_surfaces:
+            lines.append(
+                f"  - {surface.get('status', '?')}: {surface.get('id', '')} - {surface.get('title', '')}"
+            )
+            for command in (surface.get("commands") or [])[:1]:
+                lines.append(f"      command: {command}")
     return "\n".join(lines)
 
 
@@ -1303,46 +1761,6 @@ def format_triage(report: dict[str, Any]) -> str:
     lines.extend(["", "Suggested commands:"])
     for command in report["commands"]:
         lines.append(f"  - {command}")
-    return "\n".join(lines)
-
-
-def format_next_step(report: dict[str, Any]) -> str:
-    rec = report["recommendation"]
-    lines = [
-        "Unified Pokemon Gold romhack debugger next step",
-        f"matched_lane={report['matched_lane']} symptom_class={rec['symptom_class']}",
-    ]
-    if report["symptom"]:
-        lines.append(f"symptom={report['symptom']}")
-    if report["changed_files"]:
-        lines.append("changed_files=" + ", ".join(report["changed_files"]))
-    lines.extend(
-        [
-            "",
-            f"First command: {rec['first_command']}",
-            "Required inputs:",
-        ]
-    )
-    for item in rec["required_inputs"]:
-        lines.append(f"  - {item}")
-    lines.extend(
-        [
-            f"Proof limit: {rec['proof_limit']}",
-            f"Escalation command: {rec['escalation_command']}",
-        ]
-    )
-    if rec.get("repro_recipes"):
-        lines.append("Repro recipes:")
-        for recipe in rec["repro_recipes"]:
-            lines.append(f"  - {recipe}: python -m tools.debugger repro-recipe --id {recipe}")
-    if len(report["candidates"]) > 1:
-        lines.extend(["", "Other matching paths:"])
-        for item in report["candidates"][1:]:
-            lines.append(
-                f"  - {item['symptom_class']}: {item['first_command']}"
-            )
-    if report["triage_match_ids"]:
-        lines.append("triage=" + ", ".join(report["triage_match_ids"]))
     return "\n".join(lines)
 
 
@@ -1385,15 +1803,65 @@ def format_ingest(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def format_gate(report: dict[str, Any]) -> str:
+def format_playtest_packet(report: dict[str, Any]) -> str:
     lines = [
-        "Unified Pokemon Gold romhack debugger gate",
+        "Unified Pokemon Gold romhack debugger playtest packet",
         (
-            f"executed={report['executed']} passed={report['passed']} "
-            f"steps={report['step_count']} failed={report['failed_count']} "
-            f"skipped={report['skipped_count']}"
+            f"valid={report['valid']} packet={report.get('packet_id', '')} "
+            f"artifacts={report.get('artifact_count', 0)} "
+            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
         ),
     ]
+    if report.get("symptom"):
+        lines.append(f"symptom={report['symptom']}")
+    repro = report.get("reproducibility") if isinstance(report.get("reproducibility"), dict) else {}
+    if repro:
+        lines.append(
+            "reproducibility="
+            f"runtime={repro.get('runtime_replay_ready', False)} "
+            f"black_box={repro.get('black_box_replay_ready', False)} "
+            f"visual={repro.get('visual_handoff_ready', False)}"
+        )
+    consistency = report.get("consistency_status_counts")
+    if consistency:
+        lines.append(f"consistency={format_counts(consistency)}")
+    if report.get("artifacts"):
+        lines.extend(["", "Artifacts:"])
+        for artifact in report["artifacts"][:12]:
+            status = "ok" if not artifact.get("errors") else "error"
+            lines.append(
+                f"  - {status}: {artifact.get('kind')} {artifact.get('path')} "
+                f"sha256={str(artifact.get('sha256', ''))[:12]}"
+            )
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:10])
+    for warning in report.get("warnings", [])[:6]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:6]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_gate(report: dict[str, Any]) -> str:
+    summary = (
+        f"executed=True status={report.get('status', '')} passed={report['passed']} "
+        f"steps={report['step_count']} failed={report['failed_count']} "
+        f"skipped={report['skipped_count']}"
+    )
+    if not report.get("executed"):
+        summary = (
+            f"executed=False status={report.get('status', 'planned_only')} "
+            f"steps={report['step_count']} runnable="
+            f"{sum(1 for step in report['steps'] if step['runnable'])} "
+            f"needs_input={sum(1 for step in report['steps'] if not step['runnable'])}"
+        )
+    lines = [
+        "Unified Pokemon Gold romhack debugger gate",
+        summary,
+    ]
+    if not report.get("executed"):
+        lines.append("plan_only=true; rerun with --execute to run these commands")
     if report["changed_files"]:
         lines.append("changed_files=" + ", ".join(report["changed_files"]))
     if report["symptom"]:
@@ -1404,9 +1872,27 @@ def format_gate(report: dict[str, Any]) -> str:
         lines.append(
             f"  - P{step['priority']} {step['status']}: {step['command']} ({runnable})"
         )
-        for line in step["stderr_tail"][:2]:
+        if step.get("failure_summary"):
+            lines.append(f"      error: {step['failure_summary']}")
+        for line in gate_step_diagnostic_lines(step, "stderr"):
             lines.append(f"      stderr: {line}")
+        if step.get("status") == "failed" and not step.get("stderr_tail"):
+            for line in gate_step_diagnostic_lines(step, "stdout"):
+                lines.append(f"      stdout: {line}")
     return "\n".join(lines)
+
+
+def gate_step_diagnostic_lines(step: dict[str, Any], stream: str) -> list[str]:
+    lines = list(step.get(f"{stream}_tail", []))
+    if step.get("status") != "failed" or len(lines) <= 2:
+        return lines[:2]
+    selected = [lines[0], *lines[-2:]]
+    out = []
+    for line in selected:
+        if line in out:
+            continue
+        out.append(line)
+    return out
 
 
 def format_investigation_run(report: dict[str, Any]) -> str:
@@ -1427,13 +1913,27 @@ def format_investigation_run(report: dict[str, Any]) -> str:
         lines.append("symbols=" + ", ".join(report["symbols"]))
     if report.get("changed_files"):
         lines.append("changed_files=" + ", ".join(report["changed_files"]))
+    if report.get("playtest_evidence_route_count"):
+        lines.append(
+            "playtest_routes="
+            + str(report["playtest_evidence_route_count"])
+            + " expected_proof="
+            + format_counts(report.get("playtest_expected_route_proof_status_counts", {}))
+        )
+    if report.get("executed_snapshots"):
+        lines.append("executed_snapshots=true")
+    if report.get("executed_attribution"):
+        attribution = report.get("runtime_attribution") if isinstance(report.get("runtime_attribution"), dict) else {}
+        lines.append(
+            "executed_attribution=true"
+            f" status={attribution.get('status', '')}"
+            f" effects={attribution.get('effect_event_count', 0)}"
+            f" reverse={attribution.get('reverse_result_count', 0)}"
+        )
     if report.get("static_report"):
         lines.append(f"static_report={report['static_report']}")
     if report.get("visualization"):
         lines.append(f"visualization={report['visualization']}")
-    next_note = report.get("symptom_only_next_step_note", "")
-    if next_note:
-        lines.extend(["", next_note])
     lines.extend(["", "Steps:"])
     for step in report["steps"]:
         path = f" -> {step['report_path']}" if step.get("report_path") else ""
@@ -1488,6 +1988,8 @@ def format_localization_plan(report: dict[str, Any]) -> str:
         lines.append(f"symptom={report['symptom']}")
     if report["changed_files"]:
         lines.append("changed_files=" + ", ".join(report["changed_files"]))
+    if report.get("input_reports"):
+        lines.append("reports=" + ", ".join(report["input_reports"]))
     if report["symbols"]:
         lines.append("symbols=" + ", ".join(report["symbols"]))
     if report["input_reports"]:
@@ -1657,6 +2159,30 @@ def format_minimization_plan(report: dict[str, Any]) -> str:
                 + "/"
                 + str(state_patch_minimization.get("execution_attempt_count", 0))
             )
+        if state_patch_minimization.get("semantic_reducer_candidate_attempt_count"):
+            lines.append(
+                "semantic_reducer_candidates="
+                + str(state_patch_minimization.get("semantic_reducer_candidate_execution_count", 0))
+                + "/"
+                + str(state_patch_minimization.get("semantic_reducer_candidate_attempt_count", 0))
+                + " failed="
+                + str(state_patch_minimization.get("semantic_reducer_candidate_failed_count", 0))
+            )
+        semantic_execution = state_patch_minimization.get("semantic_reducer_execution")
+        if isinstance(semantic_execution, dict) and semantic_execution.get("attempted"):
+            execution_state = "executed" if semantic_execution.get("executed") else "planned"
+            lines.append(
+                "semantic_reducer_execution="
+                + execution_state
+                + " "
+                + str(semantic_execution.get("passed_count", 0))
+                + "/"
+                + str(semantic_execution.get("step_count", 0))
+                + " failed="
+                + str(semantic_execution.get("failed_count", 0))
+                + " skipped="
+                + str(semantic_execution.get("skipped_count", 0))
+            )
         if state_patch_minimization.get("out_report"):
             lines.append(f"state_patch_subset={state_patch_minimization['out_report']}")
     evidence_minimization = report.get("evidence_minimization", {})
@@ -1720,6 +2246,21 @@ def format_generation_plan(report: dict[str, Any]) -> str:
         lines.append(
             f"seed_manifest={seed_manifest['path']} records={seed_manifest['record_count']}"
         )
+    execution = report.get("execution", {})
+    if isinstance(execution, dict) and execution.get("attempted"):
+        state = "executed" if execution.get("executed") else "planned"
+        lines.append(
+            "execution="
+            + state
+            + " "
+            + str(execution.get("passed_count", 0))
+            + "/"
+            + str(execution.get("step_count", 0))
+            + " failed="
+            + str(execution.get("failed_count", 0))
+            + " skipped="
+            + str(execution.get("skipped_count", 0))
+        )
     lines.extend(["", "Generators:"])
     for generator in report["generators"]:
         lines.append(
@@ -1771,6 +2312,21 @@ def format_fuzz_plan(report: dict[str, Any]) -> str:
     case_manifest = report.get("case_manifest", {})
     if case_manifest.get("written"):
         lines.append(f"case_manifest={case_manifest['path']} records={case_manifest['record_count']}")
+    execution = report.get("execution", {})
+    if isinstance(execution, dict) and execution.get("attempted"):
+        state = "executed" if execution.get("executed") else "planned"
+        lines.append(
+            "execution="
+            + state
+            + " "
+            + str(execution.get("passed_count", 0))
+            + "/"
+            + str(execution.get("step_count", 0))
+            + " failed="
+            + str(execution.get("failed_count", 0))
+            + " skipped="
+            + str(execution.get("skipped_count", 0))
+        )
     lines.extend(["", "Campaigns:"])
     for campaign in report["campaigns"]:
         lines.append(
@@ -1837,6 +2393,38 @@ def format_provenance(report: dict[str, Any]) -> str:
     for warning in report["warnings"][:5]:
         lines.append(f"warning: {warning}")
     for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_causal_graph(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger causal graph",
+        (
+            f"valid={report['valid']} nodes={report['node_count']} "
+            f"edges={report['edge_count']} paths={report['path_count']} "
+            f"errors={report['error_count']}"
+        ),
+    ]
+    proof_counts = report.get("proof_status_counts", {})
+    if proof_counts:
+        lines.append(
+            "proof="
+            + ", ".join(f"{name}={count}" for name, count in sorted(proof_counts.items()))
+        )
+    if report.get("paths"):
+        lines.extend(["", "Top paths:"])
+        for path in report["paths"][:12]:
+            lines.append(
+                f"  - S{path.get('score', 0)} {path.get('proof_status', '')}: "
+                f"{path.get('title', '')}"
+            )
+            for evidence in path.get("evidence", [])[:3]:
+                lines.append(f"      evidence: {evidence}")
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:8])
+    for error in report.get("errors", [])[:5]:
         lines.append(f"error: {error}")
     return "\n".join(lines)
 
@@ -2020,6 +2608,7 @@ def format_instruction_trace(report: dict[str, Any]) -> str:
             f"valid={report['valid']} executed={report['executed']} "
             f"functions={report['function_count']} instructions={report['instruction_count']} "
             f"captured={report['captured_frame_count']} watches={report['watch_count']} "
+            f"probes={report.get('probe_count', 0)} probe_fires={report.get('probe_fire_count', 0)} "
             f"errors={report['error_count']} warnings={report['warning_count']}"
         ),
         f"rom={report['rom']} sha256={report['rom_sha256'][:12]}",
@@ -2058,6 +2647,20 @@ def format_instruction_trace(report: dict[str, Any]) -> str:
             lines.append(f"hit_functions={hit_functions}")
         if missing_functions:
             lines.append(f"missing_functions={missing_functions}")
+    probe_stats = report.get("probe_stats")
+    if isinstance(probe_stats, dict) and probe_stats.get("active_probe_count"):
+        lines.append(
+            "probe_stats="
+            f"active={probe_stats.get('active_probe_count', 0)} "
+            f"fires={probe_stats.get('fire_count', 0)}"
+        )
+        for item in probe_stats.get("stats", [])[:5]:
+            if not isinstance(item, dict):
+                continue
+            lines.append(
+                f"  probe {item.get('name', '')}: fires={item.get('fire_count', 0)} "
+                f"frames={item.get('frame_span', '')}"
+            )
     if report.get("functions"):
         lines.extend(["", "Functions:"])
         for function in report["functions"][:12]:
@@ -2088,79 +2691,258 @@ def format_instruction_trace(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_effect_trace(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger effect trace",
+        (
+            f"valid={report['valid']} proof={report.get('proof_status', '')} "
+            f"events={report.get('effect_event_count', 0)} "
+            f"reads={report.get('memory_read_count', 0)} writes={report.get('memory_write_count', 0)} "
+            f"stack={report.get('stack_read_count', 0)}/{report.get('stack_write_count', 0)} "
+            f"io={report.get('io_read_count', 0)}/{report.get('io_write_count', 0)} "
+            f"side_effects={report.get('hardware_side_effect_count', 0)} "
+            f"dma={report.get('dma_copy_read_count', 0)}/{report.get('dma_copy_write_count', 0)} "
+            f"interrupts={report.get('interrupt_entry_count', 0)} "
+            f"checkpoints={report.get('trace_window_checkpoint_count', 0)} "
+            f"watch_writes={report.get('watch_write_count', 0)} errors={report.get('error_count', 0)}"
+        ),
+    ]
+    if report.get("output", {}).get("path"):
+        output = report["output"]
+        state = "written" if output.get("written") else "planned"
+        lines.append(f"effects={output['path']} {state} records={output.get('record_count', 0)}")
+    if report.get("trace_window"):
+        window = report["trace_window"]
+        lines.append(
+            f"trace_window=frames={window.get('frame_count', 0)} "
+            f"checkpoints={window.get('checkpoint_count', 0)} "
+            f"interval={window.get('checkpoint_interval', '')}"
+        )
+    if report.get("effect_proof_status_counts"):
+        counts = report.get("effect_proof_status_counts", {})
+        proof_counts = " ".join(
+            f"{key}={counts.get(key, 0)}"
+            for key in ("planned_only", "instruction_observed", "runtime_observed")
+            if counts.get(key, 0)
+        )
+        lines.append(
+            "effect_proof_statuses="
+            + (proof_counts or "none")
+            + f" hardware_gated={report.get('hardware_gated_effect_count', 0)}"
+            + f" hardware_runtime_events={report.get('hardware_runtime_event_effect_count', 0)}"
+        )
+    if report.get("write_index"):
+        lines.extend(["", "Last writers:"])
+        for item in report["write_index"][:12]:
+            lines.append(
+                f"  - {item.get('address')} writes={item.get('write_count', 0)} "
+                f"reads={item.get('read_count', 0)} last={item.get('last_writer_pc', '')}"
+            )
+    if report.get("side_effect_index"):
+        lines.extend(["", "Side effects:"])
+        for item in report["side_effect_index"][:12]:
+            lines.append(
+                f"  - {item.get('kind')} category={item.get('category', '')} "
+                f"count={item.get('count', 0)} last={item.get('last_pc', '')}"
+            )
+    for limit in report.get("known_limits", [])[:3]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_reverse_query(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger reverse query",
+        (
+            f"valid={report['valid']} proof={report.get('proof_status', '')} "
+            f"targets={report.get('target_count', 0)} results={report.get('result_count', 0)} "
+            f"errors={report.get('error_count', 0)}"
+        ),
+    ]
+    if report.get("results"):
+        lines.extend(["", "Results:"])
+        for result in report["results"][:12]:
+            target = result.get("target", {}) if isinstance(result.get("target"), dict) else {}
+            last = result.get("last_writer", {}) if isinstance(result.get("last_writer"), dict) else {}
+            lines.append(
+                f"  - {target.get('label', result.get('matched_address', '<target>'))}: "
+                f"writes={result.get('write_count', 0)} reads={result.get('read_count', 0)} "
+                f"last={result.get('last_writer_pc', '')} {last.get('operation', '')}"
+            )
+            checkpoint = result.get("checkpoint_validation") if isinstance(result.get("checkpoint_validation"), dict) else {}
+            if checkpoint.get("checkpointed"):
+                span = checkpoint.get("replay_span") if isinstance(checkpoint.get("replay_span"), dict) else {}
+                lines.append(
+                    f"      checkpoint={checkpoint.get('status')} "
+                    f"{span.get('from_seq')}->{span.get('to_seq')}"
+                )
+            span = result.get("bounded_effect_span_validation") if isinstance(result.get("bounded_effect_span_validation"), dict) else {}
+            if span:
+                lines.append(
+                    f"      effect_span={span.get('status')} "
+                    f"value={span.get('final_value_hex', '')}/{span.get('expected_value_hex', '')}"
+                )
+            for item in result.get("history", [])[-3:]:
+                lines.append(
+                    f"      seq={item.get('seq')} {item.get('access')} "
+                    f"{item.get('address')} {item.get('pc')} {item.get('operation')}"
+                )
+    if report.get("commands"):
+        lines.extend(["", "Next commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:8])
+    for limit in report.get("known_limits", [])[:3]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_hook_order_probe(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger hook-order probe",
+        (
+            f"valid={report['valid']} executed={report['executed']} "
+            f"passed={report['passed']} proof={report.get('proof_status', '')} "
+            f"observations={report.get('observation_count', 0)}/{report.get('expected_target_count', 0)} "
+            f"scenarios={report.get('event_matrix_count', report.get('scenario_count', 0))} "
+            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
+        ),
+        f"probe_rom_sha256={report.get('probe_rom_sha256', '')[:12]} address={report.get('probe_address', '')}",
+    ]
+    if report.get("event_matrix"):
+        lines.extend(["", "Event matrix:"])
+        for row in report["event_matrix"]:
+            state = "pass" if row.get("passed") else "fail"
+            lines.append(
+                f"  - {state}: {row.get('id')} pre_fetch={row.get('observes_pre_fetch')} "
+                f"pre_write={row.get('observes_pre_write')} post_write={row.get('observes_post_write')} "
+                f"post_interrupt={row.get('observes_post_interrupt')} post_dma={row.get('observes_post_dma')}"
+            )
+    elif report.get("checks"):
+        lines.extend(["", "Checks:"])
+        for check in report["checks"]:
+            state = "pass" if check.get("passed") else "fail"
+            lines.append(f"  - {state}: {check.get('operation')} pc={check.get('expected_pc')}")
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:4])
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    for limit in report.get("known_limits", [])[:2]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_hardware_regression_gate(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger Pan Docs hardware regression gate",
+        (
+            f"valid={report['valid']} passed={report['passed']} executed={report.get('executed')} "
+            f"proof={report.get('proof_status', '')} cases={report.get('passed_count', 0)}/{report.get('case_count', 0)} "
+            f"blocking={report.get('blocking_gate_count', 0)} pyboy_source_gaps={report.get('pyboy_source_gap_count', 0)}"
+        ),
+        f"status_counts={report.get('case_status_counts', {})}",
+        (
+            f"runtime_observed_cases={report.get('observed_runtime_case_count', 0)} "
+            f"hardware_proof_cases={report.get('hardware_proof_case_count', 0)} "
+            f"static_blocker_cases={report.get('static_blocker_case_count', 0)}"
+        ),
+    ]
+    if report.get("cases"):
+        lines.extend(["", "Cases:"])
+        for case in report["cases"]:
+            state = "pass" if case.get("hardware_passed") else "block"
+            lines.append(
+                f"  - {state}: {case.get('id')} status={case.get('gate_status')} "
+                f"bucket={case.get('bucket')} evidence={case.get('evidence_count', 0)} "
+                f"runtime={case.get('observed_runtime_fact_count', 0)} "
+                f"hardware_proof={case.get('hardware_proof_fact_count', 0)} "
+                f"static_blockers={case.get('static_blocker_count', 0)}"
+            )
+            for evidence in case.get("evidence", [])[:2]:
+                lines.append(
+                    f"      evidence: {evidence.get('class')} {evidence.get('status')} "
+                    f"{evidence.get('detail', '')}"
+                )
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:4])
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    for limit in report.get("known_limits", [])[:3]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
+def format_hardware_event_stream(report: dict[str, Any]) -> str:
+    lines = [
+        "Unified Pokemon Gold romhack debugger hardware event stream",
+        (
+            f"valid={report['valid']} executed={report.get('executed')} "
+            f"proof={report.get('proof_status', '')} recorder={report.get('recorder_kind', '') or '<none>'} "
+            f"available={report.get('recorder_available')} events={report.get('event_count', 0)}"
+        ),
+        (
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven')} "
+            f"hardware_event_observed={report.get('hardware_event_observed')} "
+            f"hardware_proof_status={report.get('hardware_proof_status', '')}"
+        ),
+        (
+            f"proof_grade_event_stream={report.get('proof_grade_event_stream')} "
+            f"non_mutating_event_recorder={report.get('non_mutating_event_recorder')} "
+            f"hardware_proven_cases={report.get('hardware_proven_case_count', 0)} "
+            f"incomplete_cases={report.get('incomplete_case_event_count', 0)}"
+        ),
+    ]
+    if report.get("case_event_coverage"):
+        lines.extend(["", "Case event coverage:"])
+        for item in report["case_event_coverage"][:10]:
+            missing = ",".join(item.get("missing_event_types", []))
+            lines.append(
+                f"  - {item.get('case_id')} complete={item.get('complete')} "
+                f"observed={','.join(item.get('observed_event_types', []))} "
+                f"missing={missing}"
+            )
+    if report.get("commands"):
+        lines.extend(["", "Commands:"])
+        lines.extend(f"  - {command}" for command in report["commands"][:4])
+    for warning in report.get("warnings", [])[:5]:
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", [])[:5]:
+        lines.append(f"error: {error}")
+    for limit in report.get("known_limits", [])[:3]:
+        lines.append(f"limit: {limit}")
+    return "\n".join(lines)
+
+
 def format_watch(report: dict[str, Any]) -> str:
     lines = [
         "Unified Pokemon Gold romhack debugger watch replay",
         (
             f"valid={report['valid']} executed={report['executed']} "
             f"frames={report['frames']} context={report.get('context_frames', 0)} "
-            f"hits={report['hit_count']} reset_events={report.get('reset_event_count', 0)} "
-            f"script_state_events={report.get('script_state_event_count', 0)} "
-            f"dynamic_context={report.get('dynamic_context_event_count', 0)}"
+            f"hits={report['hit_count']} dynamic_context={report.get('dynamic_context_event_count', 0)}"
         ),
         f"rom={report['rom']} sha256={report['rom_sha256'][:12]}",
         f"symbols={report['symbols']} sha256={report['symbols_sha256'][:12]}",
+        "",
+        "Watches:",
     ]
-    if report.get("save_state"):
-        lines.append(f"save_state={report.get('save_state')}")
-    if report.get("battery_save"):
-        lines.append(f"battery_save={report.get('battery_save')} boot_continue={report.get('boot_continue')}")
-    runtime_summary = report.get("runtime_summary") if isinstance(report.get("runtime_summary"), dict) else {}
-    if runtime_summary:
-        initial = runtime_summary.get("initial") if isinstance(runtime_summary.get("initial"), dict) else {}
-        final = runtime_summary.get("final") if isinstance(runtime_summary.get("final"), dict) else {}
-        initial_registers = initial.get("registers") if isinstance(initial.get("registers"), dict) else {}
-        final_registers = final.get("registers") if isinstance(final.get("registers"), dict) else {}
-        lines.append(
-            "runtime "
-            f"initial={initial.get('pc_bank_address', '')} sp={initial_registers.get('register_sp', '')} "
-            f"final={final.get('pc_bank_address', '')} sp={final_registers.get('register_sp', '')} "
-            f"inputs={runtime_summary.get('applied_input_count', 0)}"
-        )
-    if report.get("input_events"):
-        lines.append("Inputs:")
-        for event in report.get("input_events", [])[:16]:
-            lines.append(
-                f"  - frame={event.get('frame')} button={event.get('button')} delay={event.get('delay')}"
-            )
-    lines.extend(["", "Watches:"])
     for watch in report["watches"]:
         location = watch["bank_address"] if watch["found"] else "not-found"
         lines.append(f"  - {watch['name']} {location} size={watch['size']}")
         for command in watch.get("suggested_commands", [])[:2]:
             lines.append(f"      command: {command}")
-    if report.get("reset_sentinel"):
-        lines.append("Reset sentinel targets:")
-        for target in report.get("sentinel_targets", [])[:12]:
-            lines.append(f"  - {target['bank_address']} {target['name']} ({target['source']})")
-    if report.get("reset_events"):
-        lines.append("Reset sentinel events:")
-        for event in report["reset_events"][:20]:
-            context = event.get("context_symbols", {})
-            context_text = " ".join(f"{key}={value}" for key, value in context.items())
-            lines.append(
-                f"  - frame={event['frame']} pc={event['pc_bank_address']} "
-                f"{event['pc_label']} {context_text}".rstrip()
-            )
-            dyn = event.get("dynamic_context") if isinstance(event.get("dynamic_context"), dict) else {}
-            if dyn.get("context_frame_count"):
-                lines.append(f"      context: {dyn['context_frame_count']} prior frame snapshots")
     if report["events"]:
         lines.append("Events:")
         for event in report["events"][:20]:
-            if event.get("event_type") == "invalid_script_state":
-                lines.append(
-                    f"  - frame={event['frame']} invalid_script_state "
-                    f"{event.get('script', '')} pc={event['pc_bank_address']} {event['pc_label']}"
-                )
-                for reason in event.get("reasons", [])[:3]:
-                    lines.append(f"      reason: {reason}")
-            else:
-                lines.append(
-                    f"  - frame={event['frame']} {event['watch']} "
-                    f"{event['old_hex']}->{event['new_hex']} "
-                    f"pc={event['pc_bank_address']} {event['pc_label']}"
-                )
+            lines.append(
+                f"  - frame={event['frame']} {event['watch']} "
+                f"{event['old_hex']}->{event['new_hex']} "
+                f"pc={event['pc_bank_address']} {event['pc_label']}"
+            )
             cause = event.get("source_cause") if isinstance(event.get("source_cause"), dict) else {}
             context = event.get("dynamic_context") if isinstance(event.get("dynamic_context"), dict) else {}
             if context.get("context_frame_count"):
@@ -2178,237 +2960,47 @@ def format_watch(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def format_save_state_inspection(report: dict[str, Any]) -> str:
+def format_visual_snapshot(report: dict[str, Any]) -> str:
     lines = [
-        "Unified Pokemon Gold romhack debugger save-state inspection",
+        "Unified Pokemon Gold romhack debugger visual snapshot",
         (
-            f"valid={report['valid']} format={report.get('state_format')} "
-            f"findings={report.get('finding_count', 0)} "
-            f"blocking={report.get('blocking_finding_count', 0)}"
+            f"valid={report['valid']} executed={report.get('executed')} "
+            f"surfaces={report.get('surface_count', 0)} planned={report.get('planned_surface_count', 0)} "
+            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
         ),
-        f"state={report.get('save_state', '')}",
-        f"rom={report.get('rom', '')} banks={report.get('rom_bank_count', 0)}",
-    ]
-    snapshot = report.get("snapshot") if isinstance(report.get("snapshot"), dict) else {}
-    cpu = snapshot.get("cpu") if isinstance(snapshot.get("cpu"), dict) else {}
-    if cpu:
-        lines.append(
-            "cpu "
-            f"pc=${cpu.get('pc', {}).get('hex', '')} "
-            f"sp=${cpu.get('sp', {}).get('hex', '')}"
-        )
-    selected = report.get("selected_wram") if isinstance(report.get("selected_wram"), dict) else {}
-    if selected:
-        lines.append(
-            f"wram d000_base={selected.get('d000_base')} "
-            f"score={selected.get('score')} map={selected.get('map_group')}:{selected.get('map_number')}"
-        )
-    memory = report.get("memory") if isinstance(report.get("memory"), dict) else {}
-    map_info = memory.get("map") if isinstance(memory.get("map"), dict) else {}
-    if map_info:
-        lines.append(
-            f"map={map_info.get('name') or '<unknown>'} "
-            f"coords=({map_info.get('x')},{map_info.get('y')}) "
-            f"scripts={map_info.get('map_scripts_bank_live')}:{map_info.get('map_scripts_pointer_live')}"
-        )
-    script = memory.get("script_vm") if isinstance(memory.get("script_vm"), dict) else {}
-    if script:
-        lines.append(
-            f"script mode={script.get('mode')} running={script.get('running')} "
-            f"pc={script.get('bank')}:{script.get('pos')} stack_size={script.get('stack_size')}"
-        )
-        for frame in script.get("stack", [])[:5]:
-            lines.append(
-                f"  script_stack[{frame.get('index')}] "
-                f"{frame.get('bank')}:{frame.get('address')} {frame.get('region')}"
-            )
-    party = memory.get("party") if isinstance(memory.get("party"), dict) else {}
-    if party:
-        species = ", ".join(item.get("name", "") for item in party.get("species", [])[:6])
-        lines.append(f"party count={party.get('count')} species={species}")
-    if report.get("findings"):
-        lines.extend(["", "Findings:"])
-        for item in report["findings"][:20]:
-            lines.append(f"  - S{item.get('severity')} {item.get('id')}: {item.get('title')}")
-            detail = item.get("detail")
-            if detail:
-                lines.append(f"      {detail}")
-    if report.get("commands"):
-        lines.extend(["", "Next commands:"])
-        for command in report["commands"][:6]:
-            lines.append(f"  - {command}")
-    for warning in report.get("warnings", [])[:5]:
-        lines.append(f"warning: {warning}")
-    for error in report.get("errors", [])[:5]:
-        lines.append(f"error: {error}")
-    return "\n".join(lines)
-
-
-def format_runtime_state(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger runtime state inspection",
-        (
-            f"valid={report['valid']} passed={report.get('passed')} "
-            f"format={report.get('state_format')} supported={report.get('state_supported')} "
-            f"findings={report.get('finding_count', 0)} errors={report.get('error_count', 0)} "
-            f"warnings={report.get('warning_count', 0)}"
-        ),
-        f"state={report.get('save_state', '')}",
         f"rom={report.get('rom', '')} sha256={str(report.get('rom_sha256', ''))[:12]}",
         f"symbols={report.get('symbols', '')} sha256={str(report.get('symbols_sha256', ''))[:12]}",
     ]
-    cpu = report.get("cpu", {}) if isinstance(report.get("cpu"), dict) else {}
-    if cpu.get("available"):
+    if report.get("save_state"):
+        lines.append(f"save_state={report['save_state']}")
+    if report.get("evidence_class") or "hardware_behavior_proven" in report:
         lines.append(
-            f"cpu pc=${cpu.get('pc_hex', '')} sp=${cpu.get('sp_hex', '')} "
-            f"top_return=${cpu.get('top_stack_return_hex', '')}"
+            "proof_boundary="
+            f"evidence_class={report.get('evidence_class', '')} "
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven', False)} "
+            f"hardware_proof={report.get('hardware_proof_status', '')}"
         )
-    map_context = report.get("map", {}) if isinstance(report.get("map"), dict) else {}
-    if map_context:
-        script_range = map_context.get("script_range")
-        range_text = ""
-        if isinstance(script_range, dict):
-            range_text = (
-                f" range={int(script_range.get('bank', 0)):02X}:"
-                f"{script_range.get('start_hex', '')}-{script_range.get('end_hex', '') or '????'}"
-            )
-        expected_bank = map_context.get("expected_script_bank")
-        if isinstance(expected_bank, int):
-            expected_bank_text = f"${expected_bank:02X}"
-        else:
-            expected_bank_text = str(expected_bank)
+    if report.get("lcd_state"):
+        lcd = report["lcd_state"]
         lines.append(
-            f"map={map_context.get('name') or map_context.get('key') or '<unknown>'} "
-            f"group={map_context.get('group')} number={map_context.get('number')} "
-            f"expected_bank={expected_bank_text}{range_text}"
+            "lcd="
+            f"enabled={lcd.get('lcd_enabled')} mode={lcd.get('ppu_mode')} "
+            f"bg={lcd.get('bg_tilemap')} window={lcd.get('window_tilemap')}"
         )
-    script_vm = report.get("script_vm", {}) if isinstance(report.get("script_vm"), dict) else {}
-    if script_vm:
+    if report.get("io_registers"):
+        regs = report["io_registers"]
         lines.append(
-            f"script mode={script_vm.get('mode_name')} running={script_vm.get('running')} "
-            f"pc={script_vm.get('bank_address')} stack_size={script_vm.get('stack_size')}"
+            "io="
+            + " ".join(f"{key}={value}" for key, value in list(regs.items())[:8])
         )
-        current = script_vm.get("current") if isinstance(script_vm.get("current"), dict) else {}
-        if current:
+    if report.get("surfaces"):
+        lines.extend(["", "Surfaces:"])
+        for surface in report["surfaces"][:10]:
             lines.append(
-                f"  current valid_exec={current.get('valid_executable_address')} "
-                f"in_map_range={current.get('in_current_map_script_range')} "
-                f"byte={current.get('current_byte_hex', '')} label={current.get('nearest_label', '')}"
+                f"  - {surface.get('name')} {surface.get('address')} "
+                f"bank={surface.get('bank', '')} size={surface.get('size')} "
+                f"nonzero={surface.get('nonzero_count')} sha256={str(surface.get('sha256', ''))[:12]}"
             )
-        for frame in script_vm.get("stack_frames", [])[:8]:
-            lines.append(
-                f"  stack[{frame.get('index')}] raw_bank=${frame.get('raw_bank_hex', '')} "
-                f"pc={frame.get('bank_address', '')} valid_exec={frame.get('valid_executable_address')} "
-                f"in_map_range={frame.get('in_current_map_script_range')}"
-            )
-    evolution = report.get("evolution_context", {}) if isinstance(report.get("evolution_context"), dict) else {}
-    if evolution.get("available"):
-        lines.append(
-            f"evolution old=${int(evolution.get('wEvolutionOldSpecies') or 0):02X} "
-            f"new=${int(evolution.get('wEvolutionNewSpecies') or 0):02X}"
-        )
-    trainer = report.get("trainer_context", {}) if isinstance(report.get("trainer_context"), dict) else {}
-    if trainer.get("available"):
-        lines.append(
-            f"trainer_resume bank=${int(trainer.get('wSeenTrainerBank') or 0):02X} "
-            f"after=${int(trainer.get('wScriptAfterPointer') or 0):04X} "
-            f"running=${int(trainer.get('wRunningTrainerBattleScript') or 0):02X} "
-            f"backup_active={trainer.get('wTrainerBattleContextBackupActive')}"
-        )
-    if report.get("findings"):
-        lines.extend(["", "Findings:"])
-        for item in report["findings"][:20]:
-            lines.append(f"  - S{item.get('severity')} {item.get('id')}: {item.get('title')}")
-            for evidence in item.get("evidence", [])[:3]:
-                lines.append(f"      evidence: {evidence}")
-    if report.get("commands"):
-        lines.extend(["", "Next commands:"])
-        for command in report["commands"][:8]:
-            lines.append(f"  - {command}")
-    for warning in report.get("warnings", [])[:5]:
-        lines.append(f"warning: {warning}")
-    for error in report.get("errors", [])[:5]:
-        lines.append(f"error: {error}")
-    return "\n".join(lines)
-
-
-def format_learnset_inspection(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger learnset inspection",
-        f"valid={report['valid']} species={report.get('species')} level={report.get('level')}",
-        "current_moves=" + ", ".join(report.get("current_moves", [])),
-    ]
-    available = report.get("available_level_up_moves", [])
-    if available:
-        lines.append("learned_up_to_level:")
-        for row in available[-10:]:
-            lines.append(f"  - L{row['level']}: {row['move']}")
-    future = report.get("future_level_up_moves", [])
-    if future:
-        lines.append("next_moves:")
-        for row in future[:5]:
-            lines.append(f"  - L{row['level']}: {row['move']}")
-    if report.get("commands"):
-        lines.extend(["", "Next commands:"])
-        for command in report["commands"][:4]:
-            lines.append(f"  - {command}")
-    return "\n".join(lines)
-
-
-def format_party_inspection(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger party inspection",
-        f"valid={report['valid']} save={report.get('save')} slots={report.get('slots')}",
-    ]
-    for mon in report.get("party", []):
-        lines.append(
-            f"  - {mon['species']} L{mon['level']} HP={mon['current_hp']}/{mon['max_hp']} "
-            f"moves={', '.join(mon['move_names'])}"
-        )
-    for error in report.get("errors", []):
-        lines.append(f"error slot {error.get('slot')}: {error.get('error')}")
-    if report.get("commands"):
-        lines.extend(["", "Next commands:"])
-        for command in report["commands"][:4]:
-            lines.append(f"  - {command}")
-    return "\n".join(lines)
-
-
-def format_grass_regrowth(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger Grass regrowth table",
-        f"valid={report['valid']} max_total_hp={report.get('max_total_hp')}",
-        f"full_grass={report['formula']['full_grass']}",
-        f"half_grass={report['formula']['half_grass']}",
-    ]
-    for key, title in (("full_grass", "Full Grass"), ("half_grass", "Half Grass")):
-        lines.append(f"{title} cutoffs:")
-        for row in report["cutoffs"][key]:
-            lines.append(f"  - {row['min_hp']}-{row['max_hp']}: {row['heals']}")
-    return "\n".join(lines)
-
-
-def format_script_resume_gate(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger script-resume gate",
-        (
-            f"valid={report['valid']} passed={report.get('passed')} "
-            f"findings={report.get('finding_count', 0)} "
-            f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
-        ),
-    ]
-    if report.get("input_reports"):
-        lines.append("reports=" + ", ".join(report["input_reports"][:6]))
-    if report.get("findings"):
-        lines.extend(["", "Findings:"])
-        for item in report["findings"][:20]:
-            lines.append(
-                f"  - {str(item.get('severity', '')).upper()} "
-                f"{item.get('id')}: {item.get('summary') or item.get('title')}"
-            )
-            source = item.get("source")
-            if source:
-                lines.append(f"      source: {source}")
     if report.get("commands"):
         lines.extend(["", "Next commands:"])
         for command in report["commands"][:6]:
@@ -2421,137 +3013,69 @@ def format_script_resume_gate(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def format_wram_ownership(report: dict[str, Any]) -> str:
+def format_audio_snapshot(report: dict[str, Any]) -> str:
     lines = [
-        "Unified Pokemon Gold romhack debugger WRAM ownership",
+        "Unified Pokemon Gold romhack debugger audio snapshot",
         (
-            f"valid={report['valid']} symbols={len(report.get('symbols', []))} "
-            f"unions={report.get('union_count', 0)} errors={report.get('error_count', 0)} "
-            f"warnings={report.get('warning_count', 0)}"
-        ),
-        f"source={report.get('source_file', '')}",
-    ]
-    for item in report.get("ownership", [])[:20]:
-        same_arm = ", ".join(item.get("same_arm_labels", [])[:8])
-        overlaps: list[str] = []
-        for arm in item.get("other_union_arms", [])[:8]:
-            overlaps.extend(str(label) for label in arm.get("labels", [])[:3])
-        lines.extend(
-            [
-                "",
-                (
-                    f"{item.get('symbol')}: status={item.get('status')} risk={item.get('risk')} "
-                    f"line={item.get('line')} union={item.get('union_start_line')}-{item.get('union_end_line')}"
-                ),
-                f"  owner arm: {same_arm}",
-            ]
-        )
-        if overlaps:
-            lines.append("  overlaps: " + ", ".join(overlaps[:16]))
-    if report.get("commands"):
-        lines.extend(["", "Follow-up commands:"])
-        for command in report["commands"][:6]:
-            lines.append(f"  - {command}")
-    for warning in report.get("warnings", [])[:5]:
-        lines.append(f"warning: {warning}")
-    for error in report.get("errors", [])[:5]:
-        lines.append(f"error: {error}")
-    return "\n".join(lines)
-
-
-def format_wram_lifetime(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger WRAM lifetime",
-        (
-            f"valid={report['valid']} passed={report.get('passed')} "
-            f"symbols={len(report.get('symbols', []))} findings={report.get('finding_count', 0)} "
+            f"valid={report['valid']} executed={report.get('executed')} "
+            f"registers={report.get('register_count', 0)} symbols={report.get('symbol_state_count', 0)} "
+            f"planned={report.get('planned_symbol_count', 0)} "
             f"errors={report.get('error_count', 0)} warnings={report.get('warning_count', 0)}"
         ),
-        f"through={report.get('through')} source={report.get('source_file', '')}",
+        f"rom={report.get('rom', '')} sha256={str(report.get('rom_sha256', ''))[:12]}",
+        f"symbols={report.get('symbols', '')} sha256={str(report.get('symbols_sha256', ''))[:12]}",
     ]
-    routine = report.get("routine") if isinstance(report.get("routine"), dict) else {}
-    if routine:
+    if report.get("save_state"):
+        lines.append(f"save_state={report['save_state']}")
+    if report.get("evidence_class") or "hardware_behavior_proven" in report:
         lines.append(
-            f"barrier={routine.get('barrier', '')} "
-            f"protected={routine.get('trainer_context_protected')}"
+            "proof_boundary="
+            f"evidence_class={report.get('evidence_class', '')} "
+            f"hardware_behavior_proven={report.get('hardware_behavior_proven', False)} "
+            f"hardware_proof={report.get('hardware_proof_status', '')}"
         )
-    for item in report.get("findings", [])[:12]:
-        lines.extend(
-            [
-                "",
-                f"S{item.get('severity')} {item.get('id')}: {item.get('title')}",
-                f"  range: {item.get('range')} {item.get('address_range')}",
-                f"  barrier: {', '.join(item.get('barriers', []))}",
-            ]
+    if report.get("audio_state"):
+        state = report["audio_state"]
+        lines.append(
+            "audio="
+            f"enabled={state.get('audio_enabled')} mask={state.get('channel_enable_mask')} "
+            f"left={state.get('left_volume')} right={state.get('right_volume')}"
         )
-        overlaps = item.get("overlap_labels", [])
-        if overlaps:
-            lines.append("  overlaps: " + ", ".join(overlaps[:16]))
-        protection = item.get("protection") if isinstance(item.get("protection"), dict) else {}
-        if protection:
+    if report.get("registers"):
+        regs = report["registers"]
+        lines.append(
+            "registers="
+            + " ".join(f"{key}={value}" for key, value in list(regs.items())[:8])
+        )
+    sound = report.get("sound_buffer") if isinstance(report.get("sound_buffer"), dict) else {}
+    if sound:
+        lines.append(
+            "sound_buffer="
+            f"source={sound.get('source', '')} bytes={sound.get('byte_count', 0)} "
+            f"sha256={str(sound.get('sha256', ''))[:12]}"
+        )
+    if report.get("channel_state"):
+        lines.extend(["", "Channels:"])
+        for channel in report["channel_state"][:4]:
             lines.append(
-                "  protection: "
-                + ", ".join(f"{key}={value}" for key, value in protection.items())
+                f"  - ch{channel.get('channel')} enabled={channel.get('enabled')} "
+                f"dac={channel.get('dac_enabled')}"
+            )
+    if report.get("symbol_state"):
+        lines.extend(["", "Audio symbols:"])
+        for item in report["symbol_state"][:10]:
+            lines.append(
+                f"  - {item.get('symbol')} {item.get('address')} "
+                f"bank={item.get('bank', '')} value={item.get('value_hex', '')}"
             )
     if report.get("commands"):
-        lines.extend(["", "Follow-up commands:"])
+        lines.extend(["", "Next commands:"])
         for command in report["commands"][:6]:
             runnable = "runnable" if command_is_runnable(command) else "needs-input"
             lines.append(f"  - {command} ({runnable})")
     for warning in report.get("warnings", [])[:5]:
         lines.append(f"warning: {warning}")
     for error in report.get("errors", [])[:5]:
-        lines.append(f"error: {error}")
-    return "\n".join(lines)
-
-
-def format_wram_bank_hazards(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger WRAM bank/stack hazard scan",
-        (
-            f"valid={report['valid']} passed={report['passed']} "
-            f"files={report['source_file_count']} findings={report['finding_count']} "
-            f"errors={report['error_count']} warnings={report['warning_count']}"
-        ),
-    ]
-    if report.get("source_files"):
-        lines.append("source_files=" + ", ".join(report["source_files"][:8]))
-    if report.get("findings"):
-        lines.extend(["", "Findings:"])
-        for item in report["findings"][:30]:
-            lines.append(
-                f"  - S{item['severity']} {item['type']} "
-                f"{item['source_file']}:{item['line']} {item['routine']}"
-            )
-            lines.append(f"      {item['title']}")
-            for evidence in item.get("evidence", [])[:2]:
-                lines.append(f"      evidence: {evidence}")
-    if report.get("commands"):
-        lines.extend(["", "Follow-up commands:"])
-        for command in report["commands"][:6]:
-            lines.append(f"  - {command}")
-    for error in report["errors"][:5]:
-        lines.append(f"error: {error}")
-    return "\n".join(lines)
-
-
-def format_repro_recipe(report: dict[str, Any]) -> str:
-    lines = [
-        "Unified Pokemon Gold romhack debugger repro recipes",
-        f"valid={report['valid']} recipes={report['recipe_count']}",
-    ]
-    if report.get("symptom"):
-        lines.append(f"symptom={report['symptom']}")
-    for recipe in report.get("recipes", []):
-        lines.extend(["", f"{recipe['id']}: {recipe['title']}", f"  purpose: {recipe['purpose']}"])
-        lines.append("  inputs:")
-        for item in recipe.get("inputs", [])[:6]:
-            lines.append(f"    - {item}")
-        lines.append("  commands:")
-        for command in recipe.get("commands", [])[:8]:
-            lines.append(f"    - {command}")
-        lines.append(f"  proof limit: {recipe['proof_limit']}")
-    for error in report["errors"][:5]:
         lines.append(f"error: {error}")
     return "\n".join(lines)
 
@@ -2569,6 +3093,18 @@ def format_replay_plan(report: dict[str, Any]) -> str:
     ]
     if report.get("save_state"):
         lines.append(f"save_state={report['save_state']}")
+    if report.get("input_logs"):
+        lines.append("input_logs=" + ", ".join(report["input_logs"]))
+    black_box = report.get("black_box_replay")
+    if isinstance(black_box, dict):
+        lines.append(
+            "black_box_replay="
+            f"ready={black_box.get('ready', False)} "
+            f"input_logs={black_box.get('input_log_count', 0)} "
+            f"input_frames={black_box.get('input_frame_count', 0)} "
+            f"buttons={black_box.get('button_event_count', 0)} "
+            f"proof={black_box.get('proof_status', 'planned_only')}"
+        )
     if report.get("effective_save_state") and report.get("effective_save_state") != report.get("save_state"):
         source = report.get("save_state_discovery", {}).get("selected", {}).get("source", "")
         lines.append(f"effective_save_state={report['effective_save_state']} source={source}")
@@ -2603,6 +3139,20 @@ def format_replay_plan(report: dict[str, Any]) -> str:
                     f"      source_cause_candidates={cause['candidate_count']} "
                     f"top={cause['candidates'][0].get('source_file', '')}:{cause['candidates'][0].get('line', '')}"
                 )
+    trace_report = report.get("instruction_trace_report")
+    if trace_report:
+        trace_output = trace_report.get("trace_output") if isinstance(trace_report.get("trace_output"), dict) else {}
+        validation = trace_report.get("execution_validation") if isinstance(trace_report.get("execution_validation"), dict) else {}
+        lines.extend(
+            [
+                "",
+                (
+                    f"Executed instruction trace: valid={trace_report['valid']} "
+                    f"records={trace_output.get('record_count', 0)} "
+                    f"hit={validation.get('hit', False)}"
+                ),
+            ]
+        )
     if report["phase_steps"]:
         lines.extend(["", "Plan:"])
         for phase in report["phase_steps"]:
@@ -2799,8 +3349,34 @@ def format_compare_plan(report: dict[str, Any]) -> str:
             f"({', '.join(match['matched_by'])})"
         )
         lines.append(f"      confidence: {match['confidence']}")
+        proof_parts = []
+        for key, label in (
+            ("status", "status"),
+            ("mirror_status", "mirror"),
+            ("proof_status", "proof"),
+            ("actual_proof_status", "actual"),
+        ):
+            value = match.get(key)
+            if value not in (None, "", []):
+                proof_parts.append(f"{label}={value}")
+        if proof_parts:
+            lines.append("      proof: " + " ".join(proof_parts))
+        if match.get("hardware_proof_statuses"):
+            lines.append(
+                "      hardware: statuses="
+                + ", ".join(str(item) for item in match.get("hardware_proof_statuses", []))
+            )
+        if match.get("observed_runtime_symbols"):
+            lines.append(
+                "      observed runtime helpers: "
+                + ", ".join(str(item) for item in match.get("observed_runtime_symbols", []))
+            )
+        for evidence in compare_boundary_evidence(match)[:4]:
+            lines.append(f"      evidence: {evidence}")
         for gap in match.get("gaps", [])[:2]:
             lines.append(f"      gap: {gap}")
+        for gap in match.get("runtime_evidence_gaps", [])[:2]:
+            lines.append(f"      runtime gap: {gap}")
     lines.extend(["", "Compare commands:"])
     for command in report["commands"]:
         lines.append(f"  - {command}")
@@ -2808,6 +3384,21 @@ def format_compare_plan(report: dict[str, Any]) -> str:
     for command in report["materialization_commands"]:
         lines.append(f"  - {command}")
     return "\n".join(lines)
+
+
+def compare_boundary_evidence(match: dict[str, Any]) -> list[str]:
+    prefixes = (
+        "runtime_sink_evidence=",
+        "runtime_symbol_evidence=",
+        "proof_downgrade_reason=",
+        "hardware_proof_statuses=",
+        "hardware_proof_boundary=",
+    )
+    return [
+        str(item)
+        for item in match.get("evidence", [])
+        if any(str(item).startswith(prefix) for prefix in prefixes)
+    ]
 
 
 def format_content_mirror(report: dict[str, Any]) -> str:
