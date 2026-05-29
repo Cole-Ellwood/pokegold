@@ -924,6 +924,18 @@ DoRepelStep:
 	ld [wRepelEffect], a
 	ret nz
 
+	; The active charge just ran out. If a silent recharge is pending (a Repel
+	; Cube sets one), refill to a fresh 255 steps and say nothing.
+	ld a, [wRepelRecharges]
+	and a
+	jr z, .wore_off
+	dec a
+	ld [wRepelRecharges], a
+	ld a, 255
+	ld [wRepelEffect], a
+	ret
+
+.wore_off
 	ld a, BANK(RepelWoreOffScript)
 	ld hl, RepelWoreOffScript
 	call CallScript

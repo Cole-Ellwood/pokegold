@@ -2767,6 +2767,23 @@ wStackTop::
 ENDSECTION
 
 
+; Transient overworld scratch (NOT saved). Lives outside the
+; wPlayerData..wPlayerDataEnd / wPokemonData..wPokemonDataEnd save blocks, so it
+; never touches the SRAM save format. Zeroed at boot like the rest of WRAM.
+SECTION "Repel Recharge", WRAMX, BANK[1]
+
+; Pending silent Repel refills. A Repel Cube sets this to 1 so that when its
+; first 255-step charge runs out, DoRepelStep refills wRepelEffect to a fresh
+; 255 instead of wearing off -- ~510 steps total -- without needing a 16-bit
+; counter. All other repels set it to 0. It is only read in the instant
+; wRepelEffect hits 0, which can only happen after a repel was deliberately
+; used, so a stale value surviving a hard reset mid-cube is harmless (worst
+; case: the pending second charge is lost).
+wRepelRecharges:: db
+
+ENDSECTION
+
+
 ; --- WRAMX bank 2 ---
 ; First declaration of a WRAMX bank beyond bank 1. P0.5b plumbing slice. Real
 ; consumers (P5 observation log, etc.) populate the buffer in later phases.
