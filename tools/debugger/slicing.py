@@ -9,10 +9,13 @@ from .ingest import sha256_file
 from .provenance import (
     LABEL_DEF_RE,
     collect_source_paths,
+    derive_report_provenance_inputs,
     display_path,
     parse_symbol_table,
     resolve_path,
+    unique_list,
 )
+from .reporting import load_reports
 
 
 TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_.$])([A-Za-z_.$][A-Za-z0-9_.$]*)(?![A-Za-z0-9_.$])")
@@ -106,6 +109,7 @@ IGNORED_TOKENS = {
 def build_slice_report(
     *,
     symbols_path: str = "pokegold.sym",
+    reports: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     source_files: tuple[str, ...] = (),
     max_depth: int = 2,
@@ -115,6 +119,13 @@ def build_slice_report(
     errors: list[str] = []
     warnings: list[str] = []
     sym_path = resolve_path(symbols_path, root=root)
+
+    loaded_reports, report_errors = load_reports(reports=reports, root=root)
+    errors.extend(report_errors)
+    derived_inputs = derive_report_provenance_inputs(loaded_reports)
+    effective_symbols = tuple(unique_list([*symbols, *derived_inputs["symbols"]]))
+    effective_source_files = tuple(unique_list([*source_files, *derived_inputs["source_files"]]))
+
     symbol_table: dict[str, dict[str, Any]] = {}
     if sym_path.exists():
         symbol_table = parse_symbol_table(sym_path)
@@ -123,7 +134,7 @@ def build_slice_report(
 
     source_paths = [
         path
-        for path in collect_source_paths(root=root, include_docs=False, explicit_paths=source_files)
+        for path in collect_source_paths(root=root, include_docs=False, explicit_paths=effective_source_files)
         if path.suffix.lower() == ".asm"
     ]
     graph = build_assembly_graph(
@@ -143,7 +154,7 @@ def build_slice_report(
             max_edges=max_edges,
             root=root,
         )
-        for symbol in symbols
+        for symbol in effective_symbols
     ]
     source_reports = [
         describe_source_slice(
@@ -152,7 +163,7 @@ def build_slice_report(
             root=root,
             max_edges=max_edges,
         )
-        for source_file in source_files
+        for source_file in effective_source_files
     ]
     warnings.extend(
         warning
@@ -176,6 +187,11 @@ def build_slice_report(
         "warning_count": len(warnings),
         "errors": errors,
         "warnings": warnings,
+        "input_reports": [item["source"] for item in loaded_reports],
+        "input_symbols": list(symbols),
+        "input_source_files": list(source_files),
+        "derived_report_symbols": derived_inputs["symbols"],
+        "derived_report_source_files": derived_inputs["source_files"],
         "max_depth": max_depth,
         "max_edges": max_edges,
         "graph": {

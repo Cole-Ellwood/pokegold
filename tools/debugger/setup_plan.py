@@ -4,12 +4,20 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import ROOT
-from .generate import SURFACE_ORDER, SURFACE_RULES, keyword_matches, normalize_surface
-from .localize import normalize_path
+from .generate import (
+    BANKING_TRACE_SYMBOLS,
+    BANKING_WATCH_SYMBOLS,
+    SURFACE_ORDER,
+    SURFACE_RULES,
+    banking_dynamic_probe_commands,
+    keyword_matches,
+    normalize_surface,
+)
+from .localize import is_watchable_symbol, normalize_path
 from .minimize import load_scenario_files, scenario_id_for, unique_list
 from .reporting import load_reports
 from .runtime_watch import DEFAULT_ROM, DEFAULT_SYMBOLS
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 DEFAULT_SETUP_SCENARIOS = ".local\\tmp\\debugger_setup_scenarios.jsonl"
@@ -33,6 +41,8 @@ def build_setup_plan(
     changed_files: tuple[str, ...] = (),
     symbols: tuple[str, ...] = (),
     watch_symbols: tuple[str, ...] = (),
+    watch_addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
     symptom: str = "",
     frames: int = 300,
     out_scenarios: str = "",
@@ -44,6 +54,11 @@ def build_setup_plan(
     loaded_scenarios, scenario_errors = load_scenario_files(
         scenarios=scenarios,
         root=root,
+    )
+    effective_watch_size = setup_watch_size(
+        requested=watch_size,
+        loaded_reports=loaded_reports,
+        loaded_scenarios=loaded_scenarios,
     )
     discovered_save_states = discover_save_states(
         loaded_reports=loaded_reports,
@@ -61,8 +76,15 @@ def build_setup_plan(
         changed_files=changed_files,
         symbols=symbols,
         watch_symbols=watch_symbols,
+        watch_addresses=watch_addresses,
         symptom=symptom,
     )
+    derived_inputs = derive_setup_inputs(signals)
+    effective_changed_files = tuple(unique_list([*changed_files, *derived_inputs["changed_files"]]))
+    effective_symbols = tuple(unique_list([*symbols, *derived_inputs["symbols"]]))
+    effective_watch_symbols = tuple(unique_list([*watch_symbols, *derived_inputs["watch_symbols"]]))
+    effective_watch_addresses = tuple(unique_list([*watch_addresses, *derived_inputs["watch_addresses"]]))
+    effective_scenario_ids = tuple(unique_list([*scenario_ids, *derived_inputs["scenario_ids"]]))
     surfaces = infer_setup_surfaces(signals)
     content_scenarios = collect_content_setup_scenarios(
         loaded_reports=loaded_reports,
@@ -76,10 +98,12 @@ def build_setup_plan(
             symbols_path=symbols_path,
             save_state=effective_save_state,
             scenario_path=scenario_path,
-            changed_files=changed_files,
-            symbols=symbols,
-            watch_symbols=watch_symbols,
-            scenario_ids=scenario_ids,
+            changed_files=effective_changed_files,
+            symbols=effective_symbols,
+            watch_symbols=effective_watch_symbols,
+            watch_addresses=effective_watch_addresses,
+            watch_size=effective_watch_size,
+            scenario_ids=effective_scenario_ids,
             content_scenarios=content_scenarios,
             symptom=symptom,
             frames=frames,
@@ -128,9 +152,16 @@ def build_setup_plan(
         "reports": [item["source"] for item in loaded_reports],
         "scenarios": [item["source"] for item in loaded_scenarios],
         "input_scenario_ids": list(scenario_ids),
-        "changed_files": [normalize_path(path) for path in changed_files],
-        "symbols": list(symbols),
-        "watch_symbols": list(watch_symbols),
+        "input_changed_files": [normalize_path(path) for path in changed_files],
+        "input_symbols": list(symbols),
+        "input_watch_symbols": list(watch_symbols),
+        "input_watch_addresses": list(watch_addresses),
+        "changed_files": [normalize_path(path) for path in effective_changed_files],
+        "symbols": list(effective_symbols),
+        "watch_symbols": list(effective_watch_symbols),
+        "watch_addresses": list(effective_watch_addresses),
+        "derived_inputs": derived_inputs,
+        "watch_size": effective_watch_size,
         "symptom": symptom,
         "signal_count": len(signals),
         "signals": signals[:160],
@@ -144,7 +175,7 @@ def build_setup_plan(
             "requires_positioned_state": bool(dynamic_targets),
             "dynamic_surface_count": len(dynamic_targets),
             "scenario_manifest": scenario_path,
-            "scenario_ids": list(scenario_ids),
+            "scenario_ids": list(effective_scenario_ids),
             "content_scenario_count": len(content_scenarios),
             "content_scenario_ids": [str(item.get("id", "")) for item in content_scenarios[:16] if item.get("id")],
         },
@@ -155,10 +186,59 @@ def build_setup_plan(
         "blocked_commands": [command for command in commands if not command_is_runnable(command)],
         "known_limits": [
             "This plans ROM setup, state synthesis recipes, trigger, and validation commands; it does not yet synthesize every possible save state by itself.",
-            "Damage and Boss AI surfaces have dedicated state synthesis/materialization recipes; content, UI, audio, and banking surfaces still rely on scenario manifests, audits, watches, and targeted replay.",
+            "Damage and Boss AI surfaces have dedicated state synthesis/materialization recipes; content, UI, audio, and banking surfaces use scenario manifests, output sinks, audits, watches, targeted replay, and trace validation routes.",
             "Use trace-instructions with --require-hit after setup to prove the selected trigger actually reached the intended code window.",
         ],
     }
+
+
+def setup_watch_size(
+    *,
+    requested: int,
+    loaded_reports: list[dict[str, Any]],
+    loaded_scenarios: list[dict[str, Any]],
+) -> int:
+    sizes = [positive_int(requested)]
+    for loaded in loaded_reports:
+        sizes.extend(report_watch_sizes(loaded.get("data", {})))
+    for loaded in loaded_scenarios:
+        sizes.extend(report_watch_sizes(loaded.get("records", [])))
+    return max([size for size in sizes if size > 0] or [1])
+
+
+def report_watch_sizes(data: Any) -> list[int]:
+    sizes: list[int] = []
+    if isinstance(data, dict):
+        for key in ("watch_size", "sink_size"):
+            size = positive_int(data.get(key))
+            if size:
+                sizes.append(size)
+        if watch_like_record(data):
+            size = positive_int(data.get("size"))
+            if size:
+                sizes.append(size)
+        for value in data.values():
+            sizes.extend(report_watch_sizes(value))
+    elif isinstance(data, list):
+        for item in data:
+            sizes.extend(report_watch_sizes(item))
+    return sizes
+
+
+def watch_like_record(data: dict[str, Any]) -> bool:
+    if data.get("address_watch"):
+        return True
+    return any(key in data for key in ("watch", "watch_address", "sink_address", "raw")) and any(
+        key in data for key in ("address", "bank_address", "size")
+    )
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
 
 
 def discover_save_states(
@@ -344,6 +424,7 @@ def collect_setup_signals(
     changed_files: tuple[str, ...],
     symbols: tuple[str, ...],
     watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...],
     symptom: str,
 ) -> list[dict[str, Any]]:
     signals: list[dict[str, Any]] = []
@@ -351,6 +432,8 @@ def collect_setup_signals(
         signals.append(signal("input_symbol", "symbol", symbol, 90, "input"))
     for symbol in watch_symbols:
         signals.append(signal("input_watch", "symbol", symbol, 95, "input"))
+    for address in watch_addresses:
+        signals.append(signal("input_watch_address", "address", address, 92, "input"))
     for path in changed_files:
         signals.append(signal("input_file", "file", normalize_path(path), 90, "input"))
     for scenario_id in scenario_ids:
@@ -384,13 +467,50 @@ def collect_report_setup_signals(data: Any, *, source: str, out: list[dict[str, 
     if isinstance(data, dict):
         for key, value in data.items():
             lowered = str(key).lower()
-            if lowered in {"symbol", "watch", "state_symbol", "pc_symbol", "source_symbol", "resolved", "query"}:
+            if lowered in {
+                "symbol",
+                "watch",
+                "state_symbol",
+                "state_symbols",
+                "pc_symbol",
+                "source_symbol",
+                "source_symbols",
+                "sink_symbol",
+                "sink_symbols",
+                "resolved",
+                "query",
+                "symbols",
+                "related_symbols",
+                "watch_symbols",
+                "trace_symbols",
+                "semantic_watch_symbols",
+                "semantic_replay_watch_symbols",
+            }:
                 for item in string_items(value):
                     out.append(signal(f"report_{lowered}", "symbol", item, 45, source))
-            elif lowered in {"path", "file", "source_file", "changed_file"}:
+            elif lowered in {
+                "address",
+                "bank_address",
+                "related_addresses",
+                "watch_address",
+                "watch_addresses",
+                "sink_address",
+                "sink_addresses",
+                "semantic_watch_addresses",
+                "semantic_replay_watch_addresses",
+            }:
+                for item in string_items(value):
+                    out.append(signal(f"report_{lowered}", "address", item, 42, source))
+            elif lowered == "source_mems":
+                for address, origin in source_mem_parts(value):
+                    if address:
+                        out.append(signal("report_source_mems_address", "address", address, 50, source))
+                    if origin:
+                        out.append(signal("report_source_mems_origin", "symbol", origin, 50, source))
+            elif lowered in {"path", "file", "source_file", "changed_file", "source_files", "changed_files", "related_files"}:
                 for item in string_items(value):
                     out.append(signal(f"report_{lowered}", "file", normalize_path(item), 45, source))
-            elif lowered in {"scenario_id", "id", "capture_id", "trace_id"}:
+            elif lowered in {"scenario_id", "scenario_ids", "id", "capture_id", "trace_id"}:
                 for item in string_items(value):
                     out.append(signal(f"report_{lowered}", "scenario", item, 35, source))
             elif lowered in {"surface", "surface_id", "family", "kind", "type"}:
@@ -400,6 +520,69 @@ def collect_report_setup_signals(data: Any, *, source: str, out: list[dict[str, 
     elif isinstance(data, list):
         for item in data:
             collect_report_setup_signals(item, source=source, out=out)
+
+
+def source_mem_parts(value: Any) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for item in string_items(value):
+        text = str(item).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
+def derive_setup_inputs(signals: list[dict[str, Any]], *, max_items: int = 12) -> dict[str, list[str]]:
+    symbol_scores: dict[str, int] = {}
+    watch_scores: dict[str, int] = {}
+    address_scores: dict[str, int] = {}
+    file_scores: dict[str, int] = {}
+    scenario_scores: dict[str, int] = {}
+    for item in signals:
+        kind = str(item.get("kind", ""))
+        value = str(item.get("value", "")).strip()
+        if not value:
+            continue
+        weight = int(item.get("weight", 0))
+        signal_type = str(item.get("type", ""))
+        if kind == "symbol":
+            if "watch" in signal_type or is_watchable_symbol(value):
+                watch_scores[value] = watch_scores.get(value, 0) + weight
+            elif looks_like_runtime_symbol(value):
+                symbol_scores[value] = symbol_scores.get(value, 0) + weight
+        elif kind == "address":
+            address_scores[value] = address_scores.get(value, 0) + weight
+        elif kind == "file":
+            path = normalize_path(value)
+            file_scores[path] = file_scores.get(path, 0) + weight
+        elif kind == "scenario" and "scenario" in signal_type:
+            scenario_scores[value] = scenario_scores.get(value, 0) + weight
+    symbols = top_scored_keys(symbol_scores, max_items)
+    watch_symbols = unique_list(
+        [
+            *top_scored_keys(watch_scores, max_items),
+            *[symbol for symbol in symbols if is_watchable_symbol(symbol)],
+        ]
+    )[:max_items]
+    return {
+        "changed_files": top_scored_keys(file_scores, max_items),
+        "symbols": [symbol for symbol in symbols if symbol not in watch_symbols][:max_items],
+        "watch_symbols": watch_symbols,
+        "watch_addresses": top_scored_keys(address_scores, max_items),
+        "scenario_ids": top_scored_keys(scenario_scores, max_items),
+    }
+
+
+def top_scored_keys(scores: dict[str, int], limit: int) -> list[str]:
+    return [
+        key
+        for key, _score in sorted(scores.items(), key=lambda item: (-item[1], item[0]))[:limit]
+        if key
+    ]
 
 
 def collect_content_setup_scenarios(
@@ -417,6 +600,10 @@ def collect_content_setup_scenarios(
         if data.get("kind") == "unified_debugger_content_scenarios":
             for scenario in dict_items(data.get("scenarios")):
                 scenarios.append(scenario_with_setup_source(scenario, source=str(loaded.get("source", ""))))
+        elif data.get("kind") == "unified_debugger_fuzz_plan":
+            for case in dict_items(data.get("fuzz_cases")):
+                if case.get("runtime_targets") or case.get("scenario_type"):
+                    scenarios.append(scenario_with_setup_source(case, source=str(loaded.get("source", ""))))
         elif data.get("kind") == "unified_debugger_content_scenario" or data.get("scenario_type"):
             scenarios.append(scenario_with_setup_source(data, source=str(loaded.get("source", ""))))
     for loaded in loaded_scenarios:
@@ -540,6 +727,8 @@ def build_surface_setup_target(
     changed_files: tuple[str, ...],
     symbols: tuple[str, ...],
     watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...],
+    watch_size: int,
     scenario_ids: tuple[str, ...],
     content_scenarios: list[dict[str, Any]],
     symptom: str,
@@ -564,6 +753,8 @@ def build_surface_setup_target(
                 symbols_path=symbols_path,
                 save_state=save_state,
                 watch=watch,
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
             ),
         ]
@@ -574,6 +765,8 @@ def build_surface_setup_target(
                 save_state=save_state,
                 trace_symbol=trace_symbol,
                 watch=watch,
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
                 out_trace=".local\\tmp\\debugger_setup_damage_trace.jsonl",
             ),
@@ -608,6 +801,8 @@ def build_surface_setup_target(
                 symbols_path=symbols_path,
                 save_state=save_state,
                 watch=watch,
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
             ),
         ]
@@ -618,6 +813,8 @@ def build_surface_setup_target(
                 save_state=save_state,
                 trace_symbol=trace_symbol,
                 watch=watch,
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
                 out_trace=".local\\tmp\\debugger_setup_boss_ai_trace.jsonl",
             ),
@@ -646,6 +843,8 @@ def build_surface_setup_target(
                 symbols_path=symbols_path,
                 save_state=save_state,
                 watch=first_symbol(watch_symbols, default="hROMBank"),
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
             ),
         ]
@@ -656,6 +855,8 @@ def build_surface_setup_target(
                 save_state=save_state,
                 trace_symbol=first_matching_symbol(symbols, ("FarCall", "Bankswitch"), default="FarCall"),
                 watch=first_symbol(watch_symbols, default="hROMBank"),
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
                 out_trace=".local\\tmp\\debugger_setup_banking_trace.jsonl",
             ),
@@ -722,6 +923,9 @@ def build_surface_setup_target(
                 save_state=save_state,
                 scenario_path=scenario_path,
                 scenarios=content_scenarios,
+                watch_symbols=watch_symbols,
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
                 frames=frames,
             )
         )
@@ -753,6 +957,8 @@ def build_surface_setup_target(
             save_state=save_state,
             symbols=symbols,
             watch_symbols=watch_symbols,
+            watch_addresses=watch_addresses,
+            watch_size=watch_size,
             changed_files=changed_files,
             symptom=symptom,
             frames=frames,
@@ -761,6 +967,20 @@ def build_surface_setup_target(
     validation_commands = [
         "python -m tools.debugger investigate --symbol <symbol> --symptom <description>",
     ]
+    if watch_addresses and symbols:
+        validation_commands.append(
+            trace_instruction_command(
+                effective_rom=effective_rom,
+                symbols_path=symbols_path,
+                save_state=save_state,
+                trace_symbol=first_symbol(symbols, default="<symbol>"),
+                watch=first_symbol(watch_symbols, default=""),
+                watch_addresses=watch_addresses,
+                watch_size=watch_size,
+                frames=frames,
+                out_trace=".local\\tmp\\debugger_setup_raw_address_trace.jsonl",
+            )
+        )
     return setup_target(
         surface=surface,
         title="General setup and trigger plan",
@@ -886,6 +1106,9 @@ def boss_ai_state_synthesis_recipes(
 
 
 def banking_state_synthesis_recipes(*, watch: str) -> list[dict[str, Any]]:
+    dynamic_probe_commands = tuple(
+        banking_dynamic_probe_commands(report_stem=".local\\tmp\\debugger_setup_banking_probe")
+    )
     return [
         state_recipe(
             recipe_id="banking_boot_watch_probe",
@@ -903,7 +1126,25 @@ def banking_state_synthesis_recipes(*, watch: str) -> list[dict[str, Any]]:
             notes=(
                 "Banking hazards usually need register/bank watch evidence around an existing route; this recipe gives the generic runtime probe and static ABI gates.",
             ),
-        )
+        ),
+        state_recipe(
+            recipe_id="banking_state_space_trace_probe",
+            surface="banking_abi",
+            title="Banking state-space and trace probe",
+            status="ready",
+            produces=("patched_save_state", "runtime_watch_evidence", "instruction_trace", "dynamic_taint_report"),
+            commands=dynamic_probe_commands,
+            output_candidates=(
+                ".local/tmp/debugger_setup_banking_probe_state_space.json",
+                ".local/tmp/debugger_setup_banking_probe.state",
+                ".local/tmp/debugger_setup_banking_probe_trace_report.json",
+                ".local/tmp/debugger_setup_banking_probe_trace.jsonl",
+            ),
+            notes=(
+                "Patches the real hROMBank and wFarCallBC symbols, replays the patched state, traces FarCall/FarCall_hl/Bankswitch, and hands the trace report to dynamic taint.",
+                f"Default watch symbols: {', '.join(BANKING_WATCH_SYMBOLS)}; trace symbols: {', '.join(BANKING_TRACE_SYMBOLS)}.",
+            ),
+        ),
     ]
 
 
@@ -1136,16 +1377,20 @@ def content_runtime_probe_commands(
     save_state: str,
     scenario_path: str,
     scenarios: list[dict[str, Any]],
+    watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...],
+    watch_size: int,
     frames: int,
 ) -> list[str]:
     commands: list[str] = []
+    extra_watches = [watch for watch in watch_symbols if looks_like_runtime_symbol(watch)]
     if scenarios:
         for scenario in scenarios[:8]:
             scenario_id = setup_scenario_id_for(scenario)
             if not scenario_id:
                 continue
             helpers = content_scenario_runtime_helpers(scenario)
-            watches = content_scenario_runtime_watches(scenario)
+            watches = unique_list([*content_scenario_runtime_watches(scenario), *extra_watches])
             if not helpers and not watches:
                 continue
             source_file = normalize_path(str(scenario.get("source_file", "")))
@@ -1169,12 +1414,16 @@ def content_runtime_probe_commands(
                 args.extend(["--symbol", helper])
             for watch in watches[:5]:
                 args.extend(["--watch-symbol", watch])
+            for address in watch_addresses[:6]:
+                args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+            if watch_addresses and watch_size != 1:
+                args.extend(["--watch-size", str(watch_size)])
             commands.append("python -m tools.debugger replay " + " ".join(args))
         if commands:
             return commands
     for path in files:
         helpers = content_runtime_helpers(path)
-        watches = content_runtime_watches(path)
+        watches = unique_list([*content_runtime_watches(path), *extra_watches])
         if not helpers and not watches:
             continue
         args = [
@@ -1197,6 +1446,10 @@ def content_runtime_probe_commands(
             args.extend(["--symbol", helper])
         for watch in watches:
             args.extend(["--watch-symbol", watch])
+        for address in watch_addresses[:6]:
+            args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+        if watch_addresses and watch_size != 1:
+            args.extend(["--watch-size", str(watch_size)])
         commands.append("python -m tools.debugger replay " + " ".join(args))
     return commands
 
@@ -1582,18 +1835,24 @@ def replay_command(
     save_state: str,
     watch: str,
     frames: int,
+    watch_addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
 ) -> str:
     args = [
         "--rom",
         cmd_arg(effective_rom),
         "--symbols",
         cmd_arg(symbols_path),
-        "--watch-symbol",
-        cmd_arg(watch),
         "--frames",
         str(frames),
         "--execute-watch",
     ]
+    if watch:
+        args.extend(["--watch-symbol", cmd_arg(watch)])
+    for address in watch_addresses[:6]:
+        args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+    if watch_addresses and watch_size != 1:
+        args.extend(["--watch-size", str(watch_size)])
     if save_state:
         args.extend(["--save-state", cmd_arg(save_state)])
     return "python -m tools.debugger replay " + " ".join(args)
@@ -1606,6 +1865,8 @@ def replay_general_command(
     save_state: str,
     symbols: tuple[str, ...],
     watch_symbols: tuple[str, ...],
+    watch_addresses: tuple[str, ...],
+    watch_size: int,
     changed_files: tuple[str, ...],
     symptom: str,
     frames: int,
@@ -1624,6 +1885,10 @@ def replay_general_command(
         args.extend(["--symbol", cmd_arg(symbol)])
     for watch in watch_symbols[:6]:
         args.extend(["--watch-symbol", cmd_arg(watch)])
+    for address in watch_addresses[:6]:
+        args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+    if watch_addresses and watch_size != 1:
+        args.extend(["--watch-size", str(watch_size)])
     for path in changed_files[:4]:
         args.extend(["--changed-file", cmd_arg(path)])
     if symptom:
@@ -1640,6 +1905,8 @@ def trace_instruction_command(
     watch: str,
     frames: int,
     out_trace: str,
+    watch_addresses: tuple[str, ...] = (),
+    watch_size: int = 1,
 ) -> str:
     args = [
         "--rom",
@@ -1648,8 +1915,6 @@ def trace_instruction_command(
         cmd_arg(symbols_path),
         "--symbol",
         cmd_arg(trace_symbol),
-        "--watch-symbol",
-        cmd_arg(watch),
         "--frames",
         str(frames),
         "--execute",
@@ -1657,6 +1922,12 @@ def trace_instruction_command(
         "--out-trace",
         cmd_arg(out_trace),
     ]
+    if watch:
+        args.extend(["--watch-symbol", cmd_arg(watch)])
+    for address in watch_addresses[:6]:
+        args.extend(["--watch-address", cmd_arg(command_address_arg(address))])
+    if watch_addresses and watch_size != 1:
+        args.extend(["--watch-size", str(watch_size)])
     if save_state:
         args.extend(["--save-state", cmd_arg(save_state)])
     return "python -m tools.debugger trace-instructions " + " ".join(args)
@@ -1755,9 +2026,7 @@ def cmd_arg(value: str) -> str:
     if not text:
         return '""'
     if any(char.isspace() for char in text):
-        import json
-
-        return json.dumps(text)
+        return '"' + text.replace('"', '\\"') + '"'
     return text
 
 

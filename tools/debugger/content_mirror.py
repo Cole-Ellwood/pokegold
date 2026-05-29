@@ -61,6 +61,7 @@ ROM_MIRROR_INVARIANT_TYPES = {
     "incbin_asset_rom_bytes",
     "incbin_table_rom_bytes",
     "audio_channel_rom_bytes",
+    "base_stats_rom_bytes",
     "labeled_data_rom_bytes",
     "script_command_rom_bytes",
     "text_block_rom_bytes",
@@ -561,6 +562,7 @@ def analyze_source_file(raw_path: str, *, root: Path, rom_context: dict[str, Any
     invariants.extend(audio_channel_invariants(parsed, source_file=normalized))
     invariants.extend(audio_channel_rom_mirror_invariants(parsed, source_file=normalized, rom_context=rom_context or {}))
     invariants.extend(data_block_rom_mirror_invariants(parsed, source_file=normalized, rom_context=rom_context or {}))
+    invariants.extend(base_stats_rom_mirror_invariants(parsed, text, root=root, source_file=normalized, rom_context=rom_context or {}))
     invariants.extend(script_command_rom_mirror_invariants(parsed, source_file=normalized, rom_context=rom_context or {}))
     invariants.extend(text_block_rom_mirror_invariants(parsed, source_file=normalized, rom_context=rom_context or {}))
     invariants.extend(movement_data_rom_mirror_invariants(parsed, source_file=normalized, rom_context=rom_context or {}))
@@ -1556,6 +1558,374 @@ def encode_labeled_data_block(
         "errors": unique_list(errors),
         "related_symbols": unique_list(related_symbols),
     }
+
+
+def base_stats_rom_mirror_invariants(
+    parsed: dict[str, Any],
+    text: str,
+    *,
+    root: Path,
+    source_file: str,
+    rom_context: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if not rom_context.get("available") or not is_base_stats_species_file(source_file):
+        return []
+    commands = [
+        f"python -m tools.debugger content-mirror --source-file {source_file}",
+        f"python -m tools.debugger provenance --source-file {source_file}",
+        f"python -m tools.debugger compare --changed-file {source_file}",
+    ]
+    related_files = [
+        source_file,
+        str(rom_context.get("rom_path", "")),
+        str(rom_context.get("symbols_path", "")),
+    ]
+    encoded = encode_base_stats_record(
+        text,
+        root=root,
+        source_file=source_file,
+        rom_context=rom_context,
+        source_constants=parsed.get("constants", {}),
+    )
+    species_name = str(encoded.get("species_name", ""))
+    line = int(encoded.get("line", 0))
+    related_symbols = unique_list(["BaseData", species_name, *encoded.get("related_symbols", [])])
+    if encoded["errors"]:
+        return [
+            content_invariant(
+                invariant_id=f"{source_file}:base_stats_rom_bytes",
+                invariant_type="base_stats_rom_bytes",
+                status="warning",
+                severity=56,
+                title=f"{source_file} base-stats record could not be fully encoded for ROM byte comparison",
+                source_file=source_file,
+                line=line,
+                evidence=[*encoded["errors"][:12]],
+                commands=commands,
+                related_files=related_files,
+                related_symbols=related_symbols,
+            )
+        ]
+    expected = bytes(encoded["bytes"])
+    species_id = int(encoded["species_id"])
+    base_symbol = rom_context.get("labels", {}).get("BaseData")
+    base_data_size = int(encoded["base_data_size"])
+    if not base_symbol:
+        return [
+            content_invariant(
+                invariant_id=f"{source_file}:base_stats_rom_bytes",
+                invariant_type="base_stats_rom_bytes",
+                status="warning",
+                severity=50,
+                title="BaseData table is missing from built ROM symbols",
+                source_file=source_file,
+                line=line,
+                evidence=[f"symbols={rom_context.get('symbols_path', '')}"],
+                commands=commands,
+                related_files=related_files,
+                related_symbols=related_symbols,
+            )
+        ]
+    if species_id <= 0:
+        return [
+            content_invariant(
+                invariant_id=f"{source_file}:base_stats_rom_bytes",
+                invariant_type="base_stats_rom_bytes",
+                status="warning",
+                severity=56,
+                title=f"{source_file} base-stats species id is not table-addressable",
+                source_file=source_file,
+                line=line,
+                evidence=[f"species_id={species_id}"],
+                commands=commands,
+                related_files=related_files,
+                related_symbols=related_symbols,
+            )
+        ]
+    if base_data_size != len(expected):
+        return [
+            content_invariant(
+                invariant_id=f"{source_file}:base_stats_rom_bytes",
+                invariant_type="base_stats_rom_bytes",
+                status="warning",
+                severity=56,
+                title=f"{source_file} encoded base-stats size does not match BASE_DATA_SIZE",
+                source_file=source_file,
+                line=line,
+                evidence=[
+                    f"species={species_name}",
+                    f"species_id={species_id}",
+                    f"base_data_size={base_data_size}",
+                    f"encoded_len={len(expected)}",
+                ],
+                commands=commands,
+                related_files=related_files,
+                related_symbols=related_symbols,
+            )
+        ]
+    rom_bytes = rom_context.get("rom_bytes", b"")
+    offset = int(base_symbol["rom_offset"]) + (species_id - 1) * base_data_size
+    actual = rom_bytes[offset:offset + len(expected)]
+    short_read = len(actual) != len(expected)
+    mismatch_index = first_mismatch(expected, actual) if not short_read else min(len(actual), max(0, len(expected) - 1))
+    matched = not short_read and mismatch_index < 0
+    evidence = [
+        f"species={species_name}",
+        f"species_id={species_id}",
+        f"base_label=BaseData",
+        f"base_bank=${int(base_symbol['bank']):02x}",
+        f"base_address=${int(base_symbol['address']):04x}",
+        f"base_data_size={base_data_size}",
+        f"rom_offset=${offset:06x}",
+        f"expected_len={len(expected)}",
+        f"actual_len={len(actual)}",
+        f"expected_sha256={hashlib.sha256(expected).hexdigest()}",
+        f"actual_sha256={hashlib.sha256(actual).hexdigest()}",
+    ]
+    if mismatch_index >= 0:
+        expected_byte = expected[mismatch_index] if mismatch_index < len(expected) else None
+        actual_byte = actual[mismatch_index] if mismatch_index < len(actual) else None
+        evidence.append(
+            "first_mismatch="
+            f"{mismatch_index} expected={format_optional_byte(expected_byte)} actual={format_optional_byte(actual_byte)}"
+        )
+        evidence.append(f"expected_window={hex_window(expected, mismatch_index)}")
+        evidence.append(f"actual_window={hex_window(actual, mismatch_index)}")
+    return [
+        content_invariant(
+            invariant_id=f"{source_file}:base_stats_rom_bytes:{species_name or species_id}",
+            invariant_type="base_stats_rom_bytes",
+            status="passed" if matched else "failed",
+            severity=0 if matched else 88,
+            title=(
+                f"{species_name} base-stats ROM bytes match source record"
+                if matched
+                else f"{species_name} base-stats ROM bytes differ from source record"
+            ),
+            source_file=source_file,
+            line=line,
+            evidence=evidence,
+            commands=commands,
+            related_files=related_files,
+            related_symbols=related_symbols,
+        )
+    ]
+
+
+def encode_base_stats_record(
+    text: str,
+    *,
+    root: Path,
+    source_file: str,
+    rom_context: dict[str, Any],
+    source_constants: dict[str, int] | None = None,
+) -> dict[str, Any]:
+    out: list[int] = []
+    errors: list[str] = []
+    related_symbols: list[str] = []
+    constants = {**rom_context.get("constants", {}), **(source_constants or {})}
+    constants.setdefault("NULL", 0)
+    labels = rom_context.get("labels", {})
+    species_name = ""
+    species_id = -1
+    line = 0
+
+    def resolve_numeric(arg: str) -> int | None:
+        return evaluate_int_expression(arg, constants)
+
+    def resolve_pointer(arg: str) -> int | None:
+        value = resolve_numeric(arg)
+        if value is not None:
+            return value
+        label = arg.strip()
+        symbol = labels.get(label)
+        if symbol is None:
+            return None
+        related_symbols.append(label)
+        return int(symbol["address"])
+
+    def append_u8(arg: str, *, line_no: int) -> None:
+        text_arg = arg.strip()
+        value = resolve_numeric(text_arg)
+        if value is None:
+            errors.append(f"line_{line_no}:unresolved_db_value={text_arg}")
+            return
+        out.append(value & 0xff)
+
+    def append_u16(arg: str, *, line_no: int) -> None:
+        text_arg = arg.strip()
+        value = resolve_pointer(text_arg)
+        if value is None:
+            errors.append(f"line_{line_no}:unresolved_dw_value={text_arg}")
+            return
+        value &= 0xffff
+        out.extend([value & 0xff, value >> 8])
+
+    def append_nibble_pair(high_arg: str, low_arg: str, *, line_no: int) -> None:
+        high = resolve_numeric(high_arg.strip())
+        low = resolve_numeric(low_arg.strip())
+        if high is None or low is None:
+            if high is None:
+                errors.append(f"line_{line_no}:unresolved_dn_high={high_arg.strip()}")
+            if low is None:
+                errors.append(f"line_{line_no}:unresolved_dn_low={low_arg.strip()}")
+            return
+        out.append(((high & 0x0f) << 4) | (low & 0x0f))
+
+    for line_no, clean in active_gold_code_lines(text.splitlines()):
+        token = first_token(clean)
+        if not token:
+            continue
+        args = split_macro_args(clean[len(token):])
+        if token == "db":
+            if species_name == "" and args:
+                species_name = args[0].strip()
+                species_value = resolve_numeric(species_name)
+                if species_value is not None:
+                    species_id = species_value
+                line = line_no
+            for arg in args:
+                append_u8(arg, line_no=line_no)
+            continue
+        if token == "dw":
+            for arg in args:
+                append_u16(arg, line_no=line_no)
+            continue
+        if token == "dn":
+            if len(args) % 2:
+                errors.append(f"line_{line_no}:dn_odd_arg_count={len(args)}")
+            for pair_index in range(0, len(args) - 1, 2):
+                append_nibble_pair(args[pair_index], args[pair_index + 1], line_no=line_no)
+            continue
+        if token == "INCBIN":
+            incbin_entries = parse_incbin_entries(clean)
+            if not incbin_entries:
+                errors.append(f"line_{line_no}:unsupported_incbin={clean}")
+                continue
+            for incbin in incbin_entries:
+                payload = load_incbin_payload(
+                    {
+                        "path": incbin["path"],
+                        "incbin_args": incbin.get("args", []),
+                    },
+                    root=root,
+                    constants=constants,
+                )
+                for error in payload["errors"]:
+                    errors.append(f"line_{line_no}:{error}")
+                out.extend(payload["bytes"])
+            continue
+        if token == "tmhm":
+            out.extend(encode_tmhm_bitset(args, constants=constants, errors=errors, line=line_no))
+            continue
+        errors.append(f"line_{line_no}:unsupported_base_stats_token={token}")
+
+    base_data_size = constants.get("BASE_DATA_SIZE")
+    if base_data_size is None:
+        base_data_size = infer_base_data_size_from_symbols(rom_context)
+    if base_data_size is None:
+        errors.append("missing_BASE_DATA_SIZE")
+        base_data_size = len(out)
+    if species_name == "":
+        errors.append("missing_species_id")
+    if not out:
+        errors.append("no_base_stats_bytes_encoded")
+    return {
+        "bytes": out,
+        "errors": unique_list(errors),
+        "related_symbols": unique_list(related_symbols),
+        "species_name": species_name,
+        "species_id": species_id,
+        "line": line,
+        "base_data_size": int(base_data_size),
+    }
+
+
+def active_gold_code_lines(lines: list[str]) -> list[tuple[int, str]]:
+    active_stack: list[dict[str, Any]] = []
+    out: list[tuple[int, str]] = []
+
+    def current_active() -> bool:
+        return all(bool(frame["active"]) for frame in active_stack)
+
+    for line_no, raw_line in enumerate(lines, start=1):
+        clean = strip_comment(raw_line).strip()
+        if not clean:
+            continue
+        token = first_token(clean)
+        args = split_macro_args(clean[len(token):])
+        if token == "IF":
+            parent_active = current_active()
+            condition = gold_condition_is_active(args)
+            active_stack.append(
+                {
+                    "parent_active": parent_active,
+                    "active": parent_active and condition,
+                    "taken": condition,
+                }
+            )
+            continue
+        if token == "ELIF" and active_stack:
+            frame = active_stack[-1]
+            condition = gold_condition_is_active(args)
+            frame["active"] = bool(frame["parent_active"]) and not bool(frame["taken"]) and condition
+            frame["taken"] = bool(frame["taken"]) or condition
+            continue
+        if token == "ELSE" and active_stack:
+            frame = active_stack[-1]
+            frame["active"] = bool(frame["parent_active"]) and not bool(frame["taken"])
+            frame["taken"] = True
+            continue
+        if token == "ENDC" and active_stack:
+            active_stack.pop()
+            continue
+        if current_active():
+            out.append((line_no, clean))
+    return out
+
+
+def gold_condition_is_active(args: list[str]) -> bool:
+    expression = " ".join(args)
+    if "_GOLD" in expression:
+        return True
+    if "_SILVER" in expression:
+        return False
+    return True
+
+
+def encode_tmhm_bitset(args: list[str], *, constants: dict[str, int], errors: list[str], line: int) -> list[int]:
+    num_tm_hm = evaluate_int_expression("NUM_TM_HM", constants)
+    if num_tm_hm is None:
+        errors.append(f"line_{line}:missing_NUM_TM_HM")
+        return []
+    out = [0] * ((num_tm_hm + 7) // 8)
+    for raw_move in args:
+        move = raw_move.strip()
+        tmnum = evaluate_int_expression(f"{move}_TMNUM", constants)
+        if tmnum is None:
+            errors.append(f"line_{line}:unresolved_tmhm_move={move}")
+            continue
+        if tmnum <= 0 or tmnum > num_tm_hm:
+            errors.append(f"line_{line}:tmhm_index_out_of_range={move}:{tmnum}")
+            continue
+        index = tmnum - 1
+        out[index // 8] |= 1 << (index % 8)
+    return out
+
+
+def infer_base_data_size_from_symbols(rom_context: dict[str, Any]) -> int | None:
+    labels = rom_context.get("labels", {})
+    start = labels.get("wCurBaseData")
+    end = labels.get("wCurBaseDataEnd")
+    if not start or not end:
+        return None
+    size = int(end["address"]) - int(start["address"])
+    return size if size > 0 else None
+
+
+def is_base_stats_species_file(source_file: str) -> bool:
+    normalized = source_file.replace("\\", "/")
+    return normalized.startswith("data/pokemon/base_stats/") and normalized.endswith(".asm")
 
 
 def is_quoted_rgbds_string(value: str) -> bool:
@@ -3046,6 +3416,7 @@ def evaluate_int_expression(expr: str, constants: dict[str, int]) -> int | None:
         return int(constants[text])
     text = re.sub(r"\$([0-9A-Fa-f]+)", r"0x\1", text)
     text = re.sub(r"%([01]+)", r"0b\1", text)
+    text = re.sub(r"\bpercent\b", "* 0xff // 100", text)
     unresolved: list[str] = []
 
     def replace_name(match: re.Match[str]) -> str:

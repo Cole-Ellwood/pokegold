@@ -8,7 +8,7 @@ from .coverage import load_traces
 from .localize import normalize_path
 from .reporting import load_reports
 from .slicing import build_slice_report
-from .workflow import command_is_runnable
+from .workflow import command_address_arg, command_is_runnable
 
 
 SYMPTOM_SYMBOLS = {
@@ -97,6 +97,7 @@ def build_explanation_report(
         "dynamic_event_count": len(evidence["events"]),
         "trace_observation_count": len(evidence["trace_observations"]),
         "content_scenario_count": len(evidence["content_scenarios"]),
+        "state_patch_minimization_count": len(evidence["state_patch_minimizations"]),
         "target_symbol_count": len(target_symbols),
         "target_file_count": len(target_files),
         "target_symbols": target_symbols,
@@ -128,7 +129,9 @@ def collect_evidence(
         "events": [],
         "trace_observations": [],
         "content_scenarios": [],
+        "state_patch_minimizations": [],
         "symbols": [],
+        "addresses": [],
         "files": [],
         "notes": [],
     }
@@ -148,6 +151,7 @@ def collect_evidence(
     for loaded in loaded_traces:
         collect_from_data(loaded["data"], source=loaded["source"], evidence=evidence, base_weight=55)
     evidence["symbols"] = merge_named_items(evidence["symbols"], "symbol")
+    evidence["addresses"] = merge_named_items(evidence["addresses"], "address")
     evidence["files"] = merge_named_items(evidence["files"], "file")
     evidence["trace_observations"] = merge_trace_observations(evidence["trace_observations"])
     evidence["events"] = merge_events(evidence["events"])
@@ -175,6 +179,8 @@ def collect_from_data(data: Any, *, source: str, evidence: dict[str, Any], base_
             collect_trace_index_report(data, source=source, evidence=evidence, base_weight=max(base_weight, 82))
         elif kind == "unified_debugger_content_scenarios":
             collect_content_scenarios(data, source=source, evidence=evidence, base_weight=max(base_weight, 76))
+        elif kind == "unified_debugger_minimization_plan":
+            collect_state_patch_minimization(data, source=source, evidence=evidence, base_weight=max(base_weight, 84))
 
         collect_generic_observations(data, source=source, evidence=evidence, base_weight=base_weight)
         for value in data.values():
@@ -310,6 +316,61 @@ def collect_content_scenarios(data: dict[str, Any], *, source: str, evidence: di
         )
 
 
+def collect_state_patch_minimization(data: dict[str, Any], *, source: str, evidence: dict[str, Any], base_weight: int) -> None:
+    minimization = data.get("state_patch_minimization")
+    if not isinstance(minimization, dict) or not minimization.get("attempted"):
+        return
+    source_mems = string_items(minimization.get("source_mems"))
+    source_symbols = runtime_symbol_items(minimization.get("source_symbols"))
+    source_mem_symbols = runtime_symbol_items(source_mem_origins(minimization))
+    watch_symbols = runtime_symbol_items(
+        [
+            *string_items(minimization.get("watch_symbols")),
+            *[
+                symbol
+                for result in dict_items(minimization.get("results"))
+                for symbol in string_items(result.get("semantic_watch_symbols"))
+            ],
+            *[
+                symbol
+                for result in dict_items(minimization.get("results"))
+                for symbol in string_items(result.get("semantic_replay_watch_symbols"))
+            ],
+        ]
+    )
+    watch_addresses = state_patch_minimization_addresses(minimization)
+    source_files = [
+        normalize_path(path)
+        for path in string_items(minimization.get("source_files"))
+        if looks_like_source_path(path)
+    ]
+    for symbol in unique_list([*source_symbols, *source_mem_symbols, *watch_symbols]):
+        add_symbol(evidence, symbol, source=source, weight=base_weight)
+    for address in watch_addresses:
+        add_address(evidence, address, source=source, weight=base_weight)
+    for path in source_files:
+        add_file(evidence, path, source=source, weight=base_weight)
+    evidence["state_patch_minimizations"].append(
+        {
+            "source": source,
+            "preserved": bool(minimization.get("preserved")),
+            "original_patch_count": int(minimization.get("original_patch_count", 0) or 0),
+            "minimized_patch_count": int(minimization.get("minimized_patch_count", 0) or 0),
+            "out_report": str(minimization.get("out_report", "")),
+            "scenario_ids": string_items(minimization.get("scenario_ids")),
+            "source_files": unique_list(source_files),
+            "source_symbols": unique_list(source_symbols),
+            "source_mems": source_mems,
+            "source_mem_symbols": unique_list(source_mem_symbols),
+            "watch_symbols": unique_list(watch_symbols),
+            "watch_addresses": watch_addresses,
+            "watch_size": positive_int(minimization.get("watch_size")) or 1,
+            "commands": string_items(minimization.get("commands")),
+            "weight": base_weight,
+        }
+    )
+
+
 def collect_generic_observations(data: dict[str, Any], *, source: str, evidence: dict[str, Any], base_weight: int) -> None:
     symbol = first_string(data, ("full_symbol", "symbol", "resolved", "query", "pc_label", "watch"))
     source_file = first_string(data, ("source_file",))
@@ -342,6 +403,11 @@ def build_causal_paths(
     for index, event in enumerate(evidence["events"], 1):
         path = path_from_event(index, event, slice_by_query=slice_by_query, symptom=symptom)
         paths.append(path)
+    minimization_start = len(paths) + 1
+    for offset, minimization in enumerate(evidence["state_patch_minimizations"][:max_paths], minimization_start):
+        path = path_from_state_patch_minimization(offset, minimization, slice_by_query=slice_by_query, symptom=symptom)
+        if path:
+            paths.append(path)
     content_start = len(paths) + 1
     for offset, scenario in enumerate(evidence["content_scenarios"][:max_paths], content_start):
         path = path_from_content_scenario(offset, scenario, slice_by_query=slice_by_query, symptom=symptom)
@@ -359,6 +425,73 @@ def build_causal_paths(
                 paths.append(path)
     paths.sort(key=lambda item: (-int(item["score"]), -float(item["confidence"]), item["id"]))
     return paths[:max_paths]
+
+
+def path_from_state_patch_minimization(
+    index: int,
+    minimization: dict[str, Any],
+    *,
+    slice_by_query: dict[str, dict[str, Any]],
+    symptom: str,
+) -> dict[str, Any] | None:
+    source_symbols = runtime_symbol_items(minimization.get("source_symbols"))
+    source_mem_symbols = runtime_symbol_items(minimization.get("source_mem_symbols"))
+    watch_symbols = runtime_symbol_items(minimization.get("watch_symbols"))
+    watch_addresses = unique_list(string_items(minimization.get("watch_addresses")))
+    source_files = [
+        normalize_path(path)
+        for path in string_items(minimization.get("source_files"))
+        if looks_like_source_path(path)
+    ]
+    if not source_symbols and not source_mem_symbols and not watch_symbols and not watch_addresses and not source_files:
+        return None
+    nodes = []
+    if symptom:
+        nodes.append(node("symptom", "symptom", symptom))
+    status = "preserved" if minimization.get("preserved") else "attempted"
+    nodes.append(
+        node(
+            "artifact",
+            "state_patch_minimization",
+            status,
+            detail=(
+                f"{minimization.get('original_patch_count', 0)}"
+                f" -> {minimization.get('minimized_patch_count', 0)} patches"
+            ),
+        )
+    )
+    for path in source_files[:4]:
+        nodes.append(node("source", "minimized_source", path, file=path))
+    for symbol_name in source_symbols[:4]:
+        nodes.append(symbol_node("source", "source_label", symbol_name, slice_by_query=slice_by_query))
+    for symbol_name in source_mem_symbols[:4]:
+        nodes.append(symbol_node("state", "source_memory_origin", symbol_name, slice_by_query=slice_by_query))
+    for symbol_name in watch_symbols[:4]:
+        nodes.append(node("state", "watch_symbol", symbol_name, symbol=symbol_name))
+    for address in watch_addresses[:4]:
+        nodes.append(node("state", "watch_address", address, detail=f"watch_size={minimization.get('watch_size', 1)}"))
+    related_symbols = unique_list([*source_symbols, *source_mem_symbols, *watch_symbols])
+    title_target = ", ".join(unique_list([*watch_symbols, *watch_addresses])[:3]) or str(minimization.get("out_report", "state patch"))
+    return finish_path(
+        path_id=f"state_patch_minimization_{index}",
+        title=f"State-patch minimization preserved causal state for {title_target}",
+        score=88 if minimization.get("preserved") else 70,
+        confidence=0.84 if minimization.get("preserved") else 0.62,
+        nodes=nodes,
+        edges=path_edges(nodes),
+        evidence=[
+            f"state-patch minimization from {minimization.get('source')}",
+            f"{minimization.get('original_patch_count', 0)} -> {minimization.get('minimized_patch_count', 0)} patches",
+            "source_mems=" + ", ".join(string_items(minimization.get("source_mems"))[:4]),
+            "watch_addresses=" + ", ".join(watch_addresses[:4]),
+            f"artifact={minimization.get('out_report', '')}",
+        ],
+        symbols=related_symbols,
+        files=source_files,
+        addresses=watch_addresses,
+        watch_size=int(minimization.get("watch_size", 1) or 1),
+        extra_commands=state_patch_minimization_commands(minimization),
+    )
 
 
 def path_from_content_scenario(
@@ -599,9 +732,17 @@ def finish_path(
     evidence: list[str],
     symbols: list[str],
     files: list[str],
+    addresses: list[str] | None = None,
+    watch_size: int = 1,
     extra_commands: list[str] | None = None,
 ) -> dict[str, Any]:
-    commands = unique_list([*(extra_commands or []), *commands_for(symbols=symbols, files=files)])
+    related_addresses = unique_list(addresses or [])
+    commands = unique_list(
+        [
+            *(extra_commands or []),
+            *commands_for(symbols=symbols, files=files, addresses=related_addresses, watch_size=watch_size),
+        ]
+    )
     return {
         "id": path_id,
         "title": title,
@@ -612,11 +753,12 @@ def finish_path(
         "evidence": [item for item in evidence if item],
         "related_symbols": [item for item in symbols if item],
         "related_files": [item for item in files if item],
+        "related_addresses": related_addresses,
         "commands": commands,
     }
 
 
-def commands_for(*, symbols: list[str], files: list[str]) -> list[str]:
+def commands_for(*, symbols: list[str], files: list[str], addresses: list[str] | None = None, watch_size: int = 1) -> list[str]:
     commands: list[str] = []
     for symbol in symbols[:4]:
         commands.append(f"python -m tools.debugger replay --symbol {symbol}")
@@ -627,6 +769,39 @@ def commands_for(*, symbols: list[str], files: list[str]) -> list[str]:
     for path in files[:4]:
         commands.append(f"python -m tools.debugger slice --source-file {path}")
         commands.append(f"python -m tools.debugger gate --changed-file {path}")
+    watch_size_arg = f" --watch-size {watch_size}" if watch_size != 1 else ""
+    for address in (addresses or [])[:4]:
+        command_address = command_address_arg(address)
+        commands.append(f"python -m tools.debugger replay --watch-address {command_address}{watch_size_arg} --execute-watch")
+        commands.append(f"python -m tools.debugger watch --watch-address {command_address}{watch_size_arg} --execute")
+        commands.append(f"python -m tools.debugger trace-instructions --watch-address {command_address}{watch_size_arg} --execute --require-hit")
+    return unique_list(commands)
+
+
+def state_patch_minimization_commands(minimization: dict[str, Any]) -> list[str]:
+    commands = string_items(minimization.get("commands"))
+    source = str(minimization.get("source", ""))
+    out_report = str(minimization.get("out_report", ""))
+    watch_size = positive_int(minimization.get("watch_size")) or 1
+    watch_size_arg = f" --watch-size {watch_size}" if watch_size != 1 else ""
+    if source:
+        commands.append(f"python -m tools.debugger provenance --report {source}")
+        commands.append(f"python -m tools.debugger taint --report {source}")
+        commands.append(f"python -m tools.debugger slice --report {source}")
+    if out_report:
+        commands.append(f"python -m tools.debugger setup --report {out_report}")
+        commands.append(f"python -m tools.debugger replay --report {out_report}")
+        commands.append(f"python -m tools.debugger localize --report {out_report}")
+        commands.append(f"python -m tools.debugger coverage --report {out_report}")
+    for address in state_patch_minimization_addresses(minimization)[:4]:
+        source_mem_args = " ".join(
+            f"--source-mem {source_mem}"
+            for source_mem in string_items(minimization.get("source_mems"))[:4]
+        )
+        sink_args = f"--sink-address {command_address_arg(address)}{watch_size_arg.replace(' --watch-size', ' --sink-size')}"
+        dynamic_args = " ".join(part for part in [f"--report {out_report}" if out_report else "", source_mem_args, sink_args] if part)
+        if dynamic_args:
+            commands.append(f"python -m tools.debugger dynamic-taint {dynamic_args} --execute-synthesis")
     return unique_list(commands)
 
 
@@ -779,6 +954,13 @@ def add_symbol(evidence: dict[str, Any], symbol: str, *, source: str, weight: in
     evidence["symbols"].append({"symbol": name, "source": source, "weight": int(weight)})
 
 
+def add_address(evidence: dict[str, Any], address: str, *, source: str, weight: int) -> None:
+    text = str(address).strip()
+    if not text:
+        return
+    evidence["addresses"].append({"address": text, "source": source, "weight": int(weight)})
+
+
 def add_file(evidence: dict[str, Any], path: str, *, source: str, weight: int) -> None:
     normalized = normalize_path(path)
     if not looks_like_source_path(normalized):
@@ -836,6 +1018,60 @@ def first_string(data: dict[str, Any], keys: tuple[str, ...]) -> str:
         if isinstance(value, str):
             return value
     return ""
+
+
+def state_patch_minimization_addresses(item: dict[str, Any]) -> list[str]:
+    addresses = [
+        *string_items(item.get("watch_addresses")),
+        *source_mem_addresses(item),
+    ]
+    for result in dict_items(item.get("results")):
+        addresses.extend(string_items(result.get("semantic_watch_addresses")))
+        addresses.extend(string_items(result.get("semantic_replay_watch_addresses")))
+        addresses.extend(source_mem_addresses(result))
+    return unique_list(addresses)
+
+
+def source_mem_origins(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            origin
+            for _, origin in source_mem_parts(route)
+            if origin
+        ]
+    )
+
+
+def source_mem_addresses(route: dict[str, Any]) -> list[str]:
+    return unique_list(
+        [
+            address
+            for address, _ in source_mem_parts(route)
+            if address
+        ]
+    )
+
+
+def source_mem_parts(route: dict[str, Any]) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    for value in string_items(route.get("source_mems")):
+        text = str(value).strip()
+        if not text:
+            continue
+        if "=" in text:
+            address, origin = text.split("=", 1)
+            out.append((address.strip(), origin.strip()))
+        else:
+            out.append((text, ""))
+    return out
+
+
+def positive_int(value: Any) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
 
 
 def base_label(label: str) -> str:
