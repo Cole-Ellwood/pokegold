@@ -75,10 +75,10 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 15721 | 663 |  |
-| ROMX | 1148491 | 932277 | 127 |
+| ROMX | 1148519 | 932249 | 127 |
 | SRAM | 31419 | 1349 | 4 |
 | WRAM0 | 4024 | 72 |  |
-| WRAMX | 3711 | 4481 | 2 |
+| WRAMX | 3712 | 4480 | 2 |
 | HRAM | 107 | 20 |  |
 
 ### Boss AI WRAM Reserve
@@ -157,7 +157,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Evolutions and Attacks` | ROMX | 10:685c-7f97 | 5948 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Late Gen Held Items` | ROMX | 11:65eb-739f | 3509 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
 | `Maps` | ROMX | 25:4000-65f8 | 9721 | ROMX 25 | `data/maps/attributes.asm`, `data/maps/blocks.asm`, `data/maps/map_data.asm`, `data/maps/maps.asm`, +2 more |
-| `Events` | ROMX | 25:65f9-7db6 | 6078 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
+| `Events` | ROMX | 25:65f9-7dc6 | 6094 | ROMX 25 | `data/wild/bug_contest_mons.asm`, `engine/events/trainer_scripts.asm`, `engine/overworld/cmd_queue.asm`, `engine/overworld/events.asm`, +1 more |
 | `Audio` | ROMX | 3a:4000-548c | 5261 | ROMX 3a | `audio.asm`, `audio/cry_pointers.asm`, `audio/engine.asm`, `audio/music/nothing.asm`, +3 more |
 | `Songs 1` | ROMX | 3a:548d-7fb1 | 11045 | ROMX 3a | `audio.asm`, `audio/music/championbattle.asm`, `audio/music/darkcave.asm`, `audio/music/elmslab.asm`, +12 more |
 | `Songs 2` | ROMX | 3b:4000-7ef4 | 16117 | ROMX 3b | `audio.asm`, `audio/music/bicycle.asm`, `audio/music/contestresults.asm`, `audio/music/dancinghall.asm`, +29 more |

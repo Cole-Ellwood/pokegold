@@ -1993,21 +1993,27 @@ EscapeRopeEffect:
 	call z, UseDisposableItem
 	ret
 
+; b = steps, c = pending silent recharges (see wRepelRecharges).
 SuperRepelEffect:
 	ld b, 200
+	ld c, 0
 	jr UseRepel
 
 MaxRepelEffect:
 	ld b, 250
+	ld c, 0
 	jr UseRepel
 
 RepelCubeEffect:
-; Repurposed CARBOS ("REPEL CUBE"): top-tier repel duration.
+; Repurposed CARBOS ("REPEL CUBE"): 255 steps now, then one silent 255-step
+; refill in DoRepelStep -- ~510 steps total without a 16-bit step counter.
 	ld b, 255
+	ld c, 1
 	jr UseRepel
 
 RepelEffect:
 	ld b, 100
+	ld c, 0
 
 UseRepel:
 	ld a, [wRepelEffect]
@@ -2017,6 +2023,8 @@ UseRepel:
 
 	ld a, b
 	ld [wRepelEffect], a
+	ld a, c
+	ld [wRepelRecharges], a
 	jp UseItemText
 
 RepelUsedEarlierIsStillInEffectText:
