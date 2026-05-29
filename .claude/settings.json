@@ -17,6 +17,24 @@
           {
             "type": "command",
             "command": "python3 scripts/inject_asm_guide.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 tools/audit/check_branch_currency.py --hook"
+          },
+          {
+            "type": "command",
+            "command": "python3 tools/audit/check_uncommitted_work.py --hook"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 tools/audit/check_uncommitted_work.py --snapshot"
           }
         ]
       }

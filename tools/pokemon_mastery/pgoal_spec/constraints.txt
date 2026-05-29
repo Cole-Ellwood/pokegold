@@ -1,5 +1,6 @@
 - NEVER extract cases from validation or sealed_exam tier replays; verify_loop_state.py enforces this
-- NEVER commit to master; only the current claude/ working branch
+- Before each iteration run `python tools/pokemon_mastery/loop_runner.py sync-preflight`: it rebases the working branch onto canonical master and runs the integrity gate, refusing on a dirty tree, a conflicting rebase, or a red gate. Don't start an iteration on a branch that hasn't passed preflight
+- After the iteration's commits are green, run `python tools/pokemon_mastery/loop_runner.py land` to fast-forward the shared integration line (master) to HEAD. Landing finished, audit-passing loop work is ordinary delegated execution; leaving iterations stranded on a per-session branch is the divergence generator A3 exists to stop
 - Pre-freeze context for fresh predictions is live_core.md plus the replay prompt plus at most one heuristic_core card plus retrieved cases; no archives, no web search, no future turns
 - replay_index.jsonl is append-only; partitions are fixed at fetch time
 - When stagnation triggers escalation, log via pgoal decision

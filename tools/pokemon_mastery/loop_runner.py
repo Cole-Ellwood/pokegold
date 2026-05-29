@@ -20,6 +20,8 @@ CLI:
   python tools/pokemon_mastery/loop_runner.py append-metrics --from-stdin
   python tools/pokemon_mastery/loop_runner.py bump-iteration --phase INGEST --replay-id gen2ou-NNN
   python tools/pokemon_mastery/loop_runner.py commit-message --phase INGEST --replay-id gen2ou-NNN
+  python tools/pokemon_mastery/loop_runner.py sync-preflight   # rebase onto master + gate, before an iteration
+  python tools/pokemon_mastery/loop_runner.py land             # FF the shared integration line, after green
 """
 
 from __future__ import annotations
@@ -30,6 +32,9 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tools.pokemon_mastery import sync  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 LIB = HERE / "case_library"
@@ -273,6 +278,19 @@ def main(argv: list[str] | None = None) -> int:
     p_msg.add_argument("--phase", required=True)
     p_msg.add_argument("--replay-id", default=None)
 
+    p_pre = sub.add_parser(
+        "sync-preflight",
+        help="rebase the working branch onto master and run the integrity gate (before an iteration)",
+    )
+    p_pre.add_argument("--base", default=None, help="canonical base ref to rebase onto (default: master)")
+    p_pre.add_argument("--no-fetch", action="store_true", help="skip `git fetch` (offline / autonomous runs)")
+
+    p_land = sub.add_parser(
+        "land",
+        help="fast-forward the shared integration line to HEAD after the iteration is green",
+    )
+    p_land.add_argument("--into", default="master", help="integration branch to fast-forward (default: master)")
+
     args = parser.parse_args(argv)
 
     if args.command == "status":
@@ -308,6 +326,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "commit-message":
         print(commit_message(args.phase, args.replay_id))
         return 0
+    if args.command == "sync-preflight":
+        return sync.sync_preflight(base=args.base, do_fetch=not args.no_fetch)
+    if args.command == "land":
+        return sync.land(into=args.into)
     return 2
 
 
