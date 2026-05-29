@@ -84,6 +84,7 @@ V2_PASSTHROUGH_MODULES = {
     "clobbers": "tools.debugger.register_flow",
     "auto-watch": "tools.debugger.auto_watch",
     "speedup-report": "tools.debugger.speedup_harness",
+    "consequence": "tools.debugger.consequence",
 }
 
 
