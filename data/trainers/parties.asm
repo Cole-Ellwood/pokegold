@@ -1448,10 +1448,10 @@ BugCatcherGroup:
 
 	; BUG_CATCHER (4)
 	db "WADE@", TRAINERTYPE_NORMAL
-	db  5, CATERPIE
-	db  5, CATERPIE
-	db  6, WEEDLE
-	db  5, CATERPIE
+	db  9, CATERPIE
+	db  9, CATERPIE
+	db 10, WEEDLE
+	db  9, CATERPIE
 	db -1 ; end
 
 	; BUG_CATCHER (5)
@@ -1485,18 +1485,18 @@ BugCatcherGroup:
 
 	; BUG_CATCHER (10)
 	db "WADE@", TRAINERTYPE_NORMAL
-	db  9, METAPOD
-	db  9, METAPOD
-	db 10, KAKUNA
-	db  9, METAPOD
+	db 13, METAPOD
+	db 13, METAPOD
+	db 14, KAKUNA
+	db 13, METAPOD
 	db -1 ; end
 
 	; BUG_CATCHER (11)
 	db "WADE@", TRAINERTYPE_NORMAL
-	db 14, BUTTERFREE
-	db 14, BUTTERFREE
-	db 15, BEEDRILL
-	db 14, BUTTERFREE
+	db 18, BUTTERFREE
+	db 18, BUTTERFREE
+	db 19, BEEDRILL
+	db 18, BUTTERFREE
 	db -1 ; end
 
 	; BUG_CATCHER (12)
