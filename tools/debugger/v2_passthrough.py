@@ -19,8 +19,15 @@ from typing import Sequence
 # verb -> module exposing ``main(argv) -> int``. Grows one cluster per harvest
 # slice; keep it alphabetical within a slice for a stable ``--help`` listing.
 V2_PASSTHROUGH_MODULES = {
+    "auto-watch": "tools.debugger.auto_watch",
+    "bisect": "tools.debugger.bisect",
     "clobbers": "tools.debugger.register_flow",
     "consequence": "tools.debugger.consequence",
+    "crossemu": "tools.debugger.crossemu",
+    "heatmap": "tools.debugger.heatmap",
+    "hypothesis": "tools.debugger.hypothesis_tracker",
+    "pack": "tools.debugger.context_packet",
+    "probe": "tools.debugger.probe",
     "save-state-lab": "tools.debugger.save_state_lab",
     "vram-diff": "tools.debugger.vram_diff",
     "vram-snapshot": "tools.debugger.vram_snapshot",
