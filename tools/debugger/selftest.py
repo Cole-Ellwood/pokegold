@@ -1300,6 +1300,33 @@ def check_speedup_harness(root: Path) -> CheckResult:
     )
 
 
+def check_auto_navigation(root: Path) -> CheckResult:
+    """Exercise Phase-1 auto-navigation logic without booting PyBoy.
+
+    The end-to-end self-drive proof (power-on -> PLAYERS_HOUSE_2F) lives in the
+    deity benchmark (driver: auto). This gate verifies the navigator's checkpoint
+    parse + byte integrity, map-catalog const resolution, and the predicate
+    parse/observe/evaluate path the live drive uses — fast and deterministic.
+    """
+
+    from .navigate import run_self_test
+
+    def inner() -> str:
+        report = run_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"navigate self-test failed: {report.get('errors')}")
+        return (
+            f"auto_navigation logic verified ({len(report['checks'])} checks); "
+            "new_game checkpoint resolves to PLAYERS_HOUSE_2F"
+        )
+
+    return _capture(
+        component="auto_navigation",
+        next_command='python -m tools.debugger navigate --to "map=PLAYERS_HOUSE_2F"',
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1329,6 +1356,7 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("register_flow", check_register_flow),
     ("auto_watch", check_auto_watch),
     ("speedup_harness", check_speedup_harness),
+    ("auto_navigation", check_auto_navigation),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)

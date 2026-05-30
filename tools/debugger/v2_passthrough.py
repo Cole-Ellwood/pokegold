@@ -27,6 +27,7 @@ V2_PASSTHROUGH_MODULES = {
     "dap": "tools.debugger.dap_server",
     "heatmap": "tools.debugger.heatmap",
     "hypothesis": "tools.debugger.hypothesis_tracker",
+    "navigate": "tools.debugger.navigate",
     "pack": "tools.debugger.context_packet",
     "probe": "tools.debugger.probe",
     "save-state-lab": "tools.debugger.save_state_lab",

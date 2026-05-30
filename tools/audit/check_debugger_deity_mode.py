@@ -18,8 +18,9 @@ built when it has registered a (green) selftest component of the same name —
 the selftest registry is the single source of truth for "is this capability
 real," and selftest's own all-green gate guarantees a registered component
 works end-to-end. This keeps the deity bar additive: the godmode triad
-(`audit ready=True` 11/11, godmode benchmark 29/29, selftest 28/28) stays the
-frozen floor; deity is measured separately here.
+(`audit ready=True` 11/11, godmode benchmark 29/29, and the all-green selftest
+gate) stays the frozen floor; deity is measured separately here. (The selftest
+component count grows as each deity component lands green — see roadmap §5.)
 
 Roadmap: ``docs/debugger_deity_mode_roadmap.md`` (Phase 0 builds this harness).
 At baseline — before any capability phase lands — every runtime proof fails and
@@ -274,8 +275,8 @@ def write_markdown(path: Path, summary: DeitySummary) -> None:
         "A question passes only when its `driver: auto` proof command runs to",
         "exit 0 AND emits its evidence marker — i.e. the debugger self-drove the",
         "proof with no hand-supplied state/trace/scenario. The godmode triad",
-        "(audit 11/11, godmode benchmark 29/29, selftest 28/28) is the frozen",
-        "floor and is not scored here.",
+        "(audit 11/11, godmode benchmark 29/29, and the all-green selftest gate)",
+        "is the frozen floor and is not scored here.",
         "",
         "## Capability components",
         "",

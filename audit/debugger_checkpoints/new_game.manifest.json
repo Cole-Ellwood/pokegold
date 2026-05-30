@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "new_game",
+  "description": "Power-on a fresh game to the New Bark bedroom (PLAYERS_HOUSE_2F) with fixed inputs.",
+  "input_log": "new_game.input.log",
+  "input_log_sha256": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+  "expected_map": "24:7",
+  "expected_group": 24,
+  "expected_number": 7,
+  "expected_const": "PLAYERS_HOUSE_2F",
+  "reached_frame": 4680,
+  "total_frames": 5416,
+  "start_presses": 1,
+  "a_presses": 89,
+  "note": "reached_frame/total_frames are authoring-time observations; navigate --verify asserts the reached map, not the exact frame."
+}

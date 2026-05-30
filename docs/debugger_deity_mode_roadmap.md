@@ -330,6 +330,28 @@ deity-benchmark question previously blocked on a hand-supplied state (e.g.
 known target from a checkpoint, verify the manifest round-trips, assert
 fail-closed on a deliberately unreachable predicate).
 
+**Status — foundational slice landed (not the full phase).** The
+replay-to-checkpoint half is built and proven; input-space *search* is not.
+
+- Task 2 (checkpoint library): seeded — `audit/debugger_checkpoints/new_game`
+  (`.input.log` + manifest) power-on → `PLAYERS_HOUSE_2F` (map `24:7`), fixed
+  deterministic inputs, byte-sha pinned. Regenerate via `.local/deity_freeze.py`.
+- Task 3 (`navigate.py`): built as **replay nearest checkpoint + evaluate the
+  predicate each frame**, not BFS/greedy input search. So it reaches a state a
+  checkpoint already lands on (e.g. `map=PLAYERS_HOUSE_2F`) and fails closed on
+  anything past the checkpoint's inputs (`battle(...)`, `wild_battle`, other
+  maps) — the honest "capability not built yet" signal. Search across menu/
+  overworld/battle transitions is the next slice.
+- Task 4 (honest synthesis): `navigate --verify <run-manifest>` re-drives and
+  re-asserts predicate + map + checkpoint-log sha; fail-closed names the nearest
+  observed state. RNG-seed recording deferred (fixed inputs from boot are
+  already deterministic).
+- `auto_navigation` selftest component is **green** (pure-logic gate, no
+  emulator); the end-to-end self-drive proof is the `deity_nav_new_game_bedroom`
+  benchmark question (PASS). Tasks 5 (`save-state-lab synth`) and 6 (crossemu
+  cross-check) remain. Latest scores: `baseline_2026-05-30.md` (1/9 questions,
+  1/7 components).
+
 ---
 
 ## 7) Phase 2 — One-shot automatic instruction-level taint for any byte
