@@ -2477,7 +2477,6 @@ MareepEvosAttacks:
 	db 1, GROWL
 	db 9, THUNDERSHOCK
 	db 16, THUNDER_WAVE
-	db 23, COTTON_SPORE
 	db 23, HEAL_BELL
 	db 30, LIGHT_SCREEN
 	db 37, THUNDER
@@ -2490,9 +2489,11 @@ FlaaffyEvosAttacks:
 	db 1, GROWL
 	db 1, THUNDERSHOCK
 	db 9, THUNDERSHOCK
+	db 15, THUNDERPUNCH
 	db 18, THUNDER_WAVE
-	db 27, COTTON_SPORE
 	db 27, HEAL_BELL
+	db 32, DRAGONBREATH
+	db 35, DRAGON_DANCE
 	db 36, LIGHT_SCREEN
 	db 45, THUNDER
 	db 0 ; no more level-up moves
@@ -2506,11 +2507,7 @@ AmpharosEvosAttacks:
 	db 1, TWISTER
 	db 9, THUNDERSHOCK
 	db 18, THUNDER_WAVE
-	db 27, COTTON_SPORE
 	db 27, HEAL_BELL
-	db 30, THUNDERPUNCH
-	db 32, DRAGONBREATH
-	db 35, DRAGON_DANCE
 	db 55, OUTRAGE
 	db 57, THUNDER
 	db 0 ; no more level-up moves
