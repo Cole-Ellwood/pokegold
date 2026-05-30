@@ -659,7 +659,7 @@ SOURCE_REFS = {
     ],
     "damage_matchup_cli": [
         "tools/damage_debugger/README.md",
-        "docs/damage_query_cli_codex_task.md",
+        "docs/damage_query_cli_spec.md",
         "tools/damage_debugger/matchup.py",
         "tools/debugger/README.md",
         "tools/audit/check_release_smoke.py",

@@ -1,6 +1,8 @@
 # Debugger Unification Plan — one God debugger on canonical `master`
 
-**Status:** in progress (Slice 1 landed). Branch `claude/debugger-unify-god` off `master`.
+**Status:** core unification complete (Slices 1–6 landed; 20 v2 God verbs on
+master + the v1 oracle + selftest 28/28). Branch `claude/debugger-unify-god` off
+`master`. Remaining: 3 deferred items (below) + final merge to master.
 **Why:** two debuggers evolved in parallel. `master` (canonical) carries the
 verified **Q&A oracle** (`audit ready=True` 11/11; `check_debugger_godmode_benchmark.py`
 29/29) on a clean `__main__` → `parsers` → `commands` → `formatters` architecture.
@@ -77,6 +79,46 @@ suite green.
    `audit ready=True` reflects the unified surface; port `selftest` + `session_start`;
    get the God selftest green on master. Then `/shape-check` + `refactor-reviewer`,
    regen `docs/generated/dev_index.md`, merge to master.
+
+## Final state (Slices 1–6 landed)
+
+**20 v2 God verbs on master**, alongside the v1 Q&A oracle (`audit ready=True`
+11/11, benchmark 29/29) and `selftest` (28/28 components): `auto-watch`, `bisect`,
+`clobbers`, `consequence`, `crossemu`, `dap`, `heatmap`, `hypothesis`, `pack`,
+`probe`, `save-state-lab`, `selftest`, `session-start`, `speedup-report`,
+`stat-at`, `tdb`, `type-matchup`, `vram-diff`, `vram-snapshot`, `when-wrote`.
+Whole suite green throughout (`tools/debugger/tests` 600+ passing); pure tooling,
+zero ROM bytes.
+
+De-Codex (single-owner): pairing machinery retired (`handoff_log`,
+`check_two_llm_handoff_log`); codex-named spec docs renamed
+(`debugger_godmode_spec.md`, `damage_query_cli_spec.md`) with refs updated;
+module comments/docstrings/tests neutralized.
+
+### Deferred (re-harvestable from the God branch; tracked follow-ups)
+
+1. **`rom_edit`** — its core gate was "ROM edit requires a *mutual-verified* (two-LLM)
+   handoff phase"; single-owner needs a new gate (e.g. audits-pass), and it edits ROM
+   source, which sits in tension with the debugger's read-only-on-ROM North Star.
+   A design call — left out pending that decision.
+2. **`causal-graph` + `hardware-event-stream` verbs** — harvested as libs but unexposed;
+   they render via a kind→formatter dispatch (no self-contained `format_text`), so a
+   clean verb needs their text formatters ported into `formatters.py` (or a JSON-only
+   wrapper). Modules removed from the tree to avoid orphans; re-harvest when wiring.
+3. **Benchmark-internal Codex naming** — `~10 codex_*` question IDs in
+   `questions.jsonl`, the `questions_codex_lane.jsonl` filename, and "Codex pair-review"
+   note text remain as historical provenance. Harness reads only `questions.jsonl` and
+   keys per-question scoring on the IDs; mass-renaming risks the 29/29 and isn't
+   load-bearing, so left as a documented cosmetic residual.
+
+### `sm83_model_parity` selftest component — intentionally dropped
+
+Master's `dynamic_taint` taint engine was preserved intact (a wholesale swap of the
+God branch's `dynamic_taint` regressed master's taint tests — 0 findings where master
+finds 1). The frame model was grafted additively. The parity check asserted both taint
+consumers *share* the SM83 model, which full taint-engine unification would require;
+that unification is deferred, so the component was removed. Both consumers work
+independently.
 
 ## Notes / traps
 
