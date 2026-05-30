@@ -613,5 +613,43 @@ starts, not mid-implementation.
 
 ---
 
+## 14) Effort, payoff, and where to stop (judgment — Cole's call)
+
+Not all six phases are equally worth building. Listing them is not endorsing
+them. This is the honest effort-vs-payoff read so the scope is a *decision*,
+not a default. (Effort/payoff/risk are judgment, not measured; the ceiling per
+phase is the most that phase can truthfully deliver given [§1's limits](#1-the-tier-line-what-deity-mode-means).)
+
+| Phase | Effort | Payoff to the daily job | Risk of under-delivering | Honest ceiling |
+|---|---|---|---|---|
+| 0 Harness | S | enabling (can't measure progress without it) | low | a scorecard, not a capability |
+| 1 Auto-nav | **L** | **high — keystone, unblocks 2/3/5** | **med–high** (input search is exponential) | short-horizon, checkpoint-anchored nav; *not* arbitrary deep states |
+| 2 Auto-taint | M | **high — "why did this byte get this value" is the daily question** | low–med (engine exists; risk is window auto-sizing) | one byte, one reachable state, per run |
+| 3 Runtime replay | L (×3 surfaces) | med — audio/graphics/script-VM bugs are rarer here than damage/AI | med (script-VM stepping + PyBoy↔VBA divergence) | behavioral diff vs the static mirror, on an emulation |
+| 4 SM83 unify | M | low–med — internal coherence, no new user capability | med (could re-trigger the dropped-component regression) | one model behind both taint consumers |
+| 5 Live viz | M–L | med — QoL; the static reports already work | low | a live TUI/canvas; not a new proof |
+| 6 Cleanup | S | low — cosmetic + the `rom_edit` decision | low | provenance tidy + a gated proposer |
+
+**Recommended cut line:**
+
+- **Must-build for the "self-driving proof" promise — Phase 0 + 1 + 2.** Measure,
+  navigate, one-shot taint. If only these land, the debugger genuinely drives
+  its own runtime proofs for the surfaces that already matter most (damage,
+  Boss AI, any byte) — which is the bulk of the "95%."
+- **Build only if that surface actually bites — Phase 3.** And then only the
+  *one* sub-surface (audio / graphics / script-VM) that is producing real bugs;
+  don't build all three on spec.
+- **Optional polish — Phases 4, 5, 6.** Coherence, a nicer view, and tidy-up.
+  Real, but none of them removes a manual step from a typical investigation.
+- **If you do nothing else: Phase 0 + Phase 1.** Auto-navigation alone deletes
+  the single biggest manual step — hand-building a save state — from *every*
+  runtime investigation. Everything past it is leverage on that one win.
+
+The diminishing returns are real and intentional to surface: the curve is steep
+through Phase 2 and flattens after. A defensible "done" is **Phases 0–2 shipped,
+3–6 deferred until a concrete need names them** — not all six as a checklist.
+
+---
+
 **End of roadmap.** Built but unbuilt: every phase here is a plan awaiting
 Cole's review. Do not begin Phase 1 until that review lands.
