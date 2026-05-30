@@ -122,11 +122,12 @@ build started by building its benchmark harness). The deity gate is a triad:
    (`debugger_godmode_benchmark`, 29/29) is **frozen and never regressed** —
    deity is additive.
 2. **New selftest components** — one health-check slot per deity capability,
-   added to `tools/debugger/selftest.py`. The target count climbs from today's
-   28 as each phase lands its component:
+   added to `tools/debugger/selftest.py`. The count climbs **28 → 35** as the
+   five capability phases (Phases 1–5) each land their component:
    `auto_navigation`, `auto_taint`, `audio_replay`, `graphics_replay`,
    `script_vm_replay`, `sm83_model_parity` (re-added — see
-   [§9](#9-phase-4--full-sm83-model-unification)), `live_view`.
+   [§9](#9-phase-4--full-sm83-model-unification)), `live_view` — plus 2 more
+   (→ 37) if Phase 6a's `causal-graph`/`hardware-event-stream` verbs land.
 3. **Deity audit tier** — `check_debugger_deity_mode.py` asserts (a) every
    deity-benchmark question's proof ran with `driver: auto` and passed, and
    (b) the new selftest components are green. Its top line —
@@ -513,7 +514,7 @@ in direct tension with the read-only North Star.
 
 ### 6c — `codex_*` benchmark question IDs (cosmetic, lowest priority)
 
-~10 `codex_*` question IDs in `questions.jsonl`, the
+16 of the 29 `codex_*` question IDs in `questions.jsonl`, the
 `questions_codex_lane.jsonl` filename, and "Codex pair-review" note text remain
 as historical provenance. The harness keys per-question scoring on the IDs, so
 mass-renaming risks the 29/29.
