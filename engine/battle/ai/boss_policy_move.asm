@@ -3424,6 +3424,7 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 	; fallthrough
 
 .restore_species_base_data
+	call .ApplyStatStagesToScored           ; a = scored -> stage-adjusted scored
 	ld [wBossAITemp], a
 	pop af
 	ld [wCurSpecies], a
@@ -3495,6 +3496,101 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 
 .fixed_store
 	ld [wBossAITemp], a
+	ret
+
+.ApplyStatStagesToScored
+	; a = base scored power. Scale it by the enemy's offensive stage (Atk for a
+	; physical move, SpA for special) and the player's defensive stage (Def/SpD).
+	; scored * off_mult / def_mult is equivalent to (atk*off)/(def*def_mult) *
+	; power, so it folds both stages into the base-stat ratio. The defensive
+	; stage is applied INVERTED (a defender boost reduces incoming offense), and
+	; StatLevelMultipliers is symmetric (mult(-N) = 1/mult(+N)), so the inverse
+	; is just stage 2*BASE_STAT_LEVEL - stage fed through the same helper.
+	;
+	; Stages are PUBLIC info -- the enemy's own boosts and the player's stages
+	; are both shown on screen, so this is no hidden-info read. The base-stat
+	; ratio scaled by the stage multiplier is the no-cheat AI's estimate; the +5
+	; floor and IV/EV terms that also scale the true computed stat are an
+	; accepted approximation (the AI cannot read the player's IVs/EVs anyway).
+	push af                                 ; base scored
+	call BossAI_CurrentEnemyMoveCategory
+	cp SPECIAL                              ; carry set if PHYSICAL
+	jr c, .stages_physical
+	ld a, [wEnemySAtkLevel]
+	ld d, a                                 ; d = enemy offensive stage
+	ld a, [wPlayerSDefLevel]
+	jr .stages_have_def
+.stages_physical
+	ld a, [wEnemyAtkLevel]
+	ld d, a
+	ld a, [wPlayerDefLevel]
+.stages_have_def
+	ld e, a
+	ld a, 2 * BASE_STAT_LEVEL
+	sub e
+	ld e, a                                 ; e = inverted player defensive stage
+	pop af                                  ; a = base scored
+	ld c, d                                 ; offensive stage
+	push de
+	call BossAI_ScaleValueByStatStage       ; a = scored * off_mult
+	pop de
+	ld c, e                                 ; inverted defensive stage
+	jp BossAI_ScaleValueByStatStage         ; a = scored * off_mult / def_mult
+
+; ai-layer: POLICY
+; Scale a value (a, 0-255) by the stat-stage multiplier for stage byte c
+; (base-7 encoded, 1..13). Returns a = value * StatLevelMultipliers[stage],
+; clamped 0..255. Stage 7 (+0) returns the value unchanged. StatLevelMultipliers
+; lives in another bank, so read it with GetFarByte. Clobbers a, bc, de, hl,
+; HRAM math UNION.
+BossAI_ScaleValueByStatStage:
+	ld b, a                                 ; b = value
+	ld a, c
+	cp BASE_STAT_LEVEL
+	ld a, b
+	ret z                                   ; +0 -> unchanged
+	ld a, c
+	dec a
+	add a                                   ; (stage - 1) * 2
+	ld e, a
+	ld d, 0
+	ld hl, StatLevelMultipliers
+	add hl, de
+	ld a, BANK(StatLevelMultipliers)
+	call GetFarByte                         ; a = numerator
+	ld c, a                                 ; c = num
+	inc hl
+	ld a, BANK(StatLevelMultipliers)
+	call GetFarByte                         ; a = denominator
+	ld d, a                                 ; d = denominator
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh [hMultiplicand + 1], a
+	ld a, b                                 ; value
+	ldh [hMultiplicand + 2], a
+	ld a, c                                 ; numerator
+	ldh [hMultiplier], a
+	ld a, d                                 ; denominator -> b (survives Multiply: bc preserved)
+	ld b, a
+	call Multiply                           ; hProduct = value * num
+	ld a, b                                 ; denominator
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 0]
+	or a
+	jr nz, .stage_clamp
+	ldh a, [hQuotient + 1]
+	or a
+	jr nz, .stage_clamp
+	ldh a, [hQuotient + 2]
+	or a
+	jr nz, .stage_clamp
+	ldh a, [hQuotient + 3]
+	ret
+
+.stage_clamp
+	ld a, $ff
 	ret
 
 ; ai-layer: POLICY
