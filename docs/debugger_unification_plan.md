@@ -3,6 +3,11 @@
 **Status:** core unification complete (Slices 1–6 landed; 20 v2 God verbs on
 master + the v1 oracle + selftest 28/28). Branch `claude/debugger-unify-god` off
 `master`. Remaining: 3 deferred items (below) + final merge to master.
+**Next tier:** the unification is on canonical `master` (tip `04170ddf`). The
+frontier above the God-tool bar — auto-navigation, runtime replay of the
+static-only surfaces, one-shot taint, SM83 unification, live visualization —
+and the 3 deferred items below are specced in
+[`docs/debugger_deity_mode_roadmap.md`](debugger_deity_mode_roadmap.md).
 **Why:** two debuggers evolved in parallel. `master` (canonical) carries the
 verified **Q&A oracle** (`audit ready=True` 11/11; `check_debugger_godmode_benchmark.py`
 29/29) on a clean `__main__` → `parsers` → `commands` → `formatters` architecture.
