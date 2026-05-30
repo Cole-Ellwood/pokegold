@@ -58,7 +58,46 @@ The one-sentence definition:
 "Reachable" is load-bearing: deity mode does **not** mean omniscience over
 unreachable or hidden-info states (that would violate the First-Playthrough
 Promise's no-cheating rule). It means the debugger can autonomously reach and
-prove anything a *player or the engine could legitimately produce*.
+prove anything a *player or the engine could legitimately produce* — within
+the hard limits named next.
+
+### What deity mode does NOT do — the ceiling
+
+"Deity" is a **codename for self-driving proofs**, not a literal claim of
+omniscience. The honest bar is Cole's original "**95% automates the debugging
+job**," not 100%. Even fully built, the debugger cannot:
+
+1. **Reach every state — only *tractably* reachable ones.** The input-space
+   search is exponential; deep, long-horizon, or RNG-gated states can be
+   infeasible to navigate to under any practical budget. "Reachable" means
+   "the engine can produce it *and* the navigator can find a path within the
+   compute budget" — not "any RAM configuration you can name."
+2. **Answer hidden-information or taste questions.** No private reads; no "is
+   this fair / fun / well-balanced," no "does this Pokémon now have a distinct
+   role." Those are the First-Playthrough Promise and gameplay-taste calls —
+   Cole's seat, escalated by design. The debugger *informs* them; it does not
+   make them.
+3. **Prove universal absence.** It finds counterexamples and proves *specific*
+   scenarios. "This bug can never happen in any state" is not provable by
+   trace/fuzz/replay — only "not in the states I checked." Universal
+   correctness over all inputs is undecidable in general; the tool samples, it
+   does not exhaust.
+4. **Guarantee behavior on the real platform.** Proofs run on PyBoy
+   (cross-checked on VBA-M). That is evidence about *an emulation*, not a proof
+   about real MBC3 hardware or every flashcart/emulator config. Divergence is a
+   known bug class (North-Star #5), not an edge case.
+5. **Design features or make architectural calls.** It locates where a change
+   goes, proposes a proof + regression gate, and at most drafts a diff. It does
+   not decide *what* to build or *whether* the design is right.
+6. **Exceed its own ground truth.** It reasons from the disassembly, the symbol
+   table, and the static mirrors. A mislabeled symbol or a wrong mirror is an
+   error the debugger inherits — it is only as correct as its inputs.
+
+Deity mode shrinks the human's role in *mechanically-decidable, well-posed,
+tractably-reachable* runtime questions to **ask-and-read**. The remaining ~5% —
+taste, design, universal guarantees, real-hardware certainty — stays human **by
+construction**, not for lack of effort. A phase that claims to cross one of
+these limits is mis-scoped, not ambitious.
 
 ---
 
