@@ -3450,7 +3450,15 @@ BossAI_ApplyEnemyHeldItemPressure:
 	jr z, .wise_glasses
 	cp HELD_METRONOME
 	jr z, .metronome
-	ret
+	; Type-boost items (Sharp Beak, Charcoal, Mystic Water, ...) multiply a
+	; same-type move by ~1.1-1.2x (engine: TypeBoostItems, x(100+amount)/100).
+	; Score it like the other small +1.x items: +1 pressure band when the held
+	; item's boosted type matches the current move's type. KO-pressure only --
+	; the ~1.2x bump sits below the move-choice dominance buffer, so wiring it
+	; into the rank would never flip a comparison (see the gate decision).
+	call BossAI_EnemyTypeBoostItemMatchesMove
+	ret nc
+	jr .boost_one
 
 .choice_band
 	call BossAI_CurrentEnemyMoveCategory
@@ -3493,6 +3501,44 @@ BossAI_ApplyEnemyHeldItemPressure:
 
 .boost_one
 	inc b
+	ret
+
+; ai-layer: POLICY
+; Carry set if the enemy's held effect (a) is a type-boost item whose boosted
+; type matches the current enemy move's type. Walks the engine's TypeBoostItems
+; table (the single source of truth for item->type) cross-bank, so the AI and
+; the damage engine never disagree on which item boosts which type. Preserves b
+; (the pressure accumulator); clobbers a, d, e, hl.
+BossAI_EnemyTypeBoostItemMatchesMove:
+	ld d, a                                ; d = held effect
+	ld a, [wEnemyMoveStruct + MOVE_TYPE]
+	ld e, a                                ; e = current move type
+	ld hl, TypeBoostItems
+.loop
+	ld a, BANK(TypeBoostItems)
+	call GetFarByte                        ; a = table held effect
+	inc hl
+	cp -1
+	jr z, .no_match
+	cp d
+	jr nz, .skip_type
+	ld a, BANK(TypeBoostItems)
+	call GetFarByte                        ; a = table boosted type
+	inc hl
+	cp e
+	jr z, .match
+	jr .loop
+
+.skip_type
+	inc hl                                 ; past the type byte
+	jr .loop
+
+.match
+	scf
+	ret
+
+.no_match
+	and a
 	ret
 
 ; ai-layer: POLICY
