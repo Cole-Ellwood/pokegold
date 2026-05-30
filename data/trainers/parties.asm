@@ -356,13 +356,13 @@ ErikaGroup:
 YoungsterGroup:
 	; YOUNGSTER (1)
 	db "JOEY@", TRAINERTYPE_NORMAL
-	db  4, RATTATA
+	db  8, RATTATA
 	db -1 ; end
 
 	; YOUNGSTER (2)
 	db "MIKEY@", TRAINERTYPE_NORMAL
-	db  3, PIDGEY
-	db  5, RATTATA
+	db  7, PIDGEY
+	db  9, RATTATA
 	db -1 ; end
 
 	; YOUNGSTER (3)
@@ -392,12 +392,12 @@ YoungsterGroup:
 
 	; YOUNGSTER (7)
 	db "JOEY@", TRAINERTYPE_NORMAL
-	db 15, RATTATA
+	db 19, RATTATA
 	db -1 ; end
 
 	; YOUNGSTER (8)
 	db "JOEY@", TRAINERTYPE_MOVES
-	db 21, RATICATE,   TAIL_WHIP, QUICK_ATTACK, HYPER_FANG, SCARY_FACE
+	db 25, RATICATE,   TAIL_WHIP, QUICK_ATTACK, HYPER_FANG, SCARY_FACE
 	db -1 ; end
 
 	; YOUNGSTER (9)
@@ -1429,8 +1429,8 @@ SabrinaGroup:
 BugCatcherGroup:
 	; BUG_CATCHER (1)
 	db "DON@", TRAINERTYPE_NORMAL
-	db  4, CATERPIE
-	db  4, CATERPIE
+	db  8, CATERPIE
+	db  8, CATERPIE
 	db -1 ; end
 
 	; BUG_CATCHER (2)
