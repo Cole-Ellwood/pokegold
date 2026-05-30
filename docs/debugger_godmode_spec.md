@@ -1,10 +1,15 @@
-# Codex Task — Debugger Godmode: Omniscient Repo Q&A Oracle
+# Debugger Godmode Spec — Omniscient Repo Q&A Oracle
 
-**Status:** v0 spec, Cole-approved 2026-05-24 via `/codex-pgoal` Step 0 AskUserQuestion intake.
-**Pairing:** Claude (frame + review, ~30%) + Codex (implement, ~70%) under mutual approval, structural defenses promoted to acceptance.
-**Branch:** `claude/debugger-godmode` off `claude/boss-ai-rom-expansion` (created 2026-05-24).
-**Roadmap home:** this file — canonical contract, both LLMs read it, update it before drift.
-**Handoff log:** `audit/omni_debugger_2026-05-24_handoff_log.jsonl` (seeded; continues here).
+> **Historical spec (archived 2026-05-29).** This documents the bar the godmode
+> Q&A oracle was built to — and met (`audit ready=True`,
+> `check_debugger_godmode_benchmark.py` 29/29). The two-LLM pairing protocol
+> below is **retired**: this is single-owner (Claude) work now, so the
+> handoff-log / no-solo-commit / mutual-approval scaffolding no longer applies.
+> The live forward-looking doc is
+> [`docs/debugger_unification_plan.md`](debugger_unification_plan.md). The body
+> is preserved as the record of what the capability bar was and why.
+
+**Status:** spec met; capability bar documented for the record.
 **Project roadmap anchor:** [`docs/project_roadmap.md`](project_roadmap.md) row `DEBUGGER-001`.
 
 ## Goal

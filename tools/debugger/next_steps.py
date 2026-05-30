@@ -582,7 +582,7 @@ SOURCE_REFS = {
         "audit/omni_debugger_first_gap_action_proof_2026-05-24.md",
         "tools/debugger/__main__.py",
         "tools/debugger/catalog.py",
-        "docs/debugger_godmode_codex_task.md",
+        "docs/debugger_godmode_spec.md",
         "tools/audit/check_release_smoke.py",
         "tools/audit/check_workspace_hygiene.py",
         "docs/agent_navigation/source_output_ownership.md",

@@ -5,23 +5,24 @@
 verified **Q&A oracle** (`audit ready=True` 11/11; `check_debugger_godmode_benchmark.py`
 29/29) on a clean `__main__` → `parsers` → `commands` → `formatters` architecture.
 The **God-integration** (forward `consequence`, `tdb`/`reverse-query` time-travel,
-`save-state-lab`, `rom-edit`, `bisect`, `vram-*`, `clobbers`, …) shipped to the
-`codex/cleanup-gsc-rebalance-split` line and never came across. Goal: one debugger
-that is a superset of both, on canonical master, ROM-byte-neutral.
+`save-state-lab`, `rom-edit`, `bisect`, `vram-*`, `clobbers`, …) shipped to an
+old integration branch (referred to here as the **God branch**) and never came
+across to master. Goal: one debugger that is a superset of both, on canonical
+master, ROM-byte-neutral. Single-owner (Claude) work — no pairing scaffolding.
 
 ## Divergence shape (measured)
 
-- `tools/debugger/*.py` (excl. tests): **26 master-only, 45 codex-only, 38 shared**.
+- `tools/debugger/*.py` (excl. tests): **26 master-only, 45 God-branch-only, 38 shared**.
 - Of the 38 shared, **32 diverged** — several massively (`dynamic_taint` 5035,
   `__main__` 4225, `visualization` 3166, `content_state` 2956, `mirrors` 2623,
   `minimize` 2490). So this is a **3-way reconciliation**, not a graft: both lines
-  rewrote the shared core (master for the oracle + the package refactors, codex for
-  the God verbs).
+  rewrote the shared core (master for the oracle + the package refactors, the God
+  branch for the God verbs).
 
 ## Architecture decision — master is the skeleton
 
-Codex's God verbs are **self-contained CLIs**: each module owns its `argparse` and
-exposes `main(argv) -> int`; codex's monolithic `__main__` delegates to them via a
+The God verbs are **self-contained CLIs**: each module owns its `argparse` and
+exposes `main(argv) -> int`; the God branch's monolithic `__main__` delegates to them via a
 `V2_PASSTHROUGH_MODULES` dict. That pattern transplants cleanly onto master **without
 touching `parsers`/`commands`/`formatters`**:
 
@@ -36,17 +37,17 @@ changed on master; caught immediately by an import test + the module's own tests
 
 ## Module disposition
 
-- **Harvest (codex-only, additive):** the 45 God modules **except two that master
-  already superseded** — codex's single-file `content_mirror.py` and `ranking.py`
-  are OLDER than master's `content_mirror/` and `ranking/` **packages**. Keep
-  master's packages; do not copy codex's single-file versions.
+- **Harvest (God-branch-only, additive):** the 45 God modules **except two that
+  master already superseded** — the God branch's single-file `content_mirror.py`
+  and `ranking.py` are OLDER than master's `content_mirror/` and `ranking/`
+  **packages**. Keep master's packages; do not copy the single-file versions.
 - **Keep (master-only):** the architecture files (`parsers`, `commands`,
   `formatters`, `cli_helpers`), the `content_mirror/` + `ranking/` packages,
   `proof_runner`, `runtime_state`, `save_state_format`. `save_state_inspect` is a
   reconciliation point — God's `save_state_lab` supersedes it (decide in Slice 4).
 - **Shared diverged (32):** do **not** wholesale-replace. Each God module proved its
   shared-dep usage by importing + passing its tests against master's versions. When a
-  God verb needs a codex-only ADDITION to a shared module, port that as a targeted
+  God verb needs a God-branch-only ADDITION to a shared module, port that as a targeted
   addition to master's version, never a blind overwrite. `catalog.py` (capability
   registry feeding `audit ready=`) is reconciled last (Slice 6).
 
