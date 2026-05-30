@@ -295,6 +295,7 @@ BossAI_ApplyDamageDominanceBias::
 	; the pre-loop cache in wBossAITemp5, taken before any farcall could
 	; overwrite wTypeMatchup.
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	ld e, a                  ; power in e: farcall's `ld a, BANK` clobbers a before the target
 	farcall BossAI_ScaleMovePowerByBaseStatRatio
 	ld a, [wBossAITemp]
 	ld b, a
@@ -366,7 +367,7 @@ BossAI_ApplyDamageDominanceBias::
 	farcall BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemUncached
 	pop bc
 	push bc
-	ld a, b                                ; raw comparison power
+	ld e, b                                ; raw comparison power in e (farcall clobbers a)
 	farcall BossAI_ScaleMovePowerByBaseStatRatio
 	pop bc                                 ; b = raw power, c = comparison type
 	pop af

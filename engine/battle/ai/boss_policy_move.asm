@@ -3317,6 +3317,7 @@ BossAI_CurrentEnemyMoveScoredPower:
 .raw_power
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 .scale
+	ld e, a                ; pass raw power in e (the scorer's farcall-safe input reg)
 	jp BossAI_ScaleMovePowerByBaseStatRatio
 
 BossAI_ScaleMovePowerByBaseStatRatio:
@@ -3328,9 +3329,15 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 ; the COMPUTED stat including the +5 floor and IV/EV term, so they
 ; must be applied in computed-stat space, not via base × multiplier).
 ;
-; Input:  a = raw power (0 means status — returned as-is)
-; Output: a = stat-scaled power, clamped to 0..255
-; Clobbers: bc, de, hl, HRAM math UNION
+; Input:  e = raw power (0 means status — returned as-is).
+;         `e`, NOT `a`: the two move-choice dominance callers in
+;         ko_band_oracle.asm reach this by `farcall`, whose macro runs
+;         `ld a, BANK(target)` BEFORE the target executes (asm guide §3.2), so
+;         the move power must arrive in a farcall-preserved register. `e` is
+;         unused here until the fixed-damage path reuses it, after entry reads it.
+; Output: a = stat-scaled power, clamped to 0..255 (callers also read wBossAITemp)
+; Clobbers: a, bc, de, hl, HRAM math UNION
+	ld a, e
 	and a
 	ret z
 	ld c, a                ; c = raw power; multi-hit may scale it below
