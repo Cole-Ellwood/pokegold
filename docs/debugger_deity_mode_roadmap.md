@@ -284,13 +284,17 @@ synthesis across every ROM surface") + `generation_fuzzing_counterexamples`
 
 ### Tasks
 
-1. **Define a target-state predicate language.** Reuse `tdb`'s predicate
-   style so there is one query dialect across the tool. Targets look like
+1. **Define a target-state predicate language.** ✅ **Done** —
+   `tools/debugger/state_predicate.py` (`parse` / `evaluate`, 23 tests in
+   `tests/test_state_predicate.py`). One query dialect for navigate/taint/
+   replay/watch. Targets look like
    `battle(boss=MORTY) and turn==3 and enemy_active=GENGAR`, or
    `map=ECRUTEAK_GYM and facing=UP`, or `party_has(species=TYPHLOSION,
-   level>=30)`. Validate predicates against symbol/`content_mirror` knowledge
-   so a typo'd species or unreachable clause fails at parse, not at frame
-   100000.
+   level>=30)`. Unknown field/function/flag, bad operator, type mismatch, and
+   stray `and` all fail **at parse** with a human-facing message — not at frame
+   100000. (Vocabulary tables are curated + extensible; widen them as the
+   navigator learns to observe more state.) `evaluate` treats an unobserved
+   field as *not satisfied*, so it never claims a state it could not see.
 2. **Build a committed checkpoint/waypoint library.** Named, reachable
    anchors stored as input-scripts (preferred — replayable, tiny, save-format
    neutral) or seed states: `new_game`, `post_elm`, each gym door, in-battle
