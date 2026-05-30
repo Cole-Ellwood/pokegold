@@ -4,7 +4,7 @@ SwarmGrassWildMons:
 
 ; Yanma swarm
 	def_grass_wildmons ROUTE_35
-	db 10 percent, 10 percent, 10 percent ; encounter rates: morn/day/nite
+	db 5 percent, 5 percent, 5 percent ; encounter rates: morn/day/nite
 	; morn
 	db 12, NIDORAN_M
 	db 12, NIDORAN_F
@@ -33,7 +33,7 @@ SwarmGrassWildMons:
 
 ; Snubbull swarm
 	def_grass_wildmons ROUTE_38
-	db 10 percent, 10 percent, 10 percent ; encounter rates: morn/day/nite
+	db 5 percent, 5 percent, 5 percent ; encounter rates: morn/day/nite
 	IF DEF(_GOLD)
 	; morn
 	db 16, SNUBBULL
@@ -89,7 +89,7 @@ SwarmGrassWildMons:
 
 ; Dunsparce swarm
 	def_grass_wildmons DARK_CAVE_VIOLET_ENTRANCE
-	db 4 percent, 4 percent, 4 percent ; encounter rates: morn/day/nite
+	db 10 percent, 10 percent, 10 percent ; encounter rates: morn/day/nite
 	; morn
 	db 3, GEODUDE
 	db 3, DUNSPARCE
@@ -118,7 +118,7 @@ SwarmGrassWildMons:
 
 ; Marill swarm
 	def_grass_wildmons MOUNT_MORTAR_1F_OUTSIDE
-	db 6 percent, 6 percent, 6 percent ; encounter rates: morn/day/nite
+	db 10 percent, 10 percent, 10 percent ; encounter rates: morn/day/nite
 	; morn
 	db 13, MARILL
 	db 15, ZUBAT
