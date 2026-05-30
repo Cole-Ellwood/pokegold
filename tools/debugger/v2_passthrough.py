@@ -21,6 +21,9 @@ from typing import Sequence
 V2_PASSTHROUGH_MODULES = {
     "clobbers": "tools.debugger.register_flow",
     "consequence": "tools.debugger.consequence",
+    "save-state-lab": "tools.debugger.save_state_lab",
+    "vram-diff": "tools.debugger.vram_diff",
+    "vram-snapshot": "tools.debugger.vram_snapshot",
 }
 
 

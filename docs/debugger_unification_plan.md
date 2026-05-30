@@ -58,12 +58,15 @@ suite green.
 
 1. **consequence cluster** — `consequence`, `register_flow` (`clobbers`),
    `clobber_chain`, `clobber_graph`. **DONE.** 56 cluster tests + 301 suite pass.
-2. **vram cluster** — `vram_snapshot`, `vram_decode`, `vram_diff`.
+2. **vram cluster + save_state_lab** — `vram_snapshot`, `vram_decode`, `vram_diff`,
+   plus `save_state_lab` (`save-state-lab`), pulled forward because `vram_snapshot`
+   imports it. **DONE.** 16 cluster tests + 317 suite pass. `save_state_lab` is added
+   additively; master's `save_state_inspect` is left in place — consolidating the two
+   is a deferred cleanup, not a blocker.
 3. **reverse/time-travel** — `reverse_query`, `when_wrote`, `tdb` + deps
    (`address`, `address_boundary`, `effect_trace`, `evidence`, `hardware_evidence`,
    `reporting`/`workflow` additions). Heaviest.
-4. **save_state_lab + rom_edit + bisect** — reconcile `save_state_lab` vs master's
-   `save_state_inspect`.
+4. **rom_edit + bisect** — both leaf verbs (`save_state_lab` moved to Slice 2).
 5. **remaining God modules** — `probe`, `auto_watch`, `hardware_event_stream`,
    `hardware_regression`, `chaos`, `heatmap`, `causal_graph`, `speedup_harness`,
    `dap_server`, `input_log`, `audio_snapshot`, `visual_snapshot`, `stat_at`,
