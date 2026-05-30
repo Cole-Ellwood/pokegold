@@ -302,7 +302,7 @@ BossAI_ApplyDamageDominanceBias::
 	ld c, a
 	ld a, [wBossAITemp5]
 	call .ScalePowerByMatchup
-	jr .ApplySTABToRank
+	jp .ApplySTABToRank      ; jp not jr: .MoveIdMatchupSTABRank below pushes the target out of jr range
 
 .MoveIdMatchupSTABRank
 	ld a, c
@@ -319,6 +319,23 @@ BossAI_ApplyDamageDominanceBias::
 	and a
 	ret z
 	ld b, a
+	; Swap the comparison move's effect into the move struct so the shared
+	; scorer (multi-hit EV, fixed-damage) reads THIS move's effect, not the
+	; current move's. Saved current effect is restored alongside the type at
+	; the end. Read by id now, while c still holds the move id — the type read
+	; below overwrites c.
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	push af                                ; [stack bottom] current move effect
+	ld a, c
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	push bc
+	ld bc, MOVE_LENGTH
+	call AddNTimes
+	ld a, BANK(Moves)
+	call GetFarByte
+	pop bc
+	ld [wEnemyMoveStruct + MOVE_EFFECT], a  ; comparison effect into the struct
 	ld a, c
 	dec a
 	ld hl, Moves + MOVE_TYPE
@@ -354,6 +371,8 @@ BossAI_ApplyDamageDominanceBias::
 	pop bc                                 ; b = raw power, c = comparison type
 	pop af
 	ld [wEnemyMoveStruct + MOVE_TYPE], a   ; restore current move type
+	pop af
+	ld [wEnemyMoveStruct + MOVE_EFFECT], a ; restore current move effect
 	ld a, [wBossAITemp]
 	ld b, a                                ; b = stat-scaled comparison power
 	ld a, [wTypeMatchup]                   ; comparison matchup (preserved)

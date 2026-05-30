@@ -3333,7 +3333,26 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 ; Clobbers: bc, de, hl, HRAM math UNION
 	and a
 	ret z
-	ld c, a
+	ld c, a                ; c = raw power; multi-hit may scale it below
+	; Multi-hit EV: EFFECT_MULTI_HIT (Fury Attack, Fury Swipes, Pin Missile,
+	; ...) strikes 2-5 times, expected 3.0. A single-hit power reading
+	; undercounts the move's damage, so triple the power (saturating) before
+	; the stat ratio. The current move's effect is already in the struct; the
+	; comparison-move rank in ko_band_oracle.asm swaps the comparison move's
+	; MOVE_EFFECT into the struct so this fires for it too.
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_MULTI_HIT
+	jr nz, .power_ready
+	ld a, c
+	add c                  ; 2x
+	jr c, .multi_hit_cap
+	add c                  ; 3x
+	jr nc, .multi_hit_store
+.multi_hit_cap
+	ld a, $ff
+.multi_hit_store
+	ld c, a                ; c = saturated 3x power
+.power_ready
 	ld a, [wCurSpecies]
 	push af
 
