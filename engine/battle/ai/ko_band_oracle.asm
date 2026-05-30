@@ -233,22 +233,24 @@ BossAI_ApplyDamageDominanceBias::
 	jr z, .next
 	call .MoveIdMatchupSTABRank
 	ld d, a
-	; Coverage-trumps-STAB rule: if comparison is SE and current is NOT SE,
-	; drop the +32 buffer and use strict-less rank comparison. Without this,
-	; a STAB-neutral move (Haunter Shadow Ball, 80 × 1.5 = 120 effective rank)
-	; could tie with a non-STAB SE move (Ice Punch, 75 × 2 = 150) within the
-	; 32-point buffer and avoid being dominated. The buffer's purpose is
-	; tolerance between same-matchup-tier moves; it shouldn't shelter a
-	; neutral move from an SE alternative.
-	ld a, [wTypeMatchup]
-	cp SUPER_EFFECTIVE
-	jr c, .standard_buffer
-	ld a, [wBossAITemp5]
-	cp SUPER_EFFECTIVE
-	jr nc, .standard_buffer
-	; comparison SE, current not SE → strict-less dominance (equal rank does
-	; not dominate so two equal-rank SE moves don't both get discouraged
-	; against each other).
+	; Tier-aware dominance. The +32 rank buffer is tolerance between moves of
+	; the SAME effectiveness tier; it must not shelter a move from a strictly
+	; better-tier alternative. At equal base power a neutral STAB move and a
+	; resisted STAB move rank close enough to tie inside the buffer (the Falkner
+	; Pidgeotto Tackle-vs-Gust coin flip), so when the comparison move lands a
+	; strictly better matchup tier than the current move, drop the buffer and
+	; dominate on real (rich-model) rank alone. Tier only selects the comparison
+	; method; the comparison itself is on damage rank, so a strong resisted move
+	; still survives a weak neutral one.
+	ld a, [wBossAITemp5]      ; current move's matchup tier
+	ld e, a
+	ld a, [wTypeMatchup]      ; comparison move's matchup tier
+	cp e
+	jr c, .standard_buffer    ; comparison worse tier -> buffered tolerance
+	jr z, .standard_buffer    ; same tier -> buffered tolerance
+	; comparison is a strictly better tier -> strict-less rank dominance (equal
+	; rank does not dominate, so two equal-rank moves don't discourage each
+	; other).
 	ld a, [wBossAITemp2]
 	cp d
 	jr c, .dominated
@@ -283,11 +285,22 @@ BossAI_ApplyDamageDominanceBias::
 	jr .ret_regs
 
 .CurrentMoveDamageRank
+	; Rich-model damage rank for the current move: stat-ratio scored power (base
+	; offense/defense on the move's category axis) then type matchup then STAB.
+	; BossAI_ScaleMovePowerByBaseStatRatio lives in bank 0x0e (reach it by
+	; farcall) and derives the category from wEnemyMoveStruct + MOVE_TYPE, which
+	; already holds the current move's type. It stashes its result in wBossAITemp
+	; and clobbers a/bc/de/hl, so we read wBossAITemp — the farcall a-return is
+	; the target's exit c, not a (asm guide 3.3). The current move's matchup is
+	; the pre-loop cache in wBossAITemp5, taken before any farcall could
+	; overwrite wTypeMatchup.
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	farcall BossAI_ScaleMovePowerByBaseStatRatio
+	ld a, [wBossAITemp]
 	ld b, a
 	ld a, [wEnemyMoveStruct + MOVE_TYPE]
 	ld c, a
-	ld a, [wTypeMatchup]
+	ld a, [wBossAITemp5]
 	call .ScalePowerByMatchup
 	jr .ApplySTABToRank
 
@@ -316,25 +329,34 @@ BossAI_ApplyDamageDominanceBias::
 	call GetFarByte
 	pop bc
 	ld c, a
-	; Scale by type matchup vs the active player defender so the comparison
-	; ranks the same way .CurrentMoveDamageRank does for the current move.
-	; Cross-bank note: this file lives in bank 0x11, but the boss-AI matchup
-	; helpers live in bank 0x0e. A plain `call BossAI_CheckTypeMatchupNoItem`
+	; Rank the comparison move the same way .CurrentMoveDamageRank ranks the
+	; current move: stat-ratio scored power then type matchup then STAB.
+	; Cross-bank note: this file lives in bank 0x11, but the boss-AI matchup and
+	; scoring helpers live in bank 0x0e. A plain `call BossAI_CheckTypeMatchupNoItem`
 	; jumped into the BossAIMatchupTables data table (broke the first 2026-05-25
-	; build). The fix swaps the comparison move's type into
-	; wEnemyMoveStruct + MOVE_TYPE and farcalls the *uncached* wrapper, which
-	; reads MOVE_TYPE and sets hl internally, so the farcall hl-clobber is
-	; harmless and the cached current-move matchup key/result are untouched.
-	push bc
+	; build), so both bank-0x0e helpers are reached by farcall. We swap the
+	; comparison move's type into wEnemyMoveStruct + MOVE_TYPE so BOTH the matchup
+	; helper AND the stat-ratio category derivation (which read MOVE_TYPE) see the
+	; comparison move, then restore the current move's type. BossAI_ScaleMovePower-
+	; ByBaseStatRatio stashes its result in wBossAITemp (the farcall a-return is the
+	; target's exit c, not a) and preserves wTypeMatchup, so the comparison matchup
+	; survives for the matchup scaling below and for the loop's tier check.
 	ld a, [wEnemyMoveStruct + MOVE_TYPE]
-	push af
+	push af                                ; current move type (restored last)
 	ld a, c
-	ld [wEnemyMoveStruct + MOVE_TYPE], a
+	ld [wEnemyMoveStruct + MOVE_TYPE], a   ; comparison type into the move struct
+	push bc                                ; preserve raw power (b) + type (c)
 	farcall BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItemUncached
-	pop af
-	ld [wEnemyMoveStruct + MOVE_TYPE], a
 	pop bc
-	ld a, [wTypeMatchup]
+	push bc
+	ld a, b                                ; raw comparison power
+	farcall BossAI_ScaleMovePowerByBaseStatRatio
+	pop bc                                 ; b = raw power, c = comparison type
+	pop af
+	ld [wEnemyMoveStruct + MOVE_TYPE], a   ; restore current move type
+	ld a, [wBossAITemp]
+	ld b, a                                ; b = stat-scaled comparison power
+	ld a, [wTypeMatchup]                   ; comparison matchup (preserved)
 	call .ScalePowerByMatchup
 	jr .ApplySTABToRank
 
