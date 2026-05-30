@@ -3341,6 +3341,12 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 	; comparison-move rank in ko_band_oracle.asm swaps the comparison move's
 	; MOVE_EFFECT into the struct so this fires for it too.
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	; Fixed-damage moves ignore the attacker/defender stats, so they bypass the
+	; ratio below and compute their own scaled-power equivalent (see .fixed_*).
+	cp EFFECT_LEVEL_DAMAGE
+	jp z, .fixed_level
+	cp EFFECT_STATIC_DAMAGE
+	jp z, .fixed_static
 	cp EFFECT_MULTI_HIT
 	jr nz, .power_ready
 	ld a, c
@@ -3424,6 +3430,71 @@ BossAI_ScaleMovePowerByBaseStatRatio:
 	and a
 	call nz, GetBaseData
 	ld a, [wBossAITemp]
+	ret
+
+.fixed_static
+	; STATIC_DAMAGE: the fixed HP is the move's power byte (Sonicboom 20,
+	; Dragon Rage 40), already in c from the entry.
+	ld a, c
+	jr .fixed_equiv
+
+.fixed_level
+	; LEVEL_DAMAGE (Seismic Toss, Night Shade): fixed HP = the user's level.
+	ld a, [wEnemyMonLevel]
+
+.fixed_equiv
+	; equivalent scaled power = fixed_HP * 50 / (2*level/5 + 2). Inverts the
+	; damage formula's level term so a fixed HP amount lands on the same
+	; "scaled power" axis the variable moves use (the rank/band proxy for
+	; damage). No atk/def ratio -- fixed damage ignores stats. Downstream the
+	; type matchup still zeroes immunities (Night Shade vs NORMAL, Seismic Toss
+	; vs GHOST); resisted/SE and STAB scaling on fixed damage are accepted AI
+	; approximations -- Gen 2 fixed damage ignores them, but the band/rank error
+	; is bounded and the move stays read as a real threat rather than as status.
+	ld e, a                                ; e = fixed HP
+	ld a, [wEnemyMonLevel]
+	add a                                  ; 2*level (level <= 100, no carry)
+	ldh [hDividend + 3], a
+	xor a
+	ldh [hDividend + 0], a
+	ldh [hDividend + 1], a
+	ldh [hDividend + 2], a
+	ld a, 5
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 3]
+	add 2                                  ; level term = 2*level/5 + 2 (>= 2)
+	ld c, a
+	xor a
+	ldh [hMultiplicand + 0], a
+	ldh [hMultiplicand + 1], a
+	ld a, e
+	ldh [hMultiplicand + 2], a
+	ld a, 50
+	ldh [hMultiplier], a
+	call Multiply                          ; hProduct = fixed_HP * 50
+	ld a, c
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide                            ; hProduct sits in hDividend (math UNION)
+	ldh a, [hQuotient + 0]
+	or a
+	jr nz, .fixed_clamp
+	ldh a, [hQuotient + 1]
+	or a
+	jr nz, .fixed_clamp
+	ldh a, [hQuotient + 2]
+	or a
+	jr nz, .fixed_clamp
+	ldh a, [hQuotient + 3]
+	jr .fixed_store
+
+.fixed_clamp
+	ld a, $ff
+
+.fixed_store
+	ld [wBossAITemp], a
 	ret
 
 ; ai-layer: POLICY
