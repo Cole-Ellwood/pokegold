@@ -220,7 +220,7 @@ deity-mode analogue of the godmode per-slice north-star gate.
 
 ---
 
-## 5) Phase 0 — Deity measurement harness
+## 5) Phase 0 — Deity measurement harness — ✅ DONE
 
 **Goal:** build the numeric target before building capabilities, exactly as
 the godmode build opened by building its benchmark. No deity capability is
@@ -228,30 +228,40 @@ the godmode build opened by building its benchmark. No deity capability is
 
 ### Tasks
 
-1. **Author the deity benchmark.** `audit/debugger_deity_benchmark/questions.jsonl`,
-   ~15–25 runtime questions seeded from real Cole asks + the five frontier
-   areas. Every record: `{id, archetype: WHERE|WHY|WHAT, symptom,
-   proof_mode: runtime, driver: auto, expected_answer: {source_anchors[],
-   proof_command, evidence_standard, disproof_standard}, phase, severity}`.
-   `driver: auto` is the deity discriminator — the proof must run with **no
-   hand-supplied state/trace/scenario**.
-2. **Build the scorer.** `tools/audit/check_debugger_deity_mode.py`: run each
-   question through its `proof_command`, assert it ran `driver: auto` and
-   matched the expected anchors/standard, emit per-question pass/fail +
-   aggregate + the top line `deity_ready=<bool> deity_gap_actions=<n>`.
-3. **Wire the selftest slots.** Add the seven component names from
-   [§3](#3-how-deity-mode-is-measured) to `selftest.py` as `skipped/not-built`
-   placeholders so the count target is explicit; each phase flips its slot to
-   green.
-4. **Record the baseline.** `audit/debugger_deity_benchmark/baseline_2026-05-29.md`
-   — expected near-0% (almost everything FAIL; that is the start line).
+1. **Author the deity benchmark.** ✅ `audit/debugger_deity_benchmark/questions.jsonl`
+   — 8 runtime questions across the frontier (Phase 1 nav ×2, Phase 2 taint ×2,
+   Phase 3 replay ×3, Phase 5 live view ×1). Every record:
+   `{id, archetype, symptom, proof_mode: runtime, driver: auto, proof_command,
+   evidence_marker, expected_answer: {source_anchors[], evidence_standard,
+   disproof_standard}, phase, severity}`. `driver: auto` + `evidence_marker`
+   are the deity discriminators — the proof must **run** to exit 0 and emit its
+   marker, with **no hand-supplied state/trace/scenario**. (More questions get
+   added as phases land; 8 is the seed, not the cap.)
+2. **Build the scorer.** ✅ `tools/audit/check_debugger_deity_mode.py`: runs each
+   `proof_command` as a subprocess; PASS only when `driver==auto` **and** exit 0
+   **and** the `evidence_marker` is in stdout. Emits per-question pass/fail +
+   the top line `deity_ready=<bool> deity_gap_actions=<n>`. `--baseline` records
+   without failing; `--self-test` verifies the scorer's own logic with synthetic
+   proofs (no ROM/emulator).
+3. **Track the seven component slots — in the scorer, not `selftest.py`.** ✅ A
+   deity component counts as **built** when a selftest component of the same
+   name is registered (the selftest all-green gate guarantees a registered
+   component works end-to-end). This is the key correction to the original plan:
+   adding `not-built` placeholders to `selftest.py` would break the **28/28
+   frozen floor** (`run_selftest` requires *all* components green). So the
+   scorer reads `selftest.NAMED_CHECKS` and reports `components_built=N/7`;
+   selftest gains each deity component only when its phase turns it green.
+4. **Record the baseline.** ✅ `audit/debugger_deity_benchmark/baseline_2026-05-29.md`.
 
-### Acceptance criterion
+### Acceptance criterion — ✅ MET
 
-`python tools/audit/check_debugger_deity_mode.py` runs, scores every deity
-question (baseline ~0% PASS), and prints `deity_ready=False` with a non-zero
-gap count; baseline committed. The God-tool triad is untouched and still
-green.
+`python tools/audit/check_debugger_deity_mode.py --self-test` PASSES (scorer
+logic verified). The baseline run prints
+`deity_ready=False deity_gap_actions=15` (8 failed runtime proofs + 7 unbuilt
+components, `pass_rate=0.000`) — the honest start line. The God-tool triad is
+untouched: selftest still **28/28**, `check_release_smoke.py` PASS, and the
+deity gate is deliberately **excluded** from release-smoke (it is meant to be
+red until the capability phases land).
 
 ---
 
