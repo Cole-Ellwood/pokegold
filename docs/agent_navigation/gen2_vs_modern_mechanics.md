@@ -634,10 +634,27 @@ Source: `engine/battle/move_effects/rain_dance.asm`,
   Synthesis-family heal halved.
 - **Sandstorm:** chip damage to non-Rock/Ground/Steel; Rock SpD ×1.5
   `(verify exact multipliers in HandleWeather)`.
-- **Duration:** all weather lasts **5 turns** flat. `wWeatherCount` is
-  set to `5` by all three setup moves (e.g.
-  `engine/battle/move_effects/rain_dance.asm:4-5`). No Heat Rock /
-  Damp Rock / Smooth Rock — no extension items exist (§ 7C).
+- **Duration (HACK CHANGE):** weather is **permanent** within a battle
+  (Gen 3–5 ability style). It persists until a setup move overwrites it
+  or a clearing move removes it; `HandleWeather`
+  (`engine/battle/core.asm`) no longer counts down. Weather still resets
+  to `WEATHER_NONE` at the start of every battle via `ClearBattleRAM`, so
+  it never leaks across battles, and it is never part of the save.
+  `wWeatherCount` is still set to `5` by the setup moves but is no longer
+  read by the ROM — it is retained only so trace/headless tooling can read
+  the symbol. (NOTE: the headless simulator in `tools/headless_battle/`
+  still models the old 5-turn decrement and therefore diverges from the
+  ROM until updated.)
+- **Clearing weather (HACK CHANGE):** **Gust** (`EFFECT_GUST`), **Haze**
+  (`EFFECT_RESET_STATS`), and the force-switch family — **Whirlwind** and
+  **Roar** (`EFFECT_FORCE_SWITCH`) — clear all active weather as a rider on
+  their normal effect (`engine/battle/move_effects/clear_weather.asm`,
+  `BattleCommand_ClearWeather`, appended to those effect scripts in
+  `data/moves/effects.asm`). The rider is skipped on a missed move and is a
+  silent no-op when there is no weather. Roar shares Whirlwind's
+  `EFFECT_FORCE_SWITCH`, so it clears weather too; isolating Whirlwind would
+  require a dedicated effect wired through every force-switch site (priority
+  table, vanilla + boss AI scoring, type-passive, revealed-effect matrix).
 
 ## 12. Entry hazards
 

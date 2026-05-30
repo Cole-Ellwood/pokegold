@@ -2068,7 +2068,7 @@ JohtoGrassWildMons:
 
 	def_grass_wildmons ROUTE_39
 	IF DEF(_GOLD)
-	db 1 percent, 1 percent, 5 percent ; encounter rates: morn/day/nite
+	db 5 percent, 5 percent, 5 percent ; encounter rates: morn/day/nite
 	; morn
 	db 16, RATICATE
 	db 17, RATICATE
@@ -2094,7 +2094,7 @@ JohtoGrassWildMons:
 	db 15, GRIMER
 	db 15, KOFFING
 	ELIF DEF(_SILVER)
-	db 1 percent, 1 percent, 1 percent ; encounter rates: morn/day/nite
+	db 5 percent, 5 percent, 5 percent ; encounter rates: morn/day/nite
 	; morn
 	db 16, MEOWTH
 	db 17, RATICATE

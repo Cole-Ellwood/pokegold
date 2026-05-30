@@ -813,6 +813,7 @@ ResetStats:
 	usedmovetext
 	doturn
 	resetstats
+	clearweather
 	endmove
 
 Bide:
@@ -855,11 +856,14 @@ Rampage:
 	endmove
 
 ForceSwitch:
+; Whirlwind and Roar. clearweather rides along so the gust/roar blows away
+; active weather (skipped on a miss; see BattleCommand_ClearWeather).
 	checkobedience
 	usedmovetext
 	doturn
 	checkhit
 	forceswitch
+	clearweather
 	endmove
 
 MultiHit:
@@ -1987,6 +1991,7 @@ Gust:
 	supereffectivetext
 	checkfaint
 	buildopponentrage
+	clearweather
 	endmove
 
 Stomp:

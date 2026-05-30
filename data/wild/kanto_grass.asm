@@ -1003,7 +1003,7 @@ KantoGrassWildMons:
 	end_grass_wildmons
 
 	def_grass_wildmons ROUTE_21
-	db 3 percent, 3 percent, 3 percent ; encounter rates: morn/day/nite
+	db 5 percent, 5 percent, 5 percent ; encounter rates: morn/day/nite
 	; morn
 	db 30, TANGELA
 	db 25, TANGELA

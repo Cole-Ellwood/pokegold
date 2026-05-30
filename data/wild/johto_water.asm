@@ -10,21 +10,21 @@ JohtoWaterWildMons:
 	end_water_wildmons
 
 	def_water_wildmons UNION_CAVE_1F
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 15, WOOPER
 	db 15, POLIWAG
 	db 20, QUAGSIRE
 	end_water_wildmons
 
 	def_water_wildmons UNION_CAVE_B1F
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 15, WOOPER
 	db 15, SLOWPOKE
 	db 20, QUAGSIRE
 	end_water_wildmons
 
 	def_water_wildmons UNION_CAVE_B2F
-	db 10 percent ; encounter rate
+	db 2 percent ; encounter rate
 	db 15, TENTACOOL
 	db 20, KRABBY
 	db 20, TENTACRUEL
@@ -56,63 +56,63 @@ JohtoWaterWildMons:
 	end_water_wildmons
 
 	def_water_wildmons MOUNT_MORTAR_1F_OUTSIDE
-	db 10 percent ; encounter rate
+	db 2 percent ; encounter rate
 	db 20, GOLDEEN
 	db 15, POLIWAG
 	db 20, SEAKING
 	end_water_wildmons
 
 	def_water_wildmons MOUNT_MORTAR_2F_INSIDE
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 20, GOLDEEN
 	db 25, POLIWAG
 	db 25, SEAKING
 	end_water_wildmons
 
 	def_water_wildmons MOUNT_MORTAR_B1F
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 20, GOLDEEN
 	db 15, KRABBY
 	db 20, SEAKING
 	end_water_wildmons
 
 	def_water_wildmons WHIRL_ISLAND_SW
-	db 10 percent ; encounter rate
+	db 2 percent ; encounter rate
 	db 20, TENTACOOL
 	db 15, HORSEA
 	db 20, CHINCHOU
 	end_water_wildmons
 
 	def_water_wildmons WHIRL_ISLAND_B2F
-	db 10 percent ; encounter rate
+	db 2 percent ; encounter rate
 	db 15, HORSEA
 	db 20, HORSEA
 	db 20, CHINCHOU
 	end_water_wildmons
 
 	def_water_wildmons WHIRL_ISLAND_LUGIA_CHAMBER
-	db 10 percent ; encounter rate
+	db 2 percent ; encounter rate
 	db 20, HORSEA
 	db 20, CHINCHOU
 	db 20, SEADRA
 	end_water_wildmons
 
 	def_water_wildmons SILVER_CAVE_ROOM_2
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 66, SEAKING
 	db 69, SEAKING
 	db 65, SEAKING
 	end_water_wildmons
 
 	def_water_wildmons DARK_CAVE_VIOLET_ENTRANCE
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 15, GOLDEEN
 	db 10, WOOPER
 	db 5, GOLDEEN
 	end_water_wildmons
 
 	def_water_wildmons DARK_CAVE_BLACKTHORN_ENTRANCE
-	db 10 percent ; encounter rate
+	db 1 percent ; encounter rate
 	db 15, GOLDEEN
 	db 10, GOLDEEN
 	db 5, SEAKING

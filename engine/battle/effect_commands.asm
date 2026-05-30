@@ -98,7 +98,7 @@ DoMove:
 	cp endturn_command
 	ret nc
 
-; The rest of the commands (01-af) are read from BattleCommandPointers.
+; The rest of the commands (01-b1) are read from BattleCommandPointers.
 	push bc
 	dec a
 	ld c, a
@@ -6369,6 +6369,8 @@ INCLUDE "engine/battle/move_effects/hidden_power.asm"
 INCLUDE "engine/battle/move_effects/rain_dance.asm"
 
 INCLUDE "engine/battle/move_effects/sunny_day.asm"
+
+INCLUDE "engine/battle/move_effects/clear_weather.asm"
 
 INCLUDE "engine/battle/move_effects/belly_drum.asm"
 

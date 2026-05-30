@@ -194,6 +194,7 @@ ENDM
 	command startloop               ; ae
 	command curl                    ; af
 	command bestattackup            ; b0
+	command clearweather            ; b1
 DEF NUM_EFFECT_COMMANDS EQU const_value - 1
 
 	const_def -1, -1

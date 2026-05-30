@@ -1749,13 +1749,13 @@ HandleScreens:
 	jp StdBattleTextbox
 
 HandleWeather:
+; Weather is permanent: it persists until a setup move overwrites it or
+; Gust/Whirlwind/Haze clear it (BattleCommand_ClearWeather). wWeatherCount is
+; no longer counted down here; it is kept only so external trace tooling can
+; still read the symbol.
 	ld a, [wBattleWeather]
 	cp WEATHER_NONE
 	ret z
-
-	ld hl, wWeatherCount
-	dec [hl]
-	jr z, .ended
 
 	ld hl, .WeatherMessages
 	call .PrintWeatherMessage
@@ -1816,13 +1816,6 @@ HandleWeather:
 	ld hl, SandstormHitsText
 	jp StdBattleTextbox
 
-.ended
-	ld hl, .WeatherEndedMessages
-	call .PrintWeatherMessage
-	xor a
-	ld [wBattleWeather], a
-	ret
-
 .PrintWeatherMessage:
 	ld a, [wBattleWeather]
 	dec a
@@ -1840,12 +1833,6 @@ HandleWeather:
 	dw BattleText_RainContinuesToFall
 	dw BattleText_TheSunlightIsStrong
 	dw BattleText_TheSandstormRages
-
-.WeatherEndedMessages:
-; entries correspond to WEATHER_* constants
-	dw BattleText_TheRainStopped
-	dw BattleText_TheSunlightFaded
-	dw BattleText_TheSandstormSubsided
 
 SubtractHPFromTarget:
 	call SubtractHP
