@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from .address import command_address_text
 from .catalog import ROOT, triage_request
 
 
@@ -124,3 +125,63 @@ def execute_step(step: dict[str, Any], *, root: Path, timeout_seconds: int) -> N
 def tail(text: str, *, max_lines: int = 12) -> list[str]:
     lines = [line.rstrip() for line in text.splitlines() if line.strip()]
     return lines[-max_lines:]
+
+
+# --- Command-string helpers (consumed by reverse_query / rom_edit) ---
+def command_address_arg(address: Any) -> str:
+    return command_address_text(address)
+
+
+def command_parts(command: str) -> list[str]:
+    parts: list[str] = []
+    current: list[str] = []
+    quote = ""
+    for char in str(command):
+        if quote:
+            if char == quote:
+                quote = ""
+            else:
+                current.append(char)
+            continue
+        if char in {"\"", "'"}:
+            quote = char
+            continue
+        if char.isspace():
+            if current:
+                parts.append("".join(current))
+                current = []
+            continue
+        current.append(char)
+    if current:
+        parts.append("".join(current))
+    return parts
+
+
+def command_option_values(command: str, option: str) -> list[str]:
+    values: list[str] = []
+    parts = command_parts(command)
+    for index, part in enumerate(parts):
+        if part == option and index + 1 < len(parts):
+            values.append(parts[index + 1])
+        elif part.startswith(option + "="):
+            values.append(strip_command_quotes(part.split("=", 1)[1]))
+    return unique_texts(values)
+
+
+def strip_command_quotes(value: str) -> str:
+    text = str(value)
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in {"\"", "'"}:
+        return text[1:-1]
+    return text
+
+
+def unique_texts(values: list[str]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        text = str(value)
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out

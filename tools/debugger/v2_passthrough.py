@@ -29,8 +29,10 @@ V2_PASSTHROUGH_MODULES = {
     "pack": "tools.debugger.context_packet",
     "probe": "tools.debugger.probe",
     "save-state-lab": "tools.debugger.save_state_lab",
+    "tdb": "tools.debugger.tdb",
     "vram-diff": "tools.debugger.vram_diff",
     "vram-snapshot": "tools.debugger.vram_snapshot",
+    "when-wrote": "tools.debugger.when_wrote",
 }
 
 
