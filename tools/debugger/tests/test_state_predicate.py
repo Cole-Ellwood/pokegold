@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
+import re
+import unittest
+from contextlib import contextmanager
 
 from tools.debugger.state_predicate import (
     Call,
@@ -12,6 +14,16 @@ from tools.debugger.state_predicate import (
     evaluate,
     parse,
 )
+
+
+@contextmanager
+def raises_predicate_error(match: str):
+    try:
+        yield
+    except PredicateError as exc:
+        assert re.search(match, str(exc)), f"{exc!s} does not match {match!r}"
+    else:
+        assert False, f"PredicateError not raised for {match!r}"
 
 
 # --- parsing: the happy paths -----------------------------------------------
@@ -68,52 +80,52 @@ def test_describe_roundtrips_readably():
 
 
 def test_unknown_field_fails_at_parse():
-    with pytest.raises(PredicateError, match="unknown field 'trun'"):
+    with raises_predicate_error("unknown field 'trun'"):
         parse("trun==3")
 
 
 def test_unknown_function_fails_at_parse():
-    with pytest.raises(PredicateError, match="unknown predicate function 'fight'"):
+    with raises_predicate_error("unknown predicate function 'fight'"):
         parse("fight(boss=MORTY)")
 
 
 def test_unknown_flag_fails_at_parse():
-    with pytest.raises(PredicateError, match="unknown flag 'in_menu'"):
+    with raises_predicate_error("unknown flag 'in_menu'"):
         parse("in_menu")
 
 
 def test_unknown_function_arg_fails_at_parse():
-    with pytest.raises(PredicateError, match="no argument 'leader'"):
+    with raises_predicate_error("no argument 'leader'"):
         parse("battle(leader=MORTY)")
 
 
 def test_int_field_rejects_identifier_value():
-    with pytest.raises(PredicateError, match="expects an integer"):
+    with raises_predicate_error("expects an integer"):
         parse("turn==soon")
 
 
 def test_str_field_rejects_ordered_operator():
-    with pytest.raises(PredicateError, match="not valid for str field 'map'"):
+    with raises_predicate_error("not valid for str field 'map'"):
         parse("map>=ROUTE_29")
 
 
 def test_str_field_rejects_non_identifier_value():
-    with pytest.raises(PredicateError, match="expects an identifier"):
+    with raises_predicate_error("expects an identifier"):
         parse("map==12-34")
 
 
 def test_empty_predicate_fails():
-    with pytest.raises(PredicateError, match="empty predicate"):
+    with raises_predicate_error("empty predicate"):
         parse("   ")
 
 
 def test_stray_and_makes_empty_clause():
-    with pytest.raises(PredicateError, match="empty clause"):
+    with raises_predicate_error("empty clause"):
         parse("turn==3 and ")
 
 
 def test_repeated_function_arg_fails():
-    with pytest.raises(PredicateError, match="repeats argument 'species'"):
+    with raises_predicate_error("repeats argument 'species'"):
         parse("party_has(species=A, species=B)")
 
 
@@ -158,3 +170,11 @@ def test_call_requires_function_flag_truthy():
     pred = parse("battle(boss=MORTY)")
     # boss matches but we are not actually in a battle -> unmet.
     assert not evaluate(pred, {"battle": False, "boss": "MORTY"}).satisfied
+
+
+def load_tests(loader, tests, pattern):
+    suite = unittest.TestSuite()
+    for name, obj in sorted(globals().items()):
+        if name.startswith("test_") and callable(obj):
+            suite.addTest(unittest.FunctionTestCase(obj))
+    return suite
