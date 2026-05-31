@@ -926,6 +926,7 @@ def materialization_for_scenario(
         patch("wEnemyMonStatus", 0),
         patch("hBattleTurn", 1),
     ]
+    patches.extend(turn_cache_miss_patches())
     for offset, move_id in enumerate(move_ids):
         patches.append(patch("wEnemyMonMoves", move_id, offset))
         patches.append(patch("wEnemyMonPP", 30, offset))
@@ -1033,6 +1034,7 @@ def base_public_policy_patches(
         patch("wBossAIPlanConfidence", 70 if tags & {"setup_window", "support_job_completed"} else 50),
         patch("wBossAIWinconMonIdx", 2),
     ]
+    patches.extend(turn_cache_miss_patches())
     patches.extend(word_patches("wEnemyMonHP", enemy_hp))
     patches.extend(word_patches("wEnemyMonMaxHP", 100))
     patches.extend(word_patches("wBattleMonHP", player_hp))
@@ -1063,6 +1065,20 @@ def public_seen_player_patches(tags: set[str]) -> list[MemoryPatch]:
         ]
     )
     return patches
+
+
+def turn_cache_miss_patches() -> list[MemoryPatch]:
+    return [
+        patch("wBossAIHasKOMoveCache", 0xFF),
+        patch("wBossAIPublicThreatCache", 0xFF),
+        patch("wBossAIRevealedPriorityCache", 0xFF),
+        patch("wBossAIPrimaryThreatCache", 0xFF),
+        patch("wBossAIPublicEnemyFasterCache", 0xFF),
+        patch("wBossAILookaheadDepthCache", 0xFF),
+        patch("wBossAILastMatchupType", 0xFF),
+        patch("wBossAIShouldScoutPrereqCache", 0xFF),
+        patch("wBossAIShouldScoutMatchupValue", 0xFF),
+    ]
 
 
 def plan_id_for_tags(tags: set[str]) -> int:

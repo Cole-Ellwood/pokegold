@@ -1508,7 +1508,9 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     reserve_ghost = rng.choice([False, True])
     bench_revealed_spin = rng.choice([False, True])
     active_species_prior = rng.choice([False, True])
-    immediate_pressure = active_species_prior and not active_ghost
+    # This prior is only about possible Rapid Spin access. In this hack's type
+    # chart, Starmie's public Psychic typing is not an immediate Poison threat.
+    immediate_pressure = False
 
     condition_tags = [f"spikes_layers_{layers}"]
     if active_revealed_spin:
@@ -1653,7 +1655,8 @@ def materialized_spikes_spin_rom_deltas(
     role = weights["role"]
     status = weights["status"]
     risk = weights["risk"]
-    pressure = active_species_prior and not active_ghost
+    # Keep this tied to ROM-materialized pressure facts, not spin-source priors.
+    pressure = False
     active_spinblock = active_ghost and not foresighted
     spinblock_available = active_spinblock or reserve_ghost
     revealed_spin_counts = active_revealed_spin and not active_spinblock

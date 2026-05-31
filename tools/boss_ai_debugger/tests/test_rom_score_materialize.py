@@ -24,6 +24,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     replay_controls_from_manifest,
     verdict_from_materialized_trace,
     scenario_condition_tags,
+    turn_cache_miss_patches,
     validate_score_materialization_base,
 )
 from tools.boss_ai_preference.data import PreferenceDataError
@@ -86,6 +87,24 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wPlayerUsedMoves", 0)], MOVES["RAPID_SPIN"])
         self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 2)
         self.assertEqual(patches[("wBossAISpeciesUsedMoves", 4)], MOVES["RAPID_SPIN"])
+        self.assertEqual(patches[("wBossAIPublicThreatCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIPrimaryThreatCache", 0)], 0xFF)
+
+    def test_turn_cache_miss_patches_mirror_boss_ai_reset_turn_caches(self) -> None:
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in turn_cache_miss_patches()
+        }
+
+        self.assertEqual(patches[("wBossAIHasKOMoveCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIPublicThreatCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIRevealedPriorityCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIPrimaryThreatCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIPublicEnemyFasterCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAILookaheadDepthCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAILastMatchupType", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIShouldScoutPrereqCache", 0)], 0xFF)
+        self.assertEqual(patches[("wBossAIShouldScoutMatchupValue", 0)], 0xFF)
 
     def test_layer_parser_uses_condition_tags(self) -> None:
         tags = {"spikes_layers_3", "active_revealed_rapid_spin"}

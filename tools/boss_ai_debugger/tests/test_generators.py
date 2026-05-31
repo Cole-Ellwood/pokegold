@@ -169,6 +169,23 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(result["best_action_id"], "move_spikes")
 
+    def test_active_species_spin_prior_does_not_create_immediate_pressure(self) -> None:
+        scenario = spikes_spin_score_scenario(
+            tier="late",
+            layers=1,
+            active_revealed_spin=False,
+            active_ghost=False,
+            foresighted=False,
+            reserve_ghost=True,
+            bench_revealed_spin=False,
+            active_species_prior=True,
+        )
+
+        result = select_move(scenario)
+
+        self.assertEqual(scenario["moves"][0]["deltas"], [])
+        self.assertEqual(result["best_action_id"], "move_spikes")
+
     def test_capped_spikes_prefers_sludge_bomb_when_active_species_prior_is_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="late",
