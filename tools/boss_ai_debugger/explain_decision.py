@@ -141,15 +141,24 @@ def explain_decision_from_path(
         run_reports = {"score": [], "selector": [], "switch": []}
     score_reports = [
         *run_reports["score"],
-        *load_json_reports(rom_score_materialization_paths or []),
+        *load_json_reports(
+            rom_score_materialization_paths or [],
+            expected_kind="rom_score_materialization",
+        ),
     ]
     selector_reports = [
         *run_reports["selector"],
-        *load_json_reports(rom_selector_materialization_paths or []),
+        *load_json_reports(
+            rom_selector_materialization_paths or [],
+            expected_kind="rom_selector_materialization",
+        ),
     ]
     switch_reports = [
         *run_reports["switch"],
-        *load_json_reports(rom_switch_materialization_paths or []),
+        *load_json_reports(
+            rom_switch_materialization_paths or [],
+            expected_kind="rom_switch_materialization",
+        ),
     ]
 
     trace_replay = replay_trace_artifacts(trace_paths or [], trace_capture_id)
@@ -1599,7 +1608,11 @@ def live_trace_static_rule_ids(capture: dict[str, Any]) -> list[str]:
     return rule_ids
 
 
-def load_json_reports(paths: list[Path]) -> list[dict[str, Any]]:
+def load_json_reports(
+    paths: list[Path],
+    *,
+    expected_kind: str = "",
+) -> list[dict[str, Any]]:
     reports = []
     for path in paths:
         try:
@@ -1608,6 +1621,16 @@ def load_json_reports(paths: list[Path]) -> list[dict[str, Any]]:
             raise PreferenceDataError(f"missing report: {path}") from exc
         if not isinstance(data, dict):
             raise PreferenceDataError(f"report is not a JSON object: {path}")
+        if expected_kind:
+            kind = str(data.get("kind", ""))
+            if kind != expected_kind:
+                raise PreferenceDataError(
+                    f"{path}: expected {expected_kind} report, got {kind or 'missing kind'}"
+                )
+            if not isinstance(data.get("verdicts"), list):
+                raise PreferenceDataError(
+                    f"{path}: expected {expected_kind} report with verdicts list"
+                )
         data = dict(data)
         data.setdefault("_artifact_path", str(path))
         reports.append(data)

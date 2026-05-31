@@ -136,6 +136,36 @@ class ExplainDecisionTests(unittest.TestCase):
         self.assertIn("selector best=a", text)
         self.assertIn("Next proof commands", text)
 
+    def test_explanation_rejects_wrong_rom_materialization_artifact_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            scenarios_path = root / "scenarios.jsonl"
+            score_path = root / "not_rom_score.json"
+            write_jsonl([explain_scenario()], scenarios_path)
+            score_path.write_text(
+                json.dumps(
+                    {
+                        "changed_ai_run": {
+                            "artifacts": {
+                                "rom_score_materialization": "real_report.json",
+                            },
+                        },
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                PreferenceDataError,
+                "expected rom_score_materialization report",
+            ):
+                explain_decision_from_path(
+                    scenarios_path,
+                    scenario_id="explain_case",
+                    rom_score_materialization_paths=[score_path],
+                )
+
     def test_cli_explain_decision_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_dir:
             root = Path(temporary_dir)
