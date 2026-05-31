@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from tools.boss_ai_preference.data import PreferenceDataError
+
 from .rom_scenarios import evaluate_batch, load_scenario_batch
 
 
@@ -15,6 +17,8 @@ def localize_from_scenarios(path: Path) -> dict[str, Any]:
 
 def localize_from_report(path: Path) -> dict[str, Any]:
     report = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(report, dict):
+        raise PreferenceDataError("localization input must be a batch report object")
     return localize_report(report, scenarios=None, source=str(path))
 
 
@@ -24,7 +28,9 @@ def localize_report(
     scenarios: list[dict[str, Any]] | None,
     source: str,
 ) -> dict[str, Any]:
-    verdicts = report.get("verdicts", [])
+    verdicts = report.get("verdicts")
+    if not isinstance(verdicts, list):
+        raise PreferenceDataError("localization input must contain verdicts")
     reviewable = [item for item in verdicts if int(item.get("severity", 0)) > 0]
     return {
         "schema_version": 1,

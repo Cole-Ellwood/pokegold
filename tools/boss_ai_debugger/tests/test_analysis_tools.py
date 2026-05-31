@@ -143,6 +143,23 @@ class AnalysisToolTests(unittest.TestCase):
         self.assertTrue(report["top_condition_tags"])
         self.assertTrue(report["likely_causes"])
 
+    def test_localize_rejects_wrong_report_artifact_shape(self) -> None:
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "localization input must contain verdicts",
+        ):
+            localize_report(
+                {
+                    "changed_ai_run": {
+                        "artifacts": {
+                            "batch_report": "audit/boss_ai_debugger/runs/run/batch_report.json"
+                        }
+                    }
+                },
+                scenarios=None,
+                source="inline",
+            )
+
     def test_confidence_report_summarizes_generated_and_materialized_strata(self) -> None:
         scenarios = generate_scenarios(family="prediction_mix", count=9, seed=21)
         batch = evaluate_batch(scenarios)
