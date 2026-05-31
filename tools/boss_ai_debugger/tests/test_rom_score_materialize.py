@@ -23,6 +23,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     parse_spikes_layers,
     policy_verdict_from_rom_selector,
     replay_controls_from_manifest,
+    score_materialization_failure_count,
     score_materialization_skip_reason,
     verdict_from_materialized_trace,
     scenario_condition_tags,
@@ -474,6 +475,52 @@ class RomScoreMaterializeTests(unittest.TestCase):
         text = format_rom_score_materialization(report, limit=2)
 
         self.assertLess(text.index("policy_review"), text.index("score_noise"))
+
+    def test_score_materialization_failure_count_covers_fail_on_mismatch_cases(self) -> None:
+        report = {
+            "error_count": 1,
+            "contribution_mismatch_count": 2,
+            "hook_equivalence_mismatch_count": 3,
+            "verdicts": [
+                {
+                    "status": "pass",
+                    "family": "spikes_spin",
+                    "score_bytes_match": False,
+                    "rom_policy": {"severity": 0},
+                },
+                {
+                    "status": "pass",
+                    "family": "mastery_policy",
+                    "score_bytes_match": False,
+                    "rom_policy": {"severity": 0},
+                },
+                {
+                    "status": "pass",
+                    "family": "support_handoff",
+                    "score_bytes_match": True,
+                    "rom_policy": {"severity": 80},
+                },
+            ],
+        }
+
+        self.assertEqual(score_materialization_failure_count(report), 8)
+
+    def test_score_materialization_failure_count_allows_broad_score_review_noise(self) -> None:
+        report = {
+            "error_count": 0,
+            "contribution_mismatch_count": 0,
+            "hook_equivalence_mismatch_count": 0,
+            "verdicts": [
+                {
+                    "status": "pass",
+                    "family": "mastery_policy",
+                    "score_bytes_match": False,
+                    "rom_policy": {"severity": 0},
+                }
+            ],
+        }
+
+        self.assertEqual(score_materialization_failure_count(report), 0)
 
     def test_chunk_scenarios_preserves_all_cases(self) -> None:
         scenarios = [{"id": str(index)} for index in range(7)]

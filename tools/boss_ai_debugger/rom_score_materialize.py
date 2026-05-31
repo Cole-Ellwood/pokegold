@@ -46,6 +46,7 @@ PUBLIC_POLICY_FAMILIES = (
     "cashout_board_delta",
 )
 SUPPORTED_FAMILIES = ("spikes_spin", *PUBLIC_POLICY_FAMILIES)
+EXACT_SCORE_MATCH_FAMILIES = {"spikes_spin"}
 
 MOVE_FALLBACK_IDS = {
     "move_absorber_coverage": 0x59,
@@ -1687,6 +1688,7 @@ def format_rom_score_materialization(
         and (
             not verdict.get("score_bytes_match", False)
             or verdict.get("contribution_comparison", {}).get("mismatch_count", 0) > 0
+            or not verdict.get("hook_equivalence", {}).get("match", True)
             or int(verdict.get("rom_policy", {}).get("severity", 0)) > 0
         )
     ]
@@ -1714,10 +1716,28 @@ def format_rom_score_materialization(
     return "\n".join(lines)
 
 
-def score_materialization_review_key(verdict: dict[str, Any]) -> tuple[int, int, int]:
+def score_materialization_failure_count(report: dict[str, Any]) -> int:
+    failures = int(report.get("error_count", 0))
+    failures += int(report.get("contribution_mismatch_count", 0))
+    failures += int(report.get("hook_equivalence_mismatch_count", 0))
+    for verdict in report.get("verdicts", []):
+        if verdict.get("status") != "pass":
+            continue
+        if int(verdict.get("rom_policy", {}).get("severity", 0)) > 0:
+            failures += 1
+        elif (
+            verdict.get("family") in EXACT_SCORE_MATCH_FAMILIES
+            and not verdict.get("score_bytes_match", False)
+        ):
+            failures += 1
+    return failures
+
+
+def score_materialization_review_key(verdict: dict[str, Any]) -> tuple[int, int, int, int]:
     return (
         int(verdict.get("rom_policy", {}).get("severity", 0)),
         int(verdict.get("contribution_comparison", {}).get("mismatch_count", 0)),
+        0 if verdict.get("hook_equivalence", {}).get("match", True) else 1,
         0 if verdict.get("score_bytes_match", False) else 1,
     )
 

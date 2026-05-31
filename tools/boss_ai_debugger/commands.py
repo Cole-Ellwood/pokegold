@@ -178,6 +178,7 @@ from .rom_score_materialize import (
     DEFAULT_WATCH_FRAMES as DEFAULT_SCORE_MATERIALIZE_WATCH_FRAMES,
     format_rom_score_materialization,
     run_rom_score_materialization_from_path,
+    score_materialization_failure_count,
     write_rom_score_materialization_json,
 )
 from .rom_switch_materialize import (
@@ -1244,7 +1245,7 @@ def cmd_rom_score_materialize(args: argparse.Namespace) -> int:
         print(format_rom_score_materialization(report, limit=args.display_limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
-    if args.fail_on_mismatch and report["contribution_mismatch_count"] > 0:
+    if args.fail_on_mismatch and score_materialization_failure_count(report) > 0:
         return 1
     return 0
 
