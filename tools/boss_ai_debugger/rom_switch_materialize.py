@@ -1062,6 +1062,14 @@ def skipped_verdict(
     }
 
 
+def switch_materialization_failure_count(report: dict[str, Any]) -> int:
+    return (
+        int(report.get("policy_disagreement_count", 0))
+        + int(report.get("error_count", 0))
+        + int(report.get("skipped_count", 0))
+    )
+
+
 def format_rom_switch_materialization(
     report: dict[str, Any],
     *,

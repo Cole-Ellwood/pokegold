@@ -11,6 +11,7 @@ from tools.boss_ai_debugger.rom_switch_materialize import (
     format_rom_switch_materialization,
     scenario_expects_switch,
     source_base_switch_threshold,
+    switch_materialization_failure_count,
     switch_materialization_patches,
     switch_observation_status,
     switch_roll_frequency,
@@ -806,6 +807,15 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertIn("status=error", text)
         self.assertIn("reason=stale post-dispatch state", text)
+
+    def test_switch_materialization_failure_count_includes_skipped_scenarios(self) -> None:
+        report = {
+            "policy_disagreement_count": 1,
+            "error_count": 2,
+            "skipped_count": 3,
+        }
+
+        self.assertEqual(switch_materialization_failure_count(report), 6)
 
 
 if __name__ == "__main__":

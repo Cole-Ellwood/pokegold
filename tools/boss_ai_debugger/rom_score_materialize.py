@@ -1716,8 +1716,14 @@ def format_rom_score_materialization(
     return "\n".join(lines)
 
 
-def score_materialization_failure_count(report: dict[str, Any]) -> int:
+def score_materialization_failure_count(
+    report: dict[str, Any],
+    *,
+    include_skipped: bool = False,
+) -> int:
     failures = int(report.get("error_count", 0))
+    if include_skipped:
+        failures += int(report.get("skipped_count", 0))
     failures += int(report.get("contribution_mismatch_count", 0))
     failures += int(report.get("hook_equivalence_mismatch_count", 0))
     for verdict in report.get("verdicts", []):

@@ -186,6 +186,7 @@ from .rom_switch_materialize import (
     DEFAULT_WATCH_FRAMES as DEFAULT_SWITCH_MATERIALIZE_WATCH_FRAMES,
     format_rom_switch_materialization,
     run_rom_switch_materialization_from_path,
+    switch_materialization_failure_count,
     write_rom_switch_materialization_json,
 )
 from .run_store import DEFAULT_RUNS_DIR, run_changed_ai_suite, run_generated_smoke_suite
@@ -1245,7 +1246,10 @@ def cmd_rom_score_materialize(args: argparse.Namespace) -> int:
         print(format_rom_score_materialization(report, limit=args.display_limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
-    if args.fail_on_mismatch and score_materialization_failure_count(report) > 0:
+    if args.fail_on_mismatch and score_materialization_failure_count(
+        report,
+        include_skipped=True,
+    ) > 0:
         return 1
     return 0
 
@@ -1269,9 +1273,7 @@ def cmd_rom_switch_materialize(args: argparse.Namespace) -> int:
         print(format_rom_switch_materialization(report, limit=args.display_limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
-    if args.fail_on_mismatch and (
-        report["policy_disagreement_count"] > 0 or report["error_count"] > 0
-    ):
+    if args.fail_on_mismatch and switch_materialization_failure_count(report) > 0:
         return 1
     return 0
 

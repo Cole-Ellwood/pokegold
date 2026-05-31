@@ -489,6 +489,7 @@ class RomScoreMaterializeTests(unittest.TestCase):
     def test_score_materialization_failure_count_covers_fail_on_mismatch_cases(self) -> None:
         report = {
             "error_count": 1,
+            "skipped_count": 4,
             "contribution_mismatch_count": 2,
             "hook_equivalence_mismatch_count": 3,
             "verdicts": [
@@ -513,11 +514,16 @@ class RomScoreMaterializeTests(unittest.TestCase):
             ],
         }
 
+        self.assertEqual(
+            score_materialization_failure_count(report, include_skipped=True),
+            12,
+        )
         self.assertEqual(score_materialization_failure_count(report), 8)
 
     def test_score_materialization_failure_count_allows_broad_score_review_noise(self) -> None:
         report = {
             "error_count": 0,
+            "skipped_count": 0,
             "contribution_mismatch_count": 0,
             "hook_equivalence_mismatch_count": 0,
             "verdicts": [
