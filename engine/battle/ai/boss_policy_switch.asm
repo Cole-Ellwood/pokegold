@@ -47,7 +47,11 @@ BossAI_TrySwitch:
 	ret z
 	call BossAI_GetPrimaryThreatType
 	jr nc, .candidate_answers_threat
-	call BossAI_IsImmunityPivotOpportunity
+	; A threat exists, so a voluntary type-flee must actually improve the
+	; matchup. The old check here greenlit the switch whenever the bench mon was
+	; immune/resistant to the SINGLE primary-threat type, blind to a worse
+	; weakness against the player's other likely public threats.
+	call BossAI_SwitchInBeatsStaying
 	jr c, .candidate_answers_threat
 	xor a
 	ld [wEnemySwitchMonParam], a
@@ -582,6 +586,84 @@ BossAI_FindFirstAliveSwitchCandidate:
 
 .none
 	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchInBeatsStaying:
+; Carry SET when the finalized switch candidate's worst-case matchup against
+; the player's likely threat types is strictly safer than the active mon's.
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	ld c, a
+	ld b, 0
+	ld hl, wOTPartySpecies
+	add hl, bc
+	ld a, [hl]
+	call BossAI_WorstLikelyThreatMatchupForSpecies
+	push af ; candidate worst-case matchup
+	ld a, [wEnemyMonSpecies]
+	call BossAI_WorstLikelyThreatMatchupForSpecies
+	ld b, a ; active (staying) worst-case matchup
+	pop af ; candidate worst-case matchup
+	cp b ; carry set iff candidate worst < active worst
+	ret
+
+; ai-layer: POLICY
+BossAI_WorstLikelyThreatMatchupForSpecies:
+; In:  a = valid enemy species id.
+; Out: a = max matchup over likely public threat types.
+; Saves/restores wCurSpecies + wCurBaseData; uses wBossAITemp4 as scratch.
+	ld c, a
+	ld a, [wCurSpecies]
+	push af
+	ld a, c
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld b, 0
+	ld hl, BossAI_PlausibleThreatTypes
+.type_loop
+	ld a, [hli]
+	cp -1
+	jr z, .check_hidden_power
+	ld [wBossAITemp4], a
+	push hl
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr nc, .type_loop
+	ld a, [wBossAITemp4]
+	call BossAI_AccumulateWorstMatchup
+	jr .type_loop
+
+.check_hidden_power
+	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
+	call BossAI_TestLikelyMaskBit
+	jr nc, .restore
+	ld hl, BossAIHiddenPowerThreatTypes
+.hp_loop
+	ld a, [hli]
+	cp -1
+	jr z, .restore
+	call BossAI_AccumulateWorstMatchup
+	jr .hp_loop
+
+.restore
+	pop af
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, b
+	ret
+
+; ai-layer: POLICY
+BossAI_AccumulateWorstMatchup:
+; in:  a = attacking threat type, b = running worst, wBaseType1/2 = defender.
+; out: b = max(b, threat effectiveness).
+	push hl
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem
+	pop hl
+	ld a, [wTypeMatchup]
+	cp b
+	ret c
+	ld b, a
 	ret
 
 endc

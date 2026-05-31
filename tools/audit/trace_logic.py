@@ -93,7 +93,7 @@ def audit_switch_loop(boss: str) -> None:
             "call BossAI_RefineSwitchCandidateForPlausibleRisk",
             "call BossAI_GetPrimaryThreatType",
             "jr nc, .candidate_answers_threat",
-            "call BossAI_IsImmunityPivotOpportunity",
+            "call BossAI_SwitchInBeatsStaying",
             "jr c, .candidate_answers_threat",
             "xor a",
             "ld [wEnemySwitchMonParam], a",
@@ -104,27 +104,63 @@ def audit_switch_loop(boss: str) -> None:
             "ret z",
             "call BossAI_ComputeSwitchConfidence",
         ],
-        "switch target must answer public primary threat before confidence roll",
+        "switch target must improve over active worst likely threat before confidence roll",
     )
 
-    answer = top_block(boss, "BossAI_IsImmunityPivotOpportunity")
+    answer = top_block(boss, "BossAI_SwitchInBeatsStaying")
     require_order(
         answer,
         [
-            "call BossAI_GetPrimaryThreatType",
-            "ret nc",
-            "ld [wBossAITemp], a",
             "ld a, [wEnemySwitchMonParam]",
             "and $f",
+            "ld c, a",
             "ld hl, wOTPartySpecies",
-            "call GetBaseData",
-            "ld a, [wBossAITemp]",
-            "call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem",
-            "ld a, [wTypeMatchup]",
-            "cp EFFECTIVE",
-            "jr nc, .not_immune",
+            "call BossAI_WorstLikelyThreatMatchupForSpecies",
+            "push af",
+            "ld a, [wEnemyMonSpecies]",
+            "call BossAI_WorstLikelyThreatMatchupForSpecies",
+            "ld b, a",
+            "pop af",
+            "cp b",
         ],
-        "switch target answer gate must require resistance/immunity to primary threat",
+        "switch target answer gate must compare candidate and active worst threat",
+    )
+
+    worst = top_block(boss, "BossAI_WorstLikelyThreatMatchupForSpecies")
+    require_order(
+        worst,
+        [
+            "ld [wCurSpecies], a",
+            "call GetBaseData",
+            "ld b, 0",
+            "ld hl, BossAI_PlausibleThreatTypes",
+            "call BossAI_TestLikelyMaskBit",
+            "call BossAI_AccumulateWorstMatchup",
+            "ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT",
+            "call BossAI_TestLikelyMaskBit",
+            "ld hl, BossAIHiddenPowerThreatTypes",
+            "call BossAI_AccumulateWorstMatchup",
+            "pop af",
+            "ld [wCurSpecies], a",
+            "call GetBaseData",
+            "ld a, b",
+        ],
+        "switch target worst-threat helper must scan likely types and restore base data",
+    )
+
+    accumulate = top_block(boss, "BossAI_AccumulateWorstMatchup")
+    require_order(
+        accumulate,
+        [
+            "push hl",
+            "call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem",
+            "pop hl",
+            "ld a, [wTypeMatchup]",
+            "cp b",
+            "ret c",
+            "ld b, a",
+        ],
+        "switch target worst-threat helper must keep the max matchup value",
     )
 
     perish = top_block(boss, "BossAI_EnemyPerishEscapeUrgent")

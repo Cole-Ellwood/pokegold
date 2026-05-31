@@ -294,9 +294,9 @@ def audit_type_matchup_scan_preserves_table_cursor(boss: str) -> None:
         matchup,
         [
             ".yup",
-            "push hl",
             "call GetFarByte",
             "inc hl",
+            "push hl",
             "call BossAI_ApplyDragonsMajestyNoItem",
             "call Multiply",
             "call Divide",

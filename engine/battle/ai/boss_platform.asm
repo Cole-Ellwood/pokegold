@@ -692,7 +692,6 @@ BossAI_CheckTypeMatchupNoItem:
 	jr .types_loop
 
 .yup
-	push hl
 	xor a
 	ldh [hDividend + 0], a
 	ldh [hMultiplicand + 0], a
@@ -700,6 +699,15 @@ BossAI_CheckTypeMatchupNoItem:
 	ld a, BANK(TypeMatchups)
 	call GetFarByte
 	inc hl
+	; Preserve the table pointer AFTER advancing past this entry's factor byte.
+	; BossAI_ApplyDragonsMajestyNoItem and Multiply/Divide clobber hl, so it must
+	; be saved across them. Vanilla CheckTypeMatchup does this post-advance
+	; (`ld a, [hli]` then `push hl`). The earlier port pushed BEFORE the read+inc,
+	; so `pop hl` rewound onto the factor byte and the loop re-read that factor as
+	; the next attacker. For a dual-type defender that desync corrupted every row
+	; after the first match (e.g. FIRE vs Bug/Flying resolved 0.25x instead of 2x),
+	; feeding the boss false "resist" reads in move scoring and switch decisions.
+	push hl
 	call BossAI_ApplyDragonsMajestyNoItem
 	ldh [hMultiplicand + 2], a
 	ld a, [wTypeMatchup]
