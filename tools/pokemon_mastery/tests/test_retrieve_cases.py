@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from tools.pokemon_mastery import retrieve_cases as rc
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests
 
 
 def make_case(case_id: str, user: str, opp: str, tb: str = "mid", user_sides=(), opp_sides=(), tier="study", lesson="x"):
@@ -130,3 +131,6 @@ def test_format_retrieval_for_predictor_renders_lesson():
     assert "active damage before script" in out
     assert "L0" in out
     assert "a" in out
+
+
+load_tests = make_load_tests(globals())

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from tools.pokemon_mastery import fetch_replay
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests, raises
 
 
 def write_index(path: Path, rows: list[dict]) -> None:
@@ -181,14 +182,12 @@ def test_pick_and_record_skips_already_seen(tmp_path: Path):
 
 
 def test_pick_and_record_raises_when_no_candidate(tmp_path: Path):
-    import pytest
-
     index_path = tmp_path / "replay_index.jsonl"
 
     def fake_fetch_json(url):
         return [{"id": "a", "rating": 1200, "private": 0, "uploadtime": 1, "players": []}]
 
-    with pytest.raises(RuntimeError):
+    with raises(RuntimeError):
         fetch_replay.pick_and_record(
             fmt="gen2ou",
             min_rating=1400,
@@ -206,3 +205,6 @@ def test_append_index_row_is_append_only(tmp_path: Path):
     fetch_replay.append_index_row({"replay_id": "b", "tier": "validation"}, p)
     rows = fetch_replay.read_replay_index(p)
     assert [r["replay_id"] for r in rows] == ["a", "b"]
+
+
+load_tests = make_load_tests(globals())

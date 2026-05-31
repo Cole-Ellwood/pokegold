@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
-import pytest
 
 from tools.pokemon_mastery import loop_runner as lr
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests, raises
 
 
-@pytest.fixture
-def isolated_lib(tmp_path: Path, monkeypatch):
+def _isolated_lib(ctx):
+    tmp_path = ctx.get("tmp_path")
+    monkeypatch = ctx.get("monkeypatch")
     lib = tmp_path / "case_library"
     lib.mkdir()
     state = {
@@ -88,12 +87,12 @@ def test_suggest_phase_resets_after_validation(isolated_lib):
 
 def test_append_case_rejects_non_study_tier(isolated_lib):
     lr.append_replay(good_replay(replay_id="gen2ou-v", tier="validation"))
-    with pytest.raises(ValueError, match="tier must be 'study'"):
+    with raises(ValueError, match="tier must be 'study'"):
         lr.append_case(good_case(replay_id="gen2ou-v", tier="validation"))
 
 
 def test_append_case_rejects_unknown_replay_id(isolated_lib):
-    with pytest.raises(ValueError, match="not in replay_index"):
+    with raises(ValueError, match="not in replay_index"):
         lr.append_case(good_case(replay_id="gen2ou-missing"))
 
 
@@ -107,27 +106,27 @@ def test_append_case_missing_required_field(isolated_lib):
     lr.append_replay(good_replay())
     case = good_case()
     del case["pro_action"]
-    with pytest.raises(ValueError, match="missing required field"):
+    with raises(ValueError, match="missing required field"):
         lr.append_case(case)
 
 
 def test_append_replay_dedupes(isolated_lib):
     lr.append_replay(good_replay())
-    with pytest.raises(ValueError, match="already in"):
+    with raises(ValueError, match="already in"):
         lr.append_replay(good_replay())
 
 
 def test_append_replay_rejects_bad_tier(isolated_lib):
     row = good_replay()
     row["tier"] = "garbage"
-    with pytest.raises(ValueError, match="invalid tier"):
+    with raises(ValueError, match="invalid tier"):
         lr.append_replay(row)
 
 
 def test_append_metrics_rejects_bad_tier(isolated_lib):
     row = good_metrics()
     row["tier"] = "garbage"
-    with pytest.raises(ValueError, match="invalid tier"):
+    with raises(ValueError, match="invalid tier"):
         lr.append_metrics(row)
 
 
@@ -147,7 +146,7 @@ def test_bump_iteration_increments(isolated_lib):
 
 
 def test_bump_iteration_rejects_unknown_phase(isolated_lib):
-    with pytest.raises(ValueError, match="unknown phase"):
+    with raises(ValueError, match="unknown phase"):
         lr.bump_iteration("garbage", None)
 
 
@@ -173,3 +172,6 @@ def test_status_report_fields(isolated_lib):
     assert report["replays_indexed"] == 1
     assert report["cases_stored"] == 1
     assert report["suggested_next_phase"] in {"INGEST", "VALIDATE", "CONSOLIDATE"}
+
+
+load_tests = make_load_tests(globals(), {"isolated_lib": _isolated_lib})

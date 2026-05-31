@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from tools.pokemon_mastery import verify_loop_state as vls
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests
 
 
 def write_lib(tmp: Path, replays: list[dict], cases: list[dict]) -> Path:
@@ -107,3 +108,6 @@ def test_partial_investigation_block_fails(tmp_path, monkeypatch):
     lib = write_lib(tmp_path, [good_replay()], [base_case("c1", "missed_class", investigation=inv)])
     errors = run_check(lib, monkeypatch)
     assert any("investigation" in e.lower() for e in errors), errors
+
+
+load_tests = make_load_tests(globals())

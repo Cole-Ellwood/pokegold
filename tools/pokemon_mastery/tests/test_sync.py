@@ -11,9 +11,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
-
 from tools.pokemon_mastery import sync
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests
 
 
 def g(cwd: Path, *args: str) -> str:
@@ -38,16 +37,17 @@ def commit(path: Path, fname: str, content: str, msg: str) -> str:
     return g(path, "rev-parse", "HEAD")
 
 
-@pytest.fixture
-def repo(tmp_path: Path, monkeypatch) -> Path:
+def _repo(ctx) -> Path:
+    tmp_path = ctx.get("tmp_path")
+    monkeypatch = ctx.get("monkeypatch")
     r = init_repo(tmp_path / "repo")
     monkeypatch.setattr(sync, "ROOT", r)
     return r
 
 
-@pytest.fixture
-def green_gate(monkeypatch):
+def _green_gate(ctx) -> None:
     """Default: integrity gate passes, so tests focus on git correctness."""
+    monkeypatch = ctx.get("monkeypatch")
     monkeypatch.setattr(sync, "run_gate", lambda: [])
 
 
@@ -174,3 +174,12 @@ def test_land_refuses_missing_target_branch(repo, green_gate):
     commit(repo, "f", "v0", "c0")
     g(repo, "checkout", "-b", "work")
     assert sync.land(into="nonexistent") == 1
+
+
+load_tests = make_load_tests(
+    globals(),
+    {
+        "repo": _repo,
+        "green_gate": _green_gate,
+    },
+)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tools.pokemon_mastery import fingerprint as fp
 from tools.pokemon_mastery import replay_turn_pause as rtp
+from tools.pokemon_mastery.tests.unittest_compat import make_load_tests, raises
 
 
 def test_hp_bucket_unknown_inputs():
@@ -122,8 +123,7 @@ def test_fingerprint_perspective_flips_for_p2():
 
 def test_fingerprint_rejects_bad_side():
     state = build_state()
-    import pytest
-    with pytest.raises(ValueError):
+    with raises(ValueError):
         fp.fingerprint_from_state(state, turn=1, side="p3")
 
 
@@ -150,3 +150,6 @@ def test_fingerprint_hash_matches_verify_case_breadth_expectation():
     # Verify the import is the same function (not a stale copy).
     from tools.pokemon_mastery import verify_case_breadth
     assert verify_case_breadth.fingerprint_hash is fp.fingerprint_hash
+
+
+load_tests = make_load_tests(globals())
