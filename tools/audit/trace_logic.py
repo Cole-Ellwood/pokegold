@@ -93,7 +93,7 @@ def audit_switch_loop(boss: str) -> None:
             "call BossAI_RefineSwitchCandidateForPlausibleRisk",
             "call BossAI_GetPrimaryThreatType",
             "jr nc, .candidate_answers_threat",
-            "call BossAI_IsImmunityPivotOpportunity",
+            "call BossAI_SwitchInBeatsStaying",
             "jr c, .candidate_answers_threat",
             "xor a",
             "ld [wEnemySwitchMonParam], a",

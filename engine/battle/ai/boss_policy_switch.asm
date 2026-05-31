@@ -47,7 +47,14 @@ BossAI_TrySwitch:
 	ret z
 	call BossAI_GetPrimaryThreatType
 	jr nc, .candidate_answers_threat
-	call BossAI_IsImmunityPivotOpportunity
+	; A threat exists, so a voluntary type-flee must actually improve the matchup.
+	; The old check greenlit the switch whenever the bench mon was immune/resistant
+	; to the SINGLE primary-threat type, blind to a worse weakness against the
+	; player's other threats: Ariados fled a 2x Rock matchup into Ledian's 4x Rock
+	; because Ledian "resisted" the mis-ranked primary threat. SwitchInBeatsStaying
+	; instead compares the switch-in's WORST single-type matchup over the whole
+	; likely-threat set against the active mon's, and only commits if strictly safer.
+	call BossAI_SwitchInBeatsStaying
 	jr c, .candidate_answers_threat
 	xor a
 	ld [wEnemySwitchMonParam], a
@@ -582,6 +589,91 @@ BossAI_FindFirstAliveSwitchCandidate:
 
 .none
 	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_SwitchInBeatsStaying:
+; Stage-1 switch-matchup gate. Carry SET when the finalized switch candidate's
+; worst-case matchup against the player's likely threat types is STRICTLY safer
+; (lower) than the active mon's worst case -- i.e. fleeing actually reduces the
+; worst the player can bring; carry CLEAR otherwise (cancel the switch). The
+; comparison is the MAX single-type matchup, never a sum, so one 4x weakness can
+; never look as safe as two 2x weaknesses and we never flee a winning matchup
+; into a worse one.
+;
+; Reads:  wEnemySwitchMonParam (low nibble = 0-based candidate slot),
+;         wEnemyMonSpecies, wOTPartySpecies, the likely-threat mask.
+; Writes: wBossAITemp4 (scratch); restores wCurSpecies + wCurBaseData.
+	ld a, [wEnemySwitchMonParam]
+	and $f
+	ld c, a
+	ld b, 0
+	ld hl, wOTPartySpecies
+	add hl, bc
+	ld a, [hl]
+	call BossAI_WorstLikelyThreatMatchupForSpecies
+	push af ; candidate worst-case matchup
+	ld a, [wEnemyMonSpecies]
+	call BossAI_WorstLikelyThreatMatchupForSpecies
+	ld b, a ; active (staying) worst-case matchup
+	pop af ; candidate worst-case matchup
+	cp b ; carry set iff candidate worst < active worst (strictly safer)
+	ret
+
+; ai-layer: POLICY
+BossAI_WorstLikelyThreatMatchupForSpecies:
+; Worst-case (max) type effectiveness the player's LIKELY threat types deal to
+; one enemy species. "Likely" = the public threat mask (active player STAB +
+; revealed damaging move types), NOT the speculative possible mask, so a
+; switch-in is judged against pressure the player has actually shown. (Hidden
+; Power keeps a hidden type even once the move is revealed, so it is left out.)
+;
+; In:  a = enemy species id (0 / $ff -> returns 0).
+; Out: a = max wTypeMatchup (0/5/10/20/40...) over the likely threat types.
+; Saves/restores wCurSpecies + wCurBaseData; uses wBossAITemp4 as scratch.
+	and a
+	jr z, .zero
+	cp $ff
+	jr z, .zero
+	push bc
+	ld c, a ; target species
+	ld a, [wCurSpecies]
+	push af ; save caller's wCurSpecies
+	ld a, c
+	ld [wCurSpecies], a
+	call GetBaseData ; wBaseType1/2 <- target species' types
+	ld b, 0 ; b = running worst (max) matchup; preserved across the calls below
+	ld hl, BossAI_PlausibleThreatTypes
+.loop
+	ld a, [hli]
+	cp -1
+	jr z, .restore
+	ld [wBossAITemp4], a ; TestLikelyMaskBit clobbers a/c/d/e/hl, so stash the type
+	push hl
+	call BossAI_TestLikelyMaskBit
+	pop hl
+	jr nc, .loop
+	push hl
+	ld a, [wBossAITemp4]
+	call BossAI_CheckPlayerMoveTypeMatchupVsBaseNoItem ; preserves bc; clobbers hl
+	pop hl
+	ld a, [wTypeMatchup]
+	cp b
+	jr c, .loop ; effectiveness < current worst -> keep the running max
+	ld b, a
+	jr .loop
+
+.restore
+	pop af ; caller's wCurSpecies
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ld a, b
+	pop bc
+	ret
+
+.zero
+	xor a
 	ret
 
 endc
