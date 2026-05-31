@@ -67,6 +67,16 @@ class RomScoreMaterializeTests(unittest.TestCase):
             [0xBF, 0xBC, 0x39, 0x99],
         )
 
+    def test_move_ids_reject_boolean_explicit_move_id(self) -> None:
+        scenario = {
+            "moves": [
+                {"id": "move_a", "move_id": True},
+            ],
+        }
+
+        with self.assertRaisesRegex(PreferenceDataError, "move_id for slot 1"):
+            move_ids_for_scenario(scenario, move_name_to_id={})
+
     def test_materialization_patches_public_spikes_and_rapid_spin_state(self) -> None:
         scenario = generate_scenarios(family="spikes_spin", count=1, seed=1)[0]
         scenario["expectation"]["condition_tags"] = [

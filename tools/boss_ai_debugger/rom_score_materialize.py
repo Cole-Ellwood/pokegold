@@ -1647,7 +1647,7 @@ def word_patches(symbol_name: str, value: int) -> list[MemoryPatch]:
 def validate_byte(raw: Any, label: str) -> int:
     if isinstance(raw, str):
         raw = int(raw, 0)
-    if not isinstance(raw, int):
+    if isinstance(raw, bool) or not isinstance(raw, int):
         raise PreferenceDataError(f"{label} must be an integer")
     if not 0 <= raw <= 0xFF:
         raise PreferenceDataError(f"{label} is out of byte range")
