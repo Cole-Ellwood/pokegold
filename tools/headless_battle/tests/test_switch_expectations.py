@@ -551,6 +551,38 @@ class CliMainTests(unittest.TestCase):
                     )
         self.assertEqual(code, 0)
 
+    def test_cli_fail_on_violation_exits_nonzero_for_missing_expected_scenario(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            expectations_path = tmp_path / "expectations.json"
+            expectations_path.write_text(
+                json.dumps(
+                    [
+                        {"scenario_id": "pass_id", "expected": {"action": "switch"}},
+                        {"scenario_id": "missing_id", "expected": {"action": "stay"}},
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            scenarios_path = tmp_path / "scenarios.jsonl"
+            scenarios_path.write_text("[]", encoding="utf-8")
+            with patch(
+                "tools.headless_battle.switch_expectations.run_batch_switch_materialize",
+                return_value=_batch_report([_verdict("pass_id")]),
+            ):
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    code = main(
+                        [
+                            "--scenarios",
+                            str(scenarios_path),
+                            "--expectations",
+                            str(expectations_path),
+                            "--fail-on-violation",
+                        ]
+                    )
+        self.assertEqual(code, 1)
+
     def test_cli_batch_json_out_writes_underlying_batch_report(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

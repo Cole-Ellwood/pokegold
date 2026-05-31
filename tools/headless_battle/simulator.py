@@ -4896,6 +4896,7 @@ def run_self_test() -> None:
         "tier": "late",
         "move_ids": [33, 52, 0, 0],
         "scores": [20, 21, 80, 80],
+        "selector_hedge_slot": 1,
     }
     selector_move_payload["rng"] = {"mode": "fixed", "values": [200, 255, 255, 255]}
     selector_move = simulate_payload(selector_move_payload)["outcomes"][0]["events"]

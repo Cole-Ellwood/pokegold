@@ -12,12 +12,16 @@ from tools.headless_battle.simulator import (
     REPORT_KIND,
     SimulationInputError,
     format_text,
+    run_self_test,
     scenario_template,
     simulate_payload,
 )
 
 
 class HeadlessBattleSimulatorTests(unittest.TestCase):
+    def test_internal_self_test_passes(self) -> None:
+        run_self_test()
+
     def test_template_runs_one_selected_turn(self) -> None:
         report = simulate_payload(scenario_template())
 

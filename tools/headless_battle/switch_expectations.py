@@ -525,7 +525,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fail-on-violation",
         action="store_true",
-        help="exit nonzero when any comparison is fail or error",
+        help="exit nonzero when any comparison is fail/error or an expectation was not checked",
     )
     return parser
 
@@ -559,7 +559,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"wrote {args.batch_json_out}")
     if args.fail_on_violation:
         summary = comparison.get("summary", {})
-        if summary.get("fail", 0) or summary.get("error", 0):
+        if (
+            summary.get("fail", 0)
+            or summary.get("error", 0)
+            or summary.get("missing_scenario_ids")
+        ):
             return 1
     return 0
 
