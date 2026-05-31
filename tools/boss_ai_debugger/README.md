@@ -72,8 +72,8 @@ python -m tools.boss_ai_debugger simulate --builtin all_equal_late
 
 This simulator is for source review, not player-facing UX. It models the real
 ROM direction: lower scores are better, scores 80+ are blocked, negative
-lookahead deltas encourage, and `BossAI_SelectMove` rolls only between the best
-and second-best slots.
+lookahead deltas encourage, and `BossAI_SelectMove` commits to the best slot
+unless a public switch-hedge candidate exists.
 
 Batch-check scenarios against policy expectations:
 
@@ -446,21 +446,21 @@ the live trace also carries switch-dispatch bytes, such as
 `shared_switch_loop_live.txt`, the packet parses `switch_confidence` and
 `switch_context` into the observed proposal/actual switch path, a switch-roll
 range from source thresholds, and follow-up `rom-switch-materialize` commands.
-Live-trace packets also render the selector path explicitly: best and second
-candidate, score gap, `BossAI_SelectMove` roll threshold, nonzero-probability
-actions, chosen action probability, and current rule-map source anchors for the
-selector and observed switch-dispatch path. Attached ROM score and selector
-materialization artifacts are normalized into the same selector-path shape, so
-scenario packets show the ROM-backed best/second/threshold surface without
-hand-reading materialization JSON. Each packet starts with a `decision_summary`
-answer block that compresses the observed action, selector/switch path,
-selector rank and roll probability for the observed action, candidate scores,
-top ROM/Python rule deltas, source anchors, public-input highlights,
-ROM/Python agreement, decisive counterfactual, missing evidence, and next proof
-command. If the observed action is the best or second selector candidate, the
-counterfactual block also names the exact 0-255 roll range that would have
-selected the alternate candidate, which keeps random selector choices separate
-from score-model preference. When `--focus-action-id` is supplied, the summary
+Live-trace packets also render the selector path explicitly: best and optional
+public switch-hedge candidate, score gap, `BossAI_SelectMove` roll threshold,
+nonzero-probability actions, chosen action probability, and current rule-map
+source anchors for the selector and observed switch-dispatch path. Attached ROM
+score and selector materialization artifacts are normalized into the same
+selector-path shape, so scenario packets show the ROM-backed best/hedge/threshold
+surface without hand-reading materialization JSON. Each packet starts with a
+`decision_summary` answer block that compresses the observed action,
+selector/switch path, selector rank and roll probability for the observed
+action, candidate scores, top ROM/Python rule deltas, source anchors,
+public-input highlights, ROM/Python agreement, decisive counterfactual, missing
+evidence, and next proof command. If the observed action is the best or switch
+hedge, the counterfactual block also names the exact 0-255 roll range that would
+have selected the alternate candidate, which keeps random selector choices
+separate from score-model preference. When `--focus-action-id` is supplied, the summary
 also compares that action against the observed/chosen candidate by final score,
 selector probability, selector rank, block status, candidate-local score-rule
 deltas, and required score movement, preferring matching ROM contribution events

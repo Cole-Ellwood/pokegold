@@ -252,12 +252,14 @@ For the full current behavior list (one-line each, with rationale), read
 
 | Need | Label / line |
 | --- | --- |
-| Pick best vs. second-best, weighted dice on score gap | `BossAI_SelectMove` (`engine/battle/ai/boss_policy_move.asm:2786`) |
+| Pick best vs. public switch hedge, weighted dice on score gap | `BossAI_SelectMove` (`engine/battle/ai/boss_policy_move.asm:2786`) |
 | Trace top-3 moves and scores | `BossAI_TraceTopMoves` in `engine/battle/ai/boss_trace_topmoves.asm` (own SECTION; called via `farcall` from `BossAI_SelectMove`) |
 
-Dice contract (comment at `engine/battle/ai/boss_policy_move.asm:137-141`): gap ≥6 → 90% best, gap ≥3 →
-75% best, else 60% best. 79+ scores are treated as "blocked" (saturated by
-`DiscourageScoreHL`).
+Dice contract: with no public switch hedge, the selector commits to the best
+slot. If `BossAI_SelectSwitchHedge` finds a revealed alive bench target that the
+best move is resisted/immune by, the selector rolls best vs. that coverage hedge:
+gap >=6 -> 90% best, gap >=3 -> 75% best, else 60% best, with tier bumps. 79+
+scores are treated as "blocked" (saturated by `DiscourageScoreHL`).
 
 ### Pressure / KO scoring of own moves
 

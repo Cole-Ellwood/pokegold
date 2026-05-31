@@ -15,8 +15,8 @@ Source evidence supporting this decision:
 - `BossAI_SelectPlanIfNeeded` already tracks a readable plan id and confidence.
 - `BossAI_ApplyLookaheadToTopMoveCandidates` evaluates near-top actions before
   selection.
-- `BossAI_SelectMove` already picks weighted best versus second-best instead of
-  always taking a deterministic argmax.
+- `BossAI_SelectMove` commits to the best move unless a public switch-hedge
+  candidate exists, then rolls weighted best versus hedge.
 - `BossAI_PredictPlayerSwitch`, `BossAI_ApplyRepeatPenalty`, scouting, and
   switch-loop penalties already cover the practical pattern-detection lane.
 - `BossAI_RefineSwitchCandidateForPlausibleRisk` already uses plausible and

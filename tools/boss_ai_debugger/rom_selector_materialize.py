@@ -40,8 +40,9 @@ KNOWN_LIMITS = [
         "ROM score-model contribution accuracy."
     ),
     (
-        "One ROM sample is stochastic when two actions have nonzero probability; "
-        "agreement means the chosen action had nonzero Python selector probability."
+        "One ROM sample is stochastic when a public switch hedge has nonzero "
+        "probability; agreement means the chosen action had nonzero Python "
+        "selector probability."
     ),
 ]
 
