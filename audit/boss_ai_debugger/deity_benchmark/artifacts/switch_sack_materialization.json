@@ -248,9 +248,9 @@
     "closed_evidence_ids": [
       "decision_input.generated_auto"
     ],
-    "generated_at": "2026-05-31T01:16:47Z",
+    "generated_at": "2026-05-31T02:20:19Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
     },
     "kind": "boss_ai_decision_input_manifest",
@@ -270,9 +270,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
-      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
-      "scenario_artifact_sha256": "48008BDC4CC8496DAAA0DCCB84E58B1E4C2201DB041277F0943237EFAE94C45C"
+      "dirty_diff_sha256": "5878A47183E87755C55482201780782F1BDEEB709CB24D1C3DB095448CC1D2CC",
+      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
+      "scenario_artifact_sha256": "60BAC64E463541E3473536F69B56D65258535FA86BC01ED563D9A46797D01066"
     },
     "target": {
       "case": "best_review",

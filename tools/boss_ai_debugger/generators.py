@@ -1535,6 +1535,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
             "id": "move_spikes",
             "name": "Spikes",
             "deltas": rom_deltas["spikes"],
+            "blocked": layers == 3,
             "lookahead_delta": 18,
         },
         {
@@ -1558,7 +1559,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     ]
 
     if layers == 3:
-        best = ["move_sludge_bomb"]
+        best = ["move_surf"] if active_species_prior else ["move_sludge_bomb"]
         bad = ["move_spikes"]
         why = "A fourth local Spikes click fails after the stack is already capped."
         lesson_type = "hard_rule"
@@ -1703,8 +1704,8 @@ def materialized_spikes_spin_rom_deltas(
                     "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
                     -role,
                 )
-    else:
-        add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", 24)
+    # layers == 3 is hard-blocked by the generated move's ``blocked`` flag
+    # because BattleCommand_Spikes fails once three layers are already present.
 
     damage_dominance = "ko_band_oracle.apply_damage_dominance_bias"
     return {

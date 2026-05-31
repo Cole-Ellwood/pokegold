@@ -2132,9 +2132,9 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	cp 2
 	jr z, .spikes_layer3
 
-; Already at 3 layers: discourage.
-	ld a, 24
-	call BossAI_DiscourageScoreHL
+; Already at 3 layers: another Spikes use fails, so block it.
+	ld a, 80
+	call BossAI_SetScoreHL
 	ret
 
 .spikes_layer1

@@ -163,10 +163,26 @@ class GeneratorTests(unittest.TestCase):
         result = select_move(scenario)
 
         self.assertEqual(result["best_action_id"], "move_surf")
-        self.assertLess(
-            result["probabilities"]["move_spikes"],
-            result["probabilities"]["move_surf"],
+        self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
+        self.assertTrue(result["moves"][0]["blocked"])
+
+    def test_capped_spikes_active_species_prior_still_prefers_surf_when_ghost_is_identified(self) -> None:
+        scenario = spikes_spin_score_scenario(
+            tier="mid",
+            layers=3,
+            active_revealed_spin=True,
+            active_ghost=True,
+            foresighted=True,
+            reserve_ghost=False,
+            bench_revealed_spin=False,
+            active_species_prior=True,
         )
+
+        result = select_move(scenario)
+
+        self.assertEqual(result["best_action_id"], "move_surf")
+        self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
+        self.assertTrue(result["moves"][0]["blocked"])
 
     def test_cli_generate_writes_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -204,6 +220,7 @@ def spikes_spin_score_scenario(**kwargs: Any) -> dict[str, Any]:
                 "id": "move_spikes",
                 "name": "Spikes",
                 "deltas": deltas["spikes"],
+                "blocked": kwargs["layers"] >= 3,
                 "lookahead_delta": 18,
             },
             {

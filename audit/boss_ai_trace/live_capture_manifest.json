@@ -1,7 +1,7 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+  "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
   "trace_symbols": "pokegold_trace.sym",
   "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
   "default_watch_frames": 600,
@@ -84,13 +84,13 @@
       "id": "jasmine",
       "boss": "Jasmine",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory/jasmine_chosen_frame_5181.state",
+      "save_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_5181.state",
       "snapshot_only": true,
       "stop_after_first_capture": true,
       "require_chosen_move": true,
       "out": "audit/boss_ai_trace/jasmine_live.txt",
       "notes": "real Olivine Gym first decision; Magneton opener with Electric pressure, status, and screen options",
-      "pre_choice_state": ".local/tmp/boss_state_factory/jasmine_pre_choice_frame_5151.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory_current/jasmine_pre_choice_frame_5151.state",
       "choice_button": "a",
       "choice_wait_frames": 30
     },
@@ -280,9 +280,9 @@
       "stop_after_first_capture": true,
       "require_chosen_move": false,
       "switch_materialization_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
-      "switch_materialization_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "switch_materialization_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "switch_materialization_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "switch_materialization_base_state": ".local/tmp/boss_state_factory/jasmine_chosen_frame_4100.state"
+      "switch_materialization_base_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_5181.state"
     }
   ]
 }

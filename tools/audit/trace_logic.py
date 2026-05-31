@@ -165,6 +165,25 @@ def audit_switch_loop(boss: str) -> None:
 
 
 def audit_spikes_and_status(boss: str) -> None:
+    capped_spikes = local_block(boss, ".ApplySpikesLayerBias", ".spikes_layer1")
+    require_order(
+        capped_spikes,
+        [
+            "and SCREENS_SPIKES_MASK",
+            "cp 2",
+            "jr z, .spikes_layer3",
+            "ld a, 80",
+            "call BossAI_SetScoreHL",
+            "ret",
+        ],
+        "capped Spikes hard-blocks a failing fourth layer",
+    )
+    require_not_contains(
+        capped_spikes,
+        "BossAI_DiscourageScoreHL",
+        "capped Spikes must not remain a selectable discouraged move",
+    )
+
     spikes = local_block(boss, ".spikes_layer1", ".spikes_layer2")
     require_order(
         spikes,

@@ -3150,7 +3150,7 @@
   ],
   "schema_version": 1,
   "source_hashes": {
-    "engine\\battle\\ai\\boss_policy_move.asm": "05CE10CC948CA208F64D134F54D5B49FC3EC4BA3E9EEA0B42191898E5A5D3B42",
+    "engine\\battle\\ai\\boss_policy_move.asm": "C4A65D46A85C35DDC05982DA3D4F5DD5F4ADD2EA7D946FC321A1EE850443B341",
     "engine\\battle\\ai\\boss_policy_switch.asm": "D7AFC907015B1DC054DAC68D4C8EA639D1434DAD99243EECD4D801C0914FBD73",
     "engine\\battle\\ai\\ko_band_oracle.asm": "909E5A17264E7B8BD5517ACBB36E76C2A2914C9ECCA24F4CF17736834ECD1EC7"
   }

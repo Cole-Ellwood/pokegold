@@ -126,6 +126,7 @@ def main() -> int:
         "revealed fast Encore avoidance",
         "last-move Encore trap bias",
         "revealed Selfdestruct Protect bias",
+        "capped Spikes hard block",
         "first-turn Spikes pressure gate",
         "public Rapid Spin risk before extra Spikes",
         "Ghost/Foresight spinblock adjustment",

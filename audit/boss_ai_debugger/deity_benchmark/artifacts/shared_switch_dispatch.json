@@ -217,11 +217,11 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified"
     ],
-    "generated_at": "2026-05-31T01:16:45Z",
+    "generated_at": "2026-05-31T02:20:16Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "manifest_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "manifest_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
       "trace_rom_matches_manifest": true,
       "trace_symbols_matches_manifest": true
@@ -256,9 +256,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
-      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
-      "trace_artifact_sha256": "C572C9BBCED088173B81D1475994816474096F6DDC3C1F69DEDA4B1D73921F49"
+      "dirty_diff_sha256": "6C6560626F5AF81C74B64222089D0DFDD852A3F7B8F4F9B85B0452F276A5C571",
+      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
+      "trace_artifact_sha256": "55A8137A4F721889550453FFB255FC43AB39E049E35AD2925EE3B88E513C09BB"
     },
     "target": {
       "boss_route": "shared_switch_loop",
@@ -1216,7 +1216,7 @@
       "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
       "base_state_field": "switch_materialization_state",
       "checked_count": 12,
-      "elapsed_seconds": 0.43552110000746325,
+      "elapsed_seconds": 0.6243496999959461,
       "error_count": 0,
       "kind": "rom_switch_materialization",
       "known_limits": [
@@ -1224,7 +1224,7 @@
         "This proves switch-dispatch proposal behavior and reports the final source-mirrored switch-roll frequency from observed confidence plus an explicit or source-derived threshold; it does not prove move score bytes.",
         "Only public battle facts and boss-owned party state are patched; hidden player party, hidden moves, PP, held items, and current input are not read."
       ],
-      "materializations_per_minute": 1653.1920037574798,
+      "materializations_per_minute": 1153.1998814201,
       "policy_disagreement_count": 7,
       "scenario_count": 12,
       "schema_version": 1,
@@ -1286,7 +1286,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 86,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -1529,7 +1529,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -1647,7 +1647,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 81,
+            "frame": 78,
             "memory_patches": [
               {
                 "offset": 0,
@@ -1890,7 +1890,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -2008,7 +2008,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 82,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -2251,7 +2251,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00002_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -2369,7 +2369,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 86,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -2612,7 +2612,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -2728,7 +2728,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 182
             },
             "frame": 180,
             "memory_patches": [
@@ -2973,7 +2973,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -3048,7 +3048,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 82,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -3291,7 +3291,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00005_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -3358,7 +3358,7 @@
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": false,
+            "actual_switch": true,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
@@ -3407,9 +3407,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 211
+              "type_matchup": 10
             },
-            "frame": 86,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -3637,7 +3637,7 @@
                 "value": 100
               }
             ],
-            "observation_status": "switch_proposal_observed",
+            "observation_status": "actual_switch_observed",
             "observed_decision": true,
             "observed_switch_path": true,
             "proposed_switch": true,
@@ -3646,13 +3646,13 @@
             "source": "trace_rom_pyboy_switch",
             "switch_confidence": 99,
             "switch_gate_evaluated": true,
-            "switch_index": 0,
+            "switch_index": 2,
             "switch_param": 49,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -3768,7 +3768,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 182
             },
             "frame": 180,
             "memory_patches": [
@@ -4013,7 +4013,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -4037,7 +4037,7 @@
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": true,
+            "actual_switch": false,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
@@ -4086,9 +4086,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 182
             },
-            "frame": 82,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -4316,7 +4316,7 @@
                 "value": 100
               }
             ],
-            "observation_status": "actual_switch_observed",
+            "observation_status": "switch_proposal_observed",
             "observed_decision": true,
             "observed_switch_path": true,
             "proposed_switch": true,
@@ -4325,13 +4325,13 @@
             "source": "trace_rom_pyboy_switch",
             "switch_confidence": 89,
             "switch_gate_evaluated": true,
-            "switch_index": 2,
+            "switch_index": 0,
             "switch_param": 49,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00008_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -4449,7 +4449,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 86,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -4692,7 +4692,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -4808,7 +4808,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 182
             },
             "frame": 180,
             "memory_patches": [
@@ -5053,7 +5053,7 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }
@@ -5077,7 +5077,7 @@
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": true,
+            "actual_switch": false,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
@@ -5126,9 +5126,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 182
             },
-            "frame": 82,
+            "frame": 83,
             "memory_patches": [
               {
                 "offset": 0,
@@ -5356,7 +5356,7 @@
                 "value": 100
               }
             ],
-            "observation_status": "actual_switch_observed",
+            "observation_status": "switch_proposal_observed",
             "observed_decision": true,
             "observed_switch_path": true,
             "proposed_switch": true,
@@ -5365,13 +5365,13 @@
             "source": "trace_rom_pyboy_switch",
             "switch_confidence": 89,
             "switch_gate_evaluated": true,
-            "switch_index": 2,
+            "switch_index": 0,
             "switch_param": 49,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00011_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
               "trace_symbols": "pokegold_trace.sym",
               "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
             }

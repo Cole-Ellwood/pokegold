@@ -172,11 +172,11 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified"
     ],
-    "generated_at": "2026-05-31T01:16:45Z",
+    "generated_at": "2026-05-31T02:20:16Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "manifest_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "manifest_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
       "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
       "trace_rom_matches_manifest": true,
       "trace_symbols_matches_manifest": true
@@ -211,9 +211,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
-      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
-      "trace_artifact_sha256": "8BC3C640EEADCDB4CD4EF7CFABDBB08CDCB6EEE0742C3E7FCAC18E7F9CC1B99A"
+      "dirty_diff_sha256": "0DC099C3CA5824D70DEBFE9205B7CB35377341B56D06F62AA082A0E926248010",
+      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
+      "trace_artifact_sha256": "61A3E9CB9441AA88A5E36786DC2A2C3FADABFF554922A0F009E2CAC8BAABC4EE"
     },
     "target": {
       "boss_route": "falkner",
