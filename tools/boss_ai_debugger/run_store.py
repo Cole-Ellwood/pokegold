@@ -28,6 +28,7 @@ from .rom_contribution_trace import (
 from .rom_scenarios import evaluate_batch
 from .rom_score_materialize import (
     run_rom_score_materialization,
+    score_materialization_failure_count,
     write_rom_score_materialization_json,
 )
 from .route_eval import evaluate_route_batch
@@ -341,6 +342,9 @@ def run_changed_ai_suite(
         },
         "rom_score_materialization_summary": {
             "checked_count": rom_score_materialization.get("checked_count", 0),
+            "failure_count": score_materialization_failure_count(
+                rom_score_materialization
+            ),
             "error_count": rom_score_materialization.get("error_count", 0),
             "score_bytes_match_count": rom_score_materialization.get(
                 "score_bytes_match_count", 0
@@ -752,6 +756,10 @@ def changed_ai_metric_deltas(
         ),
         "trace_replay_failure_count": ("trace_replay_summary", "failure_count"),
         "rom_score_error_count": ("rom_score_materialization_summary", "error_count"),
+        "rom_score_failure_count": (
+            "rom_score_materialization_summary",
+            "failure_count",
+        ),
         "rom_score_bytes_match_count": (
             "rom_score_materialization_summary",
             "score_bytes_match_count",
@@ -961,6 +969,7 @@ def skipped_rom_score_materialization_report(
         "base_state": "",
         "scenario_count": selected_count,
         "checked_count": 0,
+        "failure_count": 0,
         "skipped_count": selected_count,
         "error_count": 0,
         "score_bytes_match_count": 0,

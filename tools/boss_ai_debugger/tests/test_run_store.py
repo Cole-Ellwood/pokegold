@@ -155,6 +155,10 @@ class RunStoreTests(unittest.TestCase):
             metadata["rom_score_materialization_summary"]["checked_count"],
             0,
         )
+        self.assertEqual(
+            metadata["rom_score_materialization_summary"]["failure_count"],
+            0,
+        )
         self.assertIn("known_gaps", metadata)
         if queue["items"]:
             self.assertTrue(queue["items"][0]["explain_decision"]["available"])
@@ -231,6 +235,7 @@ class RunStoreTests(unittest.TestCase):
             "trace_replay_summary": {"failure_count": 0},
             "rom_score_materialization_summary": {
                 "error_count": 0,
+                "failure_count": 3,
                 "contribution_mismatch_count": 1,
             },
             "mutation_summary": {"survived_count": 4},
@@ -253,6 +258,7 @@ class RunStoreTests(unittest.TestCase):
             "trace_replay_summary": {"failure_count": 0},
             "rom_score_materialization_summary": {
                 "error_count": 0,
+                "failure_count": 1,
                 "contribution_mismatch_count": 0,
             },
             "mutation_summary": {"survived_count": 2},
@@ -288,6 +294,10 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(
             diff["metric_deltas"]["differential_mismatch_count"]["delta"],
             -1,
+        )
+        self.assertEqual(
+            diff["metric_deltas"]["rom_score_failure_count"]["delta"],
+            -2,
         )
         self.assertEqual(diff["summary"]["artifact_hash_change_count"], 1)
         self.assertEqual(
