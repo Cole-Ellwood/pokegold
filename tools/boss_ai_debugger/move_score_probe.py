@@ -519,7 +519,19 @@ def find_score_probe_route(
                         "using score_materialization_state as a generic synthetic scoring base",
                     ),
                 )
-    route = find_route_probe(manifest_path, trainer_route_ids)
+    route = find_route_probe(
+        manifest_path,
+        trainer_route_ids,
+        preferred_state_fields=(),
+    )
+    if route.route_id is not None:
+        route = replace(
+            route,
+            warnings=route.warnings
+            + (
+                "no score_materialization_state was available; replaying the trainer route from the start for the score probe",
+            ),
+        )
     if basis_warnings and route.route_state is not None:
         route = replace(
             route,
@@ -537,14 +549,19 @@ def find_score_probe_route(
     )
 
 
-def find_route_probe(manifest_path: Path, route_ids: Sequence[str]) -> ProbeRoute:
+def find_route_probe(
+    manifest_path: Path,
+    route_ids: Sequence[str],
+    *,
+    preferred_state_fields: Sequence[str] = ("pre_choice_state", "save_state"),
+) -> ProbeRoute:
     try:
         entry = resolve_route_entry(manifest_path, route_ids)
     except MoveScoreProbeError as exc:
         if str(exc).startswith("no trace manifest route") or str(exc).startswith("missing Boss AI trace manifest"):
             return ProbeRoute(route_id=None, route_state=None)
         raise
-    return route_probe_from_entry(entry)
+    return route_probe_from_entry(entry, preferred_state_fields=preferred_state_fields)
 
 
 def route_probe_from_entry(

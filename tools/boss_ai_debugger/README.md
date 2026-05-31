@@ -611,6 +611,13 @@ the same scenarios and reports hook-equivalence mismatches explicitly. Fast mode
 can shard cases across `--workers` independent PyBoy sessions for the
 high-throughput ROM-backed replay gate.
 
+`move-score-probe` follows the same clean-score-base rule for synthetic score
+checks. If a manifest route has `score_materialization_state`, the probe can use
+that state as a generic scoring base. If the route only has `pre_choice_state`
+or `save_state`, the probe replays the trainer route from the start instead of
+patching synthetic battle facts into a snapshot that may already be inside or
+past score calculation.
+
 `rom-switch-materialize` requires a current trace-ROM/symbol basis and a base
 state before the real `BossAI_TrySwitch` path reaches switch
 confidence/proposal. When a manifest row provides `switch_materialization_state`,
