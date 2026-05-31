@@ -5,10 +5,54 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from tools.boss_ai_debugger.move_score_probe import find_score_probe_route
+from tools.boss_ai_debugger.move_score_probe import (
+    find_score_probe_route,
+    manifest_basis_warnings,
+)
 
 
 class MoveScoreProbeRouteTests(unittest.TestCase):
+    def test_manifest_basis_warnings_skip_missing_files_without_hash_pins(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({"captures": []}), encoding="utf-8")
+
+            warnings = manifest_basis_warnings(
+                manifest,
+                rom=root / "missing.gbc",
+                symbols=root / "missing.sym",
+            )
+
+            self.assertEqual(warnings, ())
+
+    def test_manifest_basis_warnings_report_missing_pinned_files(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = root / "manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "trace_rom_sha256": "abcd",
+                        "trace_symbols_sha256": "1234",
+                        "captures": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            warnings = manifest_basis_warnings(
+                manifest,
+                rom=root / "missing.gbc",
+                symbols=root / "missing.sym",
+            )
+
+            self.assertEqual(len(warnings), 2)
+            self.assertTrue(any("current ROM is missing" in item for item in warnings))
+            self.assertTrue(
+                any("current symbols file is missing" in item for item in warnings)
+            )
+
     def test_score_probe_does_not_use_pre_choice_state_as_score_base(self) -> None:
         with TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

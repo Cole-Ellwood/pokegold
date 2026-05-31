@@ -632,14 +632,23 @@ def manifest_basis_warnings(manifest_path: Path, *, rom: Path, symbols: Path) ->
     warnings: list[str] = []
     manifest_rom_sha = str(manifest.get("trace_rom_sha256", "")).lower()
     manifest_symbols_sha = str(manifest.get("trace_symbols_sha256", "")).lower()
-    try:
-        actual_rom_sha = capture.sha256_file(rom).lower()
-    except FileNotFoundError:
-        actual_rom_sha = ""
-    try:
-        actual_symbols_sha = capture.sha256_file(symbols).lower()
-    except FileNotFoundError:
-        actual_symbols_sha = ""
+    actual_rom_sha = ""
+    actual_symbols_sha = ""
+    if manifest_rom_sha:
+        if rom.exists():
+            actual_rom_sha = capture.sha256_file(rom).lower()
+        else:
+            warnings.append(
+                f"manifest trace_rom_sha256 is pinned but the current ROM is missing: {rom}"
+            )
+    if manifest_symbols_sha:
+        if symbols.exists():
+            actual_symbols_sha = capture.sha256_file(symbols).lower()
+        else:
+            warnings.append(
+                "manifest trace_symbols_sha256 is pinned but the current symbols "
+                f"file is missing: {symbols}"
+            )
     if manifest_rom_sha and actual_rom_sha and manifest_rom_sha != actual_rom_sha:
         warnings.append(
             "manifest trace_rom_sha256 differs from the current ROM; if replay fails, regenerate the trace base state"
