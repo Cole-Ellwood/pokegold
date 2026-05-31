@@ -90,10 +90,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-commands", type=int, default=50)
     args = parser.parse_args(argv)
 
-    # The proof campaign includes a ROM-backed rom-switch-materialize proof
-    # whose expected discrepancy_found disposition needs the trace ROM; without
-    # a canonical trace build, skip rather than hard-fail. (check_debugger_power_v2
-    # runs standalone, so godmode coverage is unaffected.)
+    # The proof campaign includes a ROM-backed rom-switch-materialize regression
+    # proof that needs the trace ROM; without a canonical trace build, skip
+    # rather than hard-fail. (check_debugger_power_v2 runs standalone, so
+    # godmode coverage is unaffected.)
     require_manifest_basis()
 
     cases_path = args.cases if args.cases.is_absolute() else ROOT / args.cases
@@ -148,8 +148,8 @@ def main(argv: list[str] | None = None) -> int:
             "executed unique commands="
             f"{campaign.get('executed_unique_command_count')} expected >=18"
         )
-    if status_counts.get("discrepancy_found", 0) < 1:
-        errors.append("expected at least one discrepancy_found proof")
+    if status_counts.get("passed", 0) < 18:
+        errors.append(f"passed proof commands={status_counts.get('passed', 0)} expected >=18")
     if blocked_total < 10:
         errors.append(f"blocked commands={blocked_total} expected >=10")
     if campaign.get("unsafe_execution_attempts") != 0:
@@ -192,6 +192,7 @@ def main(argv: list[str] | None = None) -> int:
         f"elapsed={elapsed_total:.3f}s "
         f"executed={campaign.get('executed_unique_command_count')} "
         f"routes={campaign.get('route_row_count')} "
+        f"passed={status_counts.get('passed', 0)} "
         f"discrepancies={status_counts.get('discrepancy_found', 0)}"
     )
     print(f"json_out={out_path.relative_to(ROOT).as_posix()}")

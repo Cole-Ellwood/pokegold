@@ -354,8 +354,18 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         raise PreferenceDataError("scenario.overrides must be an object when present")
 
     player_species = _resolve_species(overrides_raw.get("player_species"), SPECIES["STARMIE"])
-    player_type1 = _resolve_type(overrides_raw.get("player_type1"), TYPES["GROUND"])
-    player_type2 = _resolve_type(overrides_raw.get("player_type2"), TYPES["GROUND"])
+    default_player_type = (
+        TYPES["WATER"]
+        if active_converts and "public_threat_to_active" not in tags
+        else TYPES["GROUND"]
+    )
+    default_player_type2 = (
+        TYPES["PSYCHIC"]
+        if active_converts and "public_threat_to_active" not in tags
+        else TYPES["GROUND"]
+    )
+    player_type1 = _resolve_type(overrides_raw.get("player_type1"), default_player_type)
+    player_type2 = _resolve_type(overrides_raw.get("player_type2"), default_player_type2)
     player_hp = _resolve_int(overrides_raw.get("player_hp"), 20 if active_converts else 80)
     player_max_hp = _resolve_int(overrides_raw.get("player_max_hp"), 100)
 

@@ -97,6 +97,49 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBattleMonStatus", 0)], 0)
         self.assertEqual(patches[("wEnemyMonStatus", 0)], 0)
 
+    def test_switch_materialization_active_pressure_without_public_threat_keeps_neutral_types(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {
+                "condition_tags": [
+                    "active_pressure_converts",
+                    "switch_sack",
+                    "stay_when_current_move_converts",
+                ]
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        self.assertEqual(patches[("wBattleMonType1", 0)], 0x15)  # WATER
+        self.assertEqual(patches[("wBattleMonType2", 0)], 0x18)  # PSYCHIC
+        self.assertEqual(patches[("wBattleMonHP", 0)], 0)
+        self.assertEqual(patches[("wBattleMonHP", 1)], 20)
+
+    def test_switch_materialization_public_threat_keeps_ground_fixture(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "tier": "mid",
+            "expectation": {
+                "condition_tags": [
+                    "active_pressure_converts",
+                    "public_threat_to_active",
+                    "switch_sack",
+                ]
+            },
+        }
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in switch_materialization_patches(scenario)
+        }
+
+        self.assertEqual(patches[("wBattleMonType1", 0)], 0x04)  # GROUND
+        self.assertEqual(patches[("wBattleMonType2", 0)], 0x04)
+        self.assertEqual(patches[("wBattleMonHP", 1)], 20)
+
     def test_switch_materialization_overrides_replace_defaults(self) -> None:
         scenario = {
             "family": "switch_sack",
