@@ -27,6 +27,9 @@ SYMBOL = "wBossAILookaheadRunningBest"
 DRIVER = "BossAI_ApplyLookaheadToTopMoveCandidates"
 
 ALLOWED_FILES = {DRIVER_SRC, WRAM}
+IGNORED_ASM_ROOTS = {
+    ROOT / ".claude" / "worktrees",
+}
 
 
 def main() -> int:
@@ -44,6 +47,8 @@ def main() -> int:
     #    ROM bytes).
     for p in ROOT.rglob("*.asm"):
         if p in ALLOWED_FILES:
+            continue
+        if any(is_relative_to(p, ignored_root) for ignored_root in IGNORED_ASM_ROOTS):
             continue
         try:
             text = p.read_text(encoding="utf-8", errors="replace")
@@ -88,7 +93,7 @@ def main() -> int:
             print(f"FAIL: {f}", file=sys.stderr)
         return 1
 
-    print(f"PASS: {SYMBOL} lifecycle is clean (declared, reset, driver-only).")
+    print(f"PASS: {SYMBOL} lifecycle is clean (declared, initialized, driver-only).")
     return 0
 
 
@@ -114,6 +119,14 @@ def extract_label_body(text: str, label: str) -> str:
             break
         body_lines.append(line)
     return "\n".join(body_lines)
+
+
+def is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+    except ValueError:
+        return False
+    return True
 
 
 if __name__ == "__main__":

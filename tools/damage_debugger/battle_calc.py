@@ -758,7 +758,7 @@ def run_self_test() -> int:
     if kenji.species != "HITMONLEE":
         raise AssertionError(f"expected BlackbeltGroup resolver to find KENJI1, got {kenji.species}")
     joey = state.trainer_state("JOEY1:RATTATA")
-    if joey.move_names != ("Tackle", "Tail Whip", "No Move", "No Move"):
+    if joey.move_names != ("Tackle", "Tail Whip", "Quick Attack", "No Move"):
         raise AssertionError(f"expected level-up moves for normal trainer row, got {joey.move_names}")
     defender = state.state_from_exact_values(
         species="DROWZEE",

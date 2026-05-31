@@ -64,6 +64,7 @@ DEFINES      ?=
 	clean \
 	tidy \
 	compare \
+	bgb_sym \
 	tools
 
 all: $(roms)
@@ -83,6 +84,7 @@ clean: tidy
 tidy:
 	$(RMFILES) $(roms) \
 	           $(roms:.gbc=.sym) \
+	           $(roms:.gbc=.bgb.sym) \
 	           $(roms:.gbc=.map) \
 	           $(pokegold_obj) \
 	           $(pokesilver_obj) \
@@ -92,6 +94,12 @@ tidy:
 
 compare: $(roms)
 	@$(PYTHON) tools/verify_sha1.py roms.sha1
+
+bgb_sym: pokegold.bgb.sym
+
+%.bgb.sym: %.gbc scripts/emit_bgb_sym.py
+	@test -f $*.sym || { echo "missing $*.sym; rebuild $*.gbc first"; exit 1; }
+	$(PYTHON) scripts/emit_bgb_sym.py --symbols $*.sym --out $@
 
 tools:
 	$(MAKE) -C tools/
