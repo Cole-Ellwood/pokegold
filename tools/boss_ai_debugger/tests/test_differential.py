@@ -7,6 +7,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+from tools.boss_ai_preference.data import PreferenceDataError
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.differential import build_differential_report
 from tools.boss_ai_debugger.generators import write_jsonl
@@ -223,6 +224,24 @@ class DifferentialTests(unittest.TestCase):
 
         self.assertEqual(report["contribution_comparison"]["matched_trace_count"], 1)
         self.assertEqual(report["contribution_comparison"]["mismatch_count"], 0)
+
+    def test_missing_requested_rom_contribution_trace_fails_closed(self) -> None:
+        missing = Path("missing_rom_contribution_trace.json")
+
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "missing ROM contribution trace",
+        ):
+            build_differential_report(rom_contribution_trace_paths=[missing])
+
+    def test_missing_requested_python_contribution_trace_fails_closed(self) -> None:
+        missing = Path("missing_python_contribution_trace.json")
+
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "missing Python contribution trace",
+        ):
+            build_differential_report(python_contribution_trace_paths=[missing])
 
     def test_scenario_policy_deltas_are_not_treated_as_rom_mirror_rules(self) -> None:
         scenario = {

@@ -175,13 +175,13 @@ def write_python_contribution_report(report: dict[str, Any], path: Path) -> None
 
 
 def load_rom_contribution_reports(paths: list[Path]) -> list[dict[str, Any]]:
-    return [load_rom_contribution_trace(path) for path in paths if path.exists()]
+    return [load_rom_contribution_trace(path) for path in paths]
 
 
 def load_python_contribution_reports(paths: list[Path] | None) -> list[dict[str, Any]]:
     if not paths:
         return []
-    return [load_python_contribution_report(path) for path in paths if path.exists()]
+    return [load_python_contribution_report(path) for path in paths]
 
 
 def compare_contribution_reports(

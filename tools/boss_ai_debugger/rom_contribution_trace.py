@@ -1778,7 +1778,6 @@ def summarize_rom_contribution_trace_paths(paths: list[Path]) -> dict[str, Any]:
             artifact_path=path,
         )
         for path in paths
-        if path.exists()
     ]
     return summarize_rom_contribution_trace_summaries(loaded)
 
