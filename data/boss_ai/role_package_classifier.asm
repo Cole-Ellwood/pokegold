@@ -186,7 +186,7 @@ BossAIRolePackageBySpecies::
 	db BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; XATU: physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK ; MAREEP: sleep/status-pressure
 	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK ; FLAAFFY: sleep/status-pressure
-	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; AMPHAROS: setup-sweeper, sleep/status-pressure, physical/special-wallbreaker
+	db BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; AMPHAROS: sleep/status-pressure, physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_SETUP_SWEEPER_MASK | BOSS_AI_ROLEPKG_RECOVERY_WALL_MASK | BOSS_AI_ROLEPKG_STATUS_PRESSURE_MASK | BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; BELLOSSOM: setup-sweeper, recovery-wall, sleep/status-pressure, physical/special-wallbreaker
 	db BOSS_AI_ROLEPKG_TRAP_PERISH_MASK ; MARILL: trap/perish-line
 	db BOSS_AI_ROLEPKG_WALLBREAKER_MASK ; AZUMARILL: physical/special-wallbreaker
