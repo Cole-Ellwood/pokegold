@@ -8,6 +8,7 @@ from typing import Any
 from tools.boss_ai_preference.data import PreferenceDataError
 
 from .generators import FAMILIES
+from .rom_score_materialize import EXACT_SCORE_MATCH_FAMILIES
 
 
 Z_95 = 1.96
@@ -207,12 +208,13 @@ def summarize_materializations(reports: list[dict[str, Any]]) -> dict[str, Any]:
                 if verdict.get("status") == "pass":
                     row["score_checked_count"] += 1
                     totals["score_checked_count"] += 1
-                    if not bool(verdict.get("selector_top_match", False)):
-                        row["score_mismatch_count"] += 1
-                        totals["score_mismatch_count"] += 1
-                    if not bool(verdict.get("score_bytes_match", False)):
-                        row["score_bytes_mismatch_count"] += 1
-                        totals["score_bytes_mismatch_count"] += 1
+                    if family in EXACT_SCORE_MATCH_FAMILIES:
+                        if not bool(verdict.get("selector_top_match", False)):
+                            row["score_mismatch_count"] += 1
+                            totals["score_mismatch_count"] += 1
+                        if not bool(verdict.get("score_bytes_match", False)):
+                            row["score_bytes_mismatch_count"] += 1
+                            totals["score_bytes_mismatch_count"] += 1
                     rom_policy = verdict.get("rom_policy", {})
                     if isinstance(rom_policy, dict):
                         policy_verdict = str(rom_policy.get("verdict", ""))

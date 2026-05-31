@@ -168,6 +168,22 @@ class AnalysisToolTests(unittest.TestCase):
                             "selector_top_match": True,
                             "score_bytes_match": False,
                             "rom_policy": {"verdict": "bad_roll", "severity": 80},
+                        },
+                        {
+                            "scenario_id": scenarios[2]["id"],
+                            "family": "prediction_mix",
+                            "status": "pass",
+                            "selector_top_match": False,
+                            "score_bytes_match": False,
+                            "rom_policy": {"verdict": "pass", "severity": 0},
+                        },
+                        {
+                            "scenario_id": "generated_spikes_spin_21_00000_case",
+                            "family": "spikes_spin",
+                            "status": "pass",
+                            "selector_top_match": False,
+                            "score_bytes_match": False,
+                            "rom_policy": {"verdict": "pass", "severity": 0},
                         }
                     ],
                 },
@@ -196,11 +212,31 @@ class AnalysisToolTests(unittest.TestCase):
         )
         self.assertEqual(
             families["prediction_mix"]["materialization"]["score_checked_count"],
-            1,
+            2,
+        )
+        self.assertEqual(
+            families["prediction_mix"]["materialization"]["score_mismatch_count"],
+            0,
+        )
+        self.assertEqual(
+            families["prediction_mix"]["materialization"]["score_bytes_mismatch_count"],
+            0,
         )
         self.assertEqual(
             families["prediction_mix"]["materialization"][
                 "score_policy_reviewable_count"
+            ],
+            1,
+        )
+        self.assertEqual(
+            report["materialization"]["by_family"]["spikes_spin"][
+                "score_mismatch_count"
+            ],
+            1,
+        )
+        self.assertEqual(
+            report["materialization"]["by_family"]["spikes_spin"][
+                "score_bytes_mismatch_count"
             ],
             1,
         )
