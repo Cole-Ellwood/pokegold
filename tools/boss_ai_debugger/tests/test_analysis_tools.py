@@ -7,6 +7,7 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
+from tools.boss_ai_preference.data import PreferenceDataError
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.counterfactuals import (
     explain_counterfactuals,
@@ -246,6 +247,42 @@ class AnalysisToolTests(unittest.TestCase):
             ],
             1,
         )
+
+    def test_confidence_report_rejects_wrong_batch_artifact_shape(self) -> None:
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "batch report must contain a verdicts list",
+        ):
+            build_confidence_report(
+                {
+                    "changed_ai_run": {
+                        "artifacts": {
+                            "batch_report": "audit/boss_ai_debugger/runs/run/batch_report.json"
+                        }
+                    }
+                }
+            )
+
+    def test_confidence_report_rejects_wrong_materialization_artifact_shape(self) -> None:
+        scenarios = generate_scenarios(family="prediction_mix", count=1, seed=21)
+        batch = evaluate_batch(scenarios)
+
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "materialization report must be a root ROM materialization report",
+        ):
+            build_confidence_report(
+                batch,
+                materialization_reports=[
+                    {
+                        "kind": "boss_ai_decision_input_manifest",
+                        "rom_materialization": {
+                            "kind": "rom_score_materialization",
+                            "verdicts": [],
+                        },
+                    }
+                ],
+            )
 
     def test_cli_analysis_commands(self) -> None:
         scenarios = generate_scenarios(family="spikes_spin", count=12, seed=15)

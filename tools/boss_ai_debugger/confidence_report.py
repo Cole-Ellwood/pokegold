@@ -27,6 +27,11 @@ HARD_FAILURE_VERDICTS = {
     "catastrophic_roll",
     "mismatch",
 }
+MATERIALIZATION_KINDS = {
+    "rom_selector_materialization",
+    "rom_score_materialization",
+    "rom_switch_materialization",
+}
 
 
 def build_confidence_report_from_paths(
@@ -51,10 +56,14 @@ def build_confidence_report(
     materialization_reports: list[dict[str, Any]] | None = None,
     source: str = "inline",
 ) -> dict[str, Any]:
-    verdicts = batch_report.get("verdicts", [])
+    if "verdicts" not in batch_report:
+        raise PreferenceDataError("batch report must contain a verdicts list")
+    verdicts = batch_report["verdicts"]
     if not isinstance(verdicts, list):
         raise PreferenceDataError("batch report must contain a verdicts list")
 
+    materialization_reports = materialization_reports or []
+    validate_materialization_reports(materialization_reports)
     family_rows = summarize_groups(
         verdicts,
         key_fn=lambda verdict: family_for_scenario_id(str(verdict.get("scenario_id", ""))),
@@ -67,7 +76,7 @@ def build_confidence_report(
         verdicts,
         key_fn=lambda verdict: list_of_strings(verdict.get("condition_tags")),
     )
-    materialization = summarize_materializations(materialization_reports or [])
+    materialization = summarize_materializations(materialization_reports)
 
     return {
         "schema_version": 1,
@@ -86,6 +95,19 @@ def build_confidence_report(
             "ROM switch materialization proves switch-dispatch proposal behavior separately from move-score materialization.",
         ],
     }
+
+
+def validate_materialization_reports(reports: list[dict[str, Any]]) -> None:
+    for report in reports:
+        kind = str(report.get("kind", ""))
+        if kind not in MATERIALIZATION_KINDS:
+            raise PreferenceDataError(
+                "materialization report must be a root ROM materialization report "
+                f"with kind one of {sorted(MATERIALIZATION_KINDS)}"
+            )
+        verdicts = report.get("verdicts")
+        if not isinstance(verdicts, list):
+            raise PreferenceDataError("materialization report must contain a verdicts list")
 
 
 def summarize_groups(
