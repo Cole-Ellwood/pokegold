@@ -101,7 +101,7 @@ def mine_scenario_invariants(scenarios: list[dict[str, Any]]) -> list[dict[str, 
     selector_surface = invariant(
         "scenario.selector_probability_surface",
         "scenario",
-        "The selector gives nonzero probability only to the best and first second-best actions.",
+        "The selector gives nonzero probability only to the best action and an explicit public switch hedge.",
     )
     pass_floor = invariant(
         "scenario.pass_expected_probability_floor",

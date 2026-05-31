@@ -35,6 +35,7 @@ class InvariantMiningTests(unittest.TestCase):
                         "tier=3",
                         "move_ids=1,2,3,0",
                         "move_scores=20,20,20,80",
+                        "selector_hedge_slot=1",
                         "chosen_id=2",
                         "chosen_slot=1",
                     ]

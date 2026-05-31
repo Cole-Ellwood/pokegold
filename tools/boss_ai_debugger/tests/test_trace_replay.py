@@ -30,6 +30,7 @@ class TraceReplayTests(unittest.TestCase):
                 "tier": "3",
                 "move_ids": "1,2,3,0",
                 "move_scores": "20,20,20,80",
+                "selector_hedge_slot": "1",
                 "chosen_id": "2",
                 "chosen_slot": "1",
             },
@@ -48,6 +49,7 @@ class TraceReplayTests(unittest.TestCase):
                 "tier": "3",
                 "move_ids": "1,2,3,0",
                 "move_scores": "20,20,20,80",
+                "selector_hedge_slot": "1",
                 "chosen_id": "0",
                 "cur_enemy_move_id": "2",
                 "chosen_slot": "1",
@@ -76,7 +78,7 @@ class TraceReplayTests(unittest.TestCase):
         )
 
         self.assertFalse(verdict.match)
-        self.assertEqual(verdict.reason, "chosen slot is outside selector's possible best/second slots")
+        self.assertEqual(verdict.reason, "chosen slot is outside selector's possible best/hedge slots")
 
     def test_partial_top_three_capture_accepts_top_two_only(self) -> None:
         verdict = replay_capture_fields(

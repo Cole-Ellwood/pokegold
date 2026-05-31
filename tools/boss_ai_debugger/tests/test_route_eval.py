@@ -31,6 +31,7 @@ class RouteEvalTests(unittest.TestCase):
             {
                 "id": "near_tie_case",
                 "tier": "late",
+                "selector_hedge_action_id": "b",
                 "moves": [{"id": "a", "name": "A"}, {"id": "b", "name": "B"}],
                 "expectation": {
                     "best_action_ids": ["b"],
@@ -48,6 +49,7 @@ class RouteEvalTests(unittest.TestCase):
             {
                 "id": "route_context_case",
                 "tier": "late",
+                "selector_hedge_action_id": "b",
                 "moves": [
                     {"id": "a", "name": "A", "deltas": [{"rule": "now", "delta": -10}]},
                     {"id": "b", "name": "B"},
@@ -117,6 +119,7 @@ class RouteEvalTests(unittest.TestCase):
             {
                 "id": "weak_best_case",
                 "tier": "late",
+                "selector_hedge_action_id": "b",
                 "moves": [{"id": "a", "name": "A"}, {"id": "b", "name": "B"}],
                 "expectation": {
                     "best_action_ids": ["a"],

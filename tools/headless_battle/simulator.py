@@ -3216,6 +3216,13 @@ def boss_ai_selector_result(state: BattleState, side: str, action: ActionState) 
             move_ids=[int(value) for value in selector["move_ids"]],
             scores=[int(value) for value in selector["scores"]],
             move_names=move_names,
+            hedge_slot_index=(
+                int(selector["selector_hedge_slot"])
+                if "selector_hedge_slot" in selector
+                else int(selector["hedge_slot"])
+                if "hedge_slot" in selector
+                else None
+            ),
         )
     except (KeyError, ValueError) as exc:
         raise SimulationInputError(f"invalid {action.kind} action: {exc}") from exc

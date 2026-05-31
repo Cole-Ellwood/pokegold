@@ -23,7 +23,7 @@ class RomScenarioTests(unittest.TestCase):
         self.assertEqual(apply_score_delta(78, 7), 79)
         self.assertEqual(apply_score_delta(80, -7), 80)
 
-    def test_equal_scores_roll_only_first_two_slots(self) -> None:
+    def test_equal_scores_commit_to_best_without_switch_hedge(self) -> None:
         result = select_move(
             {
                 "id": "tie",
@@ -38,12 +38,35 @@ class RomScenarioTests(unittest.TestCase):
         )
 
         self.assertEqual(result["best_action_id"], "a")
+        self.assertIsNone(result["second_action_id"])
+        self.assertAlmostEqual(result["probabilities"]["a"], 1.0)
+        self.assertAlmostEqual(result["probabilities"]["b"], 0.0)
+        self.assertEqual(result["probabilities"]["c"], 0.0)
+        self.assertEqual(result["probabilities"]["d"], 0.0)
+        self.assertIn("Selectable but never rolled: b, c, d", format_simulation(result))
+
+    def test_explicit_switch_hedge_rolls_against_best(self) -> None:
+        result = select_move(
+            {
+                "id": "hedge",
+                "tier": "late",
+                "selector_hedge_action_id": "b",
+                "moves": [
+                    {"id": "a", "name": "A"},
+                    {"id": "b", "name": "B"},
+                    {"id": "c", "name": "C"},
+                    {"id": "d", "name": "D"},
+                ],
+            }
+        )
+
+        self.assertEqual(result["best_action_id"], "a")
         self.assertEqual(result["second_action_id"], "b")
+        self.assertEqual(result["selector_mode"], "switch_hedge")
         self.assertAlmostEqual(result["probabilities"]["a"], 186 / 256)
         self.assertAlmostEqual(result["probabilities"]["b"], 70 / 256)
         self.assertEqual(result["probabilities"]["c"], 0.0)
         self.assertEqual(result["probabilities"]["d"], 0.0)
-        self.assertIn("Selectable but never rolled: c, d", format_simulation(result))
 
     def test_lookahead_negative_delta_encourages(self) -> None:
         result = select_move(
@@ -154,7 +177,7 @@ class RomScenarioTests(unittest.TestCase):
         self.assertEqual(result["possible_slot_indices"], [0])
         self.assertEqual(result["possible_move_ids"], [10])
 
-    def test_selector_replay_equal_scores_only_rolls_first_two_slots(self) -> None:
+    def test_selector_replay_equal_scores_commit_without_hedge(self) -> None:
         result = select_from_score_bytes(
             scenario_id="equal",
             tier="late",
@@ -163,7 +186,22 @@ class RomScenarioTests(unittest.TestCase):
         )
 
         self.assertEqual(result["best_move_id"], 10)
+        self.assertIsNone(result["second_move_id"])
+        self.assertEqual(result["possible_slot_indices"], [0])
+        self.assertEqual(result["possible_move_ids"], [10])
+
+    def test_selector_replay_explicit_hedge_rolls_best_vs_hedge(self) -> None:
+        result = select_from_score_bytes(
+            scenario_id="hedge",
+            tier="late",
+            move_ids=[10, 11, 12, 13],
+            scores=[20, 20, 20, 20],
+            hedge_slot_index=1,
+        )
+
+        self.assertEqual(result["best_move_id"], 10)
         self.assertEqual(result["second_move_id"], 11)
+        self.assertEqual(result["selector_mode"], "switch_hedge")
         self.assertEqual(result["possible_slot_indices"], [0, 1])
         self.assertEqual(result["possible_move_ids"], [10, 11])
 
@@ -208,7 +246,7 @@ class RomScenarioTests(unittest.TestCase):
             code = debugger_main(["simulate", "--builtin", "all_equal_late"])
 
         self.assertEqual(code, 0)
-        self.assertIn("Selectable but never rolled: slot3, slot4", stdout.getvalue())
+        self.assertIn("Selectable but never rolled: slot2, slot3, slot4", stdout.getvalue())
 
 
 if __name__ == "__main__":

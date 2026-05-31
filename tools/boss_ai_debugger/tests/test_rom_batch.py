@@ -22,8 +22,9 @@ def scenario(
     *,
     moves: list[dict] | None = None,
     expectation: dict | None = None,
+    selector_hedge_action_id: str | None = None,
 ) -> dict:
-    return {
+    result = {
         "id": scenario_id,
         "tier": "late",
         "moves": moves
@@ -34,6 +35,9 @@ def scenario(
         ],
         "expectation": expectation or {},
     }
+    if selector_hedge_action_id is not None:
+        result["selector_hedge_action_id"] = selector_hedge_action_id
+    return result
 
 
 class RomBatchTests(unittest.TestCase):
@@ -53,6 +57,7 @@ class RomBatchTests(unittest.TestCase):
                     "best_action_ids": ["b"],
                     "acceptable_action_ids": ["a"],
                 },
+                selector_hedge_action_id="b",
             )
         )
 
@@ -68,6 +73,7 @@ class RomBatchTests(unittest.TestCase):
                         "best_action_ids": ["a"],
                         "catastrophic_action_ids": ["b"],
                     },
+                    selector_hedge_action_id="b",
                 ),
                 scenario(
                     "never",

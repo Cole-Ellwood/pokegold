@@ -866,6 +866,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             "tier": "late",
             "move_ids": [33, 52, 0, 0],
             "scores": [20, 21, 80, 80],
+            "selector_hedge_slot": 1,
         }
         payload["rng"] = {"mode": "fixed", "values": [200, 255, 255, 255]}
 
@@ -893,6 +894,7 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             "tier": "late",
             "move_ids": [33, 52, 0, 0],
             "scores": [20, 21, 80, 80],
+            "selector_hedge_slot": 1,
         }
         payload["rng"] = {"mode": "exhaustive"}
 

@@ -190,7 +190,7 @@ def builtin_scenario(name: str) -> dict[str, Any]:
             "tier": "late",
             "notes": [
                 "All four moves remain at the ROM default score.",
-                "This exposes BossAI_SelectMove's best-vs-second slot bias.",
+                "With no public switch hedge, BossAI_SelectMove commits to the first best slot.",
             ],
             "moves": [
                 {"id": "slot1", "name": "Slot 1"},
@@ -205,7 +205,7 @@ def builtin_scenario(name: str) -> dict[str, Any]:
             "tier": "late",
             "notes": [
                 "Slot 1 is best; slots 2 and 3 are tied for second.",
-                "The selector only rolls between best and the first second-best slot.",
+                "With no public switch hedge, tied lower-ranked slots remain unrolled.",
             ],
             "moves": [
                 {
@@ -261,6 +261,29 @@ def adjusted_best_roll_threshold(tier: int, gap: int) -> int:
     if tier == AI_TIER_MID:
         return min(245, threshold + 20)
     return threshold
+
+
+def selector_hedge_action_id(
+    scenario: dict[str, Any],
+    *,
+    best_action_id: str,
+    legal_action_ids: set[str],
+) -> str | None:
+    raw = scenario.get("selector_hedge_action_id")
+    if raw is None:
+        expectation = scenario.get("expectation", {})
+        if isinstance(expectation, dict):
+            raw = expectation.get("selector_hedge_action_id")
+    if raw is None:
+        return None
+    action_id = str(raw)
+    if action_id == best_action_id:
+        raise PreferenceDataError("selector_hedge_action_id cannot be the best action")
+    if action_id not in legal_action_ids:
+        raise PreferenceDataError(
+            f"selector_hedge_action_id {action_id!r} is not selectable"
+        )
+    return action_id
 
 
 def score_moves(scenario: dict[str, Any]) -> list[ScoredMove]:
@@ -424,7 +447,13 @@ def select_move(scenario: dict[str, Any]) -> dict[str, Any]:
         }
 
     best = legal[0]
-    second = legal[1] if len(legal) > 1 else None
+    legal_by_action_id = {item.action_id: item for item in legal}
+    hedge_action_id = selector_hedge_action_id(
+        scenario,
+        best_action_id=best.action_id,
+        legal_action_ids=set(legal_by_action_id),
+    )
+    second = legal_by_action_id[hedge_action_id] if hedge_action_id else None
     probabilities = {item.action_id: 0.0 for item in scored}
     if second is None:
         probabilities[best.action_id] = 1.0
@@ -447,6 +476,7 @@ def select_move(scenario: dict[str, Any]) -> dict[str, Any]:
         "second_score": second.final_score if second else None,
         "gap": gap,
         "best_roll_threshold": roll_threshold,
+        "selector_mode": "switch_hedge" if second else "best_only",
         "probabilities": probabilities,
         "notes": scenario.get("notes", []),
         "expectation": scenario.get("expectation", {}),
@@ -460,13 +490,15 @@ def select_from_score_bytes(
     move_ids: list[int],
     scores: list[int],
     move_names: dict[int, str] | None = None,
+    hedge_slot_index: int | None = None,
 ) -> dict[str, Any]:
     """Replay BossAI_SelectMove from exact post-scoring ROM bytes.
 
     This intentionally starts after BossAI_ApplyMoveModel and lookahead have
     already written wEnemyAIMoveScores. It mirrors the selector's first blank
-    move stop, score >= 80 block, strict-less tie behavior, and best-vs-second
-    roll surface.
+    move stop, score >= 80 block, strict-less tie behavior, and default
+    best-only choice. Passing hedge_slot_index models the public switch-hedge
+    branch that can roll the primary against a coverage move.
     """
     tier_value = normalize_tier(tier)
     if len(move_ids) != NUM_MOVES or len(scores) != NUM_MOVES:
@@ -518,17 +550,18 @@ def select_from_score_bytes(
         }
 
     best = min(legal, key=lambda item: (int(item["score"]), int(item["slot_index"])))
-    second_candidates = [
-        slot for slot in legal if int(slot["slot_index"]) != int(best["slot_index"])
-    ]
-    second = (
-        min(
-            second_candidates,
-            key=lambda item: (int(item["score"]), int(item["slot_index"])),
-        )
-        if second_candidates
-        else None
-    )
+    second = None
+    if hedge_slot_index is not None:
+        second_matches = [
+            slot for slot in legal if int(slot["slot_index"]) == hedge_slot_index
+        ]
+        if not second_matches:
+            raise PreferenceDataError(
+                f"hedge_slot_index {hedge_slot_index} is not selectable"
+            )
+        second = second_matches[0]
+        if int(second["slot_index"]) == int(best["slot_index"]):
+            raise PreferenceDataError("hedge_slot_index cannot be the best slot")
 
     probabilities_by_slot = {int(slot["slot_index"]): 0.0 for slot in slots}
     if second is None:
@@ -568,6 +601,7 @@ def select_from_score_bytes(
         "second_score": int(second["score"]) if second else None,
         "gap": gap,
         "best_roll_threshold": roll_threshold,
+        "selector_mode": "switch_hedge" if second else "best_only",
         "probabilities_by_slot": probabilities_by_slot,
         "possible_slot_indices": possible_slots,
         "possible_move_ids": possible_move_ids,
@@ -805,15 +839,11 @@ def select_move_compact(scenario: dict[str, Any]) -> dict[str, Any]:
     tier = normalize_tier(scenario.get("tier", "late"))
     scored = compact_scores(scenario, tier)
     best: dict[str, Any] | None = None
-    second: dict[str, Any] | None = None
     for item in scored:
         if item["final_score"] >= BLOCKED_SCORE:
             continue
         if best is None or compact_score_sort_key(item) < compact_score_sort_key(best):
-            second = best
             best = item
-        elif second is None or compact_score_sort_key(item) < compact_score_sort_key(second):
-            second = item
 
     if best is None:
         return {
@@ -826,6 +856,17 @@ def select_move_compact(scenario: dict[str, Any]) -> dict[str, Any]:
         }
 
     probabilities = {item["action_id"]: 0.0 for item in scored}
+    legal_by_action_id = {
+        str(item["action_id"]): item
+        for item in scored
+        if int(item["final_score"]) < BLOCKED_SCORE
+    }
+    hedge_action_id = selector_hedge_action_id(
+        scenario,
+        best_action_id=str(best["action_id"]),
+        legal_action_ids=set(legal_by_action_id),
+    )
+    second = legal_by_action_id[hedge_action_id] if hedge_action_id else None
     if second is None:
         probabilities[best["action_id"]] = 1.0
     else:
@@ -839,6 +880,8 @@ def select_move_compact(scenario: dict[str, Any]) -> dict[str, Any]:
         "tier": tier,
         "ready": True,
         "best_action_id": best["action_id"],
+        "second_action_id": second["action_id"] if second else None,
+        "selector_mode": "switch_hedge" if second else "best_only",
         "probabilities": probabilities,
     }
 
@@ -1203,22 +1246,25 @@ def format_simulation(result: dict[str, Any], *, show_events: bool = True) -> st
         lines.append(f"No ROM boss move selected: {result['reason']}")
         return "\n".join(lines)
 
-    if result["second_action_id"] is None:
-        lines.append(f"Selected deterministically: {result['best_action_id']}")
-        return "\n".join(lines)
-
-    lines.append(
-        "Selector rolls only best vs second: "
-        f"{result['best_action_id']} score={result['best_score']} vs "
-        f"{result['second_action_id']} score={result['second_score']} "
-        f"gap={result['gap']} threshold={result['best_roll_threshold']}/256"
-    )
     never = [
         move["action_id"]
         for move in result["moves"]
         if result["probabilities"].get(move["action_id"], 0.0) == 0.0
         and not move["blocked"]
     ]
+
+    if result["second_action_id"] is None:
+        lines.append(f"Selected deterministically: {result['best_action_id']}")
+        if never:
+            lines.append(f"Selectable but never rolled: {', '.join(never)}")
+        return "\n".join(lines)
+
+    lines.append(
+        "Selector rolls primary vs public switch hedge: "
+        f"{result['best_action_id']} score={result['best_score']} vs "
+        f"{result['second_action_id']} score={result['second_score']} "
+        f"gap={result['gap']} threshold={result['best_roll_threshold']}/256"
+    )
     if never:
         lines.append(f"Selectable but never rolled: {', '.join(never)}")
     return "\n".join(lines)

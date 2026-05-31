@@ -190,6 +190,9 @@ def replay_exact_capture(
         move_ids=parse_int_list(fields["move_ids"]),
         scores=parse_int_list(fields["move_scores"]),
         move_names=move_names,
+        hedge_slot_index=optional_int(
+            fields.get("selector_hedge_slot", fields.get("hedge_slot"))
+        ),
     )
     if not selector.get("ready"):
         match = False
@@ -203,7 +206,7 @@ def replay_exact_capture(
             reason = (
                 "chosen move id has nonzero selector probability"
                 if match
-                else "chosen move id is outside selector's possible best/second set"
+                else "chosen move id is outside selector's possible best/hedge set"
             )
         else:
             possible_slots = [int(item) for item in selector["possible_slot_indices"]]
@@ -215,7 +218,7 @@ def replay_exact_capture(
             reason = (
                 "chosen slot has nonzero selector probability"
                 if match
-                else "chosen slot is outside selector's possible best/second slots"
+                else "chosen slot is outside selector's possible best/hedge slots"
             )
 
     return TraceReplayVerdict(

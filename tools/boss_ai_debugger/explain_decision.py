@@ -26,6 +26,7 @@ from .rom_scenarios import (
     load_scenario_batch,
     normalize_tier,
     scenario_expectation,
+    selector_hedge_action_id,
     select_move,
     string_list,
 )
@@ -621,17 +622,13 @@ def materialized_selector_path(
             "candidates": candidates,
         }
     best = min(legal, key=lambda item: (int(item["score"]), int(item["slot_index"])))
-    second_candidates = [
-        item for item in legal if int(item["slot_index"]) != int(best["slot_index"])
-    ]
-    second = (
-        min(
-            second_candidates,
-            key=lambda item: (int(item["score"]), int(item["slot_index"])),
-        )
-        if second_candidates
-        else None
+    legal_by_action_id = {str(item["action_id"]): item for item in legal}
+    hedge_action_id = selector_hedge_action_id(
+        scenario,
+        best_action_id=str(best["action_id"]),
+        legal_action_ids=set(legal_by_action_id),
     )
+    second = legal_by_action_id[hedge_action_id] if hedge_action_id else None
     tier_value = materialized_selector_tier(scenario, tier)
     score_gap = int(second["score"]) - int(best["score"]) if second else None
     threshold = (
@@ -2337,7 +2334,7 @@ def selector_roll_counterfactual_packet(rom: dict[str, Any]) -> dict[str, Any]:
         observed_random = False
         reason = (
             "observed action was the selector best candidate; a roll in the "
-            "second-candidate range would choose the alternate action"
+            "switch-hedge range would choose the alternate action"
         )
     elif chosen == second:
         chosen_rank = "second"
@@ -2346,9 +2343,9 @@ def selector_roll_counterfactual_packet(rom: dict[str, Any]) -> dict[str, Any]:
         alternate_range = best_range
         observed_random = True
         reason = (
-            "observed action was the selector second candidate, so score bytes "
+            "observed action was the public switch hedge, so score bytes "
             "favored the best candidate but the BossAI_SelectMove roll selected "
-            "the second candidate"
+            "the hedge candidate"
         )
     else:
         return {
@@ -2953,12 +2950,12 @@ def selector_choice_explanation_packet(rom: dict[str, Any]) -> dict[str, Any]:
         rank = "second"
         if chosen_has_nonzero:
             reason = (
-                "observed action was the second selector candidate with nonzero "
+                "observed action was the public switch hedge with nonzero "
                 "BossAI_SelectMove roll probability"
             )
         else:
             reason = (
-                "observed action matches the second selector candidate, but the "
+                "observed action matches the public switch hedge, but the "
                 "recorded probability is zero; inspect score bytes and replay"
             )
     elif chosen_has_nonzero:
@@ -3012,7 +3009,7 @@ def selector_choice_explanation_text(packet: dict[str, Any]) -> str:
     if rank == "best":
         label = "chosen best candidate"
     elif rank == "second":
-        label = "chosen second candidate via selector roll"
+        label = "chosen switch hedge via selector roll"
     elif rank == "other_nonzero":
         label = "chosen nonzero-probability candidate"
     elif rank == "zero_probability":
@@ -3198,15 +3195,15 @@ def focus_selector_explanation_packet(
     elif second and action_matches_candidate(focus_candidate, second):
         rank = "second"
         reason = (
-            "focused action is the selector second candidate and can be picked "
-            "by the BossAI_SelectMove roll"
+            "focused action is the public switch hedge and can be picked by "
+            "the BossAI_SelectMove roll"
         )
     elif probability == 0.0:
         rank = "outside_selector_roll"
         reason = (
             "focused action has zero selector probability because "
-            "BossAI_SelectMove rolls only between the best and second selectable "
-            "candidates"
+            "BossAI_SelectMove only rolls a non-best action when it is a public "
+            "switch hedge"
         )
     elif probability is not None and probability > 0.0:
         rank = "nonzero"
@@ -3232,7 +3229,7 @@ def focus_selector_explanation_text(packet: dict[str, Any]) -> str:
     if rank == "best":
         label = "selector best candidate"
     elif rank == "second":
-        label = "selector second candidate"
+        label = "selector switch hedge"
     elif rank == "blocked":
         label = "blocked before selector"
     elif rank == "outside_selector_roll":

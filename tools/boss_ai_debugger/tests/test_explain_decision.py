@@ -124,7 +124,7 @@ class ExplainDecisionTests(unittest.TestCase):
         self.assertIn("focus=b score=20", text)
         self.assertIn("delta_vs_chosen=2", text)
         self.assertIn("focus_reason=focused action scored worse", text)
-        self.assertIn("focus_selector=selector second candidate", text)
+        self.assertIn("focus_selector=selector switch hedge", text)
         self.assertIn("focus_rules=b move.apply_lookahead_to_top_move_candidates", text)
         self.assertIn("chosen_rules=a move.apply_lookahead_to_top_move_candidates", text)
         self.assertIn("selector=no sampled chosen action", text)
@@ -198,6 +198,7 @@ class ExplainDecisionTests(unittest.TestCase):
             "id": "bad_roll_case",
             "family": "selector_edges",
             "tier": "late",
+            "selector_hedge_action_id": "bad_branch",
             "moves": [
                 {"id": "safe", "name": "Safe"},
                 {"id": "bad_branch", "name": "Bad Branch"},
@@ -582,11 +583,11 @@ class ExplainDecisionTests(unittest.TestCase):
         decision = report["observed_rom_decision"]["decision"]
         self.assertEqual(decision["chosen_slot_index"], 0)
         self.assertEqual(decision["chosen_slot_1_based"], 1)
-        self.assertEqual(decision["possible_action_ids"], ["slot1:IRON_HEAD", "slot2:KARATE_CHOP"])
-        self.assertEqual(decision["possible_move_ids"], [1, 2])
+        self.assertEqual(decision["possible_action_ids"], ["slot1:IRON_HEAD"])
+        self.assertEqual(decision["possible_move_ids"], [1])
         self.assertEqual(selector_path["best_action_id"], "slot1:IRON_HEAD")
-        self.assertEqual(selector_path["second_action_id"], "slot2:KARATE_CHOP")
-        self.assertEqual(selector_path["possible_action_ids"], ["slot1:IRON_HEAD", "slot2:KARATE_CHOP"])
+        self.assertIsNone(selector_path["second_action_id"])
+        self.assertEqual(selector_path["possible_action_ids"], ["slot1:IRON_HEAD"])
         self.assertTrue(selector_path["chosen_has_nonzero_probability"])
         self.assertIn(
             "move.select_move",
@@ -610,7 +611,7 @@ class ExplainDecisionTests(unittest.TestCase):
         self.assertEqual(focus["chosen_action_id"], "slot1:IRON_HEAD")
         self.assertEqual(focus["score_delta_vs_chosen"], 10)
         self.assertIn("scored worse", focus["score_reason"])
-        self.assertEqual(focus["selector_explanation"]["rank"], "second")
+        self.assertEqual(focus["selector_explanation"]["rank"], "outside_selector_roll")
         self.assertEqual(focus["focus_rule_deltas"][0]["rule_id"], "live_trace.model_score_delta")
         self.assertEqual(focus["chosen_rule_deltas"][0]["rule_id"], "live_trace.model_score_delta")
         self.assertIn(
@@ -658,10 +659,10 @@ class ExplainDecisionTests(unittest.TestCase):
         )
         self.assertIn("chosen=POUND", text)
         self.assertIn("slot=1 slot_index=0", text)
-        self.assertIn("possible_actions=['slot1:IRON_HEAD', 'slot2:KARATE_CHOP']", text)
+        self.assertIn("possible_actions=['slot1:IRON_HEAD']", text)
         self.assertIn("focus=slot2:KARATE_CHOP score=20", text)
         self.assertIn("delta_vs_chosen=10", text)
-        self.assertIn("focus_selector=selector second candidate", text)
+        self.assertIn("focus_selector=outside nonzero selector set", text)
         self.assertIn("focus_rules=slot2:KARATE_CHOP live_trace.model_score_delta", text)
         self.assertIn("chosen_rules=slot1:IRON_HEAD live_trace.model_score_delta", text)
         self.assertIn("selector=chosen best candidate", text)
@@ -684,6 +685,7 @@ class ExplainDecisionTests(unittest.TestCase):
                         "tier=3",
                         "move_ids=1,2,3,4",
                         "move_scores=10,10,30,40",
+                        "selector_hedge_slot=1",
                         "chosen_slot=1",
                         "chosen_id=2",
                         "chosen=KARATE_CHOP",
@@ -700,7 +702,7 @@ class ExplainDecisionTests(unittest.TestCase):
         self.assertEqual(selector_choice["chosen_rank"], "second")
         self.assertEqual(selector_choice["chosen_action_id"], "slot2:KARATE_CHOP")
         self.assertGreater(selector_choice["chosen_probability"], 0.0)
-        self.assertIn("second selector candidate", selector_choice["reason"])
+        self.assertIn("public switch hedge", selector_choice["reason"])
         selector_roll = report["counterfactual"]["selector_roll_counterfactual"]
         self.assertTrue(selector_roll["available"])
         self.assertTrue(selector_roll["observed_choice_due_to_random_roll"])
@@ -714,7 +716,7 @@ class ExplainDecisionTests(unittest.TestCase):
         self.assertTrue(focus["found"])
         self.assertEqual(focus["selector_explanation"]["rank"], "outside_selector_roll")
         self.assertIn("zero selector probability", focus["selector_explanation"]["reason"])
-        self.assertIn("selector=chosen second candidate via selector roll", text)
+        self.assertIn("selector=chosen switch hedge via selector roll", text)
         self.assertIn("Selector roll counterfactual", text)
         self.assertIn("focus_selector=outside nonzero selector set", text)
 
@@ -836,9 +838,9 @@ class ExplainDecisionTests(unittest.TestCase):
                         "tier=1",
                         "move_ids=33,28,16,98",
                         "move_scores=20,23,20,20",
-                        "chosen_slot=2",
-                        "chosen_id=16",
-                        "chosen=GUST",
+                        "chosen_slot=0",
+                        "chosen_id=33",
+                        "chosen=TACKLE",
                     ]
                 )
                 + "\n",
@@ -1123,6 +1125,7 @@ def explain_scenario() -> dict:
         "id": "explain_case",
         "family": "spikes_spin",
         "tier": "late",
+        "selector_hedge_action_id": "b",
         "moves": [
             {
                 "id": "a",

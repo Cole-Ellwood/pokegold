@@ -20,7 +20,7 @@ class MetamorphicResult:
 
 def run_metamorphic_suite(*, generated: int = 0, seed: int = 1) -> dict[str, Any]:
     results = [
-        relation_equal_scores_roll_first_two(),
+        relation_equal_scores_commit_without_hedge(),
         relation_blocked_scores_have_zero_probability(),
         relation_third_slot_tied_second_never_rolls(),
         relation_revealed_spin_discourages_extra_spikes(),
@@ -43,7 +43,7 @@ def run_metamorphic_suite(*, generated: int = 0, seed: int = 1) -> dict[str, Any
     }
 
 
-def relation_equal_scores_roll_first_two() -> MetamorphicResult:
+def relation_equal_scores_commit_without_hedge() -> MetamorphicResult:
     scenario = {
         "id": "metamorphic_equal_scores",
         "tier": "late",
@@ -58,14 +58,16 @@ def relation_equal_scores_roll_first_two() -> MetamorphicResult:
     probabilities = result["probabilities"]
     passed = (
         result["best_action_id"] == "slot1"
-        and result["second_action_id"] == "slot2"
+        and result["second_action_id"] is None
+        and probabilities["slot1"] == 1.0
+        and probabilities["slot2"] == 0.0
         and probabilities["slot3"] == 0.0
         and probabilities["slot4"] == 0.0
     )
     return MetamorphicResult(
-        "equal_scores_roll_first_two",
+        "equal_scores_commit_without_hedge",
         passed,
-        "equal score selector surface must only roll first and second slots",
+        "equal score selector surface must commit to the first best slot without a public switch hedge",
         scenario["id"],
         {"probabilities": probabilities},
     )
@@ -104,13 +106,14 @@ def relation_third_slot_tied_second_never_rolls() -> MetamorphicResult:
     result = select_move(scenario)
     passed = (
         result["best_action_id"] == "best"
-        and result["second_action_id"] == "second_a"
+        and result["second_action_id"] is None
+        and result["probabilities"]["second_a"] == 0.0
         and result["probabilities"]["second_b"] == 0.0
     )
     return MetamorphicResult(
         "third_slot_tied_second_never_rolls",
         passed,
-        "the selector ignores later tied second-best slots",
+        "the selector ignores lower-ranked tied slots without a public switch hedge",
         scenario["id"],
         {"probabilities": result["probabilities"]},
     )

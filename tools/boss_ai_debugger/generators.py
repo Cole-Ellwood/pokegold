@@ -1451,9 +1451,13 @@ def selector_edge_scenario(index: int, rng: random.Random, seed: int) -> dict[st
             "acceptable_action_ids": ["slot2"],
             "bad_action_ids": ["slot3", "slot4"],
             "policy_tags": ["selector_surface"],
-            "condition_tags": ["equal_scores", "best_second_only"],
+            "condition_tags": [
+                "equal_scores",
+                "no_public_switch_hedge",
+                "first_best_commit",
+            ],
             "confidence": "high",
-            "why": "Equal scores should roll only the first best and first second slot.",
+            "why": "Without a public switch hedge, equal scores commit to the first best slot.",
         }
     elif shape == "blocked_best":
         moves[0]["blocked"] = True
@@ -1474,9 +1478,9 @@ def selector_edge_scenario(index: int, rng: random.Random, seed: int) -> dict[st
             "acceptable_action_ids": ["slot2"],
             "bad_action_ids": ["slot3", "slot4"],
             "policy_tags": ["selector_surface"],
-            "condition_tags": ["third_slot_tied_second"],
+            "condition_tags": ["third_slot_tied_second", "no_public_switch_hedge"],
             "confidence": "high",
-            "why": "The selector only rolls between best and the first second-best slot.",
+            "why": "Without a public switch hedge, lower-ranked tied slots remain unrolled.",
         }
     else:
         moves[0]["deltas"] = [{"rule": "large encourage", "delta": -8}]
@@ -1485,10 +1489,10 @@ def selector_edge_scenario(index: int, rng: random.Random, seed: int) -> dict[st
             "best_action_ids": ["slot1"],
             "acceptable_action_ids": ["slot2"],
             "policy_tags": ["selector_surface"],
-            "condition_tags": ["wide_gap"],
+            "condition_tags": ["wide_gap", "no_public_switch_hedge"],
             "confidence": "high",
             "min_best_probability": 0.85,
-            "why": "Large score gaps should make the best move strongly favored.",
+            "why": "Large score gaps should commit to the best move unless a public switch hedge exists.",
         }
     return {
         "id": f"generated_selector_edges_{seed}_{index:05d}_{shape}",
