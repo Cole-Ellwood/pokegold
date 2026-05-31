@@ -132,6 +132,17 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("resisted_explosion_board_delta", tags)
         self.assertIn("role_package_ledger", tags)
 
+    def test_switch_sack_defensive_sack_is_stay_action(self) -> None:
+        scenario = find_scenario(
+            generate_scenarios(family="switch_sack", count=3, seed=1),
+            "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+        )
+        move_by_id = {move["id"]: move for move in scenario["moves"]}
+
+        self.assertEqual(scenario["tier"], "late")
+        self.assertEqual(move_by_id["move_defensive_sack"]["kind"], "move")
+        self.assertEqual(scenario["expectation"]["best_action_ids"], ["move_defensive_sack"])
+
     def test_active_revealed_spin_with_reserve_ghost_keeps_third_spikes_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="mid",

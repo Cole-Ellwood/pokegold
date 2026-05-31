@@ -17,4 +17,4 @@
 {"id":"v3_revealed_effect_matrix","command":"python tools\\audit\\check_revealed_effect_matrix_coverage.py","expected_exit_codes":[0],"expected_disposition":"passed"}
 {"id":"v3_coach_template_cli","command":"python -m tools.boss_ai_debugger coach-plan-templates --json","expected_exit_codes":[0],"expected_disposition":"passed"}
 {"id":"v3_coach_template_audit","command":"python tools\\audit\\check_coach_plan_templates.py","expected_exit_codes":[0],"expected_disposition":"passed"}
-{"id":"v3_wrong_switch_known_disagreement","command":"python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\\boss_ai_debugger\\runs\\20260531_050047_changed_ai\\scenarios.jsonl --limit 20 --fail-on-mismatch","expected_exit_codes":[1],"expected_disposition":"discrepancy_found","expected_stdout_contains":["policy_disagreements=1"]}
+{"id":"v3_wrong_switch_known_disagreement","command":"python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\\debugger_power_v3\\switch_sack_known_disagreement.jsonl --limit 3 --fail-on-mismatch","expected_exit_codes":[1],"expected_disposition":"discrepancy_found","expected_stdout_contains":["policy_disagreements=1"]}

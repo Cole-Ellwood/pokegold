@@ -28,6 +28,35 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertTrue(scenario_expects_switch(scenario))
 
+    def test_switch_sack_defensive_sack_expects_staying_in(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=2, seed=1)[1]
+
+        self.assertEqual(scenario["policy_case"], "defensive_sack_for_safe_entry")
+        self.assertFalse(scenario_expects_switch(scenario))
+
+    def test_legacy_defensive_sack_artifact_expects_staying_in(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "moves": [{"id": "move_defensive_sack", "kind": "switch"}],
+            "expectation": {"best_action_ids": ["move_defensive_sack"]},
+        }
+
+        self.assertFalse(scenario_expects_switch(scenario))
+
+    def test_defensive_sack_does_not_mask_other_best_switches(self) -> None:
+        scenario = {
+            "family": "switch_sack",
+            "moves": [
+                {"id": "move_defensive_sack", "kind": "move"},
+                {"id": "move_safe_switch", "kind": "switch"},
+            ],
+            "expectation": {
+                "best_action_ids": ["move_defensive_sack", "move_safe_switch"]
+            },
+        }
+
+        self.assertTrue(scenario_expects_switch(scenario))
+
     def test_switch_materialization_uses_public_state_patches(self) -> None:
         scenario = generate_scenarios(family="switch_sack", count=1, seed=1)[0]
         patches = {

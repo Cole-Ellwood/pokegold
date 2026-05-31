@@ -499,7 +499,7 @@ PUBLIC_POLICY_CASES = {
         },
         {
             "case_id": "defensive_sack_for_safe_entry",
-            "tiers": ("mid", "late"),
+            "tiers": ("late",),
             "notes": [
                 "generated switch/sack case: a low-value sack creates safer entry than exposing the wincon",
             ],
@@ -513,7 +513,7 @@ PUBLIC_POLICY_CASES = {
                 {
                     "id": "move_defensive_sack",
                     "name": "Defensive Sack For Safe Entry",
-                    "kind": "switch",
+                    "kind": "move",
                     "deltas": [{"rule": "sack preserves higher-value owner", "delta": -2}],
                     "lookahead_delta": -1,
                 },

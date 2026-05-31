@@ -35,6 +35,11 @@ AI_SWITCH_THRESHOLD_LATE = 60
 AI_SWITCH_ANTI_LOOP_PENALTY = 10
 AI_SWITCH_SACK_BIAS = 8
 AI_SWITCH_WINCON_BIAS = 10
+STAY_ACTION_IDS = frozenset(
+    {
+        "move_defensive_sack",
+    }
+)
 SWITCH_DIAGNOSTIC_FIELDS: tuple[tuple[str, int], ...] = (
     ("wBossAIPrimaryThreatCache", 1),
     ("wBossAIPlausibleTypeMaskCache", 4),
@@ -883,7 +888,11 @@ def switch_policy_result(verdict: str, severity: int, reason: str) -> dict[str, 
 
 def scenario_expects_switch(scenario: dict[str, Any]) -> bool:
     expectation = scenario_expectation(scenario)
-    best_ids = list_of_strings(expectation.get("best_action_ids"))
+    best_ids = [
+        action_id
+        for action_id in list_of_strings(expectation.get("best_action_ids"))
+        if action_id not in STAY_ACTION_IDS
+    ]
     moves = scenario.get("moves", [])
     by_id = {
         str(move.get("id") or f"slot{slot}"): move
