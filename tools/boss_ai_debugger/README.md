@@ -574,10 +574,10 @@ python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\bo
 python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\boss_ai_debugger\generated\expanded_all.jsonl --limit 80
 ```
 
-`rom-score-materialize` defaults to Koga's real pre-choice trace state, but
-`--base-route` can select any manifest-backed boss route. Before using a route
-for score materialization, generate or refresh that route's
-`score_materialization_state` with
+`rom-score-materialize` defaults to Koga's real score-materialization state, but
+`--base-route` can select any manifest-backed boss route that has a
+`score_materialization_state`. Before using a route for score materialization,
+generate or refresh that route's `score_materialization_state` with
 `boss_ai_state_factory.py --boss <route> --refresh-score-materialization-states
 --update-manifest` after trace-ROM or route-state changes; the state is saved
 at the first score-model entry with trace output bytes cleared.

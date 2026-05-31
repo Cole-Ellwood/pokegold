@@ -505,6 +505,18 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(controls.button_interval_frames, 45)
         self.assertEqual(controls.watch_frames, 270)
 
+    def test_replay_controls_reject_pre_choice_as_primary_score_base(self) -> None:
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "requires score_materialization_state",
+        ):
+            replay_controls_from_manifest(
+                {"pre_choice_state": ".local/tmp/pre_choice.state"},
+                button="a",
+                button_delay=8,
+                watch_frames=90,
+            )
+
     def test_score_materialization_fallback_uses_pre_choice_controls(self) -> None:
         controls = fallback_replay_controls_from_manifest(
             {

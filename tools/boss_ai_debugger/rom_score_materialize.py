@@ -388,11 +388,14 @@ def replay_controls_from_manifest(
     button_delay: int,
     watch_frames: int,
 ) -> ReplayControls:
-    base_state_field = (
-        "score_materialization_state"
-        if manifest_entry.get("score_materialization_state")
-        else "pre_choice_state"
-    )
+    if not manifest_entry.get("score_materialization_state"):
+        raise PreferenceDataError(
+            "score materialization requires score_materialization_state; "
+            "refresh one with tools\\trace\\boss_ai_state_factory.py "
+            "--boss <route> --refresh-score-materialization-states "
+            "--update-manifest"
+        )
+    base_state_field = "score_materialization_state"
     base_state = resolve_manifest_path(str(manifest_entry[base_state_field]))
     score_button = str(manifest_entry.get("score_materialization_button", button))
     button_presses = int(manifest_entry.get("score_materialization_button_presses", 1))
