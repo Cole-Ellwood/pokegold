@@ -993,7 +993,10 @@ def base_public_policy_patches(
     if "status_absorber_named" in tags:
         player_type1 = TYPES["POISON"]
         player_type2 = TYPES["POISON"]
-    elif "worst_case_unguarded" in tags:
+    elif (
+        "worst_case_unguarded" in tags
+        and "active_pressure_converts" not in tags
+    ):
         player_type1 = TYPES["STEEL"]
         player_type2 = TYPES["STEEL"]
     elif "prediction_branch_supported" in tags:
@@ -1024,6 +1027,8 @@ def base_public_policy_patches(
         patch("wEnemyMonType1", TYPES["POISON"]),
         patch("wEnemyMonType2", TYPES["WATER"]),
         patch("hBattleTurn", 1),
+        patch("wEnemyTurnsTaken", 1 if "setup_already_bankrolled" in tags else 0),
+        patch("wPlayerTurnsTaken", 1 if "setup_already_bankrolled" in tags else 0),
         patch("wBossAITurnsElapsed", 2 if "support_job_completed" in tags else 1),
         patch("wBossAIPlayerSwitchCount", 1 if "prediction_branch_supported" in tags else 0),
         patch("wBossAIPendingPlayerSwitchCount", 0),

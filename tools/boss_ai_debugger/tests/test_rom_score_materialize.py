@@ -220,6 +220,49 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wEnemyMonMoves", 1)], 0xE2)
         self.assertEqual(patches[("wOTPartyCount", 0)], 2)
 
+    def test_reject_reckless_prediction_keeps_active_target_vulnerable(self) -> None:
+        scenario = generate_scenarios(family="prediction_mix", count=2, seed=3)[1]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertIn("worst_case_unguarded", scenario["expectation"]["condition_tags"])
+        self.assertIn(
+            "active_pressure_converts",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["WATER"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["PSYCHIC"])
+
+    def test_setup_bankrolled_materialization_patches_enemy_turns_taken(self) -> None:
+        scenario = generate_scenarios(family="setup_heal", count=2, seed=3)[1]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertIn(
+            "setup_already_bankrolled",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertEqual(patches[("wEnemyTurnsTaken", 0)], 1)
+        self.assertEqual(patches[("wPlayerTurnsTaken", 0)], 1)
+        self.assertLess(
+            patches[("wEnemyMonHP", 1)],
+            patches[("wEnemyMonMaxHP", 1)],
+        )
+
     def test_mastery_policy_materialization_maps_active_pressure_case(self) -> None:
         scenario = generate_scenarios(family="mastery_policy", count=1, seed=1)[0]
 
