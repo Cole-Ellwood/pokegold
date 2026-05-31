@@ -276,26 +276,44 @@ def run_rom_switch_materialization(
     }
 
 
-def _resolve_species(value: Any, default: int) -> int:
+def _resolve_byte(value: Any, default: int, label: str) -> int:
+    if value is None:
+        return default
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise PreferenceDataError(f"overrides.{label} must be an integer byte")
+    if not 0 <= value <= 0xFF:
+        raise PreferenceDataError(
+            f"overrides.{label} = {value} out of byte range [0..255]"
+        )
+    return value
+
+
+def _resolve_word(value: Any, default: int, label: str) -> int:
+    if value is None:
+        return default
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise PreferenceDataError(f"overrides.{label} must be an integer word")
+    if not 0 <= value <= 0xFFFF:
+        raise PreferenceDataError(
+            f"overrides.{label} = {value} out of word range [0..65535]"
+        )
+    return value
+
+
+def _resolve_species(value: Any, default: int, label: str) -> int:
     if value is None:
         return default
     if isinstance(value, int):
-        return value
-    return SPECIES[str(value).upper()]
+        return _resolve_byte(value, default, label)
+    return _resolve_byte(SPECIES[str(value).upper()], default, label)
 
 
-def _resolve_type(value: Any, default: int) -> int:
+def _resolve_type(value: Any, default: int, label: str) -> int:
     if value is None:
         return default
     if isinstance(value, int):
-        return value
-    return TYPES[str(value).upper()]
-
-
-def _resolve_int(value: Any, default: int) -> int:
-    if value is None:
-        return default
-    return int(value)
+        return _resolve_byte(value, default, label)
+    return _resolve_byte(TYPES[str(value).upper()], default, label)
 
 
 def _resolve_byte_list(value: Any, *, length: int, label: str) -> list[int]:
@@ -353,7 +371,9 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
     if not isinstance(overrides_raw, dict):
         raise PreferenceDataError("scenario.overrides must be an object when present")
 
-    player_species = _resolve_species(overrides_raw.get("player_species"), SPECIES["STARMIE"])
+    player_species = _resolve_species(
+        overrides_raw.get("player_species"), SPECIES["STARMIE"], "player_species"
+    )
     default_player_type = (
         TYPES["WATER"]
         if active_converts and "public_threat_to_active" not in tags
@@ -364,76 +384,74 @@ def switch_materialization_patches(scenario: dict[str, Any]) -> list[MemoryPatch
         if active_converts and "public_threat_to_active" not in tags
         else TYPES["GROUND"]
     )
-    player_type1 = _resolve_type(overrides_raw.get("player_type1"), default_player_type)
-    player_type2 = _resolve_type(overrides_raw.get("player_type2"), default_player_type2)
-    player_hp = _resolve_int(overrides_raw.get("player_hp"), 20 if active_converts else 80)
-    player_max_hp = _resolve_int(overrides_raw.get("player_max_hp"), 100)
+    player_type1 = _resolve_type(
+        overrides_raw.get("player_type1"), default_player_type, "player_type1"
+    )
+    player_type2 = _resolve_type(
+        overrides_raw.get("player_type2"), default_player_type2, "player_type2"
+    )
+    player_hp = _resolve_word(
+        overrides_raw.get("player_hp"), 20 if active_converts else 80, "player_hp"
+    )
+    player_max_hp = _resolve_word(overrides_raw.get("player_max_hp"), 100, "player_max_hp")
 
-    enemy_species = _resolve_species(overrides_raw.get("enemy_species"), SPECIES["QWILFISH"])
-    enemy_type1 = _resolve_type(overrides_raw.get("enemy_type1"), TYPES["POISON"])
-    enemy_type2 = _resolve_type(overrides_raw.get("enemy_type2"), TYPES["WATER"])
-    enemy_hp = _resolve_int(overrides_raw.get("enemy_hp"), 22 if defensive_sack else 80)
-    enemy_max_hp = _resolve_int(overrides_raw.get("enemy_max_hp"), 100)
+    enemy_species = _resolve_species(
+        overrides_raw.get("enemy_species"), SPECIES["QWILFISH"], "enemy_species"
+    )
+    enemy_type1 = _resolve_type(
+        overrides_raw.get("enemy_type1"), TYPES["POISON"], "enemy_type1"
+    )
+    enemy_type2 = _resolve_type(
+        overrides_raw.get("enemy_type2"), TYPES["WATER"], "enemy_type2"
+    )
+    enemy_hp = _resolve_word(
+        overrides_raw.get("enemy_hp"), 22 if defensive_sack else 80, "enemy_hp"
+    )
+    enemy_max_hp = _resolve_word(overrides_raw.get("enemy_max_hp"), 100, "enemy_max_hp")
 
     enemy_bench_species = _resolve_species(
-        overrides_raw.get("enemy_bench_species"), SPECIES["GENGAR"]
+        overrides_raw.get("enemy_bench_species"), SPECIES["GENGAR"], "enemy_bench_species"
     )
-    enemy_bench_hp = _resolve_int(overrides_raw.get("enemy_bench_hp"), 80)
-    enemy_bench_max_hp = _resolve_int(overrides_raw.get("enemy_bench_max_hp"), 100)
+    enemy_bench_hp = _resolve_word(overrides_raw.get("enemy_bench_hp"), 80, "enemy_bench_hp")
+    enemy_bench_max_hp = _resolve_word(
+        overrides_raw.get("enemy_bench_max_hp"), 100, "enemy_bench_max_hp"
+    )
 
-    player_status = _resolve_int(overrides_raw.get("player_status"), 0)
-    enemy_status = _resolve_int(overrides_raw.get("enemy_status"), 0)
+    player_status = _resolve_byte(overrides_raw.get("player_status"), 0, "player_status")
+    enemy_status = _resolve_byte(overrides_raw.get("enemy_status"), 0, "enemy_status")
     # Slice C-environment fields: only patch when explicitly overridden so the
     # base save state's existing values are preserved for backward-compat.
     optional_overrides: list[tuple[str, str, int]] = []
-    if "weather" in overrides_raw:
-        optional_overrides.append(("wBattleWeather", "weather", _resolve_int(overrides_raw["weather"], 0)))
-    if "weather_count" in overrides_raw:
-        optional_overrides.append(("wWeatherCount", "weather_count", _resolve_int(overrides_raw["weather_count"], 0)))
-    if "player_item" in overrides_raw:
-        optional_overrides.append(("wBattleMonItem", "player_item", _resolve_int(overrides_raw["player_item"], 0)))
-    if "enemy_item" in overrides_raw:
-        optional_overrides.append(("wEnemyMonItem", "enemy_item", _resolve_int(overrides_raw["enemy_item"], 0)))
-    if "player_screens" in overrides_raw:
-        optional_overrides.append(("wPlayerScreens", "player_screens", _resolve_int(overrides_raw["player_screens"], 0)))
-    if "enemy_screens" in overrides_raw:
-        optional_overrides.append(("wEnemyScreens", "enemy_screens", _resolve_int(overrides_raw["enemy_screens"], 0)))
-    if "player_sub5" in overrides_raw:
-        optional_overrides.append(("wPlayerSubStatus5", "player_sub5", _resolve_int(overrides_raw["player_sub5"], 0)))
-    if "enemy_sub5" in overrides_raw:
-        optional_overrides.append(("wEnemySubStatus5", "enemy_sub5", _resolve_int(overrides_raw["enemy_sub5"], 0)))
     # Residual sub-status bytes (sub1 carries NIGHTMARE, sub3 carries CONFUSED;
     # see constants/battle_constants.asm). The headless simulator does not model
     # these bits yet, so the exporter cannot auto-populate them -- but hand-written
     # scenarios can reach the WRAM bits via these overrides for end-to-end coverage.
-    if "player_sub1" in overrides_raw:
-        optional_overrides.append(("wPlayerSubStatus1", "player_sub1", _resolve_int(overrides_raw["player_sub1"], 0)))
-    if "enemy_sub1" in overrides_raw:
-        optional_overrides.append(("wEnemySubStatus1", "enemy_sub1", _resolve_int(overrides_raw["enemy_sub1"], 0)))
-    if "player_sub3" in overrides_raw:
-        optional_overrides.append(("wPlayerSubStatus3", "player_sub3", _resolve_int(overrides_raw["player_sub3"], 0)))
-    if "enemy_sub3" in overrides_raw:
-        optional_overrides.append(("wEnemySubStatus3", "enemy_sub3", _resolve_int(overrides_raw["enemy_sub3"], 0)))
     # Slice C-substitute: sub4 byte (SUBSTATUS_SUBSTITUTE = bit 4) + the
     # separate wPlayer/EnemySubstituteHP storage. Presence-only emission --
     # the base state's existing sub4 + substitute_hp bytes survive untouched
     # when callers don't ask for non-default substitute state.
-    if "player_sub4" in overrides_raw:
-        optional_overrides.append(("wPlayerSubStatus4", "player_sub4", _resolve_int(overrides_raw["player_sub4"], 0)))
-    if "enemy_sub4" in overrides_raw:
-        optional_overrides.append(("wEnemySubStatus4", "enemy_sub4", _resolve_int(overrides_raw["enemy_sub4"], 0)))
-    if "player_substitute_hp" in overrides_raw:
-        optional_overrides.append((
-            "wPlayerSubstituteHP",
-            "player_substitute_hp",
-            _resolve_int(overrides_raw["player_substitute_hp"], 0),
-        ))
-    if "enemy_substitute_hp" in overrides_raw:
-        optional_overrides.append((
-            "wEnemySubstituteHP",
-            "enemy_substitute_hp",
-            _resolve_int(overrides_raw["enemy_substitute_hp"], 0),
-        ))
+    for symbol, key in (
+        ("wBattleWeather", "weather"),
+        ("wWeatherCount", "weather_count"),
+        ("wBattleMonItem", "player_item"),
+        ("wEnemyMonItem", "enemy_item"),
+        ("wPlayerScreens", "player_screens"),
+        ("wEnemyScreens", "enemy_screens"),
+        ("wPlayerSubStatus5", "player_sub5"),
+        ("wEnemySubStatus5", "enemy_sub5"),
+        ("wPlayerSubStatus1", "player_sub1"),
+        ("wEnemySubStatus1", "enemy_sub1"),
+        ("wPlayerSubStatus3", "player_sub3"),
+        ("wEnemySubStatus3", "enemy_sub3"),
+        ("wPlayerSubStatus4", "player_sub4"),
+        ("wEnemySubStatus4", "enemy_sub4"),
+        ("wPlayerSubstituteHP", "player_substitute_hp"),
+        ("wEnemySubstituteHP", "enemy_substitute_hp"),
+    ):
+        if key in overrides_raw:
+            optional_overrides.append(
+                (symbol, key, _resolve_byte(overrides_raw[key], 0, key))
+            )
     # Slice C-stages: 5 stat stages per side, base-7 encoded. Like the other
     # optional overrides, only emit when explicitly present so the base save
     # state's existing wPlayer/EnemyStatLevels survive when callers don't ask

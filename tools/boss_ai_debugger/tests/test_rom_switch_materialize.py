@@ -459,6 +459,40 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         with self.assertRaisesRegex(PreferenceDataError, "must be an integer"):
             switch_materialization_patches(scenario)
 
+    def test_switch_materialization_rejects_scalar_byte_overrides_out_of_range(self) -> None:
+        for field, value in (
+            ("player_species", 0x100),
+            ("enemy_status", 0x100),
+            ("weather", -1),
+            ("enemy_item", 0x100),
+            ("player_sub4", True),
+        ):
+            with self.subTest(field=field):
+                scenario = {
+                    "family": "switch_sack",
+                    "tier": "late",
+                    "expectation": {"condition_tags": ["switch_sack"]},
+                    "overrides": {field: value},
+                }
+                with self.assertRaisesRegex(PreferenceDataError, f"overrides.{field}"):
+                    switch_materialization_patches(scenario)
+
+    def test_switch_materialization_rejects_word_overrides_out_of_range(self) -> None:
+        for field, value in (
+            ("player_hp", 0x10000),
+            ("enemy_max_hp", -1),
+            ("enemy_bench_hp", False),
+        ):
+            with self.subTest(field=field):
+                scenario = {
+                    "family": "switch_sack",
+                    "tier": "late",
+                    "expectation": {"condition_tags": ["switch_sack"]},
+                    "overrides": {field: value},
+                }
+                with self.assertRaisesRegex(PreferenceDataError, f"overrides.{field}"):
+                    switch_materialization_patches(scenario)
+
     def test_switch_materialization_skips_sub5_when_absent(self) -> None:
         scenario = {
             "family": "switch_sack",
