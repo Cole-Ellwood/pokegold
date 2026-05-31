@@ -13,7 +13,7 @@ from .rom_scenarios import select_move
 PYTHON_RULE_ID_MAP = {
     "lookahead": "move.apply_lookahead_to_top_move_candidates",
 }
-ROM_RULE_PREFIXES = ("move.", "switch.", "item.")
+ROM_RULE_PREFIXES = ("move.", "switch.", "item.", "ko_band_oracle.")
 
 
 def python_contribution_report_from_scenarios(

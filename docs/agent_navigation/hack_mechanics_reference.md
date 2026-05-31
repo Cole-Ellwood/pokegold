@@ -95,11 +95,13 @@ Outrage exception source: `TypePassive_GetEffectiveMoveCategory_Far` in
 Source: `engine/pokemon/move_mon.asm`, `engine/battle/effect_commands.asm`,
 and `data/battle/stat_multipliers.asm`.
 
-Computed stats use Gen 2 DVs and Stat Exp:
+Computed stats use Gen 2 DVs only. Stat Exp has been removed from this
+hack (every `CalcMonStats` caller passes `b=FALSE`), so no Pokemon -
+player or trainer - gains a stat-exp bonus:
 
 ```text
-Non-HP = floor(((2 * (base + DV)) + floor(sqrt(StatExp) / 4)) * level / 100) + 5
-HP     = floor(((2 * (base + HP_DV)) + floor(sqrt(HPStatExp) / 4)) * level / 100) + level + 10
+Non-HP = floor((2 * (base + DV)) * level / 100) + 5
+HP     = floor((2 * (base + HP_DV)) * level / 100) + level + 10
 ```
 
 Battle stat stages then multiply the computed battle stat:
@@ -485,12 +487,12 @@ engine effect. For behavior, check `engine/battle/late_gen_held_items.asm`,
 | 17 | ????? | `THUNDERSTONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 18 | ????? | `WATER_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 19 | TERU-SAMA | `ITEM_19` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
-| 1A | HP UP | `HP_UP` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 1B | PROTEIN | `PROTEIN` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 1C | IRON | `IRON` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
-| 1D | CARBOS | `CARBOS` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 1A | MEMO HERB | `HP_UP` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 1B | PP RESTORE | `PROTEIN` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 1C | CURE-ALL | `IRON` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
+| 1D | REPEL CUBE | `CARBOS` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_CURRENT` | `ITEMMENU_NOUSE` |
 | 1E | LUCKY PUNCH | `LUCKY_PUNCH` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
-| 1F | CALCIUM | `CALCIUM` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
+| 1F | SILVERNUGGET | `CALCIUM` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 20 | RARE CANDY | `RARE_CANDY` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_PARTY` | `ITEMMENU_NOUSE` |
 | 21 | ????? | `X_ACCURACY` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |
 | 22 | ????? | `LEAF_STONE` | `HELD_NONE` | 0 | `ITEM` | `ITEMMENU_NOUSE` | `ITEMMENU_NOUSE` |

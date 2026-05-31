@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from .catalog import ROOT
 from .ingest import sha256_file
@@ -33,6 +33,10 @@ DEFAULT_SYMBOLS = (
     "wEventFlags",
     "hROMBank",
 )
+
+NAVIGATE_DEFAULT_ROM = ROOT / "pokegold.gbc"
+NAVIGATE_DEFAULT_SYMBOLS = ROOT / "pokegold.sym"
+NAVIGATE_FRAME_SLACK = 300
 
 SYMBOL_SIZES = {
     "wCurDamage": 2,
@@ -202,6 +206,115 @@ def build_save_state_diff_report(
         "known_limits": [
             "Address diffs compare decoded address-map bytes, not full emulator internals.",
             "Unsupported state formats fail closed instead of guessing WRAM offsets.",
+        ],
+    }
+
+
+def build_synth_report(
+    *,
+    predicate: str,
+    checkpoint: str = "auto",
+    rom_path: str = str(NAVIGATE_DEFAULT_ROM),
+    symbols_path: str = str(NAVIGATE_DEFAULT_SYMBOLS),
+    save_state: str | None = None,
+    manifest_out: str | None = None,
+    frame_slack: int = NAVIGATE_FRAME_SLACK,
+    verify: bool = True,
+    root: Path = ROOT,
+    navigator: Callable[..., dict[str, Any]] | None = None,
+    verifier: Callable[..., dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Synthesize a reachable state by delegating to the Phase-1 navigator.
+
+    This is intentionally a wrapper around ``navigate_to`` instead of a second
+    synthesis engine: ``save-state-lab synth`` inherits the checkpoint/input-log
+    reachability proof and fails closed when the navigator cannot satisfy the
+    predicate.
+    """
+
+    from . import state_predicate
+    from .navigate import navigate_to, verify_run
+
+    rom = resolve_path(rom_path, root=root)
+    symbols = resolve_path(symbols_path, root=root)
+    state_out = resolve_path(save_state, root=root) if save_state else None
+    manifest_path = resolve_path(manifest_out, root=root) if manifest_out else None
+    errors: list[str] = []
+    warnings: list[str] = []
+    verification: dict[str, Any] = {}
+    error_kind = ""
+
+    drive = navigator or navigate_to
+    check = verifier or verify_run
+    try:
+        outcome = drive(
+            predicate,
+            checkpoint=checkpoint,
+            rom=rom,
+            symbols_path=symbols,
+            save_state=str(state_out) if state_out else None,
+            manifest_out=str(manifest_path) if manifest_path else None,
+            frame_slack=frame_slack,
+        )
+    except state_predicate.PredicateError as exc:
+        error_kind = "invalid_predicate"
+        outcome = {"predicate": predicate, "checkpoint": checkpoint, "reached": False, "nearest": ""}
+        errors.append(f"invalid predicate: {exc}")
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        error_kind = "setup"
+        outcome = {"predicate": predicate, "checkpoint": checkpoint, "reached": False, "nearest": ""}
+        errors.append(f"{type(exc).__name__}: {exc}")
+
+    reached = bool(outcome.get("reached"))
+    if not reached and not errors:
+        unmet = ", ".join(str(item) for item in outcome.get("unmet", []))
+        nearest = outcome.get("nearest") or "no state observed"
+        errors.append(
+            f"could not reach {outcome.get('predicate', predicate)!r} "
+            f"within checkpoint {outcome.get('checkpoint', checkpoint)!r}; "
+            f"nearest observed {nearest}; unmet: {unmet}"
+        )
+
+    if verify and reached:
+        run_manifest = str(outcome.get("manifest_path") or "")
+        if not run_manifest:
+            errors.append("navigator reported reached=True without a run manifest")
+        else:
+            verification = check(
+                run_manifest,
+                rom=rom,
+                symbols_path=symbols,
+                frame_slack=frame_slack,
+            )
+            if not verification.get("passed", False):
+                errors.append("navigator manifest verification failed")
+    elif reached:
+        warnings.append("verification skipped by caller")
+
+    return {
+        "schema_version": 1,
+        "kind": "unified_debugger_save_state_synth",
+        "root": str(root),
+        "valid": reached and not errors,
+        "error_count": len(errors),
+        "warning_count": len(warnings),
+        "errors": errors,
+        "warnings": warnings,
+        "error_kind": error_kind,
+        "predicate": predicate,
+        "checkpoint": outcome.get("checkpoint", checkpoint),
+        "backend": "pyboy",
+        "synthesized": reached,
+        "reached": reached,
+        "state": display_path(Path(outcome["state_path"]), root=root) if outcome.get("state_path") else "",
+        "manifest": display_path(Path(outcome["manifest_path"]), root=root) if outcome.get("manifest_path") else "",
+        "verification_requested": bool(verify),
+        "verification": verification,
+        "navigation": outcome,
+        "known_limits": [
+            "checkpoint-backed synthesis with bounded-search-generated checkpoints only: no full arbitrary input search yet",
+            "PyBoy is the local synthesis backend; VBA-M cross-backend proof is still a separate gate",
+            "PyBoy .state bytes are not decoded directly by inspect; predicate truth is confirmed by navigator RAM observation and manifest replay",
         ],
     }
 
@@ -515,8 +628,46 @@ def format_diff_report(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_synth_report(report: dict[str, Any]) -> str:
+    lines = [
+        "Save-state synth",
+        (
+            f"valid={str(report.get('valid')).lower()} "
+            f"reached={str(report.get('reached')).lower()} "
+            f"synthesized={str(report.get('synthesized')).lower()} "
+            f"backend={report.get('backend', '')}"
+        ),
+        f"predicate={report.get('predicate', '')}",
+        f"checkpoint={report.get('checkpoint', '')}",
+    ]
+    navigation = report.get("navigation") or {}
+    if report.get("reached"):
+        state_desc = navigation.get("map_desc") or navigation.get("nearest", "")
+        lines.append(
+            f"predicate satisfied: {navigation.get('predicate', report.get('predicate', ''))} "
+            f"[checkpoint={report.get('checkpoint', '')}] {state_desc}"
+        )
+        lines.append(f"synthesized state: {report.get('state', '')}")
+        lines.append(f"manifest: {report.get('manifest', '')}")
+    else:
+        nearest = navigation.get("nearest") or "no state observed"
+        lines.append(f"nearest observed: {nearest}")
+
+    if report.get("verification_requested"):
+        verification = report.get("verification") or {}
+        if verification:
+            lines.append(f"verification: {'PASS' if verification.get('passed') else 'FAIL'}")
+        else:
+            lines.append("verification: not run")
+    for warning in report.get("warnings", []):
+        lines.append(f"warning: {warning}")
+    for error in report.get("errors", []):
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Inspect and diff supported save-state files.")
+    parser = argparse.ArgumentParser(description="Inspect, diff, and synthesize supported save-state files.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     inspect_parser = subparsers.add_parser("inspect")
@@ -533,6 +684,30 @@ def main(argv: list[str] | None = None) -> int:
     diff_parser.add_argument("--symbol", action="append", default=[])
     diff_parser.add_argument("--max-deltas", type=int, default=64)
     diff_parser.add_argument("--json", action="store_true")
+
+    synth_parser = subparsers.add_parser("synth")
+    synth_parser.add_argument("--to", required=True, metavar="PREDICATE", help="target-state predicate to synthesize")
+    synth_parser.add_argument("--checkpoint", default="auto", help="checkpoint id to replay (default: auto)")
+    synth_parser.add_argument("--rom", default=str(NAVIGATE_DEFAULT_ROM))
+    synth_parser.add_argument("--symbols", default=str(NAVIGATE_DEFAULT_SYMBOLS))
+    synth_parser.add_argument("--save-state", default=None, help="save-state output path (default: navigator default)")
+    synth_parser.add_argument("--manifest-out", default=None, help="run-manifest output path")
+    synth_parser.add_argument("--frame-slack", type=int, default=NAVIGATE_FRAME_SLACK)
+    verify_group = synth_parser.add_mutually_exclusive_group()
+    verify_group.add_argument(
+        "--verify",
+        dest="verify",
+        action="store_true",
+        default=True,
+        help="replay-validate the manifest after synthesis (default)",
+    )
+    verify_group.add_argument(
+        "--no-verify",
+        dest="verify",
+        action="store_false",
+        help="skip manifest replay validation",
+    )
+    synth_parser.add_argument("--json", action="store_true")
 
     args = parser.parse_args(argv)
     if args.command == "inspect":
@@ -553,6 +728,21 @@ def main(argv: list[str] | None = None) -> int:
             max_deltas=args.max_deltas,
         )
         print(json.dumps(report, indent=2, sort_keys=True) if args.json else format_diff_report(report))
+        return 0 if report["valid"] else 1
+    if args.command == "synth":
+        report = build_synth_report(
+            predicate=args.to,
+            checkpoint=args.checkpoint,
+            rom_path=args.rom,
+            symbols_path=args.symbols,
+            save_state=args.save_state,
+            manifest_out=args.manifest_out,
+            frame_slack=args.frame_slack,
+            verify=args.verify,
+        )
+        print(json.dumps(report, indent=2, sort_keys=True) if args.json else format_synth_report(report))
+        if report.get("error_kind") == "invalid_predicate":
+            return 2
         return 0 if report["valid"] else 1
     return 2
 

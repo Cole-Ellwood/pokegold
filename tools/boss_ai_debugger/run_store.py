@@ -66,7 +66,12 @@ def run_generated_smoke_suite(
     write_jsonl(scenarios, scenarios_path)
     validation = validate_scenario_file(scenarios_path)
     batch = evaluate_batch(scenarios)
-    queue = build_review_queue(batch, limit=50, source=str(batch_path))
+    queue = build_review_queue(
+        batch,
+        limit=50,
+        source=str(batch_path),
+        scenario_source=str(scenarios_path),
+    )
 
     write_json(batch, batch_path)
     write_review_queue(queue, queue_path)
@@ -164,7 +169,12 @@ def run_changed_ai_suite(
     write_jsonl(scenarios, scenarios_path)
     validation = validate_scenario_file(scenarios_path)
     batch = evaluate_batch(scenarios)
-    queue = build_review_queue(batch, limit=50, source=str(batch_path))
+    queue = build_review_queue(
+        batch,
+        limit=50,
+        source=str(batch_path),
+        scenario_source=str(scenarios_path),
+    )
     route_eval = evaluate_route_batch(scenarios, source=str(scenarios_path))
     rom_score_materialization = materialize_rom_score_scenarios(
         scenarios=scenarios,

@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASE_ROUTE = "koga"
 DEFAULT_WATCH_FRAMES = 90
 PUBLIC_POLICY_FAMILIES = (
+    "mastery_policy",
     "setup_heal",
     "prediction_mix",
     "support_handoff",
@@ -48,21 +49,37 @@ SUPPORTED_FAMILIES = ("spikes_spin", *PUBLIC_POLICY_FAMILIES)
 
 MOVE_FALLBACK_IDS = {
     "move_absorber_coverage": 0x59,
+    "move_active_absorber_job": 0x5E,
+    "move_active_damage": 0x7E,
+    "move_active_pressure": 0x7E,
     "move_all_in_read": 0x55,
+    "move_attack_spinner": 0x55,
+    "move_burn_wake_turns": 0x7E,
     "move_cashout_attack": 0xBC,
+    "move_cashout_converter": 0x99,
+    "move_chip_damage": 0x22,
     "move_counter_handoff": 0xE2,
     "move_counter_switch": 0xE2,
     "move_cover_reset": 0x2E,
     "move_generic_chip": 0xBC,
     "move_generic_damage": 0xBC,
     "move_generic_status": 0x5C,
+    "move_haki_generalization": 0xBC,
     "move_handoff": 0xE2,
     "move_handoff_converter": 0xE2,
+    "move_local_verified_line": 0x55,
     "move_low_risk_prediction": 0x59,
     "move_more_setup": 0xAE,
     "move_neutral_hit": 0x22,
+    "move_neutral_route": 0x22,
     "move_obvious_stab": 0xBC,
     "move_passive_reset": 0x69,
+    "move_passive_handoff": 0x69,
+    "move_pivot_out": 0xE2,
+    "move_possible_only_read": 0x55,
+    "move_preserve_job": 0x69,
+    "move_preserve_sleep_absorber": 0x69,
+    "move_punish_spin": 0x55,
     "move_receiver_coverage": 0x59,
     "move_reckless_prediction": 0x59,
     "move_recover": 0x69,
@@ -70,17 +87,25 @@ MOVE_FALLBACK_IDS = {
     "move_recover_route": 0x69,
     "move_repeat_setup": 0xAE,
     "move_repeat_support": 0x5C,
+    "move_respect_lure": 0x55,
     "move_roar_loop": 0x2E,
     "move_safe_active_ko": 0xBC,
     "move_safe_default": 0xBC,
     "move_safe_handoff": 0xE2,
+    "move_safe_status": 0x5C,
+    "move_scout_switch": 0xE2,
+    "move_self_ko": 0x99,
+    "move_set_extra_spikes": 0xBF,
+    "move_species_template": 0xBC,
     "move_safe_setup": 0xAE,
     "move_spikes_reset": 0xBF,
     "move_status": 0x5C,
+    "move_status_sleeping_target": 0x5C,
     "move_status_script": 0x5C,
     "move_switch": 0xE2,
     "move_switch_away": 0xE2,
     "move_switch_out": 0xE2,
+    "move_vanilla_assumption": 0xBC,
     "move_weak_attack": 0x22,
     "move_spikes": 0xBF,
     "move_sludge_bomb": 0xBC,
@@ -392,6 +417,34 @@ def replay_controls_from_manifest(
     )
 
 
+def fallback_replay_controls_from_manifest(
+    manifest_entry: dict[str, Any],
+    *,
+    button: str,
+    button_delay: int,
+    watch_frames: int,
+) -> ReplayControls | None:
+    if not manifest_entry.get("score_materialization_state"):
+        return None
+    if not manifest_entry.get("pre_choice_state"):
+        return None
+    score_button = str(manifest_entry.get("choice_button", button))
+    button_presses = 1
+    button_interval_frames = 0
+    manifest_watch_frames = int(
+        manifest_entry.get("choice_wait_frames", watch_frames)
+    )
+    return ReplayControls(
+        base_state=resolve_manifest_path(str(manifest_entry["pre_choice_state"])),
+        base_state_field="pre_choice_state",
+        button=score_button,
+        button_delay=button_delay,
+        watch_frames=max(watch_frames, manifest_watch_frames),
+        button_presses=button_presses,
+        button_interval_frames=button_interval_frames,
+    )
+
+
 def validate_score_materialization_base(values: dict[str, list[int]]) -> None:
     problems: list[str] = []
     if values["wBossAITraceChosenMove"][0] != 0:
@@ -418,6 +471,41 @@ def validate_base_state_file(
     with base_state.open("rb") as fh:
         pyboy.load_state(fh)
     validate_score_materialization_base(capture.read_trace_values(pyboy, symbols))
+
+
+def run_score_materialization_attempt(
+    session: RomContributionTraceSession | RomScoreReplaySession,
+    *,
+    controls: ReplayControls,
+    base_route: str,
+    scenario_id: str,
+    memory_patches: list[MemoryPatch],
+) -> dict[str, Any]:
+    return session.run(
+        save_state=controls.base_state,
+        button=controls.button,
+        button_delay=controls.button_delay,
+        watch_frames=controls.watch_frames,
+        button_presses=controls.button_presses,
+        button_interval_frames=controls.button_interval_frames,
+        metadata={
+            "boss": base_route,
+            "notes": f"generated-score-materialization:{scenario_id}",
+        },
+        memory_patches=memory_patches,
+    )
+
+
+def should_fallback_to_pre_choice(
+    controls: ReplayControls,
+    fallback_controls: ReplayControls | None,
+    exc: Exception,
+) -> bool:
+    if fallback_controls is None:
+        return False
+    if controls.base_state_field != "score_materialization_state":
+        return False
+    return "no boss move choice observed" in str(exc)
 
 
 def run_rom_score_materialization(
@@ -464,10 +552,18 @@ def run_rom_score_materialization(
         button_delay=button_delay,
         watch_frames=watch_frames,
     )
+    fallback_controls = fallback_replay_controls_from_manifest(
+        manifest_entry,
+        button=button,
+        button_delay=button_delay,
+        watch_frames=watch_frames,
+    )
     if not controls.base_state.exists():
         raise PreferenceDataError(
             f"missing {controls.base_state_field}: {controls.base_state}"
         )
+    if fallback_controls is not None and not fallback_controls.base_state.exists():
+        fallback_controls = None
 
     move_names = capture.parse_move_names(capture.MOVE_CONSTANTS)
     move_name_to_id = {normalize_name(name): move_id for move_id, name in move_names.items()}
@@ -482,6 +578,7 @@ def run_rom_score_materialization(
     with ExitStack() as stack:
         session = stack.enter_context(session_class(rom=rom, symbols_path=symbols_path))
         validate_base_state_file(session.pyboy, session.symbols, controls.base_state)
+        validated_base_states = {controls.base_state}
         fast_session = None
         if collect_contribution_traces and compare_fast_score:
             fast_session = stack.enter_context(
@@ -499,30 +596,51 @@ def run_rom_score_materialization(
                     scenario,
                     move_name_to_id=move_name_to_id,
                 )
-                rom_report = session.run(
-                    save_state=controls.base_state,
-                    button=controls.button,
-                    button_delay=controls.button_delay,
-                    watch_frames=controls.watch_frames,
-                    button_presses=controls.button_presses,
-                    button_interval_frames=controls.button_interval_frames,
-                    metadata={
-                        "boss": base_route,
-                        "notes": f"generated-score-materialization:{scenario_id}",
-                    },
-                    memory_patches=materialization.patches,
-                )
+                active_controls = controls
+                try:
+                    rom_report = run_score_materialization_attempt(
+                        session,
+                        controls=controls,
+                        base_route=base_route,
+                        scenario_id=scenario_id,
+                        memory_patches=materialization.patches,
+                    )
+                except Exception as exc:
+                    if not should_fallback_to_pre_choice(controls, fallback_controls, exc):
+                        raise
+                    if fallback_controls.base_state not in validated_base_states:
+                        validate_base_state_file(
+                            session.pyboy,
+                            session.symbols,
+                            fallback_controls.base_state,
+                        )
+                        validated_base_states.add(fallback_controls.base_state)
+                    active_controls = fallback_controls
+                    rom_report = run_score_materialization_attempt(
+                        session,
+                        controls=fallback_controls,
+                        base_route=base_route,
+                        scenario_id=scenario_id,
+                        memory_patches=materialization.patches,
+                    )
+                    rom_report["replay_fallback"] = {
+                        "from_base_state_field": controls.base_state_field,
+                        "from_base_state": display_path(controls.base_state),
+                        "to_base_state_field": fallback_controls.base_state_field,
+                        "to_base_state": display_path(fallback_controls.base_state),
+                        "reason": str(exc),
+                    }
                 rom_report["trace_id"] = scenario_id
                 rom_report["scenario_id"] = scenario_id
                 fast_report = None
                 if fast_session is not None:
                     fast_report = fast_session.run(
-                        save_state=controls.base_state,
-                        button=controls.button,
-                        button_delay=controls.button_delay,
-                        watch_frames=controls.watch_frames,
-                        button_presses=controls.button_presses,
-                        button_interval_frames=controls.button_interval_frames,
+                        save_state=active_controls.base_state,
+                        button=active_controls.button,
+                        button_delay=active_controls.button_delay,
+                        watch_frames=active_controls.watch_frames,
+                        button_presses=active_controls.button_presses,
+                        button_interval_frames=active_controls.button_interval_frames,
                         metadata={
                             "boss": base_route,
                             "notes": f"fast-score-equivalence:{scenario_id}",
@@ -581,6 +699,16 @@ def run_rom_score_materialization(
         "base_route": base_route,
         "base_state": display_path(controls.base_state),
         "base_state_field": controls.base_state_field,
+        "fallback_base_state": (
+            display_path(fallback_controls.base_state)
+            if fallback_controls is not None
+            else ""
+        ),
+        "fallback_base_state_field": (
+            fallback_controls.base_state_field
+            if fallback_controls is not None
+            else ""
+        ),
         "button_presses": controls.button_presses,
         "button_interval_frames": controls.button_interval_frames,
         "effective_watch_frames": controls.watch_frames,

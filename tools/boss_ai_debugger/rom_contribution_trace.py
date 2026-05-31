@@ -72,6 +72,10 @@ CONTROL_HOOKS = {
     "BossAI_SelectMove": "selector_start",
 }
 
+DIRECT_SCORE_WRITE_RULE_IDS = {
+    "ko_band_oracle.apply_damage_dominance_bias",
+}
+
 PREDICATE_BRANCH_HOOKS = {
     "BossAI_ApplyMoveModel.spikes_layer1": {
         "predicate_id": "spikes_existing_layer_count",
@@ -418,6 +422,7 @@ class RomContributionTracer:
         self.selector_entry_scores: list[int] = []
         self.candidate_start_scores: list[int] | None = None
         self.candidate_start_event_index = 0
+        self.candidate_start_rule_entry_index = 0
 
     def reset(self, *, memory_patches: list[MemoryPatch] | None = None) -> None:
         self.memory_patches = memory_patches or []
@@ -431,6 +436,7 @@ class RomContributionTracer:
         self.selector_entry_scores = []
         self.candidate_start_scores = None
         self.candidate_start_event_index = 0
+        self.candidate_start_rule_entry_index = 0
 
     def handle_hook(self, targets: list[HookTarget]) -> None:
         for target in sorted(targets, key=hook_order):
@@ -555,6 +561,7 @@ class RomContributionTracer:
             self.frames.clear()
             self.candidate_start_scores = self.current_score_bytes()
             self.candidate_start_event_index = len(self.events)
+            self.candidate_start_rule_entry_index = len(self.rule_entries)
         elif target.operation == "candidate_end":
             self.record_direct_score_writes(trigger=target.full_symbol)
         elif target.operation == "selector_start":
@@ -633,12 +640,15 @@ class RomContributionTracer:
                     "delta": residual,
                     "changed": True,
                     "candidate": self.candidate_for_slot(slot_index),
-                    "source": self.source_for_direct_score_write(),
+                    "source": self.source_for_direct_score_write(
+                        slot_index=slot_index,
+                    ),
                     "closed_by": trigger,
                 }
             )
         self.candidate_start_scores = None
         self.candidate_start_event_index = len(self.events)
+        self.candidate_start_rule_entry_index = len(self.rule_entries)
 
     def score_pointer_for_slot(self, slot_index: int) -> int:
         base = self.symbols["wEnemyAIMoveScores"]
@@ -647,7 +657,10 @@ class RomContributionTracer:
     def candidate_for_slot(self, slot_index: int) -> dict[str, Any]:
         return self.candidate_for_score_pointer(self.score_pointer_for_slot(slot_index))
 
-    def source_for_direct_score_write(self) -> dict[str, Any]:
+    def source_for_direct_score_write(self, *, slot_index: int) -> dict[str, Any]:
+        direct_source = self.direct_write_source_from_rule_entries(slot_index)
+        if direct_source is not None:
+            return direct_source
         frame = self.active_frame()
         rule = frame.rule if frame is not None else None
         return {
@@ -659,6 +672,26 @@ class RomContributionTracer:
             "static_public_read_hints": rule.get("public_reads", []) if rule else [],
             "attribution": "candidate score snapshot residual",
         }
+
+    def direct_write_source_from_rule_entries(
+        self,
+        slot_index: int,
+    ) -> dict[str, Any] | None:
+        for entry in reversed(self.rule_entries[self.candidate_start_rule_entry_index:]):
+            candidate = entry.get("candidate", {})
+            source = entry.get("source", {})
+            if not isinstance(candidate, dict) or not isinstance(source, dict):
+                continue
+            try:
+                entry_slot = int(candidate.get("slot_index", -1))
+            except (TypeError, ValueError):
+                continue
+            rule_id = str(source.get("rule_id", ""))
+            if entry_slot == slot_index and rule_id in DIRECT_SCORE_WRITE_RULE_IDS:
+                result = dict(source)
+                result["attribution"] = "candidate score snapshot residual"
+                return result
+        return None
 
     def pop_returned_frames(self, sp: int) -> None:
         while self.frames and self.frames[-1].sp < sp:

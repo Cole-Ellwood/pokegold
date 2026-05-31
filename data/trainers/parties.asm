@@ -1172,14 +1172,14 @@ PokemaniacGroup:
 GruntMGroup:
 	; GRUNTM (1)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db 14, KOFFING
+	db 18, KOFFING
 	db -1 ; end
 
 	; GRUNTM (2)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db  7, RATTATA
-	db  9, ZUBAT
-	db  9, ZUBAT
+	db 11, RATTATA
+	db 13, ZUBAT
+	db 13, ZUBAT
 	db -1 ; end
 
 	; GRUNTM (3)
@@ -1344,8 +1344,8 @@ GruntMGroup:
 
 	; GRUNTM (29)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db  9, RATTATA
-	db  9, RATTATA
+	db 13, RATTATA
+	db 13, RATTATA
 	db -1 ; end
 
 	; GRUNTM (30)
@@ -2861,27 +2861,27 @@ ExecutiveFGroup:
 SageGroup:
 	; SAGE (1)
 	db "CHOW@", TRAINERTYPE_NORMAL
-	db  3, BELLSPROUT
-	db  3, BELLSPROUT
-	db  3, BELLSPROUT
+	db  6, BELLSPROUT
+	db  6, BELLSPROUT
+	db  6, BELLSPROUT
 	db -1 ; end
 
 	; SAGE (2)
 	db "NICO@", TRAINERTYPE_NORMAL
-	db  5, BELLSPROUT
-	db  5, BELLSPROUT
-	db  5, BELLSPROUT
+	db  8, BELLSPROUT
+	db  8, BELLSPROUT
+	db  8, BELLSPROUT
 	db -1 ; end
 
 	; SAGE (3)
 	db "JIN@", TRAINERTYPE_NORMAL
-	db  6, BELLSPROUT
+	db  9, BELLSPROUT
 	db -1 ; end
 
 	; SAGE (4)
 	db "TROY@", TRAINERTYPE_NORMAL
-	db  7, BELLSPROUT
-	db  7, HOOTHOOT
+	db 10, BELLSPROUT
+	db 10, HOOTHOOT
 	db -1 ; end
 
 	; SAGE (5)
@@ -2900,20 +2900,20 @@ SageGroup:
 
 	; SAGE (7)
 	db "EDMOND@", TRAINERTYPE_NORMAL
-	db  5, BELLSPROUT
-	db  5, BELLSPROUT
-	db  5, BELLSPROUT
+	db  8, BELLSPROUT
+	db  8, BELLSPROUT
+	db  8, BELLSPROUT
 	db -1 ; end
 
 	; SAGE (8)
 	db "NEAL@", TRAINERTYPE_NORMAL
-	db  6, BELLSPROUT
+	db  9, BELLSPROUT
 	db -1 ; end
 
 	; SAGE (9)
 	db "LI@", TRAINERTYPE_NORMAL
-	db 10, BELLSPROUT
-	db 10, BELLSPROUT
+	db 13, BELLSPROUT
+	db 13, BELLSPROUT
 	db 13, HOOTHOOT
 	db -1 ; end
 
@@ -3200,8 +3200,8 @@ OfficerGroup:
 GruntFGroup:
 	; GRUNTF (1)
 	db "GRUNT@", TRAINERTYPE_NORMAL
-	db  9, ZUBAT
-	db 11, EKANS
+	db 13, ZUBAT
+	db 15, EKANS
 	db -1 ; end
 
 	; GRUNTF (2)

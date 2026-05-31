@@ -18,6 +18,7 @@ from .rule_map import build_rule_map
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_COVERAGE_PATH = ROOT / "audit" / "boss_ai_debugger" / "coverage_report.json"
+DEITY_COVERAGE_MARKER = "BOSS_AI_DEITY_COVERAGE_WORKLIST"
 
 
 def build_coverage_report(
@@ -107,6 +108,184 @@ def build_coverage_report(
             "PyBoy trace hooks are execution hooks with configured public-input snapshots, not CPU memory-read watchpoints.",
         ],
     }
+
+
+def build_deity_coverage_worklist(
+    *,
+    generated_count: int = 250,
+    seed: int = 1,
+    rom_contribution_trace_paths: list[Path] | None = None,
+    changed_files: list[Path | str] | None = None,
+    limit: int = 12,
+) -> dict[str, Any]:
+    coverage = build_coverage_report(
+        generated_count=generated_count,
+        seed=seed,
+        rom_contribution_trace_paths=rom_contribution_trace_paths,
+        changed_files=changed_files,
+    )
+    groups = sorted(
+        coverage["coverage_targets"]["groups"],
+        key=deity_worklist_group_key,
+    )
+    items = [deity_worklist_item(group) for group in groups[:limit]]
+    top_item = items[0] if items else {}
+    source_anchors = [
+        anchor
+        for item in items
+        for anchor in item.get("source_anchors", [])
+    ]
+    closed = [
+        "coverage_gap.localized",
+        *(
+            ["next_action.command"]
+            if top_item.get("next_action", {}).get("command")
+            else []
+        ),
+        *(
+            ["source_anchors.present"]
+            if source_anchors
+            else []
+        ),
+    ]
+    return {
+        "schema_version": 1,
+        "kind": "boss_ai_deity_coverage_worklist",
+        "evidence_marker": DEITY_COVERAGE_MARKER,
+        "closed_evidence_ids": closed,
+        "coverage_basis": {
+            "generated_count": generated_count,
+            "seed": seed,
+            "target_count": coverage["coverage_targets"]["target_count"],
+            "group_count": coverage["coverage_targets"]["group_count"],
+            "trace_executed_rule_count": coverage["rule_map"]["trace_executed_rule_count"],
+            "trace_covered_rule_count": coverage["rule_map"]["trace_covered_rule_count"],
+            "full_trace_rule_coverage_available": coverage["rule_map"][
+                "full_trace_rule_coverage_available"
+            ],
+            "score_trace_rule_coverage_available": coverage["rule_map"][
+                "score_trace_rule_coverage_available"
+            ],
+        },
+        "top_item": top_item,
+        "next_action": top_item.get("next_action", {}),
+        "worklist": items,
+        "source_anchors": source_anchors[:limit * 3],
+        "reachability_model": {
+            "reachable_status": "reachable_uncovered",
+            "unreachable_targets": [],
+            "unsupported_targets": [],
+            "note": (
+                "Rows come from rule-map dynamic coverage targets that are not "
+                "covered by the current ROM contribution/materialization corpus; "
+                "this worklist does not fabricate absent routes such as Red."
+            ),
+        },
+        "known_limits": [
+            "Ranking is deterministic and local to current rule-map coverage metadata.",
+            "A next-action command is a proof target, not proof completion; rerun explain-decision after materialization closes evidence ids.",
+        ],
+    }
+
+
+def deity_worklist_group_key(group: dict[str, Any]) -> tuple[int, int, str, str]:
+    classification_rank = {
+        "public_info": 0,
+        "platform_boundary": 1,
+        "internal": 2,
+        "haki_exception": 3,
+    }.get(str(group.get("classification", "")), 4)
+    proof_rank = {
+        "rom_score_materialization": 0,
+        "rom_route_contribution_trace": 1,
+        "rom_contribution_trace": 2,
+    }.get(str(group.get("recommended_trace_mode", "")), 3)
+    generator = str(group.get("suggested_generator", ""))
+    return (
+        classification_rank,
+        proof_rank,
+        "z" if generator == "mastery_policy" else generator,
+        str(group.get("parent_label", "")),
+    )
+
+
+def deity_worklist_item(group: dict[str, Any]) -> dict[str, Any]:
+    anchors = [
+        source_anchor_from_rule(rule)
+        for rule in group.get("first_rules", [])
+    ]
+    first_rule = anchors[0] if anchors else {}
+    generator = str(group.get("suggested_generator") or "mastery_policy")
+    trace_mode = str(group.get("recommended_trace_mode") or "rom_contribution_trace")
+    command = deity_next_action_command(
+        generator=generator,
+        trace_mode=trace_mode,
+        rule_id=str(first_rule.get("rule_id") or "coverage_gap"),
+    )
+    return {
+        "status": "reachable_uncovered",
+        "unsupported_reason": "",
+        "unreachable_reason": "",
+        "source_file": group.get("source_file", ""),
+        "source_label": group.get("parent_label", ""),
+        "classification": group.get("classification", ""),
+        "suggested_generator": generator,
+        "proof_mode": trace_mode,
+        "rule_count": group.get("rule_count", 0),
+        "rule_ids": group.get("rule_ids", []),
+        "source_anchors": anchors,
+        "next_action": {
+            "command": command,
+            "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet",
+            "closes_evidence_ids": [
+                "observed_rom_decision",
+                "score_bytes",
+                "selector_path",
+                "source_anchors",
+            ],
+        },
+    }
+
+
+def source_anchor_from_rule(rule: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "rule_id": rule.get("rule_id", ""),
+        "source_file": rule.get("source_file", ""),
+        "source_label": rule.get("source_label", ""),
+        "line": rule.get("line"),
+        "classification": rule.get("classification", ""),
+        "expected_public_inputs": rule.get("expected_public_inputs", []),
+        "suggested_generator": rule.get("suggested_generator", ""),
+        "recommended_trace_mode": rule.get("recommended_trace_mode", ""),
+    }
+
+
+def deity_next_action_command(
+    *,
+    generator: str,
+    trace_mode: str,
+    rule_id: str,
+) -> str:
+    out = f".local\\tmp\\boss_ai_debugger\\coverage_{safe_id(rule_id)}.json"
+    if trace_mode == "rom_score_materialization":
+        return (
+            "python -m tools.boss_ai_debugger explain-decision "
+            f"--generated-family {generator} --run-rom-proof auto --json-out {out}"
+        )
+    if trace_mode == "rom_route_contribution_trace":
+        contribution = f".local\\tmp\\boss_ai_debugger\\coverage_{safe_id(rule_id)}_rom_contribution.json"
+        return (
+            "python -m tools.boss_ai_debugger rom-contribution-trace "
+            f"--boss-route koga --json-out {contribution}"
+        )
+    return (
+        "python -m tools.boss_ai_debugger explain-decision "
+        f"--generated-family {generator} --json-out {out}"
+    )
+
+
+def safe_id(value: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value).strip("_") or "coverage_gap"
 
 
 def summarize_contribution_sources(
@@ -480,6 +659,33 @@ def write_coverage_report(data: dict[str, Any], path: Path = DEFAULT_COVERAGE_PA
         json.dumps(data, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
         newline="\n",
+    )
+
+
+def format_deity_coverage_worklist(data: dict[str, Any]) -> str:
+    top = data.get("top_item") or {}
+    next_action = data.get("next_action") or {}
+    basis = data.get("coverage_basis", {})
+    return "\n".join(
+        [
+            "Boss AI deity coverage worklist",
+            f"marker={data.get('evidence_marker')}",
+            f"closed_evidence_ids={data.get('closed_evidence_ids', [])}",
+            (
+                f"targets={basis.get('target_count')} groups={basis.get('group_count')} "
+                f"covered_rules={basis.get('trace_covered_rule_count')} "
+                f"executed_rules={basis.get('trace_executed_rule_count')}"
+            ),
+            (
+                f"top={top.get('source_label')} "
+                f"rules={top.get('rule_ids', [])[:3]} "
+                f"generator={top.get('suggested_generator')} "
+                f"proof_mode={top.get('proof_mode')} "
+                f"status={top.get('status')}"
+            ),
+            f"next={next_action.get('command', '')}",
+            f"source_anchors={len(data.get('source_anchors', []))}",
+        ]
     )
 
 

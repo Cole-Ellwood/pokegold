@@ -9,6 +9,7 @@ import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -92,10 +93,19 @@ class RunResult:
     choice_button: str
     choice_wait_frames: int
     frame: int
+    score_materialization_state_path: Path | None = None
 
 
 class StateFactoryError(RuntimeError):
     pass
+
+
+@dataclass
+class ScoreMaterializationCapture:
+    pyboy: Any
+    symbols: dict[str, capture.Symbol]
+    out: Path
+    saved: bool = False
 
 
 ROUTES: dict[str, BossRoute] = {
@@ -397,6 +407,32 @@ def route_ids_from_manifest(path: Path) -> list[str]:
     return ids
 
 
+def manifest_relative_path(path_text: str) -> Path:
+    path = Path(path_text)
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
+def score_materialization_state_from_manifest(
+    manifest_path: Path,
+    capture_id: str,
+) -> Path | None:
+    if not manifest_path.exists():
+        return None
+    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in data.get("captures", []):
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("id") != capture_id:
+            continue
+        raw = entry.get("score_materialization_state")
+        if isinstance(raw, str) and raw:
+            return manifest_relative_path(raw)
+        return None
+    return None
+
+
 def require_symbols(symbols: dict[str, capture.Symbol], routes: list[BossRoute]) -> None:
     capture.require_symbols(symbols)
     required = set(BASE_REQUIRED_SYMBOLS)
@@ -430,6 +466,23 @@ def read_one(pyboy, symbols: dict[str, capture.Symbol], name: str) -> int:
 
 def write_one(pyboy, symbols: dict[str, capture.Symbol], name: str, value: int) -> None:
     write_byte(pyboy, symbols[name], value)
+
+
+def clear_trace_fields(pyboy, symbols: dict[str, capture.Symbol]) -> None:
+    for name, size in capture.TRACE_FIELDS:
+        symbol = symbols[name]
+        for offset in range(size):
+            write_byte(pyboy, capture.Symbol(symbol.bank, symbol.address + offset), 0)
+
+
+def save_score_materialization_state(context: ScoreMaterializationCapture) -> None:
+    if context.saved:
+        return
+    clear_trace_fields(context.pyboy, context.symbols)
+    context.out.parent.mkdir(parents=True, exist_ok=True)
+    with context.out.open("wb") as fh:
+        context.pyboy.save_state(fh)
+    context.saved = True
 
 
 def write_event(
@@ -524,10 +577,20 @@ def boot_continue(pyboy, symbols: dict[str, capture.Symbol], log: list[str]) -> 
     frame = 0
     pyboy.tick(1800, False, False)
     frame += 1800
-    for button_name in ("start", "a", "a", "a"):
-        press(pyboy, button_name, 180)
+    press(pyboy, "start", 180)
+    frame += 180
+    log.append(watch_line(pyboy, symbols, frame, "BOOT_START_BUTTON"))
+
+    for press_index in range(1, 31):
+        press(pyboy, "a", 180)
         frame += 180
-        log.append(watch_line(pyboy, symbols, frame, f"BOOT_{button_name.upper()}"))
+        log.append(watch_line(pyboy, symbols, frame, f"BOOT_A_{press_index:02d}"))
+        if (
+            read_one(pyboy, symbols, "wMapGroup") != 0
+            and read_one(pyboy, symbols, "wMapNumber") != 0
+            and read_one(pyboy, symbols, "wMapStatus") == MAPSTATUS_HANDLE
+        ):
+            return frame
     return frame
 
 
@@ -709,6 +772,11 @@ def write_manifest_hints(args: argparse.Namespace, results: list[RunResult]) -> 
             "choice_wait_frames": result.choice_wait_frames,
             "pre_choice_frame": result.pre_choice_frame,
             "frame": result.frame,
+            "score_materialization_state": (
+                hint_path(result.score_materialization_state_path)
+                if result.score_materialization_state_path is not None
+                else ""
+            ),
         }
         for result in results
     ]
@@ -742,6 +810,16 @@ def update_manifest_paths(manifest_path: Path, results: list[RunResult]) -> None
         entry["choice_wait_frames"] = choice_metadata[capture_id].choice_wait_frames
         entry["stop_after_first_capture"] = True
         entry["require_chosen_move"] = True
+        score_state_path = choice_metadata[capture_id].score_materialization_state_path
+        if score_state_path is not None:
+            entry["score_materialization_state"] = hint_path(score_state_path)
+            entry["score_materialization_button"] = ""
+            entry["score_materialization_button_presses"] = 0
+            entry["score_materialization_button_interval_frames"] = 0
+            entry["score_materialization_watch_frames"] = max(
+                120,
+                int(entry.get("score_materialization_watch_frames", 0) or 0),
+            )
     manifest_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
@@ -764,6 +842,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--update-manifest",
         action="store_true",
         help="write generated save-state paths into the manifest; does not promote status",
+    )
+    parser.add_argument(
+        "--refresh-score-materialization-states",
+        action="store_true",
+        help=(
+            "for manifest rows that already define score_materialization_state, "
+            "refresh that state at the first BossAI_ApplyMoveModel.ScoreMove entry"
+        ),
     )
     parser.add_argument(
         "--input-wait-frames",
@@ -807,6 +893,27 @@ def run_route(
     ]
     pyboy = open_pyboy(work_rom)
     try:
+        score_capture = None
+        if args.refresh_score_materialization_states:
+            score_state_path = score_materialization_state_from_manifest(
+                args.manifest,
+                route.capture_id,
+            )
+            if score_state_path is not None:
+                score_move = symbols.get("BossAI_ApplyMoveModel.ScoreMove")
+                if score_move is None:
+                    fail("missing required symbol: BossAI_ApplyMoveModel.ScoreMove")
+                score_capture = ScoreMaterializationCapture(
+                    pyboy=pyboy,
+                    symbols=symbols,
+                    out=score_state_path,
+                )
+                pyboy.hook_register(
+                    score_move.bank,
+                    score_move.address,
+                    save_score_materialization_state,
+                    score_capture,
+                )
         frame = boot_continue(pyboy, symbols, log)
         frame = setup_route_entry(
             pyboy,
@@ -828,6 +935,25 @@ def run_route(
             log,
             frame,
         )
+        if score_capture is not None:
+            if not score_capture.saved:
+                raise StateFactoryError(
+                    f"{route.capture_id}: score materialization hook was not reached"
+                )
+            result = RunResult(
+                route=result.route,
+                state_path=result.state_path,
+                pre_choice_state_path=result.pre_choice_state_path,
+                pre_choice_frame=result.pre_choice_frame,
+                choice_button=result.choice_button,
+                choice_wait_frames=result.choice_wait_frames,
+                frame=result.frame,
+                score_materialization_state_path=score_capture.out,
+            )
+            log.append(
+                "SCORE_MATERIALIZATION_STATE "
+                f"{capture.display_path(score_capture.out)}"
+            )
         log.append(watch_line(pyboy, symbols, result.frame, f"{route.capture_id.upper()}_CHOSEN"))
     finally:
         pyboy.stop(save=False)
@@ -871,6 +997,11 @@ def main() -> int:
             f"{route.capture_id}: pre_choice_state="
             f"{capture.display_path(result.pre_choice_state_path)}"
         )
+        if result.score_materialization_state_path is not None:
+            print(
+                f"{route.capture_id}: score_materialization_state="
+                f"{capture.display_path(result.score_materialization_state_path)}"
+            )
         print(f"{route.capture_id}: frame={result.frame}")
         print(f"{route.capture_id}: log={capture.display_path(log_path)}")
 

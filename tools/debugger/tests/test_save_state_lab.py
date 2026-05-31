@@ -7,6 +7,7 @@ from io import StringIO
 from pathlib import Path
 
 from tools.debugger.save_state_lab import (
+    build_synth_report,
     build_save_state_diff_report,
     build_save_state_inspect_report,
     main,
@@ -137,6 +138,74 @@ class SaveStateLabTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn('"format"', stdout.getvalue())
         self.assertIn('"wMapGroup"', stdout.getvalue())
+
+    def test_synth_report_delegates_to_navigator_and_verifies_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            state = root / "bedroom.state"
+            manifest = root / "bedroom.manifest.json"
+
+            def fake_navigator(predicate: str, **kwargs: object) -> dict[str, object]:
+                self.assertEqual(predicate, "map=PLAYERS_HOUSE_2F")
+                self.assertEqual(kwargs["checkpoint"], "auto")
+                self.assertEqual(Path(str(kwargs["save_state"])), state)
+                self.assertEqual(Path(str(kwargs["manifest_out"])), manifest)
+                return {
+                    "predicate": predicate,
+                    "checkpoint": "new_game",
+                    "reached": True,
+                    "frame": 123,
+                    "map": "PLAYERS_HOUSE_2F",
+                    "map_desc": "map=PLAYERS_HOUSE_2F (24:7)",
+                    "state_path": str(state),
+                    "manifest_path": str(manifest),
+                    "observed_signature": {"map": "PLAYERS_HOUSE_2F"},
+                }
+
+            def fake_verifier(manifest_path: str, **kwargs: object) -> dict[str, object]:
+                self.assertEqual(Path(manifest_path), manifest)
+                self.assertEqual(Path(str(kwargs["rom"])), root / "pokegold.gbc")
+                self.assertEqual(Path(str(kwargs["symbols_path"])), root / "pokegold.sym")
+                return {"passed": True, "observed": "map=PLAYERS_HOUSE_2F (24:7)"}
+
+            report = build_synth_report(
+                predicate="map=PLAYERS_HOUSE_2F",
+                rom_path="pokegold.gbc",
+                symbols_path="pokegold.sym",
+                save_state="bedroom.state",
+                manifest_out="bedroom.manifest.json",
+                root=root,
+                navigator=fake_navigator,
+                verifier=fake_verifier,
+            )
+
+        self.assertTrue(report["valid"], report["errors"])
+        self.assertTrue(report["synthesized"])
+        self.assertEqual(report["backend"], "pyboy")
+        self.assertEqual(report["state"], "bedroom.state")
+        self.assertEqual(report["manifest"], "bedroom.manifest.json")
+        self.assertTrue(report["verification"]["passed"])
+
+    def test_synth_report_fails_closed_when_navigator_cannot_reach_predicate(self) -> None:
+        def fake_navigator(predicate: str, **kwargs: object) -> dict[str, object]:
+            return {
+                "predicate": predicate,
+                "checkpoint": "new_game",
+                "reached": False,
+                "nearest": "map=PLAYERS_HOUSE_2F (24:7)",
+                "unmet": ["map == NEVERLAND"],
+            }
+
+        report = build_synth_report(
+            predicate="map=NEVERLAND",
+            verify=False,
+            navigator=fake_navigator,
+        )
+
+        self.assertFalse(report["valid"])
+        self.assertFalse(report["reached"])
+        self.assertFalse(report["synthesized"])
+        self.assertIn("could not reach", "\n".join(report["errors"]))
 
 
 if __name__ == "__main__":

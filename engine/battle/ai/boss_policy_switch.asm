@@ -78,7 +78,6 @@ BossAI_TrySwitch:
 	ld [wEnemySwitchMonParam], a
 	ret
 .no_low_hp_block
-	push af
 	call BossAI_ComputeSwitchConfidence
 	ld [wBossAISwitchConfidence], a
 IF DEF(BOSS_AI_TRACE)
@@ -132,7 +131,16 @@ ENDC
 	cp b
 	jr nc, .stay
 
-	pop af
+	; Read the finalized candidate fresh from WRAM, the vanilla
+	; AI_SwitchOrTryItem idiom (engine/battle/ai/items.asm). The old code pop'd
+	; a byte pushed at .no_low_hp_block, but BossAI_ShouldSackHard and
+	; BossAI_SwitchCandidateLowHPBlock both clobber `a` between the param load at
+	; .candidate_answers_threat and that push, so the pushed byte was garbage. On
+	; its common return path BossAI_SwitchCandidateLowHPBlock left a=0, giving
+	; wEnemySwitchMonIndex = 1 = party slot 0 = the active mon: the boss
+	; "switched" into itself every turn (shared_switch_loop). wEnemySwitchMonParam
+	; is stable from BossAI_RefineSwitchCandidateForPlausibleRisk to here.
+	ld a, [wEnemySwitchMonParam]
 	and $f
 	inc a
 	ld [wEnemySwitchMonIndex], a
@@ -140,7 +148,6 @@ ENDC
 	jp AI_TrySwitch
 
 .stay
-	pop af
 	ret
 
 ; ai-layer: POLICY

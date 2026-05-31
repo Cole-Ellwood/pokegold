@@ -10,6 +10,7 @@ from .content_scenarios import build_content_scenario_report
 from .content_state import build_content_state_report
 from .coverage import build_coverage_report
 from .dynamic_taint import build_dynamic_taint_report
+from .deity_runtime import build_auto_replay_report, build_auto_taint_report, build_live_view_report
 from .explain import build_explanation_report
 from .expect import build_expectation_report
 from .fuzz import build_fuzz_plan
@@ -322,6 +323,15 @@ def cmd_slice(args: argparse.Namespace) -> int:
 
 
 def cmd_taint(args: argparse.Namespace) -> int:
+    if getattr(args, "byte", "") or getattr(args, "at", ""):
+        report = build_auto_taint_report(
+            byte=args.byte,
+            at=args.at,
+            rom_path=getattr(args, "rom", "pokegold.gbc"),
+            symbols_path=args.symbols,
+        )
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
     report = build_taint_report(
         symbols_path=args.symbols,
         symbols=tuple(args.symbol),
@@ -375,6 +385,16 @@ def cmd_trace_instructions(args: argparse.Namespace) -> int:
 
 
 def cmd_watch(args: argparse.Namespace) -> int:
+    if getattr(args, "live", False):
+        report = build_live_view_report(
+            at=args.at,
+            frames=args.frames,
+            rom_path=args.rom,
+            symbols_path=args.symbols,
+            snapshot=getattr(args, "snapshot", ""),
+        )
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
     report = build_watch_report(
         watch_symbols=tuple(args.watch_symbol),
         rom_path=args.rom,
@@ -486,6 +506,16 @@ def cmd_repro_recipe(args: argparse.Namespace) -> int:
 
 
 def cmd_replay(args: argparse.Namespace) -> int:
+    if getattr(args, "surface", "") or getattr(args, "at", ""):
+        report = build_auto_replay_report(
+            surface=args.surface,
+            at=args.at,
+            rom_path=args.rom or "pokegold.gbc",
+            symbols_path=args.symbols or "pokegold.sym",
+            frames=args.frames,
+        )
+        emit_report(report, args)
+        return 0 if report["valid"] else 1
     report = build_replay_plan(
         rom_path=args.rom,
         symbols_path=args.symbols,

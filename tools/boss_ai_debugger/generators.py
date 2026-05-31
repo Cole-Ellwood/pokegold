@@ -1553,6 +1553,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
             "id": "move_explosion",
             "name": "Explosion",
             "deltas": rom_deltas["explosion"],
+            "lookahead_delta": 18,
         },
     ]
 
@@ -1631,7 +1632,7 @@ def materialized_spikes_spin_rom_deltas(
     reserve_ghost: bool,
     bench_revealed_spin: bool,
     active_species_prior: bool,
-) -> dict[str, int]:
+) -> dict[str, list[dict[str, int]]]:
     weights = ROM_TIER_WEIGHTS[tier]
     role = weights["role"]
     status = weights["status"]
@@ -1646,13 +1647,12 @@ def materialized_spikes_spin_rom_deltas(
         add_rom_delta(
             spikes,
             "move.apply_move_model.enemy_under_pressure",
-            -(status if pressure else role),
+            -status,
         )
     elif layers == 1:
         if pressure:
             add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
         else:
-            returned = False
             if revealed_spin_counts:
                 if reserve_ghost:
                     add_rom_delta(
@@ -1666,7 +1666,6 @@ def materialized_spikes_spin_rom_deltas(
                         "move.apply_move_model.boss_has_available_reserve_ghost",
                         10,
                     )
-                    returned = True
     elif layers == 2:
         if pressure:
             add_rom_delta(spikes, "move.apply_move_model.enemy_under_pressure", 6)
@@ -1707,19 +1706,28 @@ def materialized_spikes_spin_rom_deltas(
     else:
         add_rom_delta(spikes, "move.apply_move_model.apply_spikes_layer_bias", 24)
 
-    add_rom_delta(spikes, "move.apply_move_model.apply_role_bias", -role)
+    damage_dominance = "ko_band_oracle.apply_damage_dominance_bias"
     return {
         "spikes": spikes,
         "sludge_bomb": [
-            {"rule": "move.apply_move_model.apply_role_bias", "delta": -role}
+            {"rule": damage_dominance, "delta": 8},
         ],
-        "surf": [],
+        "surf": (
+            []
+            if active_species_prior
+            else [{"rule": damage_dominance, "delta": 8}]
+        ),
         "explosion": [
             {
                 "rule": "move.apply_move_model.apply_self_kotrade_discipline",
                 "delta": 16,
             },
             {"rule": "move.current_enemy_move_accuracy_risky", "delta": risk},
+            *(
+                [{"rule": damage_dominance, "delta": 8}]
+                if active_species_prior
+                else []
+            ),
         ],
     }
 

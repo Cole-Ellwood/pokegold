@@ -22,6 +22,7 @@ from .commands import (
     cmd_damage_ai_report,
     cmd_decision_trace,
     cmd_diff,
+    cmd_explain_decision,
     cmd_generate,
     cmd_haki_coverage,
     cmd_inspect,
@@ -58,6 +59,7 @@ from .coverage_search import (
     DEFAULT_COVERAGE_SEARCH_SCENARIOS,
 )
 from .generators import FAMILIES as GENERATOR_FAMILIES
+from .explain_decision import ROM_PROOF_CHOICES
 from .invariants import (
     DEFAULT_INVARIANTS_JSON_PATH,
     DEFAULT_INVARIANTS_MD_PATH,
@@ -240,7 +242,11 @@ def build_parser() -> argparse.ArgumentParser:
     review_cmd.set_defaults(func=cmd_review_queue)
 
     run_suite = subparsers.add_parser("run-suite")
-    run_suite.add_argument("--profile", choices=["generated-smoke", "changed-ai"], required=True)
+    run_suite.add_argument(
+        "--profile",
+        choices=["generated-smoke", "changed-ai", "deity-changed-ai"],
+        required=True,
+    )
     run_suite.add_argument("--count", type=int, default=200)
     run_suite.add_argument("--seed", type=int, default=1)
     run_suite.add_argument("--run-id", default="")
@@ -253,6 +259,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_suite.add_argument("--rebuild-roms", action="store_true")
     run_suite.add_argument("--refresh-live-traces", action="store_true")
     run_suite.add_argument("--json", action="store_true")
+    run_suite.add_argument("--json-out", default="")
     run_suite.set_defaults(func=cmd_run_suite)
 
     metamorphic_cmd = subparsers.add_parser("metamorphic")
@@ -285,6 +292,8 @@ def build_parser() -> argparse.ArgumentParser:
     coverage_cmd.add_argument("--seed", type=int, default=1)
     coverage_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
     coverage_cmd.add_argument("--changed-file", type=path_arg, action="append")
+    coverage_cmd.add_argument("--deity-worklist", action="store_true")
+    coverage_cmd.add_argument("--limit", type=int, default=12)
     coverage_cmd.add_argument("--json", action="store_true")
     coverage_cmd.add_argument("--json-out", default=str(DEFAULT_COVERAGE_PATH))
     coverage_cmd.set_defaults(func=cmd_coverage_report)
@@ -346,6 +355,68 @@ def build_parser() -> argparse.ArgumentParser:
     decision_trace_cmd.add_argument("--json-out", default="")
     decision_trace_cmd.add_argument("--limit", type=int, default=40)
     decision_trace_cmd.set_defaults(func=cmd_decision_trace)
+
+    explain_cmd = subparsers.add_parser("explain-decision")
+    explain_cmd.add_argument(
+        "--scenario",
+        type=path_arg,
+        help="generated scenario JSON/JSONL; omit when explaining a live --trace capture",
+    )
+    explain_cmd.add_argument("--scenario-id", default="")
+    explain_cmd.add_argument("--focus-action-id", default="")
+    explain_cmd.add_argument("--rom-score-materialization", type=path_arg, action="append")
+    explain_cmd.add_argument("--rom-selector-materialization", type=path_arg, action="append")
+    explain_cmd.add_argument("--rom-switch-materialization", type=path_arg, action="append")
+    explain_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
+    explain_cmd.add_argument("--trace", type=path_arg, action="append")
+    explain_cmd.add_argument("--capture-id", default="")
+    explain_cmd.add_argument(
+        "--generated-family",
+        choices=GENERATOR_FAMILIES,
+        default="",
+        help="generate and explain a deterministic Boss AI scenario family",
+    )
+    explain_cmd.add_argument("--case", default="")
+    explain_cmd.add_argument("--policy-question", default="")
+    explain_cmd.add_argument("--score-rule", default="")
+    explain_cmd.add_argument(
+        "--boss-route",
+        default="",
+        help="resolve a supported live Boss AI route from the capture manifest",
+    )
+    explain_cmd.add_argument("--decision-index", type=int)
+    explain_cmd.add_argument("--turn", type=int)
+    explain_cmd.add_argument(
+        "--decision-surface",
+        choices=["live_boss", "switch_dispatch", "generated_policy", "score_rule"],
+        default="live_boss",
+    )
+    explain_cmd.add_argument(
+        "--at",
+        default="",
+        help="optional public-state predicate recorded in the decision target manifest",
+    )
+    explain_cmd.add_argument("--decision-input-manifest-out", type=path_arg)
+    explain_cmd.add_argument(
+        "--run-rom-proof",
+        choices=ROM_PROOF_CHOICES,
+        default="none",
+        help="optionally run a one-scenario ROM proof before rendering the packet",
+    )
+    explain_cmd.add_argument(
+        "--manifest",
+        type=path_arg,
+        default=DEFAULT_SELECTOR_MATERIALIZE_MANIFEST,
+    )
+    explain_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    explain_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    explain_cmd.add_argument("--score-base-route", default=DEFAULT_SCORE_MATERIALIZE_ROUTE)
+    explain_cmd.add_argument("--selector-base-route", default=DEFAULT_SELECTOR_MATERIALIZE_ROUTE)
+    explain_cmd.add_argument("--switch-base-route", default=DEFAULT_SWITCH_MATERIALIZE_ROUTE)
+    explain_cmd.add_argument("--json", action="store_true")
+    explain_cmd.add_argument("--json-out", default="")
+    explain_cmd.add_argument("--limit", type=int, default=12)
+    explain_cmd.set_defaults(func=cmd_explain_decision)
 
     move_score_cmd = subparsers.add_parser("move-score-probe")
     move_score_cmd.add_argument("--trainer", required=False)

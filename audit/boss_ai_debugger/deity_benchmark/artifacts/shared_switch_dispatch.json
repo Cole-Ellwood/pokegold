@@ -1,0 +1,5504 @@
+{
+  "auto_rom_proof": [
+    {
+      "base_route": "shared_switch_loop",
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "switch_path",
+        "switch_materialization"
+      ],
+      "output_path": ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json",
+      "proof_kind": "switch",
+      "reason": "rom-switch-materialize checked 12 of 12 generated switch/sack probes",
+      "scenario_path": ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl",
+      "status": "pass"
+    }
+  ],
+  "candidate_scores": [
+    {
+      "action_id": "slot1:SWORDS_DANCE",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 0,
+          "before": 0,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 20,
+      "initial_score": 0,
+      "move_id": 14,
+      "name": "SWORDS_DANCE",
+      "pre_lookahead_score": 0,
+      "selector_probability": 0.95703125,
+      "slot": 1,
+      "slot_index": 0
+    },
+    {
+      "action_id": "slot2:STEEL_WING",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 0,
+          "before": 0,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 31,
+      "initial_score": 0,
+      "move_id": 211,
+      "name": "STEEL_WING",
+      "pre_lookahead_score": 0,
+      "selector_probability": 0.04296875,
+      "slot": 2,
+      "slot_index": 1
+    },
+    {
+      "action_id": "slot3:QUICK_ATTACK",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 0,
+          "before": 0,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 46,
+      "initial_score": 0,
+      "move_id": 98,
+      "name": "QUICK_ATTACK",
+      "pre_lookahead_score": 0,
+      "selector_probability": 0.0,
+      "slot": 3,
+      "slot_index": 2
+    },
+    {
+      "action_id": "slot4:WING_ATTACK",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 0,
+          "before": 0,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 46,
+      "initial_score": 0,
+      "move_id": 17,
+      "name": "WING_ATTACK",
+      "pre_lookahead_score": 0,
+      "selector_probability": 0.0,
+      "slot": 4,
+      "slot_index": 3
+    }
+  ],
+  "closed_evidence_ids": [
+    "decision_input.auto_resolved",
+    "input_manifest.replay_verified",
+    "observed_rom_decision",
+    "candidate_scores",
+    "score_bytes",
+    "selector_path",
+    "switch_path",
+    "switch_materialization",
+    "python_score_contributions",
+    "public_info_inputs",
+    "source_anchors",
+    "counterfactual",
+    "counterfactual.decisive"
+  ],
+  "counterfactual": {
+    "answer_changing_information": [],
+    "focus_score_flip": null,
+    "public_fact_counterfactuals": [
+      "Attach a ROM contribution trace for this route to identify which public branch or score rule would move the score bytes."
+    ],
+    "selector_roll_counterfactual": {
+      "alternate_action_id": "slot1:SWORDS_DANCE",
+      "alternate_roll_range": {
+        "count": 245,
+        "max": 244,
+        "min": 0
+      },
+      "available": true,
+      "best_action_id": "slot1:SWORDS_DANCE",
+      "best_probability": 0.95703125,
+      "best_roll_range": {
+        "count": 245,
+        "max": 244,
+        "min": 0
+      },
+      "best_roll_threshold": 245,
+      "best_score": 20,
+      "chosen_action_id": "slot2:STEEL_WING",
+      "chosen_rank": "second",
+      "chosen_roll_range": {
+        "count": 11,
+        "max": 255,
+        "min": 245
+      },
+      "observed_choice_due_to_random_roll": true,
+      "reason": "observed action was the selector second candidate, so score bytes favored the best candidate but the BossAI_SelectMove roll selected the second candidate",
+      "roll_denominator": 256,
+      "score_gap": 11,
+      "second_action_id": "slot2:STEEL_WING",
+      "second_probability": 0.04296875,
+      "second_roll_range": {
+        "count": 11,
+        "max": 255,
+        "min": 245
+      },
+      "second_score": 31,
+      "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
+      "summary": "chosen=slot2:STEEL_WING roll=245..255 (11/256); alternate=slot1:SWORDS_DANCE if roll=0..244 (245/256); threshold=245/256"
+    },
+    "smallest_score_flip": {
+      "action_id": "slot2:STEEL_WING",
+      "available": true,
+      "current_score": 31,
+      "move_id": 211,
+      "name": "STEEL_WING",
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -12,
+      "slot": 2,
+      "slot_index": 1,
+      "target_score": 19
+    },
+    "switch_roll_counterfactual": {
+      "available": true,
+      "confidence": 99,
+      "current_probability_range": {
+        "max": 0.8984375,
+        "min": 0.75
+      },
+      "delta_to_force_zero_probability": -30,
+      "delta_to_guarantee_nonzero_probability": 0,
+      "delta_to_make_high_roll_possible": 0,
+      "delta_to_make_mid_roll_possible": 0,
+      "delta_to_make_nonzero_possible": 0,
+      "high_roll_possible_at_confidence": 90,
+      "mid_roll_possible_at_confidence": 80,
+      "nonzero_guaranteed_at_confidence": 88,
+      "nonzero_possible_at_confidence": 70,
+      "note": "Switch counterfactuals move the source-mirrored confidence/threshold roll surface; actual switching can still depend on RNG when probability is nonzero.",
+      "observation_status": "switch_proposal_observed",
+      "possible_effective_thresholds": [
+        70,
+        78,
+        80,
+        88
+      ],
+      "probability_exact": false,
+      "source": "live_trace_switch_path",
+      "threshold_exact": false,
+      "zero_probability_if_confidence_at_most": 69
+    },
+    "why": "Live trace counterfactuals are computed from captured final score bytes."
+  },
+  "decision_input": {
+    "artifact_path": "audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json",
+    "closed_evidence_ids": [
+      "decision_input.auto_resolved",
+      "input_manifest.replay_verified"
+    ],
+    "generated_at": "2026-05-31T01:16:45Z",
+    "hash_basis": {
+      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+      "manifest_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+      "trace_rom_matches_manifest": true,
+      "trace_symbols_matches_manifest": true
+    },
+    "kind": "boss_ai_decision_input_manifest",
+    "known_limits": [
+      "This resolver uses a committed live first-decision trace capture, not deep boss-battle navigation.",
+      "Replay verification proves selector agreement for the captured score bytes; full score-rule provenance still needs rom-contribution-trace when absent."
+    ],
+    "replay_verification": {
+      "chosen_id": 211,
+      "expected_move_ids": [
+        14,
+        211
+      ],
+      "match": true,
+      "method": "BossAI_SelectMove trace replay over captured score bytes",
+      "mode": "exact",
+      "reason": "chosen slot has nonzero selector probability",
+      "verdict": "match",
+      "verified": true
+    },
+    "resolution": {
+      "capture_manifest_id": "shared_switch_loop",
+      "capture_manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+      "capture_status": "FINISHED",
+      "source": "live_capture_manifest",
+      "source_kind": "current_live_trace_capture",
+      "sufficient": true,
+      "trace_capture_id": "Shared switch-loop#1",
+      "trace_path": "audit/boss_ai_trace/shared_switch_loop_live.txt"
+    },
+    "schema_version": 1,
+    "source_state": {
+      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+      "trace_artifact_sha256": "C572C9BBCED088173B81D1475994816474096F6DDC3C1F69DEDA4B1D73921F49"
+    },
+    "target": {
+      "boss_route": "shared_switch_loop",
+      "decision_index": 1,
+      "decision_surface": "switch_dispatch",
+      "public_state_predicate": "",
+      "requested_boss_route": "",
+      "requested_capture_id": "shared_switch_loop",
+      "turn": null
+    }
+  },
+  "decision_summary": {
+    "decisive_counterfactual": "switch confidence=99 probability=75.0%-89.8%; force_zero_delta=-30 guarantee_nonzero_delta=0",
+    "evidence_highlights": {
+      "candidate_scores": [
+        {
+          "action_id": "slot1:SWORDS_DANCE",
+          "blocked": false,
+          "final_score": 20,
+          "kind": "move",
+          "name": "SWORDS_DANCE",
+          "selector_probability": 0.95703125
+        },
+        {
+          "action_id": "slot2:STEEL_WING",
+          "blocked": false,
+          "final_score": 31,
+          "kind": "move",
+          "name": "STEEL_WING",
+          "selector_probability": 0.04296875
+        },
+        {
+          "action_id": "slot3:QUICK_ATTACK",
+          "blocked": false,
+          "final_score": 46,
+          "kind": "move",
+          "name": "QUICK_ATTACK",
+          "selector_probability": 0.0
+        },
+        {
+          "action_id": "slot4:WING_ATTACK",
+          "blocked": false,
+          "final_score": 46,
+          "kind": "move",
+          "name": "WING_ATTACK",
+          "selector_probability": 0.0
+        }
+      ],
+      "public_inputs": [
+        "trace.boss=Shared switch-loop",
+        "trace.notes=synthetic Jasmine battle context; repeated-switch state records current switc...",
+        "trace.tier=2",
+        "trace.plan_id=2"
+      ],
+      "rule_deltas": [
+        {
+          "after": 0,
+          "before": 0,
+          "candidate": "slot1:SWORDS_DANCE",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 0,
+          "before": 0,
+          "candidate": "slot2:STEEL_WING",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 0,
+          "before": 0,
+          "candidate": "slot3:QUICK_ATTACK",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 0,
+          "before": 0,
+          "candidate": "slot4:WING_ATTACK",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.select_move",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "switch.compute_switch_confidence",
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:905"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "switch.get_switch_threshold",
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:595"
+        }
+      ]
+    },
+    "focus_action_comparison": {},
+    "missing_evidence": [
+      "rom_contribution_deltas",
+      "rom_public_read_provenance",
+      "switch_materialization.proven",
+      "switch_roll.reported"
+    ],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route shared_switch_loop --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+        ],
+        "purpose": "Capture ROM score-rule contribution deltas for this route"
+      },
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --boss-route shared_switch_loop --decision-index 1 --decision-surface switch_dispatch --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+        "consumes_artifact_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+        ],
+        "expected_output_paths": [],
+        "purpose": "Re-render this live-trace packet after contribution capture"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route shared_switch_loop --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    "observed": "ROM live trace chose NO_MOVE slot=2 score=31",
+    "path": "selector best=slot1:SWORDS_DANCE score=20 second=slot2:STEEL_WING score=31 gap=11 threshold=245/256 prob=slot1:SWORDS_DANCE=95.7%, slot2:STEEL_WING=4.3%; switch switch_proposal_observed confidence=99 target=2 switch_probability=75.0%-89.8%",
+    "policy_expectation": {},
+    "python_agreement": "agreement=True reason=chosen slot has nonzero selector probability",
+    "selector_choice_explanation": {
+      "available": true,
+      "best_action_id": "slot1:SWORDS_DANCE",
+      "best_roll_threshold": 245,
+      "best_score": 20,
+      "chosen_action_id": "slot2:STEEL_WING",
+      "chosen_has_nonzero_probability": true,
+      "chosen_probability": 0.04296875,
+      "chosen_rank": "second",
+      "possible_action_ids": [
+        "slot1:SWORDS_DANCE",
+        "slot2:STEEL_WING"
+      ],
+      "reason": "observed action was the second selector candidate with nonzero BossAI_SelectMove roll probability",
+      "score_gap": 11,
+      "second_action_id": "slot2:STEEL_WING",
+      "second_score": 31,
+      "summary": "chosen second candidate via selector roll; chosen=slot2:STEEL_WING; p=4.3%; best=slot1:SWORDS_DANCE; second=slot2:STEEL_WING; gap=11; threshold=245/256"
+    },
+    "status": "needs_contribution_proof",
+    "why": "selector best=slot1:SWORDS_DANCE score=20 second=slot2:STEEL_WING score=31 gap=11 threshold=245/256 prob=slot1:SWORDS_DANCE=95.7%, slot2:STEEL_WING=4.3%; switch switch_proposal_observed confidence=99 target=2 switch_probability=75.0%-89.8%"
+  },
+  "decision_trace_summary": {
+    "event_count": 0,
+    "event_type_counts": {},
+    "source": "live_trace_selector_replay"
+  },
+  "deity_evidence_marker": "BOSS_AI_DEITY_DECISION_INPUT_RESOLVED",
+  "family": "live_trace",
+  "known_limits": [
+    "Live trace input proves selector behavior from captured ROM score bytes, not full score-model reconstruction.",
+    "Counterfactual score flips are byte-level selector flips until a ROM contribution trace is attached.",
+    "Attach or run rom-contribution-trace to get rule-level score deltas and public-read snapshots.",
+    "Live trace switch fields prove observed dispatch bytes; use rom-switch-materialize for scenario-level switch policy proof."
+  ],
+  "next_proof_commands": [
+    {
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path"
+      ],
+      "command": "python -m tools.boss_ai_debugger trace-replay --trace \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\shared_switch_loop_live.txt\"",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Replay captured ROM selector bytes"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route shared_switch_loop --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --boss-route shared_switch_loop --decision-index 1 --decision-surface switch_dispatch --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Re-render this live-trace packet after contribution capture"
+    },
+    {
+      "closes_evidence_ids": [],
+      "command": "python -m tools.boss_ai_debugger generate --family switch_sack --count 12 --seed 1 --out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl"
+      ],
+      "purpose": "Generate switch/sack probes for ROM switch-dispatch materialization"
+    },
+    {
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "switch_path",
+        "switch_materialization"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-switch-materialize --scenarios .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl --base-route shared_switch_loop --limit 12 --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl"
+      ],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json"
+      ],
+      "purpose": "Materialize switch-dispatch proof against the shared switch route"
+    },
+    {
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "switch_path",
+        "switch_materialization"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --scenario .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl --rom-switch-materialization .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl",
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Render switch-dispatch explanation packet after materialization"
+    },
+    {
+      "closes_evidence_ids": [
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rule-map check",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Verify source-rule anchors are current"
+    }
+  ],
+  "observed_rom_decision": {
+    "artifact": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\shared_switch_loop_live.txt",
+    "available": true,
+    "capture_id": "Shared switch-loop#1",
+    "decision": {
+      "chosen_id": 211,
+      "chosen_move_name": "NO_MOVE",
+      "chosen_score": 31,
+      "chosen_slot": 1,
+      "chosen_slot_1_based": 2,
+      "chosen_slot_index": 1,
+      "expected_move_ids": [
+        14,
+        211
+      ],
+      "model_score_deltas": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "move_ids": [
+        14,
+        211,
+        98,
+        17
+      ],
+      "move_scores": [
+        20,
+        31,
+        46,
+        46
+      ],
+      "possible_action_ids": [
+        "slot1:SWORDS_DANCE",
+        "slot2:STEEL_WING"
+      ],
+      "possible_move_ids": [
+        14,
+        211
+      ],
+      "post_model_scores": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pre_model_scores": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "selector": {
+        "best_move_id": 14,
+        "best_roll_threshold": 245,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "gap": 11,
+        "possible_move_ids": [
+          14,
+          211
+        ],
+        "possible_slot_indices": [
+          0,
+          1
+        ],
+        "probabilities_by_slot": {
+          "0": 0.95703125,
+          "1": 0.04296875,
+          "2": 0.0,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Shared switch-loop#1",
+        "second_move_id": 211,
+        "second_score": 31,
+        "second_slot_index": 1,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 14,
+            "name": "SWORDS_DANCE",
+            "score": 20,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 211,
+            "name": "STEEL_WING",
+            "score": 31,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 98,
+            "name": "QUICK_ATTACK",
+            "score": 46,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 17,
+            "name": "WING_ATTACK",
+            "score": 46,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 2
+      },
+      "selector_path": {
+        "agreement": true,
+        "agreement_reason": "chosen slot has nonzero selector probability",
+        "available": true,
+        "best_action_id": "slot1:SWORDS_DANCE",
+        "best_move_id": 14,
+        "best_roll_threshold": 245,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "candidate_probabilities": {
+          "slot1:SWORDS_DANCE": 0.95703125,
+          "slot2:STEEL_WING": 0.04296875,
+          "slot3:QUICK_ATTACK": 0.0,
+          "slot4:WING_ATTACK": 0.0
+        },
+        "chosen_action_id": "slot2:STEEL_WING",
+        "chosen_has_nonzero_probability": true,
+        "chosen_move_id": 211,
+        "chosen_probability": 0.04296875,
+        "chosen_slot_index": 1,
+        "possible_action_ids": [
+          "slot1:SWORDS_DANCE",
+          "slot2:STEEL_WING"
+        ],
+        "possible_move_ids": [
+          14,
+          211
+        ],
+        "score_gap": 11,
+        "second_action_id": "slot2:STEEL_WING",
+        "second_move_id": 211,
+        "second_score": 31,
+        "second_slot_index": 1,
+        "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+      },
+      "switch_confidence": 99,
+      "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+      "switch_path": {
+        "actual_switch": false,
+        "cooldown": 2,
+        "cur_ot": 0,
+        "last_switched_out": 2,
+        "observation_status": "switch_proposal_observed",
+        "observed": true,
+        "proposed_switch": true,
+        "proposed_target_1_based": 2,
+        "switch_confidence": 99,
+        "switch_context": {
+          "cooldown": 2,
+          "cur_ot": 0,
+          "index": 0,
+          "last_out": 2,
+          "param": 49
+        },
+        "switch_index": 0,
+        "switch_param": 49,
+        "switch_roll": {
+          "available": true,
+          "base_threshold": 70,
+          "confidence": 99,
+          "possible_effective_thresholds": [
+            70,
+            78,
+            80,
+            88
+          ],
+          "possible_switch_probabilities": [
+            {
+              "effective_threshold": 70,
+              "switch_chance_threshold": 230,
+              "switch_probability": 0.8984375
+            },
+            {
+              "effective_threshold": 78,
+              "switch_chance_threshold": 230,
+              "switch_probability": 0.8984375
+            },
+            {
+              "effective_threshold": 80,
+              "switch_chance_threshold": 192,
+              "switch_probability": 0.75
+            },
+            {
+              "effective_threshold": 88,
+              "switch_chance_threshold": 192,
+              "switch_probability": 0.75
+            }
+          ],
+          "probability_exact": false,
+          "proof_status": "source_mirrored_switch_roll_range_from_live_trace_confidence",
+          "threshold_exact": false,
+          "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
+          "tier": "mid"
+        }
+      }
+    },
+    "kind": "live_trace_selector_replay",
+    "python_agreement": {
+      "agreement": true,
+      "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
+      "reason": "chosen slot has nonzero selector probability"
+    },
+    "reason": "chosen slot has nonzero selector probability",
+    "status": "match"
+  },
+  "proof_blockers": [],
+  "proof_status": {
+    "blockers": [],
+    "checks": [
+      {
+        "detail": "live_capture_manifest",
+        "id": "decision_input.auto_resolved",
+        "status": "present"
+      },
+      {
+        "detail": "chosen slot has nonzero selector probability",
+        "id": "input_manifest.replay_verified",
+        "status": "present"
+      },
+      {
+        "detail": "live_trace_selector_replay",
+        "id": "observed_rom_decision",
+        "status": "present"
+      },
+      {
+        "detail": "candidates=4",
+        "id": "candidate_scores",
+        "status": "present"
+      },
+      {
+        "detail": "move_scores=[20, 31, 46, 46]",
+        "id": "score_bytes",
+        "status": "present"
+      },
+      {
+        "detail": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
+        "id": "selector_path",
+        "status": "present"
+      },
+      {
+        "detail": "switch_proposal_observed",
+        "id": "switch_path",
+        "status": "present"
+      },
+      {
+        "detail": "rom-switch-materialize artifact attached",
+        "id": "switch_materialization",
+        "status": "present"
+      },
+      {
+        "detail": "candidate contribution deltas from the Python/debugger model",
+        "id": "python_score_contributions",
+        "status": "present"
+      },
+      {
+        "detail": "matched_events=0",
+        "id": "rom_contribution_deltas",
+        "status": "missing"
+      },
+      {
+        "detail": "policy_tags=0 condition_tags=0 evidence_refs=1 trace_fields=11",
+        "id": "public_info_inputs",
+        "status": "present"
+      },
+      {
+        "detail": "predicate branches, public-read probes, or ROM public-read map",
+        "id": "rom_public_read_provenance",
+        "status": "missing"
+      },
+      {
+        "detail": "anchors=5",
+        "id": "source_anchors",
+        "status": "present"
+      },
+      {
+        "detail": "score flip or public-fact counterfactual",
+        "id": "counterfactual",
+        "status": "present"
+      },
+      {
+        "detail": "no generated policy expectation",
+        "id": "policy_expectation.reported",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "score, selector, switch, or public-fact counterfactual",
+        "id": "counterfactual.decisive",
+        "status": "present"
+      },
+      {
+        "detail": "live_trace_selector_replay",
+        "id": "selector_materialization.proven",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "switch materialization not attached",
+        "id": "switch_materialization.proven",
+        "status": "missing"
+      },
+      {
+        "detail": "switch materialization not attached",
+        "id": "switch_roll.reported",
+        "status": "missing"
+      }
+    ],
+    "missing_ids": [
+      "rom_contribution_deltas",
+      "rom_public_read_provenance",
+      "switch_materialization.proven",
+      "switch_roll.reported"
+    ],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route shared_switch_loop --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+        ],
+        "purpose": "Capture ROM score-rule contribution deltas for this route"
+      },
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --boss-route shared_switch_loop --decision-index 1 --decision-surface switch_dispatch --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+        "consumes_artifact_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+        ],
+        "expected_output_paths": [],
+        "purpose": "Re-render this live-trace packet after contribution capture"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route shared_switch_loop --json-out .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    "next_proof_reason": "next command closes missing evidence: rom_contribution_deltas, rom_public_read_provenance",
+    "present_ids": [
+      "decision_input.auto_resolved",
+      "input_manifest.replay_verified",
+      "observed_rom_decision",
+      "candidate_scores",
+      "score_bytes",
+      "selector_path",
+      "switch_path",
+      "switch_materialization",
+      "python_score_contributions",
+      "public_info_inputs",
+      "source_anchors",
+      "counterfactual",
+      "counterfactual.decisive"
+    ],
+    "status": "needs_contribution_proof"
+  },
+  "public_info_inputs": {
+    "answer_changing_information": [],
+    "condition_tags": [],
+    "evidence_refs": [
+      "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\shared_switch_loop_live.txt"
+    ],
+    "policy_tags": [],
+    "predicate_branches": [],
+    "public_read_probes": [],
+    "rom_public_reads_by_rule": {},
+    "scenario_public_keys": [],
+    "trace_fields": {
+      "boss": "Shared switch-loop",
+      "notes": "synthetic Jasmine battle context; repeated-switch state records current switch confidence and loop context",
+      "plan_confidence": "72",
+      "plan_id": "2",
+      "plan_phase": "0",
+      "plausible_mask": "11 00 a0 83",
+      "revealed_masks": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "risk_flags": "00 (none)",
+      "switch_confidence": "99",
+      "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+      "tier": "2"
+    }
+  },
+  "python_mirror": {
+    "available": true,
+    "best_action_id": "slot1:SWORDS_DANCE",
+    "best_roll_threshold": 245,
+    "best_score": 20,
+    "gap": 11,
+    "mirror_scope": "selector_from_rom_score_bytes",
+    "policy_reason": "live trace input has no generated scenario expectation",
+    "policy_verdict": "not_applicable_without_scenario_expectation",
+    "probabilities": {
+      "slot1:SWORDS_DANCE": 0.95703125,
+      "slot2:STEEL_WING": 0.04296875,
+      "slot3:QUICK_ATTACK": 0.0,
+      "slot4:WING_ATTACK": 0.0
+    },
+    "rom_comparison": {
+      "agreement": true,
+      "reason": "chosen slot has nonzero selector probability"
+    },
+    "second_action_id": "slot2:STEEL_WING",
+    "second_score": 31
+  },
+  "question": {
+    "expected_acceptable_action_ids": [],
+    "expected_best_action_ids": [],
+    "focus_action_id": "",
+    "rom_best_action_id": "slot1:SWORDS_DANCE"
+  },
+  "rom_contributions": {
+    "available": false,
+    "event_count": 0,
+    "events": [],
+    "matched_trace_count": 0,
+    "unmatched_trace_ids": []
+  },
+  "rom_evidence": [
+    {
+      "artifact": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\shared_switch_loop_live.txt",
+      "available": true,
+      "capture_id": "Shared switch-loop#1",
+      "decision": {
+        "chosen_id": 211,
+        "chosen_move_name": "NO_MOVE",
+        "chosen_score": 31,
+        "chosen_slot": 1,
+        "chosen_slot_1_based": 2,
+        "chosen_slot_index": 1,
+        "expected_move_ids": [
+          14,
+          211
+        ],
+        "model_score_deltas": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "move_ids": [
+          14,
+          211,
+          98,
+          17
+        ],
+        "move_scores": [
+          20,
+          31,
+          46,
+          46
+        ],
+        "possible_action_ids": [
+          "slot1:SWORDS_DANCE",
+          "slot2:STEEL_WING"
+        ],
+        "possible_move_ids": [
+          14,
+          211
+        ],
+        "post_model_scores": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "pre_model_scores": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "selector": {
+          "best_move_id": 14,
+          "best_roll_threshold": 245,
+          "best_score": 20,
+          "best_slot_index": 0,
+          "gap": 11,
+          "possible_move_ids": [
+            14,
+            211
+          ],
+          "possible_slot_indices": [
+            0,
+            1
+          ],
+          "probabilities_by_slot": {
+            "0": 0.95703125,
+            "1": 0.04296875,
+            "2": 0.0,
+            "3": 0.0
+          },
+          "ready": true,
+          "scenario_id": "Shared switch-loop#1",
+          "second_move_id": 211,
+          "second_score": 31,
+          "second_slot_index": 1,
+          "slots": [
+            {
+              "blocked": false,
+              "move_id": 14,
+              "name": "SWORDS_DANCE",
+              "score": 20,
+              "slot": 1,
+              "slot_index": 0
+            },
+            {
+              "blocked": false,
+              "move_id": 211,
+              "name": "STEEL_WING",
+              "score": 31,
+              "slot": 2,
+              "slot_index": 1
+            },
+            {
+              "blocked": false,
+              "move_id": 98,
+              "name": "QUICK_ATTACK",
+              "score": 46,
+              "slot": 3,
+              "slot_index": 2
+            },
+            {
+              "blocked": false,
+              "move_id": 17,
+              "name": "WING_ATTACK",
+              "score": 46,
+              "slot": 4,
+              "slot_index": 3
+            }
+          ],
+          "tier": 2
+        },
+        "selector_path": {
+          "agreement": true,
+          "agreement_reason": "chosen slot has nonzero selector probability",
+          "available": true,
+          "best_action_id": "slot1:SWORDS_DANCE",
+          "best_move_id": 14,
+          "best_roll_threshold": 245,
+          "best_score": 20,
+          "best_slot_index": 0,
+          "candidate_probabilities": {
+            "slot1:SWORDS_DANCE": 0.95703125,
+            "slot2:STEEL_WING": 0.04296875,
+            "slot3:QUICK_ATTACK": 0.0,
+            "slot4:WING_ATTACK": 0.0
+          },
+          "chosen_action_id": "slot2:STEEL_WING",
+          "chosen_has_nonzero_probability": true,
+          "chosen_move_id": 211,
+          "chosen_probability": 0.04296875,
+          "chosen_slot_index": 1,
+          "possible_action_ids": [
+            "slot1:SWORDS_DANCE",
+            "slot2:STEEL_WING"
+          ],
+          "possible_move_ids": [
+            14,
+            211
+          ],
+          "score_gap": 11,
+          "second_action_id": "slot2:STEEL_WING",
+          "second_move_id": 211,
+          "second_score": 31,
+          "second_slot_index": 1,
+          "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+        },
+        "switch_confidence": 99,
+        "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+        "switch_path": {
+          "actual_switch": false,
+          "cooldown": 2,
+          "cur_ot": 0,
+          "last_switched_out": 2,
+          "observation_status": "switch_proposal_observed",
+          "observed": true,
+          "proposed_switch": true,
+          "proposed_target_1_based": 2,
+          "switch_confidence": 99,
+          "switch_context": {
+            "cooldown": 2,
+            "cur_ot": 0,
+            "index": 0,
+            "last_out": 2,
+            "param": 49
+          },
+          "switch_index": 0,
+          "switch_param": 49,
+          "switch_roll": {
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_switch_roll_range_from_live_trace_confidence",
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range",
+            "tier": "mid"
+          }
+        }
+      },
+      "kind": "live_trace_selector_replay",
+      "python_agreement": {
+        "agreement": true,
+        "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
+        "reason": "chosen slot has nonzero selector probability"
+      },
+      "reason": "chosen slot has nonzero selector probability",
+      "status": "match"
+    },
+    {
+      "base_route": "shared_switch_loop",
+      "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+      "base_state_field": "switch_materialization_state",
+      "checked_count": 12,
+      "elapsed_seconds": 0.43552110000746325,
+      "error_count": 0,
+      "kind": "rom_switch_materialization",
+      "known_limits": [
+        "Switch materialization requires a base state before the real BossAI_TrySwitch path reaches switch confidence/param; stale snapshot states with already-populated switch outputs are rejected.",
+        "This proves switch-dispatch proposal behavior and reports the final source-mirrored switch-roll frequency from observed confidence plus an explicit or source-derived threshold; it does not prove move score bytes.",
+        "Only public battle facts and boss-owned party state are patched; hidden player party, hidden moves, PP, held items, and current input are not read."
+      ],
+      "materializations_per_minute": 1653.1920037574798,
+      "policy_disagreement_count": 7,
+      "scenario_count": 12,
+      "schema_version": 1,
+      "skipped_count": 0,
+      "source": ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl",
+      "verdicts": [
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 86,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 99,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM proposes a switch",
+            "severity": 0,
+            "verdict": "pass"
+          },
+          "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": false,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 81,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 22
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "switch_proposal_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 99,
+            "switch_gate_evaluated": true,
+            "switch_index": 0,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM proposes a switch",
+            "severity": 0,
+            "verdict": "pass"
+          },
+          "scenario_id": "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": false,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 82,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 97,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00002_stay_when_current_move_converts",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
+            "severity": 70,
+            "verdict": "mismatch"
+          },
+          "scenario_id": "generated_switch_sack_1_00002_stay_when_current_move_converts",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 97,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 86,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 99,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM proposes a switch",
+            "severity": 0,
+            "verdict": "pass"
+          },
+          "scenario_id": "generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": false,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 180,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 22
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "observed_decision": true,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 0,
+            "switch_gate_evaluated": true,
+            "switch_index": 0,
+            "switch_param": 0,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch does not propose the expected switch",
+            "severity": 75,
+            "verdict": "best_never_rolled"
+          },
+          "scenario_id": "generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
+          "status": "pass",
+          "switch_roll": {
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
+          }
+        },
+        {
+          "expected_switch": false,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 82,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 97,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00005_stay_when_current_move_converts",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
+            "severity": 70,
+            "verdict": "mismatch"
+          },
+          "scenario_id": "generated_switch_sack_1_00005_stay_when_current_move_converts",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 97,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": false,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 211
+            },
+            "frame": 86,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "switch_proposal_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 99,
+            "switch_gate_evaluated": true,
+            "switch_index": 0,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM proposes a switch",
+            "severity": 0,
+            "verdict": "pass"
+          },
+          "scenario_id": "generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 60,
+            "available": true,
+            "base_threshold": 60,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              60,
+              68,
+              70,
+              78
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 60,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 68,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              }
+            ],
+            "probability_exact": true,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 60,
+              "tier": "late",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": false,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 180,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 22
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "observed_decision": true,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 0,
+            "switch_gate_evaluated": true,
+            "switch_index": 0,
+            "switch_param": 0,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch does not propose the expected switch",
+            "severity": 75,
+            "verdict": "best_never_rolled"
+          },
+          "scenario_id": "generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
+          "status": "pass",
+          "switch_roll": {
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
+          }
+        },
+        {
+          "expected_switch": false,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 82,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 89,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00008_stay_when_current_move_converts",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
+            "severity": 70,
+            "verdict": "mismatch"
+          },
+          "scenario_id": "generated_switch_sack_1_00008_stay_when_current_move_converts",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 80,
+            "available": true,
+            "base_threshold": 80,
+            "confidence": 89,
+            "possible_effective_thresholds": [
+              80,
+              88,
+              90,
+              98
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              },
+              {
+                "effective_threshold": 90,
+                "switch_chance_threshold": 0,
+                "switch_probability": 0.0
+              },
+              {
+                "effective_threshold": 98,
+                "switch_chance_threshold": 0,
+                "switch_probability": 0.0
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.44921875,
+            "switch_chance_threshold": 141,
+            "switch_probability": 0.55078125,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 80,
+              "tier": "early",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 86,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 99,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM proposes a switch",
+            "severity": 0,
+            "verdict": "pass"
+          },
+          "scenario_id": "generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 70,
+            "available": true,
+            "base_threshold": 70,
+            "confidence": 99,
+            "possible_effective_thresholds": [
+              70,
+              78,
+              80,
+              88
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 70,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 78,
+                "switch_chance_threshold": 230,
+                "switch_probability": 0.8984375
+              },
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 192,
+                "switch_probability": 0.75
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.1015625,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 70,
+              "tier": "mid",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        },
+        {
+          "expected_switch": true,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": false,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 180,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 22
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "observed_decision": true,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 0,
+            "switch_gate_evaluated": true,
+            "switch_index": 0,
+            "switch_param": 0,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch does not propose the expected switch",
+            "severity": 75,
+            "verdict": "best_never_rolled"
+          },
+          "scenario_id": "generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
+          "status": "pass",
+          "switch_roll": {
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
+          }
+        },
+        {
+          "expected_switch": false,
+          "family": "switch_sack",
+          "rom": {
+            "actual_switch": true,
+            "chosen_move": 0,
+            "diagnostics": {
+              "likely_type_mask_cache": [
+                17,
+                0,
+                32,
+                0
+              ],
+              "plausible_type_mask_cache": [
+                17,
+                0,
+                160,
+                131
+              ],
+              "player_used_moves": [
+                89,
+                0,
+                0,
+                0
+              ],
+              "primary_threat_cache": 4,
+              "species_used_moves": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "switch_gate_evaluated": true,
+              "type_matchup": 10
+            },
+            "frame": 82,
+            "memory_patches": [
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITier",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAITierWeightRow",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonItem",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyDisabledMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wCurOTMon",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyCount",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartySpecies",
+                "value": 211
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartySpecies",
+                "value": 94
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wOTPartySpecies",
+                "value": 255
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Species",
+                "value": 94
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2Level",
+                "value": 50
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonSpecies",
+                "value": 121
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType1",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonType2",
+                "value": 4
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonSpecies",
+                "value": 211
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType1",
+                "value": 3
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonType2",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonStatus",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonParam",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemySwitchMonIndex",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAISwitchCooldown",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastSwitchedOut",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIRepeatCount",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAILastChosenMove",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIWinconMonIdx",
+                "value": 2
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanId",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanPhase",
+                "value": 1
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBossAIPlanConfidence",
+                "value": 60
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 89
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 2,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 3,
+                "symbol_name": "wPlayerUsedMoves",
+                "value": 0
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonHP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wEnemyMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonHP",
+                "value": 20
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wBattleMonMaxHP",
+                "value": 100
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2HP",
+                "value": 80
+              },
+              {
+                "offset": 0,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 0
+              },
+              {
+                "offset": 1,
+                "symbol_name": "wOTPartyMon2MaxHP",
+                "value": 100
+              }
+            ],
+            "observation_status": "actual_switch_observed",
+            "observed_decision": true,
+            "observed_switch_path": true,
+            "proposed_switch": true,
+            "proposed_target_1_based": 2,
+            "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+            "source": "trace_rom_pyboy_switch",
+            "switch_confidence": 89,
+            "switch_gate_evaluated": true,
+            "switch_index": 2,
+            "switch_param": 49,
+            "trace_basis": {
+              "boss": "shared_switch_loop",
+              "notes": "generated-switch-materialization:generated_switch_sack_1_00011_stay_when_current_move_converts",
+              "trace_rom": "pokegold_trace.gbc",
+              "trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+              "trace_symbols": "pokegold_trace.sym",
+              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+            }
+          },
+          "rom_policy": {
+            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
+            "severity": 70,
+            "verdict": "mismatch"
+          },
+          "scenario_id": "generated_switch_sack_1_00011_stay_when_current_move_converts",
+          "status": "pass",
+          "switch_roll": {
+            "assumed_effective_threshold": 80,
+            "available": true,
+            "base_threshold": 80,
+            "confidence": 89,
+            "possible_effective_thresholds": [
+              80,
+              88,
+              90,
+              98
+            ],
+            "possible_switch_probabilities": [
+              {
+                "effective_threshold": 80,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              },
+              {
+                "effective_threshold": 88,
+                "switch_chance_threshold": 141,
+                "switch_probability": 0.55078125
+              },
+              {
+                "effective_threshold": 90,
+                "switch_chance_threshold": 0,
+                "switch_probability": 0.0
+              },
+              {
+                "effective_threshold": 98,
+                "switch_chance_threshold": 0,
+                "switch_probability": 0.0
+              }
+            ],
+            "probability_exact": false,
+            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+            "stay_probability": 0.44921875,
+            "switch_chance_threshold": 141,
+            "switch_probability": 0.55078125,
+            "threshold_components": {
+              "class_threshold_mod": 0,
+              "loop_penalty": false,
+              "sack_bias": "untraced_possible",
+              "threshold": 80,
+              "tier": "early",
+              "trainer_class": "JASMINE",
+              "wincon_bias": "untraced_possible"
+            },
+            "threshold_exact": false,
+            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+          }
+        }
+      ]
+    }
+  ],
+  "scenario_id": "Shared switch-loop#1",
+  "schema_version": 1,
+  "source": {
+    "capture_id": "Shared switch-loop#1",
+    "trace_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\shared_switch_loop_live.txt"
+  },
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 5719,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2786,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 905,
+      "parent_label": "BossAI_ComputeSwitchConfidence",
+      "public_reads": [],
+      "rule_id": "switch.compute_switch_confidence",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ComputeSwitchConfidence"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 595,
+      "parent_label": "BossAI_GetSwitchThreshold",
+      "public_reads": [],
+      "rule_id": "switch.get_switch_threshold",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_GetSwitchThreshold"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 17,
+      "parent_label": "BossAI_TrySwitch",
+      "public_reads": [],
+      "rule_id": "switch.try_switch",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_TrySwitch"
+    }
+  ],
+  "tier": 2
+}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,8 @@ from tools.boss_ai_preference.data import PreferenceDataError
 from .mastery_index import build_mastery_index
 from .rom_scenarios import evaluate_batch, load_scenario_batch
 
+
+ROOT = Path(__file__).resolve().parents[2]
 
 HIGH_VALUE_VERDICTS = {
     "catastrophic_roll": 100,
@@ -63,6 +66,7 @@ def build_review_queue_from_scenarios(
         limit=limit,
         max_per_lesson=max_per_lesson,
         source=str(scenarios_path),
+        scenario_source=str(scenarios_path),
     )
 
 
@@ -78,6 +82,7 @@ def build_review_queue_from_report(
         limit=limit,
         max_per_lesson=max_per_lesson,
         source=str(path),
+        scenario_source=infer_scenario_source_from_report(path),
     )
 
 
@@ -87,6 +92,7 @@ def build_review_queue(
     limit: int = 50,
     max_per_lesson: int = 5,
     source: str = "",
+    scenario_source: str = "",
 ) -> dict[str, Any]:
     if limit < 0:
         raise PreferenceDataError("limit must be non-negative")
@@ -110,9 +116,11 @@ def build_review_queue(
         )
     )
     top = select_diverse_items(items, limit=limit, max_per_lesson=max_per_lesson)
+    attach_review_proof_commands(top, scenario_source=scenario_source)
     return {
         "schema_version": 1,
         "source": source,
+        "scenario_source": scenario_source,
         "input_scenario_count": report.get("scenario_count"),
         "input_reviewable_count": len(items),
         "limit": limit,
@@ -257,6 +265,100 @@ def select_diverse_items(
     return selected
 
 
+def attach_review_proof_commands(
+    items: list[dict[str, Any]],
+    *,
+    scenario_source: str,
+) -> None:
+    for item in items:
+        item["explain_decision"] = explain_decision_command_for_item(
+            item,
+            scenario_source=scenario_source,
+        )
+
+
+def explain_decision_command_for_item(
+    item: dict[str, Any],
+    *,
+    scenario_source: str,
+) -> dict[str, Any]:
+    scenario_id = str(item.get("scenario_id", ""))
+    if not scenario_source:
+        return {
+            "available": False,
+            "reason": "review queue was built from a report without a scenario source",
+            "command": "",
+            "closes_evidence_ids": [],
+            "expected_output_paths": [],
+            "consumes_artifact_paths": [],
+        }
+    output_path = default_explain_packet_path(scenario_source, scenario_id)
+    focus = explain_focus_action(item)
+    parts = [
+        "python -m tools.boss_ai_debugger explain-decision",
+        "--scenario",
+        quote_cli(scenario_source),
+        "--scenario-id",
+        quote_cli(scenario_id),
+        "--run-rom-proof",
+        "auto",
+        "--json-out",
+        quote_cli(output_path),
+    ]
+    if focus:
+        parts.extend(["--focus-action-id", quote_cli(focus)])
+    return {
+        "available": True,
+        "purpose": "Render this review item as a self-driving Boss AI explain-decision packet",
+        "command": " ".join(parts),
+        "focus_action_id": focus,
+        "closes_evidence_ids": [
+            "observed_rom_decision",
+            "candidate_scores",
+            "selector_path",
+            "policy_expectation.reported",
+            "counterfactual.decisive",
+        ],
+        "expected_output_paths": [output_path],
+        "consumes_artifact_paths": [scenario_source],
+    }
+
+
+def explain_focus_action(item: dict[str, Any]) -> str:
+    expected = string_list(item.get("expected_best_action_ids"))
+    rom_best = str(item.get("rom_best_action_id") or "")
+    for action_id in expected:
+        if action_id and action_id != rom_best:
+            return action_id
+    return rom_best
+
+
+def infer_scenario_source_from_report(path: Path) -> str:
+    sibling = path.with_name("scenarios.jsonl")
+    resolved = sibling if sibling.is_absolute() else ROOT / sibling
+    if resolved.exists():
+        return str(sibling)
+    return ""
+
+
+def default_explain_packet_path(scenario_source: str, scenario_id: str) -> str:
+    source_path = Path(scenario_source)
+    output_dir = source_path.parent / "explain_packets"
+    return str(output_dir / f"{safe_id(scenario_id)}.json")
+
+
+def safe_id(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip()).strip("_") or "scenario"
+
+
+def quote_cli(value: str) -> str:
+    if value == "":
+        return '""'
+    if not any(char.isspace() for char in value) and '"' not in value:
+        return value
+    return '"' + value.replace('"', '\\"') + '"'
+
+
 def mastery_evidence_index() -> dict[str, dict[str, Any]]:
     index = build_mastery_index()
     by_path: dict[str, dict[str, Any]] = {}
@@ -384,6 +486,9 @@ def format_review_queue(queue: dict[str, Any]) -> str:
                 f"      evidence: {digest['title']} - {digest['default_summary']}"
             )
         lines.append(f"      next: {item['next_action']}")
+        explain = item.get("explain_decision") or {}
+        if explain.get("available"):
+            lines.append(f"      explain: {explain['command']}")
     return "\n".join(lines)
 
 

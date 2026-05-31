@@ -10,6 +10,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     build_fast_score_report,
     chunk_scenarios,
     empty_contribution_comparison,
+    fallback_replay_controls_from_manifest,
     hook_equivalence_summary,
     materialization_for_scenario,
     move_ids_for_scenario,
@@ -136,6 +137,19 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wEnemyMonMoves", 1)], 0xE2)
         self.assertEqual(patches[("wOTPartyCount", 0)], 2)
 
+    def test_mastery_policy_materialization_maps_active_pressure_case(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=1, seed=1)[0]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+
+        self.assertEqual(
+            materialization.move_ids,
+            [0x7E, 0x5C, 0xE2, 0x99],
+        )
+
     def test_cashout_materialization_patches_revealed_ghost_branch(self) -> None:
         scenario = generate_scenarios(family="cashout_board_delta", count=3, seed=11)[2]
 
@@ -195,6 +209,25 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(controls.button_presses, 5)
         self.assertEqual(controls.button_interval_frames, 45)
         self.assertEqual(controls.watch_frames, 270)
+
+    def test_score_materialization_fallback_uses_pre_choice_controls(self) -> None:
+        controls = fallback_replay_controls_from_manifest(
+            {
+                "pre_choice_state": ".local/tmp/pre_choice.state",
+                "score_materialization_state": ".local/tmp/stale_score.state",
+                "choice_button": "a",
+                "choice_wait_frames": 45,
+            },
+            button="b",
+            button_delay=8,
+            watch_frames=90,
+        )
+
+        self.assertIsNotNone(controls)
+        assert controls is not None
+        self.assertEqual(controls.base_state_field, "pre_choice_state")
+        self.assertEqual(controls.button, "a")
+        self.assertEqual(controls.button_presses, 1)
 
     def test_score_materialization_base_rejects_mid_ai_trace_scores(self) -> None:
         with self.assertRaisesRegex(PreferenceDataError, "already inside"):

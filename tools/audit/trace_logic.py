@@ -102,7 +102,6 @@ def audit_switch_loop(boss: str) -> None:
             "ld a, [wEnemySwitchMonParam]",
             "and a",
             "ret z",
-            "push af",
             "call BossAI_ComputeSwitchConfidence",
         ],
         "switch target must answer public primary threat before confidence roll",

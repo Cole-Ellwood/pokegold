@@ -1,0 +1,1066 @@
+{
+  "auto_rom_proof": [],
+  "candidate_scores": [
+    {
+      "action_id": "slot1:TACKLE",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 20,
+          "before": 20,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 20,
+      "initial_score": 20,
+      "move_id": 33,
+      "name": "TACKLE",
+      "pre_lookahead_score": 20,
+      "selector_probability": 0.6015625,
+      "slot": 1,
+      "slot_index": 0
+    },
+    {
+      "action_id": "slot2:SAND_ATTACK",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 23,
+          "before": 20,
+          "delta": 3,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 23,
+      "initial_score": 20,
+      "move_id": 28,
+      "name": "SAND_ATTACK",
+      "pre_lookahead_score": 23,
+      "selector_probability": 0.0,
+      "slot": 2,
+      "slot_index": 1
+    },
+    {
+      "action_id": "slot3:GUST",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 20,
+          "before": 20,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 20,
+      "initial_score": 20,
+      "move_id": 16,
+      "name": "GUST",
+      "pre_lookahead_score": 20,
+      "selector_probability": 0.3984375,
+      "slot": 3,
+      "slot_index": 2
+    },
+    {
+      "action_id": "slot4:QUICK_ATTACK",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 20,
+          "before": 20,
+          "delta": 0,
+          "note": "Captured pre/post model score byte delta from live trace.",
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "final_score": 20,
+      "initial_score": 20,
+      "move_id": 98,
+      "name": "QUICK_ATTACK",
+      "pre_lookahead_score": 20,
+      "selector_probability": 0.0,
+      "slot": 4,
+      "slot_index": 3
+    }
+  ],
+  "closed_evidence_ids": [
+    "decision_input.auto_resolved",
+    "input_manifest.replay_verified",
+    "observed_rom_decision",
+    "candidate_scores",
+    "score_bytes",
+    "selector_path",
+    "python_score_contributions",
+    "public_info_inputs",
+    "source_anchors",
+    "counterfactual",
+    "counterfactual.decisive"
+  ],
+  "counterfactual": {
+    "answer_changing_information": [],
+    "focus_score_flip": null,
+    "public_fact_counterfactuals": [
+      "Attach a ROM contribution trace for this route to identify which public branch or score rule would move the score bytes."
+    ],
+    "selector_roll_counterfactual": {
+      "alternate_action_id": "slot3:GUST",
+      "alternate_roll_range": {
+        "count": 102,
+        "max": 255,
+        "min": 154
+      },
+      "available": true,
+      "best_action_id": "slot1:TACKLE",
+      "best_probability": 0.6015625,
+      "best_roll_range": {
+        "count": 154,
+        "max": 153,
+        "min": 0
+      },
+      "best_roll_threshold": 154,
+      "best_score": 20,
+      "chosen_action_id": "slot1:TACKLE",
+      "chosen_rank": "best",
+      "chosen_roll_range": {
+        "count": 154,
+        "max": 153,
+        "min": 0
+      },
+      "observed_choice_due_to_random_roll": false,
+      "reason": "observed action was the selector best candidate; a roll in the second-candidate range would choose the alternate action",
+      "roll_denominator": 256,
+      "score_gap": 0,
+      "second_action_id": "slot3:GUST",
+      "second_probability": 0.3984375,
+      "second_roll_range": {
+        "count": 102,
+        "max": 255,
+        "min": 154
+      },
+      "second_score": 20,
+      "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
+      "summary": "chosen=slot1:TACKLE roll=0..153 (154/256); alternate=slot3:GUST if roll=154..255 (102/256); threshold=154/256"
+    },
+    "smallest_score_flip": {
+      "action_id": "slot3:GUST",
+      "available": true,
+      "current_score": 20,
+      "move_id": 16,
+      "name": "GUST",
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -1,
+      "slot": 3,
+      "slot_index": 2,
+      "target_score": 19
+    },
+    "why": "Live trace counterfactuals are computed from captured final score bytes."
+  },
+  "decision_input": {
+    "artifact_path": "audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json",
+    "closed_evidence_ids": [
+      "decision_input.auto_resolved",
+      "input_manifest.replay_verified"
+    ],
+    "generated_at": "2026-05-31T01:16:45Z",
+    "hash_basis": {
+      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+      "manifest_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+      "trace_rom_matches_manifest": true,
+      "trace_symbols_matches_manifest": true
+    },
+    "kind": "boss_ai_decision_input_manifest",
+    "known_limits": [
+      "This resolver uses a committed live first-decision trace capture, not deep boss-battle navigation.",
+      "Replay verification proves selector agreement for the captured score bytes; full score-rule provenance still needs rom-contribution-trace when absent."
+    ],
+    "replay_verification": {
+      "chosen_id": 33,
+      "expected_move_ids": [
+        16,
+        33
+      ],
+      "match": true,
+      "method": "BossAI_SelectMove trace replay over captured score bytes",
+      "mode": "exact",
+      "reason": "chosen slot has nonzero selector probability",
+      "verdict": "match",
+      "verified": true
+    },
+    "resolution": {
+      "capture_manifest_id": "falkner",
+      "capture_manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+      "capture_status": "FINISHED",
+      "source": "live_capture_manifest",
+      "source_kind": "current_live_trace_capture",
+      "sufficient": true,
+      "trace_capture_id": "Falkner#1",
+      "trace_path": "audit/boss_ai_trace/falkner_live.txt"
+    },
+    "schema_version": 1,
+    "source_state": {
+      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+      "trace_artifact_sha256": "8BC3C640EEADCDB4CD4EF7CFABDBB08CDCB6EEE0742C3E7FCAC18E7F9CC1B99A"
+    },
+    "target": {
+      "boss_route": "falkner",
+      "decision_index": 1,
+      "decision_surface": "live_boss",
+      "public_state_predicate": "",
+      "requested_boss_route": "falkner",
+      "requested_capture_id": "",
+      "turn": null
+    }
+  },
+  "decision_summary": {
+    "decisive_counterfactual": "selector roll chose best candidate; slot3:GUST would be chosen if roll=154..255 (102/256)",
+    "evidence_highlights": {
+      "candidate_scores": [
+        {
+          "action_id": "slot1:TACKLE",
+          "blocked": false,
+          "final_score": 20,
+          "kind": "move",
+          "name": "TACKLE",
+          "selector_probability": 0.6015625
+        },
+        {
+          "action_id": "slot2:SAND_ATTACK",
+          "blocked": false,
+          "final_score": 23,
+          "kind": "move",
+          "name": "SAND_ATTACK",
+          "selector_probability": 0.0
+        },
+        {
+          "action_id": "slot3:GUST",
+          "blocked": false,
+          "final_score": 20,
+          "kind": "move",
+          "name": "GUST",
+          "selector_probability": 0.3984375
+        },
+        {
+          "action_id": "slot4:QUICK_ATTACK",
+          "blocked": false,
+          "final_score": 20,
+          "kind": "move",
+          "name": "QUICK_ATTACK",
+          "selector_probability": 0.0
+        }
+      ],
+      "public_inputs": [
+        "trace.boss=Falkner",
+        "trace.notes=early-tier gym leader opener; accuracy/speed pressure; no adaptive lead",
+        "trace.tier=1",
+        "trace.plan_id=2"
+      ],
+      "rule_deltas": [
+        {
+          "after": 20,
+          "before": 20,
+          "candidate": "slot1:TACKLE",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 23,
+          "before": 20,
+          "candidate": "slot2:SAND_ATTACK",
+          "delta": 3,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 20,
+          "before": 20,
+          "candidate": "slot3:GUST",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 20,
+          "before": 20,
+          "candidate": "slot4:QUICK_ATTACK",
+          "delta": 0,
+          "rule": "captured_model_score_delta",
+          "rule_id": "live_trace.model_score_delta",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        }
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.select_move",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+        }
+      ]
+    },
+    "focus_action_comparison": {},
+    "missing_evidence": [
+      "rom_contribution_deltas",
+      "rom_public_read_provenance"
+    ],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route falkner --json-out .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+        ],
+        "purpose": "Capture ROM score-rule contribution deltas for this route"
+      },
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1 --decision-surface live_boss --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+        "consumes_artifact_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+        ],
+        "expected_output_paths": [],
+        "purpose": "Re-render this live-trace packet after contribution capture"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route falkner --json-out .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    "observed": "ROM live trace chose TACKLE slot=1 score=20",
+    "path": "selector best=slot1:TACKLE score=20 second=slot3:GUST score=20 gap=0 threshold=154/256 prob=slot1:TACKLE=60.2%, slot3:GUST=39.8%",
+    "policy_expectation": {},
+    "python_agreement": "agreement=True reason=chosen slot has nonzero selector probability",
+    "selector_choice_explanation": {
+      "available": true,
+      "best_action_id": "slot1:TACKLE",
+      "best_roll_threshold": 154,
+      "best_score": 20,
+      "chosen_action_id": "slot1:TACKLE",
+      "chosen_has_nonzero_probability": true,
+      "chosen_probability": 0.6015625,
+      "chosen_rank": "best",
+      "possible_action_ids": [
+        "slot1:TACKLE",
+        "slot3:GUST"
+      ],
+      "reason": "observed action was the selector best candidate",
+      "score_gap": 0,
+      "second_action_id": "slot3:GUST",
+      "second_score": 20,
+      "summary": "chosen best candidate; chosen=slot1:TACKLE; p=60.2%; best=slot1:TACKLE; second=slot3:GUST; gap=0; threshold=154/256"
+    },
+    "status": "needs_contribution_proof",
+    "why": "selector best=slot1:TACKLE score=20 second=slot3:GUST score=20 gap=0 threshold=154/256 prob=slot1:TACKLE=60.2%, slot3:GUST=39.8%"
+  },
+  "decision_trace_summary": {
+    "event_count": 0,
+    "event_type_counts": {},
+    "source": "live_trace_selector_replay"
+  },
+  "deity_evidence_marker": "BOSS_AI_DEITY_DECISION_INPUT_RESOLVED",
+  "family": "live_trace",
+  "known_limits": [
+    "Live trace input proves selector behavior from captured ROM score bytes, not full score-model reconstruction.",
+    "Counterfactual score flips are byte-level selector flips until a ROM contribution trace is attached.",
+    "Attach or run rom-contribution-trace to get rule-level score deltas and public-read snapshots."
+  ],
+  "next_proof_commands": [
+    {
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path"
+      ],
+      "command": "python -m tools.boss_ai_debugger trace-replay --trace \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\falkner_live.txt\"",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Replay captured ROM selector bytes"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route falkner --json-out .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1 --decision-surface live_boss --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Re-render this live-trace packet after contribution capture"
+    },
+    {
+      "closes_evidence_ids": [
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rule-map check",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Verify source-rule anchors are current"
+    }
+  ],
+  "observed_rom_decision": {
+    "artifact": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\falkner_live.txt",
+    "available": true,
+    "capture_id": "Falkner#1",
+    "decision": {
+      "chosen_id": 33,
+      "chosen_move_name": "TACKLE",
+      "chosen_score": 20,
+      "chosen_slot": 0,
+      "chosen_slot_1_based": 1,
+      "chosen_slot_index": 0,
+      "expected_move_ids": [
+        16,
+        33
+      ],
+      "model_score_deltas": [
+        0,
+        3,
+        0,
+        0
+      ],
+      "move_ids": [
+        33,
+        28,
+        16,
+        98
+      ],
+      "move_scores": [
+        20,
+        23,
+        20,
+        20
+      ],
+      "possible_action_ids": [
+        "slot1:TACKLE",
+        "slot3:GUST"
+      ],
+      "possible_move_ids": [
+        16,
+        33
+      ],
+      "post_model_scores": [
+        20,
+        23,
+        20,
+        20
+      ],
+      "pre_model_scores": [
+        20,
+        20,
+        20,
+        20
+      ],
+      "selector": {
+        "best_move_id": 33,
+        "best_roll_threshold": 154,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "gap": 0,
+        "possible_move_ids": [
+          16,
+          33
+        ],
+        "possible_slot_indices": [
+          0,
+          2
+        ],
+        "probabilities_by_slot": {
+          "0": 0.6015625,
+          "1": 0.0,
+          "2": 0.3984375,
+          "3": 0.0
+        },
+        "ready": true,
+        "scenario_id": "Falkner#1",
+        "second_move_id": 16,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "slots": [
+          {
+            "blocked": false,
+            "move_id": 33,
+            "name": "TACKLE",
+            "score": 20,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "blocked": false,
+            "move_id": 28,
+            "name": "SAND_ATTACK",
+            "score": 23,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "blocked": false,
+            "move_id": 16,
+            "name": "GUST",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "blocked": false,
+            "move_id": 98,
+            "name": "QUICK_ATTACK",
+            "score": 20,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "tier": 1
+      },
+      "selector_path": {
+        "agreement": true,
+        "agreement_reason": "chosen slot has nonzero selector probability",
+        "available": true,
+        "best_action_id": "slot1:TACKLE",
+        "best_move_id": 33,
+        "best_roll_threshold": 154,
+        "best_score": 20,
+        "best_slot_index": 0,
+        "candidate_probabilities": {
+          "slot1:TACKLE": 0.6015625,
+          "slot2:SAND_ATTACK": 0.0,
+          "slot3:GUST": 0.3984375,
+          "slot4:QUICK_ATTACK": 0.0
+        },
+        "chosen_action_id": "slot1:TACKLE",
+        "chosen_has_nonzero_probability": true,
+        "chosen_move_id": 33,
+        "chosen_probability": 0.6015625,
+        "chosen_slot_index": 0,
+        "possible_action_ids": [
+          "slot1:TACKLE",
+          "slot3:GUST"
+        ],
+        "possible_move_ids": [
+          16,
+          33
+        ],
+        "score_gap": 0,
+        "second_action_id": "slot3:GUST",
+        "second_move_id": 16,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+      },
+      "switch_confidence": 0,
+      "switch_context": "param=00,index=00,last_out=00,cooldown=00,cur_ot=00",
+      "switch_path": {
+        "actual_switch": false,
+        "cooldown": 0,
+        "cur_ot": 0,
+        "last_switched_out": 0,
+        "observation_status": "no_switch_path_observed",
+        "observed": false,
+        "proposed_switch": false,
+        "proposed_target_1_based": 0,
+        "switch_confidence": 0,
+        "switch_context": {
+          "cooldown": 0,
+          "cur_ot": 0,
+          "index": 0,
+          "last_out": 0,
+          "param": 0
+        },
+        "switch_index": 0,
+        "switch_param": 0,
+        "switch_roll": {
+          "available": false,
+          "reason": "no_switch_confidence_observed"
+        }
+      }
+    },
+    "kind": "live_trace_selector_replay",
+    "python_agreement": {
+      "agreement": true,
+      "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
+      "reason": "chosen slot has nonzero selector probability"
+    },
+    "reason": "chosen slot has nonzero selector probability",
+    "status": "match"
+  },
+  "proof_blockers": [],
+  "proof_status": {
+    "blockers": [],
+    "checks": [
+      {
+        "detail": "live_capture_manifest",
+        "id": "decision_input.auto_resolved",
+        "status": "present"
+      },
+      {
+        "detail": "chosen slot has nonzero selector probability",
+        "id": "input_manifest.replay_verified",
+        "status": "present"
+      },
+      {
+        "detail": "live_trace_selector_replay",
+        "id": "observed_rom_decision",
+        "status": "present"
+      },
+      {
+        "detail": "candidates=4",
+        "id": "candidate_scores",
+        "status": "present"
+      },
+      {
+        "detail": "move_scores=[20, 23, 20, 20]",
+        "id": "score_bytes",
+        "status": "present"
+      },
+      {
+        "detail": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
+        "id": "selector_path",
+        "status": "present"
+      },
+      {
+        "detail": "no switch-dispatch bytes observed",
+        "id": "switch_path",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "no switch-dispatch proof needed for this packet",
+        "id": "switch_materialization",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "candidate contribution deltas from the Python/debugger model",
+        "id": "python_score_contributions",
+        "status": "present"
+      },
+      {
+        "detail": "matched_events=0",
+        "id": "rom_contribution_deltas",
+        "status": "missing"
+      },
+      {
+        "detail": "policy_tags=0 condition_tags=0 evidence_refs=1 trace_fields=11",
+        "id": "public_info_inputs",
+        "status": "present"
+      },
+      {
+        "detail": "predicate branches, public-read probes, or ROM public-read map",
+        "id": "rom_public_read_provenance",
+        "status": "missing"
+      },
+      {
+        "detail": "anchors=2",
+        "id": "source_anchors",
+        "status": "present"
+      },
+      {
+        "detail": "score flip or public-fact counterfactual",
+        "id": "counterfactual",
+        "status": "present"
+      },
+      {
+        "detail": "no generated policy expectation",
+        "id": "policy_expectation.reported",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "score, selector, switch, or public-fact counterfactual",
+        "id": "counterfactual.decisive",
+        "status": "present"
+      },
+      {
+        "detail": "live_trace_selector_replay",
+        "id": "selector_materialization.proven",
+        "status": "not_applicable"
+      }
+    ],
+    "missing_ids": [
+      "rom_contribution_deltas",
+      "rom_public_read_provenance"
+    ],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route falkner --json-out .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+        ],
+        "purpose": "Capture ROM score-rule contribution deltas for this route"
+      },
+      {
+        "closes_evidence_ids": [
+          "rom_contribution_deltas",
+          "rom_public_read_provenance"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1 --decision-surface live_boss --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+        "consumes_artifact_paths": [
+          ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+        ],
+        "expected_output_paths": [],
+        "purpose": "Re-render this live-trace packet after contribution capture"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route falkner --json-out .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json"
+      ],
+      "purpose": "Capture ROM score-rule contribution deltas for this route"
+    },
+    "next_proof_reason": "next command closes missing evidence: rom_contribution_deltas, rom_public_read_provenance",
+    "present_ids": [
+      "decision_input.auto_resolved",
+      "input_manifest.replay_verified",
+      "observed_rom_decision",
+      "candidate_scores",
+      "score_bytes",
+      "selector_path",
+      "python_score_contributions",
+      "public_info_inputs",
+      "source_anchors",
+      "counterfactual",
+      "counterfactual.decisive"
+    ],
+    "status": "needs_contribution_proof"
+  },
+  "public_info_inputs": {
+    "answer_changing_information": [],
+    "condition_tags": [],
+    "evidence_refs": [
+      "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\falkner_live.txt"
+    ],
+    "policy_tags": [],
+    "predicate_branches": [],
+    "public_read_probes": [],
+    "rom_public_reads_by_rule": {},
+    "scenario_public_keys": [],
+    "trace_fields": {
+      "boss": "Falkner",
+      "notes": "early-tier gym leader opener; accuracy/speed pressure; no adaptive lead",
+      "plan_confidence": "72",
+      "plan_id": "2",
+      "plan_phase": "0",
+      "plausible_mask": "33 00 10 80",
+      "revealed_masks": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+      "risk_flags": "00 (none)",
+      "switch_confidence": "0",
+      "switch_context": "param=00,index=00,last_out=00,cooldown=00,cur_ot=00",
+      "tier": "1"
+    }
+  },
+  "python_mirror": {
+    "available": true,
+    "best_action_id": "slot1:TACKLE",
+    "best_roll_threshold": 154,
+    "best_score": 20,
+    "gap": 0,
+    "mirror_scope": "selector_from_rom_score_bytes",
+    "policy_reason": "live trace input has no generated scenario expectation",
+    "policy_verdict": "not_applicable_without_scenario_expectation",
+    "probabilities": {
+      "slot1:TACKLE": 0.6015625,
+      "slot2:SAND_ATTACK": 0.0,
+      "slot3:GUST": 0.3984375,
+      "slot4:QUICK_ATTACK": 0.0
+    },
+    "rom_comparison": {
+      "agreement": true,
+      "reason": "chosen slot has nonzero selector probability"
+    },
+    "second_action_id": "slot3:GUST",
+    "second_score": 20
+  },
+  "question": {
+    "expected_acceptable_action_ids": [],
+    "expected_best_action_ids": [],
+    "focus_action_id": "",
+    "rom_best_action_id": "slot1:TACKLE"
+  },
+  "rom_contributions": {
+    "available": false,
+    "event_count": 0,
+    "events": [],
+    "matched_trace_count": 0,
+    "unmatched_trace_ids": []
+  },
+  "rom_evidence": [
+    {
+      "artifact": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\falkner_live.txt",
+      "available": true,
+      "capture_id": "Falkner#1",
+      "decision": {
+        "chosen_id": 33,
+        "chosen_move_name": "TACKLE",
+        "chosen_score": 20,
+        "chosen_slot": 0,
+        "chosen_slot_1_based": 1,
+        "chosen_slot_index": 0,
+        "expected_move_ids": [
+          16,
+          33
+        ],
+        "model_score_deltas": [
+          0,
+          3,
+          0,
+          0
+        ],
+        "move_ids": [
+          33,
+          28,
+          16,
+          98
+        ],
+        "move_scores": [
+          20,
+          23,
+          20,
+          20
+        ],
+        "possible_action_ids": [
+          "slot1:TACKLE",
+          "slot3:GUST"
+        ],
+        "possible_move_ids": [
+          16,
+          33
+        ],
+        "post_model_scores": [
+          20,
+          23,
+          20,
+          20
+        ],
+        "pre_model_scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "selector": {
+          "best_move_id": 33,
+          "best_roll_threshold": 154,
+          "best_score": 20,
+          "best_slot_index": 0,
+          "gap": 0,
+          "possible_move_ids": [
+            16,
+            33
+          ],
+          "possible_slot_indices": [
+            0,
+            2
+          ],
+          "probabilities_by_slot": {
+            "0": 0.6015625,
+            "1": 0.0,
+            "2": 0.3984375,
+            "3": 0.0
+          },
+          "ready": true,
+          "scenario_id": "Falkner#1",
+          "second_move_id": 16,
+          "second_score": 20,
+          "second_slot_index": 2,
+          "slots": [
+            {
+              "blocked": false,
+              "move_id": 33,
+              "name": "TACKLE",
+              "score": 20,
+              "slot": 1,
+              "slot_index": 0
+            },
+            {
+              "blocked": false,
+              "move_id": 28,
+              "name": "SAND_ATTACK",
+              "score": 23,
+              "slot": 2,
+              "slot_index": 1
+            },
+            {
+              "blocked": false,
+              "move_id": 16,
+              "name": "GUST",
+              "score": 20,
+              "slot": 3,
+              "slot_index": 2
+            },
+            {
+              "blocked": false,
+              "move_id": 98,
+              "name": "QUICK_ATTACK",
+              "score": 20,
+              "slot": 4,
+              "slot_index": 3
+            }
+          ],
+          "tier": 1
+        },
+        "selector_path": {
+          "agreement": true,
+          "agreement_reason": "chosen slot has nonzero selector probability",
+          "available": true,
+          "best_action_id": "slot1:TACKLE",
+          "best_move_id": 33,
+          "best_roll_threshold": 154,
+          "best_score": 20,
+          "best_slot_index": 0,
+          "candidate_probabilities": {
+            "slot1:TACKLE": 0.6015625,
+            "slot2:SAND_ATTACK": 0.0,
+            "slot3:GUST": 0.3984375,
+            "slot4:QUICK_ATTACK": 0.0
+          },
+          "chosen_action_id": "slot1:TACKLE",
+          "chosen_has_nonzero_probability": true,
+          "chosen_move_id": 33,
+          "chosen_probability": 0.6015625,
+          "chosen_slot_index": 0,
+          "possible_action_ids": [
+            "slot1:TACKLE",
+            "slot3:GUST"
+          ],
+          "possible_move_ids": [
+            16,
+            33
+          ],
+          "score_gap": 0,
+          "second_action_id": "slot3:GUST",
+          "second_move_id": 16,
+          "second_score": 20,
+          "second_slot_index": 2,
+          "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+        },
+        "switch_confidence": 0,
+        "switch_context": "param=00,index=00,last_out=00,cooldown=00,cur_ot=00",
+        "switch_path": {
+          "actual_switch": false,
+          "cooldown": 0,
+          "cur_ot": 0,
+          "last_switched_out": 0,
+          "observation_status": "no_switch_path_observed",
+          "observed": false,
+          "proposed_switch": false,
+          "proposed_target_1_based": 0,
+          "switch_confidence": 0,
+          "switch_context": {
+            "cooldown": 0,
+            "cur_ot": 0,
+            "index": 0,
+            "last_out": 0,
+            "param": 0
+          },
+          "switch_index": 0,
+          "switch_param": 0,
+          "switch_roll": {
+            "available": false,
+            "reason": "no_switch_confidence_observed"
+          }
+        }
+      },
+      "kind": "live_trace_selector_replay",
+      "python_agreement": {
+        "agreement": true,
+        "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
+        "reason": "chosen slot has nonzero selector probability"
+      },
+      "reason": "chosen slot has nonzero selector probability",
+      "status": "match"
+    }
+  ],
+  "scenario_id": "Falkner#1",
+  "schema_version": 1,
+  "source": {
+    "capture_id": "Falkner#1",
+    "trace_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace\\falkner_live.txt"
+  },
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 5719,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2786,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    }
+  ],
+  "tier": 1
+}

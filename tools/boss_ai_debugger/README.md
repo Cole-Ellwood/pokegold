@@ -5,6 +5,22 @@ Phase-1 debugger for BOSSAI-003.
 Long-term implementation plan:
 `docs/boss_ai_debugger_state_of_art_implementation_plan_2026-05-15.md`.
 
+Focused deity-mode roadmap and gate:
+`docs/boss_ai_debugger_deity_mode_roadmap.md`.
+
+```powershell
+python tools\audit\check_boss_ai_debugger_deity.py --self-test
+python tools\audit\check_boss_ai_debugger_deity.py --baseline
+```
+
+The Boss AI deity gate is intentionally separate from the broad debugger deity
+gate. It stays red until the Boss AI debugger can self-drive "why did this boss
+do that?" proofs without hand-supplied traces, scenarios, save states, or
+materialization artifacts for supported decision classes. Hash-basis-gated
+proofs fail closed when local `pokegold_trace.gbc` or `pokegold_trace.sym` does
+not match `audit/boss_ai_trace/live_capture_manifest.json`; use
+`--allow-hash-mismatch-skip` only to record an honest local skip.
+
 This started as a fixture-backed review aid. It still uses the BOSSAI-004
 public-info fixtures and labels as the decision corpus, but it can now also
 run the trace ROM through PyBoy hooks to capture score-helper contribution
@@ -114,6 +130,17 @@ through the move-choice input, compares the replayed trace fields against the
 baseline `audit/boss_ai_trace/*_live.txt` file, and requires at least 99.99%
 selector agreement.
 
+When intentionally refreshing the Boss AI trace basis, update the manifest
+hash pins with the trace batch tool before running captures:
+
+```powershell
+python tools\trace\boss_ai_trace_batch.py --update-manifest-hashes
+```
+
+This only syncs `pokegold_trace.gbc` and `pokegold_trace.sym` SHA256 pins to
+the current files. It does not count as proof by itself; regenerate states and
+rerun the capture/replay gates before treating refreshed traces as current.
+
 Validate canonical state inputs:
 
 ```powershell
@@ -204,9 +231,11 @@ python -m tools.boss_ai_debugger review-queue --report audit\boss_ai_debugger\ru
 
 The queue re-ranks reviewable mismatches by severity, bad-roll risk, policy
 tags, condition novelty, and answer-changing information. It also attaches a
-compact mastery policy digest and a `next_action` hint to each item, and
-`--max-per-lesson` diversifies the first pass before filling any remaining
-slots with duplicates.
+compact mastery policy digest, a `next_action` hint, and, when the scenario
+corpus is known, an `explain_decision.command` that renders that top item as a
+self-driving explanation packet with expected output and consumed scenario
+artifacts. `--max-per-lesson` diversifies the first pass before filling any
+remaining slots with duplicates.
 
 Record a reproducible generated smoke run:
 
@@ -224,6 +253,7 @@ python -m tools.boss_ai_debugger run-suite --profile changed-ai --count 200 --se
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-contribution-trace
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --refresh-rom-score-materialization
 python -m tools.boss_ai_debugger run-suite --profile changed-ai --rebuild-roms --refresh-live-traces
+python -m tools.boss_ai_debugger run-suite --profile deity-changed-ai --count 20 --seed 1 --json-out audit\boss_ai_debugger\deity_benchmark\artifacts\changed_ai_dry_run.json
 ```
 
 This profile records generated stress results, review queue, route evaluation,
@@ -243,6 +273,14 @@ scoring and stores the matched ROM/Python contribution comparison.
 With `--rebuild-roms` and `--refresh-live-traces`, it also records command
 artifacts for the ROM rebuild and live trace refresh steps; without those flags
 the artifacts are present as explicit skipped reports.
+
+`deity-changed-ai` is the Boss-AI-only deity benchmark front door for this same
+suite. It writes a compact `BOSS_AI_DEITY_CHANGED_AI_SUMMARY` packet with
+closed evidence ids for changed-file detection, hash-basis reporting, targeted
+generator execution, and review-queue ranking. If the local trace ROM or symbol
+hash differs from `audit\boss_ai_trace\live_capture_manifest.json`, the packet
+stays `blocked_by_hash_basis` and records exact refresh commands instead of
+presenting stale traces as current proof.
 
 Run the foundation audit:
 
@@ -294,6 +332,7 @@ Build mastery and coverage indexes:
 python -m tools.boss_ai_debugger mastery-index build
 python -m tools.boss_ai_debugger coverage-report --generated-count 250 --seed 1
 python -m tools.boss_ai_debugger coverage-report --changed-file engine\battle\ai\boss_policy_move.asm
+python -m tools.boss_ai_debugger coverage-report --deity-worklist --json-out audit\boss_ai_debugger\deity_benchmark\artifacts\coverage_gap_worklist.json
 ```
 
 The mastery index parses policy cards, quick tests, reviews, and the
@@ -304,6 +343,11 @@ artifacts. It distinguishes executable hook targets from static data labels,
 tracks score-trace target coverage separately from score-delta coverage, and
 emits grouped coverage-target worklists with suggested generator families and
 trace modes for targeted Boss AI edits.
+`--deity-worklist` renders that target data as a Boss-AI-only deity packet with
+`BOSS_AI_DEITY_COVERAGE_WORKLIST`, closed evidence ids, the top localized
+reachable-but-uncovered rule group, source anchors, and a copy-paste next proof
+command. It records unsupported/unreachable buckets explicitly instead of
+fabricating absent boss routes.
 
 Build a stratified confidence report from a generated batch and optional ROM
 materialization artifacts:
@@ -363,6 +407,99 @@ python -m tools.boss_ai_debugger decision-trace --scenario audit\boss_ai_debugge
 contributions, selector output, and policy check. It is the Python scenario
 waterfall format.
 
+Build a one-command explanation packet for a suspicious decision:
+
+```powershell
+python -m tools.boss_ai_debugger explain-decision --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001
+python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1
+python -m tools.boss_ai_debugger explain-decision --trace audit\boss_ai_trace\falkner_live.txt
+python -m tools.boss_ai_debugger explain-decision --trace audit\boss_ai_trace\falkner_live.txt --focus-action-id GUST
+python -m tools.boss_ai_debugger explain-decision --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001 --run-rom-proof auto
+python -m tools.boss_ai_debugger explain-decision --scenario audit\boss_ai_debugger\generated\spikes_spin.jsonl --scenario-id generated_spikes_spin_1_00001 --rom-score-materialization .local\tmp\boss_ai_debugger\spikes_score_materialize.json --rom-contribution-trace audit\boss_ai_debugger\rom_contribution_trace_spikes_spin_probe.json
+```
+
+`explain-decision` composes the existing proof tools into a compact "why did the
+AI do that?" packet. It accepts either a generated scenario or an exact live
+trace capture. It reports the observed ROM decision when a live trace, selector,
+score, switch, or `--run-rom-proof` artifact is supplied; candidate score bytes
+and contribution deltas; ROM contribution deltas where trace ids match; source
+anchors from the current rule map; public-info tags, predicate branches, and
+probe snapshots; ROM/Python agreement status; counterfactual score and
+public-fact flips; and exact next proof commands. By default it does not run
+PyBoy. Use `--run-rom-proof auto` for a one-scenario ROM proof, point `--trace`
+at `audit\boss_ai_trace\*_live.txt` for an immediate selector explanation from
+captured ROM score bytes, or attach previously generated
+materialization/contribution JSON when investigating a saved review item. When
+the live trace also carries switch-dispatch bytes, such as
+`shared_switch_loop_live.txt`, the packet parses `switch_confidence` and
+`switch_context` into the observed proposal/actual switch path, a switch-roll
+range from source thresholds, and follow-up `rom-switch-materialize` commands.
+Live-trace packets also render the selector path explicitly: best and second
+candidate, score gap, `BossAI_SelectMove` roll threshold, nonzero-probability
+actions, chosen action probability, and current rule-map source anchors for the
+selector and observed switch-dispatch path. Attached ROM score and selector
+materialization artifacts are normalized into the same selector-path shape, so
+scenario packets show the ROM-backed best/second/threshold surface without
+hand-reading materialization JSON. Each packet starts with a `decision_summary`
+answer block that compresses the observed action, selector/switch path,
+selector rank and roll probability for the observed action, candidate scores,
+top ROM/Python rule deltas, source anchors, public-input highlights,
+ROM/Python agreement, decisive counterfactual, missing evidence, and next proof
+command. If the observed action is the best or second selector candidate, the
+counterfactual block also names the exact 0-255 roll range that would have
+selected the alternate candidate, which keeps random selector choices separate
+from score-model preference. When `--focus-action-id` is supplied, the summary
+also compares that action against the observed/chosen candidate by final score,
+selector probability, selector rank, block status, candidate-local score-rule
+deltas, and required score movement, preferring matching ROM contribution events
+when they are attached and falling back to Python/live candidate deltas
+otherwise. That is the fast path for "why did it avoid this option?" questions.
+Generated switch/sack scenarios label switch candidates as `[switch]` in the
+score table and mark `switch_materialization` missing until the relevant
+`rom-switch-materialize` proof is attached or run.
+It also includes a
+`proof_status` summary with present/missing evidence ids and the single
+highest-priority next proof command, so callers do not need to infer the next
+step from missing sections. When the highest-priority proof needs a dependent
+render step, `proof_status.next_proof_chain` keeps the capture command and the
+follow-up `explain-decision` command together. Each proof command also names
+the evidence ids it is expected to close, artifact paths it writes, and
+artifact paths the dependent render step consumes, so proof chains are
+copy-paste-safe and self-validating. Scenario packets preserve
+`--focus-action-id` in ROM proof and re-render commands, so "why avoid this
+option?" investigations keep the focused action across materialization and
+contribution capture. If ROM score evidence is present but contribution/public
+read evidence is not, the packet prioritizes `rom-contribution-trace` and the
+dependent re-render command over Python-only contribution normalization. If a
+live packet observes a switch-dispatch path but no `rom-switch-materialize`
+artifact is attached, `proof_status` marks `switch_materialization` missing and
+prioritizes the generate-plus-materialize-plus-render proof chain for "why did
+it switch?" investigations.
+With `--run-rom-proof auto`, the live switch front door also generates the
+switch/sack probe and attempts `rom-switch-materialize` itself. If the local
+trace ROM or symbol file does not match the manifest-pinned switch basis, the
+packet stays partial, reports `status=blocked_by_hash_basis`, and prints the
+exact state-refresh commands before the materialization command instead of
+counting stale switch proof as closed.
+For supported live first-decision routes, `--boss-route` or a manifest
+`--capture-id` resolves `audit\boss_ai_trace\live_capture_manifest.json`, writes
+a Boss AI decision-input manifest, verifies selector replay against the captured
+score bytes, and renders the same packet without the user naming the trace file.
+Unsupported boss/turn/index targets fail closed with a concrete next action
+instead of falling back to a hand-supplied trace.
+Generated-policy front doors work the same way for supported deterministic
+targets: `--policy-question active_pressure_before_status`,
+`--score-rule move.spikes.public_rapid_spin_risk`, and
+`--generated-family switch_sack --case best_review` create a scenario artifact
+and decision-input manifest before rendering the packet. These generated inputs
+are labeled `decision_input.generated_auto`; ROM-backed proof remains partial
+or `blocked_by_hash_basis` until the relevant selector, score, switch, or
+contribution materialization closes its evidence ids.
+When switch confidence and threshold evidence are present, the
+counterfactual block also reports the confidence changes that would force a
+zero-percent switch roll or guarantee a nonzero roll across the known threshold
+range.
+
 Write a normalized Python contribution stream for ROM/Python comparison:
 
 ```powershell
@@ -415,6 +552,7 @@ is not full battle-state or score-model materialization.
 Materialize generated score-model state before ROM scoring:
 
 ```powershell
+python tools\trace\boss_ai_state_factory.py --boss koga --refresh-score-materialization-states --update-manifest
 python -m tools.boss_ai_debugger generate --family spikes_spin --count 12 --seed 1 --out .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4 --compare-fast-score
@@ -424,18 +562,26 @@ python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\boss_a
 
 `rom-score-materialize` loads Koga's real pre-choice trace state and patches a
 generated scenario into public WRAM before `BossAI_ApplyMoveModel.ScoreMove`.
+When the manifest has `score_materialization_state`, refresh it with
+`boss_ai_state_factory.py --boss koga --refresh-score-materialization-states
+--update-manifest` after trace-ROM or Koga route-state changes; the state is
+saved at the first score-model entry with trace output bytes cleared.
 For `spikes_spin`, this is an exact generated score-mirror check over concrete
 move ids, tier/weight row, score bytes, Spikes layers, active revealed Rapid
 Spin, Ghost/Foresight spinblock state, reserve Ghost availability, bench
 revealed Spin memory, and active species Spin priors. The broad move-policy
-families `setup_heal`, `prediction_mix`, and `support_handoff` also materialize
-real ROM score bytes and attach a `rom_policy` verdict from those observed
-bytes. Their generated Python deltas are review aids rather than exact source
-mirrors, so `score_bytes_match=false` is expected until a case is localized into
-a precise mirror rule. The roadmap/done gate keeps its strict score-byte sample
-to `spikes_spin` so broad mastery review cases do not become false exact-mirror
-blockers. `switch_sack` is intentionally not proved by this path; use
-`rom-switch-materialize` for the real switch-dispatch proposal path.
+families `mastery_policy`, `setup_heal`, `prediction_mix`, and
+`support_handoff` also materialize real ROM score bytes and attach a
+`rom_policy` verdict from those observed bytes. Their generated Python deltas
+are review aids rather than exact source mirrors, so `score_bytes_match=false`
+is expected until a case is localized into a precise mirror rule. If a
+manifest-pinned `score_materialization_state` reaches no choice, the materializer
+falls back to the same route's `pre_choice_state` and records the fallback in
+the trace report instead of treating the stale loop state as proof. The
+roadmap/done gate keeps its strict score-byte sample to `spikes_spin` so broad
+mastery review cases do not become false exact-mirror blockers. `switch_sack` is
+intentionally not proved by this path; use `rom-switch-materialize` for the real
+switch-dispatch proposal path.
 
 The output also compares ROM score-helper contributions against the Python
 scenario contribution stream with matching trace ids when contribution hooks are

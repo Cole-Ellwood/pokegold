@@ -40,7 +40,7 @@ from tools.boss_ai_debugger.state_schema import (
     validate_trace_dir,
 )
 
-from _trace_artifacts import require_manifest_basis
+from tools.audit._trace_artifacts import require_manifest_basis
 
 
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "roadmap_audit.json"

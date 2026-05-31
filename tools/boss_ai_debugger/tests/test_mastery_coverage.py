@@ -8,7 +8,10 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
-from tools.boss_ai_debugger.coverage_report import build_coverage_report
+from tools.boss_ai_debugger.coverage_report import (
+    build_coverage_report,
+    build_deity_coverage_worklist,
+)
 from tools.boss_ai_debugger.mastery_index import build_mastery_index
 
 
@@ -33,6 +36,19 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertIn("coverage_targets", data)
         self.assertGreater(data["coverage_targets"]["group_count"], 0)
         self.assertIn("public_read_provenance", data)
+
+    def test_deity_coverage_worklist_localizes_next_gap(self) -> None:
+        data = build_deity_coverage_worklist(generated_count=20, seed=1, limit=3)
+
+        self.assertEqual(data["evidence_marker"], "BOSS_AI_DEITY_COVERAGE_WORKLIST")
+        self.assertIn("coverage_gap.localized", data["closed_evidence_ids"])
+        self.assertIn("next_action.command", data["closed_evidence_ids"])
+        self.assertIn("source_anchors.present", data["closed_evidence_ids"])
+        self.assertTrue(data["next_action"]["command"].startswith("python -m tools.boss_ai_debugger"))
+        self.assertEqual(data["top_item"]["status"], "reachable_uncovered")
+        self.assertTrue(data["top_item"]["source_anchors"])
+        self.assertIn("rule_ids", data["top_item"])
+        self.assertEqual(data["reachability_model"]["unsupported_targets"], [])
 
     def test_cli_mastery_index_and_coverage_report_write_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -100,6 +116,29 @@ class MasteryCoverageTests(unittest.TestCase):
         self.assertGreater(coverage["changed_rules"]["mapped_rule_count"], 0)
         self.assertIn("dynamic_target_count", coverage["changed_rules"])
         self.assertIn("policy_card_missing_positive_count", coverage["mastery"])
+
+    def test_cli_coverage_report_deity_worklist_writes_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "coverage_worklist.json"
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = debugger_main(
+                    [
+                        "coverage-report",
+                        "--deity-worklist",
+                        "--generated-count",
+                        "10",
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+            data = json.loads(out.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(data["evidence_marker"], "BOSS_AI_DEITY_COVERAGE_WORKLIST")
+        self.assertIn("BOSS_AI_DEITY_COVERAGE_WORKLIST", stdout.getvalue())
+        self.assertIn("closed_evidence_ids=", stdout.getvalue())
+        self.assertIn("next_action.command", data["closed_evidence_ids"])
 
     def test_coverage_report_aggregates_rom_contribution_rules(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

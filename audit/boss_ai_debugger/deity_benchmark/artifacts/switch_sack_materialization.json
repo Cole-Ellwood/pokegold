@@ -1,0 +1,1096 @@
+{
+  "auto_rom_proof": [],
+  "candidate_scores": [
+    {
+      "action_id": "move_comfort_damage",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 13,
+          "before": 20,
+          "delta": -7,
+          "note": "encourage lowers score",
+          "rule": "current active chip overvalued",
+          "rule_id": "current active chip overvalued",
+          "source_anchor": null
+        },
+        {
+          "after": 12,
+          "before": 13,
+          "delta": -1,
+          "note": "negative signed lookahead delta encourages",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 12,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Comfort Damage",
+      "pre_lookahead_score": 13,
+      "selector_probability": 0.95703125,
+      "slot": 1
+    },
+    {
+      "action_id": "move_preserve_wincon_switch",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 18,
+          "before": 20,
+          "delta": -2,
+          "note": "encourage lowers score",
+          "rule": "safe entry to named owner",
+          "rule_id": "safe entry to named owner",
+          "source_anchor": null
+        },
+        {
+          "after": 18,
+          "before": 18,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 18,
+      "initial_score": 20,
+      "kind": "switch",
+      "move_id": null,
+      "name": "Switch Preserve Wincon",
+      "pre_lookahead_score": 18,
+      "selector_probability": 0.04296875,
+      "slot": 2
+    },
+    {
+      "action_id": "move_support_status",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 21,
+          "before": 20,
+          "delta": 1,
+          "note": "discourage raises score",
+          "rule": "script without converter",
+          "rule_id": "script without converter",
+          "source_anchor": null
+        },
+        {
+          "after": 21,
+          "before": 21,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 21,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Support Status",
+      "pre_lookahead_score": 21,
+      "selector_probability": 0.0,
+      "slot": 3
+    },
+    {
+      "action_id": "move_panic_cashout",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 25,
+          "before": 20,
+          "delta": 5,
+          "note": "discourage raises score",
+          "rule": "spends preserved route piece",
+          "rule_id": "spends preserved route piece",
+          "source_anchor": null
+        },
+        {
+          "after": 25,
+          "before": 25,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 25,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Panic Explosion",
+      "pre_lookahead_score": 25,
+      "selector_probability": 0.0,
+      "slot": 4
+    }
+  ],
+  "closed_evidence_ids": [
+    "decision_input.generated_auto",
+    "observed_rom_decision",
+    "candidate_scores",
+    "switch_path",
+    "switch_materialization",
+    "python_score_contributions",
+    "public_info_inputs",
+    "source_anchors",
+    "counterfactual",
+    "policy_expectation.reported",
+    "counterfactual.decisive",
+    "switch_materialization.proven",
+    "switch_roll.reported"
+  ],
+  "counterfactual": {
+    "answer_changing_information": [
+      "whether the switch target enters safely",
+      "whether active damage also changes the receiver board"
+    ],
+    "focus_score_flip": null,
+    "nearest_challenger_score_flip": {
+      "action_id": "move_preserve_wincon_switch",
+      "available": true,
+      "current_best_action_id": "move_comfort_damage",
+      "current_score": 18,
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -7,
+      "target_score": 11
+    },
+    "public_fact_counterfactuals": [
+      "If no safe next-board owner can be named, switch or handoff should lose route value.",
+      "If the entry path is unsafe, a switch, sack, or handoff should be discounted."
+    ],
+    "smallest_score_flip": {
+      "action_id": "move_preserve_wincon_switch",
+      "available": true,
+      "current_score": 18,
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -7,
+      "target_score": 11
+    },
+    "switch_roll_counterfactual": {
+      "available": true,
+      "confidence": 99,
+      "current_probability_range": {
+        "max": 0.8984375,
+        "min": 0.75
+      },
+      "delta_to_force_zero_probability": -30,
+      "delta_to_guarantee_nonzero_probability": 0,
+      "delta_to_make_high_roll_possible": 0,
+      "delta_to_make_mid_roll_possible": 0,
+      "delta_to_make_nonzero_possible": 0,
+      "high_roll_possible_at_confidence": 90,
+      "mid_roll_possible_at_confidence": 80,
+      "nonzero_guaranteed_at_confidence": 88,
+      "nonzero_possible_at_confidence": 70,
+      "note": "Switch counterfactuals move the source-mirrored confidence/threshold roll surface; actual switching can still depend on RNG when probability is nonzero.",
+      "observation_status": "actual_switch_observed",
+      "possible_effective_thresholds": [
+        70,
+        78,
+        80,
+        88
+      ],
+      "probability_exact": false,
+      "source": "rom_switch_materialization",
+      "threshold_exact": false,
+      "zero_probability_if_confidence_at_most": 69
+    },
+    "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip."
+  },
+  "decision_input": {
+    "artifact_path": ".local/tmp/boss_ai_debugger/generated_inputs/switch_sack.manifest.json",
+    "closed_evidence_ids": [
+      "decision_input.generated_auto"
+    ],
+    "generated_at": "2026-05-31T01:16:47Z",
+    "hash_basis": {
+      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+    },
+    "kind": "boss_ai_decision_input_manifest",
+    "known_limits": [
+      "Generated decision inputs are deterministic public-state scenarios, not a navigated live battle state.",
+      "ROM materialization support depends on the generated family and current trace basis."
+    ],
+    "resolution": {
+      "generated_count": 12,
+      "generator_seed": 1,
+      "scenario_family": "switch_sack",
+      "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "scenario_path": ".local/tmp/boss_ai_debugger/generated_inputs/switch_sack.jsonl",
+      "selected_case": "best_review",
+      "source": "generated_scenario",
+      "sufficient": true
+    },
+    "schema_version": 1,
+    "source_state": {
+      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+      "scenario_artifact_sha256": "48008BDC4CC8496DAAA0DCCB84E58B1E4C2201DB041277F0943237EFAE94C45C"
+    },
+    "target": {
+      "case": "best_review",
+      "decision_surface": "generated_policy",
+      "generated_family": "switch_sack",
+      "policy_question": "",
+      "requested_generated_family": "switch_sack",
+      "score_rule": ""
+    }
+  },
+  "decision_summary": {
+    "decisive_counterfactual": "switch confidence=99 probability=75.0%-89.8%; force_zero_delta=-30 guarantee_nonzero_delta=0",
+    "evidence_highlights": {
+      "candidate_scores": [
+        {
+          "action_id": "move_comfort_damage",
+          "blocked": false,
+          "final_score": 12,
+          "kind": "move",
+          "name": "Comfort Damage",
+          "selector_probability": 0.95703125
+        },
+        {
+          "action_id": "move_preserve_wincon_switch",
+          "blocked": false,
+          "final_score": 18,
+          "kind": "switch",
+          "name": "Switch Preserve Wincon",
+          "selector_probability": 0.04296875
+        },
+        {
+          "action_id": "move_support_status",
+          "blocked": false,
+          "final_score": 21,
+          "kind": "move",
+          "name": "Support Status",
+          "selector_probability": 0.0
+        },
+        {
+          "action_id": "move_panic_cashout",
+          "blocked": false,
+          "final_score": 25,
+          "kind": "move",
+          "name": "Panic Explosion",
+          "selector_probability": 0.0
+        }
+      ],
+      "public_inputs": [
+        "condition_tags=['named_next_board_owner', 'safe_entry_available', 'ace_preservation', 'public_threat_to_active']",
+        "policy_tags=['switching', 'ace_preservation', 'route_owner']",
+        "answer_changing_information=['whether the switch target enters safely', 'whether active damage also changes the receiver board']"
+      ],
+      "rule_deltas": [
+        {
+          "after": 13,
+          "before": 20,
+          "candidate": "move_comfort_damage",
+          "delta": -7,
+          "rule": "current active chip overvalued",
+          "rule_id": "current active chip overvalued",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 12,
+          "before": 13,
+          "candidate": "move_comfort_damage",
+          "delta": -1,
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "python_or_live_score_delta",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        },
+        {
+          "after": 18,
+          "before": 20,
+          "candidate": "move_preserve_wincon_switch",
+          "delta": -2,
+          "rule": "safe entry to named owner",
+          "rule_id": "safe entry to named owner",
+          "source": "python_or_live_score_delta",
+          "source_anchor": null
+        },
+        {
+          "after": 18,
+          "before": 18,
+          "candidate": "move_preserve_wincon_switch",
+          "delta": 0,
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "python_or_live_score_delta",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.select_move",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "switch.compute_switch_confidence",
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:905"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "switch.get_switch_threshold",
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:595"
+        }
+      ]
+    },
+    "focus_action_comparison": {},
+    "missing_evidence": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "observed": "ROM switch materialization proposed_switch=True actual_switch=True confidence=99",
+    "path": "switch_materialization status=actual_switch_observed confidence=99 switch_probability=89.8%",
+    "policy_expectation": {
+      "available": true,
+      "confidence": "medium",
+      "evidence_refs": [
+        "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+        "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_comfort_damage"
+      ],
+      "expected_bad_action_ids": [
+        "move_panic_cashout"
+      ],
+      "expected_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ],
+      "expected_catastrophic_action_ids": [],
+      "lesson_type": "weight_hint",
+      "policy_reason": "ROM top action is acceptable but not expected-best",
+      "policy_verdict": "acceptable_top",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "summary": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
+      "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip.",
+      "zero_probability_best_action_ids": []
+    },
+    "python_agreement": "policy_agreement=True",
+    "selector_choice_explanation": {},
+    "status": "explained",
+    "why": "switch_materialization status=actual_switch_observed confidence=99 switch_probability=89.8%"
+  },
+  "decision_trace_summary": {
+    "event_count": 15,
+    "event_type_counts": {
+      "candidate": 4,
+      "policy_check": 1,
+      "score_rule": 8,
+      "selector": 1,
+      "state_load": 1
+    }
+  },
+  "deity_evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+  "family": "switch_sack",
+  "known_limits": [
+    "Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.",
+    "ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids."
+  ],
+  "next_proof_commands": [
+    {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    {
+      "closes_evidence_ids": [
+        "counterfactual"
+      ],
+      "command": "python -m tools.boss_ai_debugger counterfactual --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Smallest score/public-fact flip"
+    },
+    {
+      "closes_evidence_ids": [
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger python-contribution-trace --scenarios \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --json-out .local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_python_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_python_contribution.json"
+      ],
+      "purpose": "Normalize Python contribution stream for ROM/Python delta comparison"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json"
+      ],
+      "purpose": "Live-route ROM contribution trace for rule/source/public-read evidence"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Re-render this scenario packet after contribution capture"
+    },
+    {
+      "closes_evidence_ids": [
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rule-map check",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Verify source-rule anchors are current"
+    }
+  ],
+  "observed_rom_decision": {
+    "artifact": "",
+    "available": true,
+    "base_route": "shared_switch_loop",
+    "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+    "decision": {
+      "actual_switch": true,
+      "chosen_move": 0,
+      "diagnostics": {
+        "likely_type_mask_cache": [
+          17,
+          0,
+          32,
+          0
+        ],
+        "plausible_type_mask_cache": [
+          17,
+          0,
+          160,
+          131
+        ],
+        "player_used_moves": [
+          89,
+          0,
+          0,
+          0
+        ],
+        "primary_threat_cache": 4,
+        "species_used_moves": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "switch_gate_evaluated": true,
+        "type_matchup": 10
+      },
+      "expected_switch": true,
+      "observation_status": "actual_switch_observed",
+      "proposed_switch": true,
+      "switch_confidence": 99,
+      "switch_index": 2,
+      "switch_param": 49,
+      "switch_roll": {
+        "assumed_effective_threshold": 70,
+        "available": true,
+        "base_threshold": 70,
+        "confidence": 99,
+        "possible_effective_thresholds": [
+          70,
+          78,
+          80,
+          88
+        ],
+        "possible_switch_probabilities": [
+          {
+            "effective_threshold": 70,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375
+          },
+          {
+            "effective_threshold": 78,
+            "switch_chance_threshold": 230,
+            "switch_probability": 0.8984375
+          },
+          {
+            "effective_threshold": 80,
+            "switch_chance_threshold": 192,
+            "switch_probability": 0.75
+          },
+          {
+            "effective_threshold": 88,
+            "switch_chance_threshold": 192,
+            "switch_probability": 0.75
+          }
+        ],
+        "probability_exact": false,
+        "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+        "stay_probability": 0.1015625,
+        "switch_chance_threshold": 230,
+        "switch_probability": 0.8984375,
+        "threshold_components": {
+          "class_threshold_mod": 0,
+          "loop_penalty": false,
+          "sack_bias": "untraced_possible",
+          "threshold": 70,
+          "tier": "mid",
+          "trainer_class": "JASMINE",
+          "wincon_bias": "untraced_possible"
+        },
+        "threshold_exact": false,
+        "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+      }
+    },
+    "kind": "rom_switch_materialization",
+    "policy": {
+      "reason": "ROM proposes a switch",
+      "severity": 0,
+      "verdict": "pass"
+    },
+    "python_agreement": {
+      "policy_agreement": true
+    },
+    "reason": "ROM proposes a switch",
+    "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+    "status": "pass"
+  },
+  "proof_blockers": [],
+  "proof_status": {
+    "blockers": [],
+    "checks": [
+      {
+        "detail": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+        "id": "decision_input.generated_auto",
+        "status": "present"
+      },
+      {
+        "detail": "rom_switch_materialization",
+        "id": "observed_rom_decision",
+        "status": "present"
+      },
+      {
+        "detail": "candidates=4",
+        "id": "candidate_scores",
+        "status": "present"
+      },
+      {
+        "detail": "switch materialization does not prove move score bytes",
+        "id": "score_bytes",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "switch materialization is not a move selector decision",
+        "id": "selector_path",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "actual_switch_observed",
+        "id": "switch_path",
+        "status": "present"
+      },
+      {
+        "detail": "rom-switch-materialize artifact attached",
+        "id": "switch_materialization",
+        "status": "present"
+      },
+      {
+        "detail": "candidate contribution deltas from the Python/debugger model",
+        "id": "python_score_contributions",
+        "status": "present"
+      },
+      {
+        "detail": "switch materialization proof does not require move-score contribution deltas",
+        "id": "rom_contribution_deltas",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "policy_tags=3 condition_tags=6 evidence_refs=2 trace_fields=0",
+        "id": "public_info_inputs",
+        "status": "present"
+      },
+      {
+        "detail": "switch proof uses patched public switch facts plus source anchors",
+        "id": "rom_public_read_provenance",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "anchors=5",
+        "id": "source_anchors",
+        "status": "present"
+      },
+      {
+        "detail": "score flip or public-fact counterfactual",
+        "id": "counterfactual",
+        "status": "present"
+      },
+      {
+        "detail": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
+        "id": "policy_expectation.reported",
+        "status": "present"
+      },
+      {
+        "detail": "score, selector, switch, or public-fact counterfactual",
+        "id": "counterfactual.decisive",
+        "status": "present"
+      },
+      {
+        "detail": "rom_switch_materialization",
+        "id": "selector_materialization.proven",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "ROM switch materialization attached",
+        "id": "switch_materialization.proven",
+        "status": "present"
+      },
+      {
+        "detail": "ROM switch roll packet available",
+        "id": "switch_roll.reported",
+        "status": "present"
+      }
+    ],
+    "missing_ids": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "next_proof_reason": "all compact explanation evidence is present; rerun the first proof command to reproduce",
+    "present_ids": [
+      "decision_input.generated_auto",
+      "observed_rom_decision",
+      "candidate_scores",
+      "switch_path",
+      "switch_materialization",
+      "python_score_contributions",
+      "public_info_inputs",
+      "source_anchors",
+      "counterfactual",
+      "policy_expectation.reported",
+      "counterfactual.decisive",
+      "switch_materialization.proven",
+      "switch_roll.reported"
+    ],
+    "status": "explained"
+  },
+  "public_info_inputs": {
+    "answer_changing_information": [
+      "whether the switch target enters safely",
+      "whether active damage also changes the receiver board"
+    ],
+    "condition_tags": [
+      "named_next_board_owner",
+      "safe_entry_available",
+      "ace_preservation",
+      "public_threat_to_active",
+      "switch_sack",
+      "preserve_wincon_over_comfort_damage"
+    ],
+    "evidence_refs": [
+      "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+      "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+    ],
+    "policy_tags": [
+      "switching",
+      "ace_preservation",
+      "route_owner"
+    ],
+    "predicate_branches": [],
+    "public_read_probes": [],
+    "rom_public_reads_by_rule": {},
+    "scenario_public_keys": [
+      "tier",
+      "family",
+      "moves",
+      "expectation"
+    ]
+  },
+  "python_mirror": {
+    "available": true,
+    "best_action_id": "move_comfort_damage",
+    "best_roll_threshold": 245,
+    "best_score": 12,
+    "gap": 6,
+    "policy_reason": "ROM top action is acceptable but not expected-best",
+    "policy_verdict": "acceptable_top",
+    "probabilities": {
+      "move_comfort_damage": 0.95703125,
+      "move_panic_cashout": 0.0,
+      "move_preserve_wincon_switch": 0.04296875,
+      "move_support_status": 0.0
+    },
+    "rom_comparison": {
+      "policy_agreement": true
+    },
+    "second_action_id": "move_preserve_wincon_switch",
+    "second_score": 18
+  },
+  "question": {
+    "confidence": "medium",
+    "evidence_refs": [
+      "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+      "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+    ],
+    "expected_acceptable_action_ids": [
+      "move_comfort_damage"
+    ],
+    "expected_bad_action_ids": [
+      "move_panic_cashout"
+    ],
+    "expected_best_action_ids": [
+      "move_preserve_wincon_switch"
+    ],
+    "expected_catastrophic_action_ids": [],
+    "focus_action_id": "",
+    "lesson_type": "weight_hint",
+    "policy_reason": "ROM top action is acceptable but not expected-best",
+    "policy_verdict": "acceptable_top",
+    "policy_why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip.",
+    "rolled_bad_action_ids": [],
+    "rolled_catastrophic_action_ids": [],
+    "rom_best_action_id": "move_comfort_damage",
+    "zero_probability_best_action_ids": []
+  },
+  "rom_contributions": {
+    "available": false,
+    "event_count": 0,
+    "events": [],
+    "matched_trace_count": 0,
+    "unmatched_trace_ids": []
+  },
+  "rom_evidence": [
+    {
+      "artifact": "",
+      "available": true,
+      "base_route": "shared_switch_loop",
+      "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
+      "decision": {
+        "actual_switch": true,
+        "chosen_move": 0,
+        "diagnostics": {
+          "likely_type_mask_cache": [
+            17,
+            0,
+            32,
+            0
+          ],
+          "plausible_type_mask_cache": [
+            17,
+            0,
+            160,
+            131
+          ],
+          "player_used_moves": [
+            89,
+            0,
+            0,
+            0
+          ],
+          "primary_threat_cache": 4,
+          "species_used_moves": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "switch_gate_evaluated": true,
+          "type_matchup": 10
+        },
+        "expected_switch": true,
+        "observation_status": "actual_switch_observed",
+        "proposed_switch": true,
+        "switch_confidence": 99,
+        "switch_index": 2,
+        "switch_param": 49,
+        "switch_roll": {
+          "assumed_effective_threshold": 70,
+          "available": true,
+          "base_threshold": 70,
+          "confidence": 99,
+          "possible_effective_thresholds": [
+            70,
+            78,
+            80,
+            88
+          ],
+          "possible_switch_probabilities": [
+            {
+              "effective_threshold": 70,
+              "switch_chance_threshold": 230,
+              "switch_probability": 0.8984375
+            },
+            {
+              "effective_threshold": 78,
+              "switch_chance_threshold": 230,
+              "switch_probability": 0.8984375
+            },
+            {
+              "effective_threshold": 80,
+              "switch_chance_threshold": 192,
+              "switch_probability": 0.75
+            },
+            {
+              "effective_threshold": 88,
+              "switch_chance_threshold": 192,
+              "switch_probability": 0.75
+            }
+          ],
+          "probability_exact": false,
+          "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
+          "stay_probability": 0.1015625,
+          "switch_chance_threshold": 230,
+          "switch_probability": 0.8984375,
+          "threshold_components": {
+            "class_threshold_mod": 0,
+            "loop_penalty": false,
+            "sack_bias": "untraced_possible",
+            "threshold": 70,
+            "tier": "mid",
+            "trainer_class": "JASMINE",
+            "wincon_bias": "untraced_possible"
+          },
+          "threshold_exact": false,
+          "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+        }
+      },
+      "kind": "rom_switch_materialization",
+      "policy": {
+        "reason": "ROM proposes a switch",
+        "severity": 0,
+        "verdict": "pass"
+      },
+      "python_agreement": {
+        "policy_agreement": true
+      },
+      "reason": "ROM proposes a switch",
+      "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+      "status": "pass"
+    }
+  ],
+  "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+  "schema_version": 1,
+  "source": {
+    "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+    "scenario_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl"
+  },
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 5719,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2786,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 905,
+      "parent_label": "BossAI_ComputeSwitchConfidence",
+      "public_reads": [],
+      "rule_id": "switch.compute_switch_confidence",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ComputeSwitchConfidence"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 595,
+      "parent_label": "BossAI_GetSwitchThreshold",
+      "public_reads": [],
+      "rule_id": "switch.get_switch_threshold",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_GetSwitchThreshold"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_route_execution_hook",
+      "line": 17,
+      "parent_label": "BossAI_TrySwitch",
+      "public_reads": [],
+      "rule_id": "switch.try_switch",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_TrySwitch"
+    }
+  ],
+  "tier": 2
+}

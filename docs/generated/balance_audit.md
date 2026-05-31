@@ -1,6 +1,6 @@
 # Generated Balance Audit
 
-Generated: 2026-05-27T20:21:41
+Generated: 2026-05-30T20:02:50
 Baseline ref: `060d4accd7c0d01b1697ac97e7d7e2da72e3646b`
 
 Do not hand-edit this file. Regenerate it with:
@@ -76,7 +76,7 @@ _No rows._
 | 2 | `SLOWBRO` | `current-final`, `large-bst-regression-vs-baseline` | 510 | 690 | -180 | 115/75/110/30/100/80 | HP-20, Def-80, SpD-80 | WATER/PSYCHIC_TYPE | - | - | 12 | 34 | DREAM_EATER (PSYCHIC_TYPE 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 2 | `HITMONCHAN` | `current-final`, `large-bst-regression-vs-baseline` | 514 | 595 | -81 | 50/80/79/75/120/110 | HP-20, Atk-45, Spe-1, SpA-15 | FIGHTING/FIGHTING | - | - | 10 | 23 | FOCUS_PUNCH (FIGHTING 150bp 100%) | FOCUS_PUNCH (FIGHTING 150bp 100%) |
 | 2 | `MAGNETON` | `current-final`, `large-bst-regression-vs-baseline` | 515 | 655 | -140 | 70/85/110/80/120/50 | HP-20, Atk-75, Def-25, Spe+30, SpA-30, SpD-20 | ELECTRIC/STEEL | - | - | 14 | 18 | THUNDERBOLT (ELECTRIC 95bp 100%) | EXPLOSION (NORMAL 250bp 100%) |
-| 2 | `AMPHAROS` | `current-final`, `large-bst-regression-vs-baseline` | 522 | 620 | -98 | 112/75/75/55/115/90 | HP-8, Def-30, SpA-30, SpD-30 | ELECTRIC/DRAGON | - | - | 14 | 27 | OUTRAGE (DRAGON 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
+| 2 | `AMPHAROS` | `current-final`, `large-bst-regression-vs-baseline` | 522 | 620 | -98 | 112/75/75/55/115/90 | HP-8, Def-30, SpA-30, SpD-30 | ELECTRIC/DRAGON | - | - | 10 | 27 | OUTRAGE (DRAGON 100bp 100%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 2 | `DEWGONG` | `current-final`, `large-bst-regression-vs-baseline` | 525 | 605 | -80 | 110/70/95/50/95/105 | HP-30, Atk-40, Def+15, Spe-20, SpA-15, SpD+10 | WATER/ICE | - | - | 11 | 21 | BLIZZARD (ICE 120bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 2 | `JYNX` | `current-final`, `large-bst-regression-vs-baseline` | 525 | 615 | -90 | 75/50/55/115/135/95 | HP+10, Atk-70, Def+20, Spe+20, SpA-10, SpD-60 | ICE/PSYCHIC_TYPE | - | - | 13 | 25 | BLIZZARD (ICE 120bp 85%) | HYPER_BEAM (NORMAL 180bp 90%) |
 | 2 | `VILEPLUME` | `current-final`, `large-bst-regression-vs-baseline` | 525 | 775 | -250 | 120/80/85/50/100/90 | HP-30, Atk-50, Def-30, Spe-50, SpA-50, SpD-40 | GRASS/POISON | - | - | 8 | 20 | SOLARBEAM (GRASS 180bp 100%) | SOLARBEAM (GRASS 180bp 100%) |

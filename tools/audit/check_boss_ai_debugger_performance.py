@@ -16,7 +16,7 @@ from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_score_materialize import run_rom_score_materialization
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
 
-from _trace_artifacts import require_manifest_basis
+from tools.audit._trace_artifacts import require_manifest_basis
 
 
 SCENARIO_COUNT = 5000

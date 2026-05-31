@@ -1,0 +1,273 @@
+{
+  "boss_ai_changed_files": [],
+  "changed_ai_run": {
+    "artifact_hashes": {
+      "batch_report": "12BAB3AEFAB863153ED974A85A16126EB3F79CCD3C5AEC476D0D709AC5C95CAD",
+      "differential": "6FDA88979A346053C9ED64BDFDBDF7794495BF297CBA2D97884B443EF9DC7146",
+      "invariants": "43F4553256D7C805ED849D1FCBA46B3D87799C926FD41111D1E916E542E81C20",
+      "live_trace_refresh": "281E415111BB4AE9AEFCD36CFEC1794212EC5EB3EE39B9DA472535C2DAF41E9A",
+      "metamorphic": "7D5D6A8D9FC9211CFA16AB2A4F9208E0012EF30AFF2FAEF5584F4D05008DB904",
+      "mutation": "DA0D78CFF0356B923466663DF5A27F3F667DB97AC2A4047B1954F99692C4BE67",
+      "previous_run_diff": "5F8981E75EC9B6439A42CE87BE923317E28CB3605A281D0D22987BDEE1EAD3BE",
+      "review_queue": "AE854A1C68B5ECEA1C0A8E2FE46B72605FFBE24EAF577448D5A34355F299EAA6",
+      "rom_contribution_trace_summary": "3CF1021EFCECEE6B5AD3FB7AD3CBC4B817940889E254DB35E5B6DB340F289181",
+      "rom_contribution_traces": {
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\01_rom_contribution_trace_counter_probe.json": "CBF9921437660E7FF66C480B48F07F480D3A1165CA7CC90DCFA377D38EA5BAAE",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\02_rom_contribution_trace_cover_player_cant_act.json": "1FF3FE6E1E83EC1691EFD568784893295169AE3F4E37D1ABB6988686ED5F46D4",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\03_rom_contribution_trace_cover_public_threat_category.json": "71A509619D669371B398929796B22D902570811F3101F62FC285394C4DBC155B",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\04_rom_contribution_trace_cover_strong_matchup.json": "75CC55147EA9821E6EF6EB2A53579624D2F18A8AC426CF50D6C9EBAE7E0CB84B",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\05_rom_contribution_trace_coverage_probe.json": "09F42A37F743F516FE258E960584BAD9282DEB49E939A41F291CDD055779C5C7",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\06_rom_contribution_trace_selfdestruct_probe.json": "A20BCEACB4DB5C8E7D4954BE55FAB4B7A3D796B7BDA156C9F111D3B6124E57B2",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\07_rom_contribution_trace_smoke.json": "B2D102D8C4F9612FABB94C468EF22467834C4FB425EC730DB51201FDC25C1DF3",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\08_rom_contribution_trace_spikes_l2_active_prior_probe.json": "3C99600F34856618501D4889907ED61A17CDD555C059D9F920526F50B8300161",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\09_rom_contribution_trace_spikes_l2_soft_probe.json": "3BA02EBCB0AED7FF954C492FF1DD1A20849A59644F8851029EDA09D838581BC5",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\10_rom_contribution_trace_spikes_l3_bench_probe.json": "EA7BBBDF7887F253F14D38BA0137DF19D32044000163480FBF71BD470A5C8345",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\11_rom_contribution_trace_spikes_spin_probe.json": "39193FC1175BCC529CCEEBAEA88385376DAB967BF5756D924B776F058E6FC159"
+      },
+      "rom_rebuild": "9C72D282B2B9366F12E9CAE01011313F8446BEA6D96006A8BEF6FB004574E16A",
+      "rom_score_materialization": "55B0B2BC3C5FEBEE37D61F644CF7B65FF152040866AFA650BE52438FDB97BEBE",
+      "route_eval": "B9CFE885B42137A396DDBC07F96FCAE64CD3F8B054154AAED62874B2FB280AE5",
+      "scenarios": "FA45BB8F3D6CD49ECC51ED9C2CD8EB6C3BF73FAB987FF3E3EF7E94A962E06AD7",
+      "trace_replay": "004F9D787D7928031BFBFA4323D912756CEA7240A129EC3E51123112D9A94683"
+    },
+    "artifacts": {
+      "batch_report": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\batch_report.json",
+      "differential": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\differential.json",
+      "invariants": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\invariants.json",
+      "live_trace_refresh": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\live_trace_refresh.json",
+      "metamorphic": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\metamorphic.json",
+      "mutation": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\mutation.json",
+      "previous_run_diff": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\previous_run_diff.json",
+      "review_queue": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\review_queue.json",
+      "rom_contribution_trace_summary": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_trace_summary.json",
+      "rom_contribution_traces": [
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\01_rom_contribution_trace_counter_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\02_rom_contribution_trace_cover_player_cant_act.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\03_rom_contribution_trace_cover_public_threat_category.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\04_rom_contribution_trace_cover_strong_matchup.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\05_rom_contribution_trace_coverage_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\06_rom_contribution_trace_selfdestruct_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\07_rom_contribution_trace_smoke.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\08_rom_contribution_trace_spikes_l2_active_prior_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\09_rom_contribution_trace_spikes_l2_soft_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\10_rom_contribution_trace_spikes_l3_bench_probe.json",
+        "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_contribution_traces\\11_rom_contribution_trace_spikes_spin_probe.json"
+      ],
+      "rom_rebuild": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_rebuild.json",
+      "rom_score_materialization": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\rom_score_materialization.json",
+      "route_eval": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\route_eval.json",
+      "scenarios": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\scenarios.jsonl",
+      "summary": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\summary.md",
+      "trace_replay": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\trace_replay.json"
+    },
+    "batch_summary": {
+      "reviewable_count": 8,
+      "scenario_count": 20,
+      "scenarios_per_minute": 2322430.786681542,
+      "verdict_counts": {
+        "acceptable_top": 3,
+        "bad_roll": 5,
+        "pass": 12
+      }
+    },
+    "changed_files": [
+      "data/pokemon/evos_attacks.asm"
+    ],
+    "created_at": "2026-05-31T01:16:48.762559+00:00",
+    "differential_summary": {
+      "contribution_comparison": {
+        "matched_trace_count": 0,
+        "mismatch_class_counts": {},
+        "mismatch_count": 0
+      },
+      "mismatch_class_counts": {
+        "policy_preference_mismatch": 8
+      },
+      "mismatch_count": 8
+    },
+    "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+    "git_status_short": "M audit/boss_ai_debugger/rule_map.json\n M audit/boss_ai_trace/blaine_live.txt\n M audit/boss_ai_trace/blue_live.txt\n M audit/boss_ai_trace/brock_live.txt\n M audit/boss_ai_trace/bugsy_live.txt\n M audit/boss_ai_trace/champion_lance_live.txt\n M audit/boss_ai_trace/chuck_live.txt\n M audit/boss_ai_trace/clair_live.txt\n M audit/boss_ai_trace/erika_live.txt\n M audit/boss_ai_trace/falkner_live.txt\n M audit/boss_ai_trace/janine_live.txt\n M audit/boss_ai_trace/jasmine_live.txt\n M audit/boss_ai_trace/koga_live.txt\n M audit/boss_ai_trace/live_capture_ledger.md\n M audit/boss_ai_trace/live_capture_manifest.json\n M audit/boss_ai_trace/lt_surge_live.txt\n M audit/boss_ai_trace/misty_live.txt\n M audit/boss_ai_trace/morty_live.txt\n M audit/boss_ai_trace/pryce_live.txt\n M audit/boss_ai_trace/sabrina_live.txt\n M audit/boss_ai_trace/shared_switch_loop_live.txt\n M audit/boss_ai_trace/whitney_live.txt\n M audit/debugger_checkpoints/new_game.manifest.json\n M audit/debugger_deity_benchmark/questions.jsonl\n M data/trainers/parties.asm\n M docs/agent_navigation/hack_mechanics_reference.md\n M docs/agent_navigation/subsystems/boss_ai_logic.md\n M docs/boss_ai_trace_capture.md\n M docs/debugger_deity_mode_roadmap.md\n M docs/generated/balance_audit.md\n M docs/generated/dev_index.md\n M docs/project_roadmap.md\n M engine/battle/ai/boss_policy_move.asm\n M engine/battle/ai/boss_policy_switch.asm\n M tools/audit/check_boss_ai_debugger_done.py\n M tools/audit/check_boss_ai_debugger_performance.py\n M tools/audit/check_boss_ai_debugger_roadmap.py\n M tools/audit/trace_logic.py\n M tools/boss_ai_debugger/README.md\n M tools/boss_ai_debugger/commands.py\n M tools/boss_ai_debugger/contribution_compare.py\n M tools/boss_ai_debugger/counterfactuals.py\n M tools/boss_ai_debugger/coverage_report.py\n M tools/boss_ai_debugger/generators.py\n M tools/boss_ai_debugger/parsers.py\n M tools/boss_ai_debugger/review_queue.py\n M tools/boss_ai_debugger/rom_contribution_trace.py\n M tools/boss_ai_debugger/rom_score_materialize.py\n M tools/boss_ai_debugger/run_store.py\n M tools/boss_ai_debugger/tests/test_analysis_tools.py\n M tools/boss_ai_debugger/tests/test_generators.py\n M tools/boss_ai_debugger/tests/test_mastery_coverage.py\n M tools/boss_ai_debugger/tests/test_review_queue.py\n M tools/boss_ai_debugger/tests/test_rom_score_materialize.py\n M tools/boss_ai_debugger/tests/test_run_store.py\n M tools/debugger/commands.py\n M tools/debugger/dynamic_taint.py\n M tools/debugger/formatters.py\n M tools/debugger/navigate.py\n M tools/debugger/parsers.py\n M tools/debugger/save_state_lab.py\n M tools/debugger/selftest.py\n M tools/debugger/state_predicate.py\n M tools/debugger/tests/test_save_state_lab.py\n M tools/trace/boss_ai_shared_switch_loop_fixture.py\n M tools/trace/boss_ai_state_factory.py\n M tools/trace/boss_ai_trace_batch.py\n M tools/trace/tests/test_boss_ai_state_factory.py\n M tools/trace/tests/test_boss_ai_trace_batch.py\n?? audit/boss_ai_debugger/deity_benchmark/\n?? audit/boss_ai_debugger/rom_contribution_trace_cover_player_cant_act.json\n?? audit/boss_ai_debugger/rom_contribution_trace_cover_public_threat_category.json\n?? audit/boss_ai_debugger/rom_contribution_trace_cover_strong_matchup.json\n?? audit/debugger_checkpoints/cherrygrove_post_rival.after_rival_battle.input.log\n?? audit/debugger_checkpoints/cherrygrove_post_rival.manifest.json\n?? audit/debugger_checkpoints/cherrygrove_rival_battle.after_mr_pokemon.input.log\n?? audit/debugger_checkpoints/cherrygrove_rival_battle.manifest.json\n?? audit/debugger_checkpoints/elms_lab_after_aide.after_officer.input.log\n?? audit/debugger_checkpoints/elms_lab_after_aide.manifest.json\n?? audit/debugger_checkpoints/elms_lab_post_officer.after_cherrygrove.input.log\n?? audit/debugger_checkpoints/elms_lab_post_officer.manifest.json\n?? audit/debugger_checkpoints/mr_pokemon_after_oak.after_route30.input.log\n?? audit/debugger_checkpoints/mr_pokemon_after_oak.manifest.json\n?? audit/debugger_checkpoints/route29_first_wild.after_new_game.input.log\n?? audit/debugger_checkpoints/route29_first_wild.manifest.json\n?? audit/debugger_checkpoints/route30_south.after_route46.input.log\n?? audit/debugger_checkpoints/route30_south.manifest.json\n?? audit/debugger_checkpoints/route46_south.after_route29.input.log\n?? audit/debugger_checkpoints/route46_south.manifest.json\n?? audit/debugger_deity_benchmark/phase1_elms_lab_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_elms_lab_after_aide_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_post_rival_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_rival_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_route29_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_route30_2026-05-30.md\n?? audit/debugger_deity_benchmark/phase1_route46_2026-05-30.md\n?? docs/boss_ai_debugger_deity_mode_roadmap.md\n?? docs/boss_ai_debugger_god_level_roadmap.md\n?? pokegold_trace.gbc.ram\n?? tools/audit/check_boss_ai_debugger_deity.py\n?? tools/boss_ai_debugger/decision_inputs.py\n?? tools/boss_ai_debugger/explain_decision.py\n?? tools/boss_ai_debugger/tests/test_explain_decision.py\n?? tools/debugger/deity_runtime.py\n?? tools/debugger/tests/test_navigate.py\n?? tools/trace/tests/test_boss_ai_shared_switch_loop_fixture.py",
+    "invariant_summary": {
+      "candidate_count": 13,
+      "violation_count": 45
+    },
+    "known_gaps": [
+      "changed-ai suite records ROM rebuild as skipped unless explicitly requested.",
+      "changed-ai suite records live trace refresh as skipped unless explicitly requested.",
+      "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them.",
+      "changed-ai suite records generated score materialization as skipped unless explicitly requested.",
+      "ROM/Python contribution traces are compared only when trace ids match.",
+      "pre-choice replay remains a separate audit until trace timing is stable."
+    ],
+    "live_trace_refresh_summary": {
+      "command_count": 0,
+      "failed_count": 0,
+      "passed": true,
+      "requested": false,
+      "skipped_reason": "not requested; pass --refresh-live-traces to rebuild state-factory states and live trace captures"
+    },
+    "metamorphic_summary": {
+      "pass_count": 26,
+      "passed": true,
+      "relation_count": 26
+    },
+    "mutation_summary": {
+      "killed_count": 4,
+      "mutation_score": 0.8,
+      "not_exercised_count": 0,
+      "survived_count": 1
+    },
+    "parameters": {
+      "count": 20,
+      "rebuild_roms": false,
+      "refresh_live_traces": false,
+      "refresh_rom_contribution_trace": false,
+      "refresh_rom_score_materialization": false,
+      "rom_contribution_boss_route": "clair",
+      "seed": 1,
+      "trace_dir": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_trace"
+    },
+    "previous_run_diff_summary": {
+      "artifact_hash_change_count": 30,
+      "available": true,
+      "changed_file_added_count": 0,
+      "changed_file_removed_count": 0,
+      "changed_metric_count": 1
+    },
+    "profile": "changed-ai",
+    "review_queue_summary": {
+      "input_reviewable_count": 8,
+      "returned_count": 8
+    },
+    "rom_contribution_summary": {
+      "artifact_count": 11,
+      "available": true,
+      "changed_event_count": 97,
+      "changed_rule_count": 21,
+      "covered_rule_count": 21,
+      "event_count": 98,
+      "unmapped_event_count": 0
+    },
+    "rom_rebuild_summary": {
+      "command_count": 0,
+      "failed_count": 0,
+      "passed": true,
+      "requested": false,
+      "skipped_reason": "not requested; pass --rebuild-roms to rebuild normal and trace ROMs"
+    },
+    "rom_score_materialization_summary": {
+      "checked_count": 0,
+      "contribution_matched_count": 0,
+      "contribution_mismatch_count": 0,
+      "error_count": 0,
+      "hook_equivalence_checked_count": 0,
+      "hook_equivalence_mismatch_count": 0,
+      "score_bytes_match_count": 0,
+      "selector_top_match_count": 0,
+      "skipped_reason": "not requested; pass --refresh-rom-score-materialization to run generated score-model materialization"
+    },
+    "route_eval_summary": {
+      "route_acceptable_but_review": 3,
+      "route_bad_roll": 5,
+      "route_pass": 12
+    },
+    "rule_map_summary": {
+      "rule_count": 197,
+      "stored_rule_map_errors": []
+    },
+    "run_id": "20260531_011648_changed_ai",
+    "schema_version": 1,
+    "tool_version": "boss-ai-debugger-run-v1",
+    "trace_replay_summary": {
+      "agreement_rate": 1.0,
+      "checked_count": 19,
+      "failure_count": 0,
+      "trace_count": 19
+    },
+    "validation": {
+      "checked_count": 20,
+      "error_count": 0,
+      "errors": [],
+      "kind": "scenario_file",
+      "schema_version": 1,
+      "valid": true
+    }
+  },
+  "changed_file_count": 1,
+  "changed_files": [
+    "data/pokemon/evos_attacks.asm"
+  ],
+  "closed_evidence_ids": [
+    "changed_files.detected",
+    "hash_basis.reported",
+    "targeted_generators.run",
+    "review_queue.ranked"
+  ],
+  "deity_evidence_marker": "BOSS_AI_DEITY_CHANGED_AI_SUMMARY",
+  "gap_actions": [
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "changed-ai suite records ROM rebuild as skipped unless explicitly requested."
+    },
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "changed-ai suite records live trace refresh as skipped unless explicitly requested."
+    },
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "changed-ai suite ingests existing ROM contribution trace artifacts but does not refresh them."
+    },
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "changed-ai suite records generated score materialization as skipped unless explicitly requested."
+    },
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "ROM/Python contribution traces are compared only when trace ids match."
+    },
+    {
+      "commands": [],
+      "kind": "known_gap",
+      "reason": "pre-choice replay remains a separate audit until trace timing is stable."
+    }
+  ],
+  "hash_basis": {
+    "diagnostics": [
+      {
+        "actual_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+        "expected_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+        "kind": "trace_rom",
+        "path": "pokegold_trace.gbc",
+        "status": "match"
+      },
+      {
+        "actual_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+        "expected_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+        "kind": "trace_symbols",
+        "path": "pokegold_trace.sym",
+        "status": "match"
+      }
+    ],
+    "manifest_found": true,
+    "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+    "ready": true,
+    "status": "ready"
+  },
+  "kind": "boss_ai_deity_changed_ai_summary",
+  "review_queue": {
+    "artifact": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\review_queue.json",
+    "input_reviewable_count": 8,
+    "returned_count": 8
+  },
+  "schema_version": 1,
+  "status": "changed_ai_summary_ready",
+  "targeted_generators": {
+    "artifact": "audit\\boss_ai_debugger\\runs\\20260531_011648_changed_ai\\scenarios.jsonl",
+    "scenario_count": 20
+  }
+}

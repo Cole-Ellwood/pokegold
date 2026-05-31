@@ -10,6 +10,7 @@ from pathlib import Path
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.counterfactuals import (
     explain_counterfactuals,
+    format_counterfactual_report,
     score_flip_for_action,
 )
 from tools.boss_ai_debugger.confidence_report import build_confidence_report
@@ -40,6 +41,29 @@ class AnalysisToolTests(unittest.TestCase):
         self.assertEqual(report["smallest_score_flip"]["action_id"], "wanted")
         self.assertLess(report["smallest_score_flip"]["required_delta"], 0)
         self.assertTrue(report["public_fact_counterfactuals"])
+
+    def test_counterfactual_reports_nearest_challenger_when_expected_best_already_wins(self) -> None:
+        scenario = {
+            "id": "already_best_case",
+            "tier": "late",
+            "moves": [
+                {"id": "expected_top", "name": "Expected Top", "deltas": [{"rule": "top", "delta": -4}]},
+                {"id": "nearest", "name": "Nearest", "deltas": [{"rule": "close", "delta": -1}]},
+                {"id": "far", "name": "Far"},
+            ],
+            "expectation": {
+                "best_action_ids": ["expected_top"],
+                "condition_tags": ["immediate_pressure"],
+            },
+        }
+
+        report = explain_counterfactuals(scenario)
+
+        self.assertEqual(report["smallest_score_flip"]["action_id"], "expected_top")
+        self.assertEqual(report["smallest_score_flip"]["required_delta"], 0)
+        self.assertEqual(report["nearest_challenger_score_flip"]["action_id"], "nearest")
+        self.assertLess(report["nearest_challenger_score_flip"]["required_delta"], 0)
+        self.assertIn("nearest challenger flip: nearest", format_counterfactual_report(report))
 
     def test_counterfactual_score_floor_marks_impossible_flip(self) -> None:
         flip = score_flip_for_action(

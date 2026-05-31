@@ -53,6 +53,7 @@ class ReviewQueueTests(unittest.TestCase):
             "Hazard Loop Spin Window",
         )
         self.assertIn("spinblock", queue["items"][0]["next_action"])
+        self.assertFalse(queue["items"][0]["explain_decision"]["available"])
 
     def test_review_queue_diversifies_before_filling_duplicates(self) -> None:
         verdicts = []
@@ -93,7 +94,7 @@ class ReviewQueueTests(unittest.TestCase):
         self.assertEqual(queue["items"][2]["scenario_id"], "hazard_1")
 
     def test_cli_review_queue_from_scenarios_writes_json(self) -> None:
-        scenarios = generate_scenarios(family="spikes_spin", count=12, seed=5)
+        scenarios = generate_scenarios(family="switch_sack", count=12, seed=5)
         with tempfile.TemporaryDirectory() as tmp:
             scenarios_path = Path(tmp) / "scenarios.jsonl"
             out = Path(tmp) / "queue.json"
@@ -119,14 +120,51 @@ class ReviewQueueTests(unittest.TestCase):
         self.assertLessEqual(data["returned_count"], 5)
         self.assertEqual(data["max_per_lesson"], 2)
         self.assertIn("Boss AI debugger review queue", stdout.getvalue())
+        self.assertEqual(data["scenario_source"], str(scenarios_path))
+        self.assertTrue(data["items"][0]["explain_decision"]["available"])
+        self.assertIn("explain-decision", data["items"][0]["explain_decision"]["command"])
+        self.assertIn("--scenario-id", data["items"][0]["explain_decision"]["command"])
+        self.assertEqual(
+            data["items"][0]["explain_decision"]["consumes_artifact_paths"],
+            [str(scenarios_path)],
+        )
+        self.assertIn("explain:", stdout.getvalue())
 
     def test_review_queue_from_batch_report_shape(self) -> None:
-        scenarios = generate_scenarios(family="selector_edges", count=8, seed=9)
+        scenarios = generate_scenarios(family="switch_sack", count=8, seed=5)
         report = evaluate_batch(scenarios)
         queue = build_review_queue(report, limit=3)
 
         self.assertLessEqual(queue["returned_count"], 3)
         self.assertEqual(queue["input_scenario_count"], 8)
+
+    def test_review_queue_from_run_report_infers_sibling_scenario_source(self) -> None:
+        scenarios = generate_scenarios(family="switch_sack", count=8, seed=5)
+        report = evaluate_batch(scenarios)
+        with tempfile.TemporaryDirectory() as tmp:
+            run_dir = Path(tmp)
+            scenarios_path = run_dir / "scenarios.jsonl"
+            report_path = run_dir / "batch_report.json"
+            write_jsonl(scenarios, scenarios_path)
+            report_path.write_text(json.dumps(report), encoding="utf-8")
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = debugger_main(
+                    [
+                        "review-queue",
+                        "--report",
+                        str(report_path),
+                        "--limit",
+                        "2",
+                        "--json",
+                    ]
+                )
+            data = json.loads(stdout.getvalue())
+
+        self.assertEqual(code, 0)
+        self.assertEqual(data["scenario_source"], str(scenarios_path))
+        self.assertTrue(data["items"][0]["explain_decision"]["available"])
+        self.assertIn(str(scenarios_path), data["items"][0]["explain_decision"]["command"])
 
 
 if __name__ == "__main__":

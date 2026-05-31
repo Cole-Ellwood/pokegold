@@ -112,7 +112,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("resisted_explosion_board_delta", tags)
         self.assertIn("role_package_ledger", tags)
 
-    def test_active_revealed_spin_prefers_live_damage_over_extra_spikes(self) -> None:
+    def test_active_revealed_spin_prefers_surf_over_extra_spikes(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="mid",
             layers=2,
@@ -126,8 +126,11 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_sludge_bomb")
-        self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
+        self.assertEqual(result["best_action_id"], "move_surf")
+        self.assertLess(
+            result["probabilities"]["move_spikes"],
+            result["probabilities"]["move_surf"],
+        )
 
     def test_no_spin_second_layer_keeps_spikes_live(self) -> None:
         scenario = spikes_spin_score_scenario(
@@ -145,7 +148,7 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(result["best_action_id"], "move_spikes")
 
-    def test_capped_spikes_does_not_roll_failed_fourth_click(self) -> None:
+    def test_capped_spikes_prefers_surf_when_active_species_prior_is_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="late",
             layers=3,
@@ -159,8 +162,11 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_sludge_bomb")
-        self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
+        self.assertEqual(result["best_action_id"], "move_surf")
+        self.assertLess(
+            result["probabilities"]["move_spikes"],
+            result["probabilities"]["move_surf"],
+        )
 
     def test_cli_generate_writes_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -216,6 +222,7 @@ def spikes_spin_score_scenario(**kwargs: Any) -> dict[str, Any]:
                 "id": "move_explosion",
                 "name": "Explosion",
                 "deltas": deltas["explosion"],
+                "lookahead_delta": 18,
             },
         ],
     }

@@ -166,6 +166,18 @@ It replays every real-trainer `pre_choice_state` through the trace ROM and
 requires the replayed trace fields to match the baseline live trace before
 checking exact selector-field agreement with the captured chosen move.
 
+Rows that carry a `score_materialization_state` need one extra refresh after a
+trace ROM or route-state change:
+
+```powershell
+python tools\trace\boss_ai_state_factory.py --boss koga --refresh-score-materialization-states --update-manifest
+```
+
+The refresh replays the real Koga route, saves the existing manifest
+`score_materialization_state` at the first `BossAI_ApplyMoveModel.ScoreMove`
+entry, and clears trace output bytes before saving so ROM score materialization
+starts from a clean proof state.
+
 As of 2026-04-26, the factory supports all real trainer rows currently in the
 manifest: the 16 gym leaders, Koga, and Champion Lance. It does not generate
 the `shared_switch_loop` scenario, because that needs a synthetic repeated
@@ -181,11 +193,13 @@ python -m tools.boss_ai_debugger rom-switch-materialize --scenarios .local\tmp\g
 
 `boss_ai_shared_switch_loop_fixture.py` saves both the snapshot capture
 `save_state` and a pre-dispatch `switch_materialization_state` at
-`BossAI_TrySwitch`. The materialization state carries row-specific trace
-ROM/symbol hashes because it may be refreshed for switch proof before the full
-live-capture manifest is recaptured. Run `boss_ai_trace_batch.py --execute
---only shared_switch_loop` only when the full manifest trace basis has also
-been refreshed.
+`BossAI_TrySwitch`. By default, it uses the current manifest-backed Jasmine
+`save_state` as its base, so run the Jasmine factory refresh before the shared
+fixture whenever the trace ROM basis changes. The materialization state carries
+row-specific trace ROM/symbol hashes because it may be refreshed for switch
+proof before the full live-capture manifest is recaptured. Run
+`boss_ai_trace_batch.py --execute --only shared_switch_loop` only when the full
+manifest trace basis has also been refreshed.
 
 Before treating a save-state or battery-RAM sidecar as boss-position proof,
 probe it:

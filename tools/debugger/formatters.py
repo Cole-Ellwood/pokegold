@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .deity_runtime import format_auto_taint, format_live_view, format_surface_replay
 from .workflow import command_is_runnable
 
 
@@ -2149,4 +2150,7 @@ FORMATTERS = {
     "unified_debugger_impact_report": format_impact_report,
     "unified_debugger_static_report": format_static_report,
     "unified_debugger_visualization": format_visualization,
+    "debugger_deity_auto_taint": format_auto_taint,
+    "debugger_deity_surface_replay": format_surface_replay,
+    "debugger_deity_live_view": format_live_view,
 }

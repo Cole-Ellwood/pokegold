@@ -1,0 +1,649 @@
+{
+  "closed_evidence_ids": [
+    "coverage_gap.localized",
+    "next_action.command",
+    "source_anchors.present"
+  ],
+  "coverage_basis": {
+    "full_trace_rule_coverage_available": false,
+    "generated_count": 250,
+    "group_count": 61,
+    "score_trace_rule_coverage_available": true,
+    "seed": 1,
+    "target_count": 61,
+    "trace_covered_rule_count": 21,
+    "trace_executed_rule_count": 143
+  },
+  "evidence_marker": "BOSS_AI_DEITY_COVERAGE_WORKLIST",
+  "kind": "boss_ai_deity_coverage_worklist",
+  "known_limits": [
+    "Ranking is deterministic and local to current rule-map coverage metadata.",
+    "A next-action command is a proof target, not proof completion; rerun explain-decision after materialization closes evidence ids."
+  ],
+  "next_action": {
+    "closes_evidence_ids": [
+      "observed_rom_decision",
+      "score_bytes",
+      "selector_path",
+      "source_anchors"
+    ],
+    "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk_rom_contribution.json",
+    "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+  },
+  "reachability_model": {
+    "note": "Rows come from rule-map dynamic coverage targets that are not covered by the current ROM contribution/materialization corpus; this worklist does not fabricate absent routes such as Red.",
+    "reachable_status": "reachable_uncovered",
+    "unreachable_targets": [],
+    "unsupported_targets": []
+  },
+  "schema_version": 1,
+  "source_anchors": [
+    {
+      "classification": "public_info",
+      "expected_public_inputs": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "line": 1242,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".ApplyRevealedPrioritySwitchInRisk",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "public_info",
+      "expected_public_inputs": [],
+      "line": 725,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.should_respect_potential_player_revenge.known_seen_revenge_threat",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": ".KnownSeenRevengeThreat",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "public_info",
+      "expected_public_inputs": [
+        "wBossAISeenPlayerSpecies"
+      ],
+      "line": 4263,
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.seen_bench_threat_score",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SeenBenchThreatScore",
+      "suggested_generator": "selector_edges"
+    },
+    {
+      "classification": "public_info",
+      "expected_public_inputs": [
+        "wPlayerUsedMoves"
+      ],
+      "line": 4760,
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.player_has_revealed_effect_a_coach",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+      "suggested_generator": "mastery_policy"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 859,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.ace_timing_hook",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_AceTimingHook",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 1600,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.apply_plan_switch_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlanSwitchBias",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 1369,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.apply_plausible_risk_to_switch_confidence",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 1641,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.apply_preservation_switch_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPreservationSwitchBias",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 1422,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.apply_role_package_switch_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyRolePackageSwitchBias",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 2121,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.candidate_immune_to_player_stab",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_CandidateImmuneToPlayerSTAB",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 531,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.check_able_to_switch_safe",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_CheckAbleToSwitchSafe",
+      "suggested_generator": "switch_sack"
+    },
+    {
+      "classification": "platform_boundary",
+      "expected_public_inputs": [],
+      "line": 455,
+      "recommended_trace_mode": "rom_route_contribution_trace",
+      "rule_id": "switch.choose_best_oracle_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ChooseBestOracleMove",
+      "suggested_generator": "switch_sack"
+    }
+  ],
+  "top_item": {
+    "classification": "public_info",
+    "next_action": {
+      "closes_evidence_ids": [
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path",
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk_rom_contribution.json",
+      "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+    },
+    "proof_mode": "rom_route_contribution_trace",
+    "rule_count": 1,
+    "rule_ids": [
+      "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk"
+    ],
+    "source_anchors": [
+      {
+        "classification": "public_info",
+        "expected_public_inputs": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "line": 1242,
+        "recommended_trace_mode": "rom_route_contribution_trace",
+        "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
+        "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+        "source_label": ".ApplyRevealedPrioritySwitchInRisk",
+        "suggested_generator": "switch_sack"
+      }
+    ],
+    "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+    "source_label": "BossAI_ComputeSwitchCandidateRisk",
+    "status": "reachable_uncovered",
+    "suggested_generator": "switch_sack",
+    "unreachable_reason": "",
+    "unsupported_reason": ""
+  },
+  "worklist": [
+    {
+      "classification": "public_info",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk"
+      ],
+      "source_anchors": [
+        {
+          "classification": "public_info",
+          "expected_public_inputs": [
+            "Moves + MOVE_EFFECT",
+            "wPlayerUsedMoves"
+          ],
+          "line": 1242,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": ".ApplyRevealedPrioritySwitchInRisk",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ComputeSwitchCandidateRisk",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "public_info",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.should_respect_potential_player_revenge.known_seen_revenge_threat_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.should_respect_potential_player_revenge.known_seen_revenge_threat"
+      ],
+      "source_anchors": [
+        {
+          "classification": "public_info",
+          "expected_public_inputs": [],
+          "line": 725,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.should_respect_potential_player_revenge.known_seen_revenge_threat",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": ".KnownSeenRevengeThreat",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ShouldRespectPotentialPlayerRevenge",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "public_info",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family selector_edges --json-out .local\\tmp\\boss_ai_debugger\\coverage_move.seen_bench_threat_score.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.seen_bench_threat_score"
+      ],
+      "source_anchors": [
+        {
+          "classification": "public_info",
+          "expected_public_inputs": [
+            "wBossAISeenPlayerSpecies"
+          ],
+          "line": 4263,
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.seen_bench_threat_score",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_SeenBenchThreatScore",
+          "suggested_generator": "selector_edges"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SeenBenchThreatScore",
+      "status": "reachable_uncovered",
+      "suggested_generator": "selector_edges",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "public_info",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\coverage_move.player_has_revealed_effect_a_coach.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.player_has_revealed_effect_a_coach"
+      ],
+      "source_anchors": [
+        {
+          "classification": "public_info",
+          "expected_public_inputs": [
+            "wPlayerUsedMoves"
+          ],
+          "line": 4760,
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.player_has_revealed_effect_a_coach",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+          "suggested_generator": "mastery_policy"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_PlayerHasRevealedEffectA_Coach",
+      "status": "reachable_uncovered",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.ace_timing_hook_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.ace_timing_hook"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 859,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.ace_timing_hook",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_AceTimingHook",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_AceTimingHook",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.apply_plan_switch_bias_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.apply_plan_switch_bias"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 1600,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.apply_plan_switch_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_ApplyPlanSwitchBias",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlanSwitchBias",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.apply_plausible_risk_to_switch_confidence_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.apply_plausible_risk_to_switch_confidence"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 1369,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.apply_plausible_risk_to_switch_confidence",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPlausibleRiskToSwitchConfidence",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.apply_preservation_switch_bias_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.apply_preservation_switch_bias"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 1641,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.apply_preservation_switch_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_ApplyPreservationSwitchBias",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyPreservationSwitchBias",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.apply_role_package_switch_bias_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.apply_role_package_switch_bias"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 1422,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.apply_role_package_switch_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_ApplyRolePackageSwitchBias",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ApplyRolePackageSwitchBias",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.candidate_immune_to_player_stab_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.candidate_immune_to_player_stab"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 2121,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.candidate_immune_to_player_stab",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_CandidateImmuneToPlayerSTAB",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_CandidateImmuneToPlayerSTAB",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.check_able_to_switch_safe_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.check_able_to_switch_safe"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 531,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.check_able_to_switch_safe",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_CheckAbleToSwitchSafe",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_CheckAbleToSwitchSafe",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    },
+    {
+      "classification": "platform_boundary",
+      "next_action": {
+        "closes_evidence_ids": [
+          "observed_rom_decision",
+          "score_bytes",
+          "selector_path",
+          "source_anchors"
+        ],
+        "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.choose_best_oracle_move_rom_contribution.json",
+        "purpose": "Render the next uncovered Boss AI rule as an explain-decision packet"
+      },
+      "proof_mode": "rom_route_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "switch.choose_best_oracle_move"
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "expected_public_inputs": [],
+          "line": 455,
+          "recommended_trace_mode": "rom_route_contribution_trace",
+          "rule_id": "switch.choose_best_oracle_move",
+          "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+          "source_label": "BossAI_ChooseBestOracleMove",
+          "suggested_generator": "switch_sack"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_switch.asm",
+      "source_label": "BossAI_ChooseBestOracleMove",
+      "status": "reachable_uncovered",
+      "suggested_generator": "switch_sack",
+      "unreachable_reason": "",
+      "unsupported_reason": ""
+    }
+  ]
+}

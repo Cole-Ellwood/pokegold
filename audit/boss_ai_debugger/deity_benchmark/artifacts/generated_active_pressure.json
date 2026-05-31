@@ -1,0 +1,1579 @@
+{
+  "auto_rom_proof": [],
+  "candidate_scores": [
+    {
+      "action_id": "move_active_pressure",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 14,
+          "before": 20,
+          "delta": -6,
+          "note": "encourage lowers score",
+          "rule": "named active route pressure",
+          "rule_id": "named active route pressure",
+          "source_anchor": null
+        },
+        {
+          "after": 13,
+          "before": 14,
+          "delta": -1,
+          "note": "negative signed lookahead delta encourages",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 13,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Active Pressure",
+      "pre_lookahead_score": 14,
+      "selector_probability": 0.95703125,
+      "slot": 1
+    },
+    {
+      "action_id": "move_status_script",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 19,
+          "before": 20,
+          "delta": -1,
+          "note": "encourage lowers score",
+          "rule": "status exists but route is already active",
+          "rule_id": "status exists but route is already active",
+          "source_anchor": null
+        },
+        {
+          "after": 19,
+          "before": 19,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 19,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Status Script",
+      "pre_lookahead_score": 19,
+      "selector_probability": 0.04296875,
+      "slot": 2
+    },
+    {
+      "action_id": "move_pivot_out",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 21,
+          "before": 20,
+          "delta": 1,
+          "note": "discourage raises score",
+          "rule": "unpriced handoff",
+          "rule_id": "unpriced handoff",
+          "source_anchor": null
+        },
+        {
+          "after": 21,
+          "before": 21,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 21,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Pivot Out",
+      "pre_lookahead_score": 21,
+      "selector_probability": 0.0,
+      "slot": 3
+    },
+    {
+      "action_id": "move_self_ko",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 23,
+          "before": 20,
+          "delta": 3,
+          "note": "discourage raises score",
+          "rule": "premature cashout",
+          "rule_id": "premature cashout",
+          "source_anchor": null
+        },
+        {
+          "after": 23,
+          "before": 23,
+          "delta": 0,
+          "note": "lookahead evaluated with no score change",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 23,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Self-KO",
+      "pre_lookahead_score": 23,
+      "selector_probability": 0.0,
+      "slot": 4
+    }
+  ],
+  "closed_evidence_ids": [
+    "decision_input.generated_auto",
+    "observed_rom_decision",
+    "candidate_scores",
+    "score_bytes",
+    "selector_path",
+    "python_score_contributions",
+    "rom_contribution_deltas",
+    "public_info_inputs",
+    "rom_public_read_provenance",
+    "source_anchors",
+    "counterfactual",
+    "policy_expectation.reported",
+    "counterfactual.decisive"
+  ],
+  "counterfactual": {
+    "answer_changing_information": [
+      "whether status stops a route that damage cannot",
+      "whether the support piece has no future entry or job"
+    ],
+    "focus_score_flip": null,
+    "nearest_challenger_score_flip": {
+      "action_id": "move_status_script",
+      "available": true,
+      "current_best_action_id": "move_active_pressure",
+      "current_score": 19,
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -7,
+      "target_score": 12
+    },
+    "public_fact_counterfactuals": [
+      "Change the public route owner, converter, or reset branch and re-score the expected best action."
+    ],
+    "smallest_score_flip": {
+      "action_id": "move_active_pressure",
+      "available": true,
+      "current_score": 13,
+      "reason": "action is already the current ROM best by score/slot ordering",
+      "required_delta": 0,
+      "target_score": 13
+    },
+    "why": "Price the direct pressure line before status or cash-out when it already advances a named route."
+  },
+  "decision_input": {
+    "artifact_path": ".local/tmp/boss_ai_debugger/generated_inputs/active_pressure_before_status.manifest.json",
+    "closed_evidence_ids": [
+      "decision_input.generated_auto"
+    ],
+    "generated_at": "2026-05-31T01:16:46Z",
+    "hash_basis": {
+      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+    },
+    "kind": "boss_ai_decision_input_manifest",
+    "known_limits": [
+      "Generated decision inputs are deterministic public-state scenarios, not a navigated live battle state.",
+      "ROM materialization support depends on the generated family and current trace basis."
+    ],
+    "resolution": {
+      "generated_count": 16,
+      "generator_seed": 1,
+      "scenario_family": "mastery_policy",
+      "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
+      "scenario_path": ".local/tmp/boss_ai_debugger/generated_inputs/active_pressure_before_status.jsonl",
+      "selected_case": "",
+      "source": "generated_scenario",
+      "sufficient": true
+    },
+    "schema_version": 1,
+    "source_state": {
+      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+      "scenario_artifact_sha256": "B0442E5E38C6B43043191144EB7E47E81729F212FD712B551FCCBE3DFC1B22AA"
+    },
+    "target": {
+      "case": "",
+      "decision_surface": "generated_policy",
+      "generated_family": "mastery_policy",
+      "policy_question": "active_pressure_before_status",
+      "requested_generated_family": "",
+      "score_rule": ""
+    }
+  },
+  "decision_summary": {
+    "decisive_counterfactual": "move_status_script score 19 -> 12 delta=-7",
+    "evidence_highlights": {
+      "candidate_scores": [
+        {
+          "action_id": "move_active_pressure",
+          "blocked": false,
+          "final_score": 13,
+          "kind": "move",
+          "name": "Active Pressure",
+          "selector_probability": 0.95703125
+        },
+        {
+          "action_id": "move_status_script",
+          "blocked": false,
+          "final_score": 19,
+          "kind": "move",
+          "name": "Status Script",
+          "selector_probability": 0.04296875
+        },
+        {
+          "action_id": "move_pivot_out",
+          "blocked": false,
+          "final_score": 21,
+          "kind": "move",
+          "name": "Pivot Out",
+          "selector_probability": 0.0
+        },
+        {
+          "action_id": "move_self_ko",
+          "blocked": false,
+          "final_score": 23,
+          "kind": "move",
+          "name": "Self-KO",
+          "selector_probability": 0.0
+        }
+      ],
+      "public_inputs": [
+        "condition_tags=['active_pressure_before_status']",
+        "policy_tags=['active_pressure', 'status_timing']",
+        "answer_changing_information=['whether status stops a route that damage cannot', 'whether the support piece has no future entry or job']"
+      ],
+      "rule_deltas": [
+        {
+          "after": 15,
+          "before": 20,
+          "candidate": "FIRE_BLAST",
+          "delta": -5,
+          "rule_id": "move.apply_move_model",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 172,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyMoveModel"
+          }
+        },
+        {
+          "after": 19,
+          "before": 20,
+          "candidate": "TOXIC",
+          "delta": -1,
+          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "public_info",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 492,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".StatusMoveWouldFailPublicly"
+          }
+        },
+        {
+          "after": 24,
+          "before": 19,
+          "candidate": "TOXIC",
+          "delta": 5,
+          "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 1050,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".ApplyStatusHardAnswerDiscipline"
+          }
+        },
+        {
+          "after": 26,
+          "before": 20,
+          "candidate": "BATON_PASS",
+          "delta": 6,
+          "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 2070,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".EnemyHasBoostToPass"
+          }
+        }
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source": "engine\\battle\\ai\\ko_band_oracle.asm:200"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:172"
+        },
+        {
+          "classification": "internal",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:1170"
+        }
+      ]
+    },
+    "focus_action_comparison": {},
+    "missing_evidence": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "observed": "ROM score bytes make move_active_pressure best with score=1",
+    "path": "selector best=move_active_pressure score=15 second=move_status_script score=24 gap=9 threshold=245/256 prob=move_active_pressure=95.7%, move_status_script=4.3%",
+    "policy_expectation": {
+      "available": true,
+      "confidence": "medium",
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_status_script"
+      ],
+      "expected_bad_action_ids": [
+        "move_self_ko"
+      ],
+      "expected_best_action_ids": [
+        "move_active_pressure"
+      ],
+      "expected_catastrophic_action_ids": [],
+      "lesson_type": "policy_card",
+      "policy_reason": "ROM top action is expected-best",
+      "policy_verdict": "pass",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "summary": "verdict=pass; expected_best=move_active_pressure; acceptable=move_status_script; bad=move_self_ko; reason=ROM top action is expected-best; why=Price the direct pressure line before status or cash-out when it already advances a named route.",
+      "why": "Price the direct pressure line before status or cash-out when it already advances a named route.",
+      "zero_probability_best_action_ids": []
+    },
+    "python_agreement": "score_bytes_match=False selector_top_match=True contribution_mismatches=8",
+    "selector_choice_explanation": {
+      "available": true,
+      "best_action_id": "move_active_pressure",
+      "best_roll_threshold": 245,
+      "best_score": 15,
+      "chosen_action_id": "",
+      "chosen_has_nonzero_probability": false,
+      "chosen_probability": 0.0,
+      "chosen_rank": "unknown",
+      "possible_action_ids": [
+        "move_active_pressure",
+        "move_status_script"
+      ],
+      "reason": "no sampled ROM chosen action is attached; selector surface gives score bytes and probabilities only",
+      "score_gap": 9,
+      "second_action_id": "move_status_script",
+      "second_score": 24,
+      "summary": "no sampled chosen action; best=move_active_pressure; second=move_status_script; gap=9; threshold=245/256"
+    },
+    "status": "explained",
+    "why": "selector best=move_active_pressure score=15 second=move_status_script score=24 gap=9 threshold=245/256 prob=move_active_pressure=95.7%, move_status_script=4.3%"
+  },
+  "decision_trace_summary": {
+    "event_count": 15,
+    "event_type_counts": {
+      "candidate": 4,
+      "policy_check": 1,
+      "score_rule": 8,
+      "selector": 1,
+      "state_load": 1
+    }
+  },
+  "deity_evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+  "family": "mastery_policy",
+  "known_limits": [
+    "Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.",
+    "ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids."
+  ],
+  "next_proof_commands": [
+    {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    {
+      "closes_evidence_ids": [
+        "counterfactual"
+      ],
+      "command": "python -m tools.boss_ai_debugger counterfactual --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Smallest score/public-fact flip"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json"
+      ],
+      "purpose": "Live-route ROM contribution trace for rule/source/public-read evidence"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Re-render this scenario packet after contribution capture"
+    },
+    {
+      "closes_evidence_ids": [
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rule-map check",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Verify source-rule anchors are current"
+    }
+  ],
+  "observed_rom_decision": {
+    "artifact": "",
+    "available": true,
+    "base_route": "koga",
+    "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
+    "decision": {
+      "best_score": 1,
+      "final_scores": [
+        1,
+        24,
+        26,
+        46
+      ],
+      "possible_action_ids": [
+        "move_active_pressure",
+        "move_status_script"
+      ],
+      "post_model_scores": [
+        15,
+        24,
+        26,
+        46
+      ],
+      "rom_best_action_id": "move_active_pressure",
+      "selector_entry_scores": [
+        15,
+        24,
+        26,
+        46
+      ],
+      "selector_path": {
+        "available": true,
+        "best_action_id": "move_active_pressure",
+        "best_move_id": null,
+        "best_roll_threshold": 245,
+        "best_score": 15,
+        "best_slot_index": 0,
+        "candidate_probabilities": {
+          "move_active_pressure": 0.95703125,
+          "move_pivot_out": 0.0,
+          "move_self_ko": 0.0,
+          "move_status_script": 0.04296875
+        },
+        "candidates": [
+          {
+            "action_id": "move_active_pressure",
+            "blocked": false,
+            "move_id": null,
+            "name": "Active Pressure",
+            "score": 15,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "action_id": "move_status_script",
+            "blocked": false,
+            "move_id": null,
+            "name": "Status Script",
+            "score": 24,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "action_id": "move_pivot_out",
+            "blocked": false,
+            "move_id": null,
+            "name": "Pivot Out",
+            "score": 26,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "action_id": "move_self_ko",
+            "blocked": false,
+            "move_id": null,
+            "name": "Self-KO",
+            "score": 46,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "chosen_action_id": "",
+        "chosen_has_nonzero_probability": false,
+        "chosen_move_id": null,
+        "chosen_probability": 0.0,
+        "chosen_slot_index": null,
+        "possible_action_ids": [
+          "move_active_pressure",
+          "move_status_script"
+        ],
+        "score_gap": 9,
+        "second_action_id": "move_status_script",
+        "second_move_id": null,
+        "second_score": 24,
+        "second_slot_index": 1,
+        "source": "rom_score_materialization_final_scores"
+      }
+    },
+    "kind": "rom_score_materialization",
+    "policy": {
+      "expected_acceptable_action_ids": [
+        "move_status_script"
+      ],
+      "expected_best_action_ids": [
+        "move_active_pressure"
+      ],
+      "probabilities": {
+        "move_active_pressure": 0.95703125,
+        "move_pivot_out": 0.0,
+        "move_self_ko": 0.0,
+        "move_status_script": 0.04296875
+      },
+      "reason": "ROM score bytes make an expected-best action top",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_active_pressure",
+      "rom_best_probability": 0.95703125,
+      "severity": 0,
+      "verdict": "pass",
+      "zero_probability_best_action_ids": []
+    },
+    "python_agreement": {
+      "contribution_mismatches": 8,
+      "hook_equivalence": {
+        "checked": true,
+        "chosen_match": true,
+        "fast_chosen": {
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot_index": 0
+        },
+        "fast_scores": [
+          1,
+          24,
+          26,
+          46
+        ],
+        "match": true,
+        "score_bytes_match": true,
+        "traced_chosen": {
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot_index": 0
+        },
+        "traced_scores": [
+          1,
+          24,
+          26,
+          46
+        ]
+      },
+      "score_bytes_match": false,
+      "selector_top_match": true
+    },
+    "reason": "ROM score bytes make an expected-best action top",
+    "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
+    "status": "pass"
+  },
+  "proof_blockers": [],
+  "proof_status": {
+    "blockers": [],
+    "checks": [
+      {
+        "detail": "generated_mastery_policy_1_00000_active_pressure_before_status",
+        "id": "decision_input.generated_auto",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization",
+        "id": "observed_rom_decision",
+        "status": "present"
+      },
+      {
+        "detail": "candidates=4",
+        "id": "candidate_scores",
+        "status": "present"
+      },
+      {
+        "detail": "final_scores=[1, 24, 26, 46]",
+        "id": "score_bytes",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization_final_scores",
+        "id": "selector_path",
+        "status": "present"
+      },
+      {
+        "detail": "no switch-dispatch bytes observed",
+        "id": "switch_path",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "no switch-dispatch proof needed for this packet",
+        "id": "switch_materialization",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "candidate contribution deltas from the Python/debugger model",
+        "id": "python_score_contributions",
+        "status": "present"
+      },
+      {
+        "detail": "matched_events=8",
+        "id": "rom_contribution_deltas",
+        "status": "present"
+      },
+      {
+        "detail": "policy_tags=2 condition_tags=1 evidence_refs=1 trace_fields=0",
+        "id": "public_info_inputs",
+        "status": "present"
+      },
+      {
+        "detail": "predicate branches, public-read probes, or ROM public-read map",
+        "id": "rom_public_read_provenance",
+        "status": "present"
+      },
+      {
+        "detail": "anchors=9",
+        "id": "source_anchors",
+        "status": "present"
+      },
+      {
+        "detail": "score flip or public-fact counterfactual",
+        "id": "counterfactual",
+        "status": "present"
+      },
+      {
+        "detail": "verdict=pass; expected_best=move_active_pressure; acceptable=move_status_script; bad=move_self_ko; reason=ROM top action is expected-best; why=Price the direct pressure line before status or cash-out when it already advances a named route.",
+        "id": "policy_expectation.reported",
+        "status": "present"
+      },
+      {
+        "detail": "score, selector, switch, or public-fact counterfactual",
+        "id": "counterfactual.decisive",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization",
+        "id": "selector_materialization.proven",
+        "status": "not_applicable"
+      }
+    ],
+    "missing_ids": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "next_proof_reason": "all compact explanation evidence is present; rerun the first proof command to reproduce",
+    "present_ids": [
+      "decision_input.generated_auto",
+      "observed_rom_decision",
+      "candidate_scores",
+      "score_bytes",
+      "selector_path",
+      "python_score_contributions",
+      "rom_contribution_deltas",
+      "public_info_inputs",
+      "rom_public_read_provenance",
+      "source_anchors",
+      "counterfactual",
+      "policy_expectation.reported",
+      "counterfactual.decisive"
+    ],
+    "status": "explained"
+  },
+  "public_info_inputs": {
+    "answer_changing_information": [
+      "whether status stops a route that damage cannot",
+      "whether the support piece has no future entry or job"
+    ],
+    "condition_tags": [
+      "active_pressure_before_status"
+    ],
+    "evidence_refs": [
+      "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+    ],
+    "policy_tags": [
+      "active_pressure",
+      "status_timing"
+    ],
+    "predicate_branches": [],
+    "public_read_probes": [],
+    "rom_public_reads_by_rule": {
+      "ko_band_oracle.apply_damage_dominance_bias": [],
+      "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank": [],
+      "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank": [],
+      "ko_band_oracle.apply_koband_oracle_pressure": [],
+      "ko_band_oracle.canonical_type_index": [],
+      "ko_band_oracle.current_slot_offensive_coverage_vs_player": [],
+      "ko_band_oracle.current_slot_offensive_coverage_vs_type": [],
+      "ko_band_oracle.get_current_enemy_matchup_slot": [],
+      "move.add_base_tmhmmoves_to_mask": [],
+      "move.add_current_species_likely_move_threats": [],
+      "move.add_current_species_speculative_move_threats": [],
+      "move.add_move_id_to_likely_mask": [],
+      "move.add_move_id_to_plausible_mask": [],
+      "move.add_public_stabthreats_to_mask": [],
+      "move.add_revealed_damaging_types_to_mask": [
+        "wPlayerUsedMoves"
+      ],
+      "move.add_species_and_pre_evolution_moves_to_mask": [],
+      "move.add_species_egg_moves_to_mask": [],
+      "move.add_species_level_up_moves_to_likely_mask": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "move.add_species_level_up_moves_to_mask": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "move.adjust_threat_severity_for_enemy_known_defense": [],
+      "move.advance_to_pre_evolution_threat_source": [],
+      "move.apply_enemy_held_item_pressure": [],
+      "move.apply_enemy_known_pressure_modifiers": [],
+      "move.apply_enemy_offensive_passive_pressure": [],
+      "move.apply_lookahead_to_top_move_candidates": [],
+      "move.apply_move_model": [],
+      "move.apply_move_model.apply_baton_pass_bias": [],
+      "move.apply_move_model.apply_charge_move_bias": [],
+      "move.apply_move_model.apply_choice_first_lock_regret": [],
+      "move.apply_move_model.apply_counter_coat_trade_bias": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_dark_shield_chance_bias": [],
+      "move.apply_move_model.apply_destiny_bond_trade_bias": [],
+      "move.apply_move_model.apply_life_orb_recoil_bias": [],
+      "move.apply_move_model.apply_phazing_plan_bias": [],
+      "move.apply_move_model.apply_poison_contact_risk_bias": [],
+      "move.apply_move_model.apply_ramp_move_bias": [],
+      "move.apply_move_model.apply_rapid_spin_bias": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_recovery_timing_discipline": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_revealed_anti_setup_avoidance": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_revealed_effect_matrix_bias": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_self_kotrade_discipline": [],
+      "move.apply_move_model.apply_setup_discipline_bias": [],
+      "move.apply_move_model.apply_setup_punish_bias": [],
+      "move.apply_move_model.apply_spikes_layer_bias": [
+        "wBossAITurnsElapsed",
+        "wPlayerScreens"
+      ],
+      "move.apply_move_model.apply_status_hard_answer_discipline": [],
+      "move.apply_move_model.enemy_has_boost_to_pass": [],
+      "move.apply_move_model.enemy_move_makes_contact": [],
+      "move.apply_move_model.enemy_under_pressure": [],
+      "move.apply_move_model.has_koline": [],
+      "move.apply_move_model.has_strong_matchup_damaging_move": [],
+      "move.apply_move_model.is_boost_setup_move": [],
+      "move.apply_move_model.is_current_enemy_recovery_move": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.player_has_major_setup_boost": [],
+      "move.apply_move_model.player_has_revealed_effect_a": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.player_has_revealed_recovery": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.player_has_seen_alive_bench_ghost": [
+        "wEnemyMonType1",
+        "wEnemyMonType2"
+      ],
+      "move.apply_move_model.status_move_would_fail_publicly": [],
+      "move.apply_move_model.utility_move_would_fail_publicly": [],
+      "move.apply_multi_turn_projection": [],
+      "move.apply_plan_move_bias": [],
+      "move.apply_player_defensive_passive_pressure": [],
+      "move.apply_repeat_penalty": [],
+      "move.apply_scout_move_bias": [],
+      "move.clamp_signed_lookahead_delta": [],
+      "move.compute_player_plausible_type_mask": [],
+      "move.current_enemy_move_accuracy_risky": [],
+      "move.current_enemy_move_has_kopressure": [],
+      "move.current_enemy_move_pressure_score": [],
+      "move.current_enemy_move_scored_power": [],
+      "move.dec_pressure_b": [],
+      "move.enemy_below_one_third_hp": [],
+      "move.enemy_known_item_nullifies_threat_type": [],
+      "move.enemy_type_boost_item_matches_move": [],
+      "move.evaluate_action_lookahead": [],
+      "move.find_party_mon_by_role": [],
+      "move.get_primary_threat_type": [],
+      "move.get_primary_threat_type_uncached": [],
+      "move.get_type_threat_severity_vs_enemy_mon": [],
+      "move.has_revealed_super_effective_move": [
+        "wPlayerUsedMoves"
+      ],
+      "move.is_current_enemy_setup_move": [],
+      "move.is_setup_effect": [],
+      "move.is_status_effect": [],
+      "move.load_public_threat_source_species": [],
+      "move.mark_scouted_if_scout_move": [],
+      "move.player_active_four_move_saturated": [],
+      "move.player_has_public_threat_vs_enemy": [],
+      "move.player_has_public_threat_vs_enemy_uncached": [],
+      "move.player_has_revealed_priority_threat": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.player_has_revealed_priority_threat_uncached": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.player_threat_type_hits_enemy": [],
+      "move.player_threat_type_super_effective_vs_enemy": [],
+      "move.predict_player_switch": [],
+      "move.public_enemy_faster": [],
+      "move.public_enemy_faster_uncached": [],
+      "move.scale_move_power_by_base_stat_ratio": [],
+      "move.scale_move_power_by_base_stat_ratio.apply_stat_stages_to_scored": [],
+      "move.scale_value_by_stat_stage": [],
+      "move.select_plan_if_needed": [],
+      "move.select_switch_hedge": [],
+      "move.should_scout": [],
+      "move.try_coach_plan_template": [],
+      "switch.find_first_alive_switch_candidate": []
+    },
+    "scenario_public_keys": [
+      "tier",
+      "family",
+      "moves",
+      "expectation"
+    ]
+  },
+  "python_mirror": {
+    "available": true,
+    "best_action_id": "move_active_pressure",
+    "best_roll_threshold": 245,
+    "best_score": 13,
+    "gap": 6,
+    "policy_reason": "ROM top action is expected-best",
+    "policy_verdict": "pass",
+    "probabilities": {
+      "move_active_pressure": 0.95703125,
+      "move_pivot_out": 0.0,
+      "move_self_ko": 0.0,
+      "move_status_script": 0.04296875
+    },
+    "rom_comparison": {
+      "contribution_mismatches": 8,
+      "hook_equivalence": {
+        "checked": true,
+        "chosen_match": true,
+        "fast_chosen": {
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot_index": 0
+        },
+        "fast_scores": [
+          1,
+          24,
+          26,
+          46
+        ],
+        "match": true,
+        "score_bytes_match": true,
+        "traced_chosen": {
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot_index": 0
+        },
+        "traced_scores": [
+          1,
+          24,
+          26,
+          46
+        ]
+      },
+      "score_bytes_match": false,
+      "selector_top_match": true
+    },
+    "second_action_id": "move_status_script",
+    "second_score": 19
+  },
+  "question": {
+    "confidence": "medium",
+    "evidence_refs": [
+      "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md"
+    ],
+    "expected_acceptable_action_ids": [
+      "move_status_script"
+    ],
+    "expected_bad_action_ids": [
+      "move_self_ko"
+    ],
+    "expected_best_action_ids": [
+      "move_active_pressure"
+    ],
+    "expected_catastrophic_action_ids": [],
+    "focus_action_id": "",
+    "lesson_type": "policy_card",
+    "policy_reason": "ROM top action is expected-best",
+    "policy_verdict": "pass",
+    "policy_why": "Price the direct pressure line before status or cash-out when it already advances a named route.",
+    "rolled_bad_action_ids": [],
+    "rolled_catastrophic_action_ids": [],
+    "rom_best_action_id": "move_active_pressure",
+    "zero_probability_best_action_ids": []
+  },
+  "rom_contributions": {
+    "available": true,
+    "event_count": 8,
+    "events": [
+      {
+        "after": 15,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot": 1,
+          "slot_index": 0
+        },
+        "closed_by": "BossAI_ApplyMoveModel.EnemyUnderPressure",
+        "delta": -5,
+        "helper_symbol": "BossAI_ApplyMoveModel.EncourageScoreByA",
+        "operation": "encourage_tier_weight",
+        "rule_id": "move.apply_move_model",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 172,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyMoveModel"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 19,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot": 2,
+          "slot_index": 1
+        },
+        "closed_by": "BossAI_ApplyMoveModel.ApplyStatusHardAnswerDiscipline",
+        "delta": -1,
+        "helper_symbol": "BossAI_ApplyMoveModel.EncourageScoreByA",
+        "operation": "encourage_tier_weight",
+        "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 492,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".StatusMoveWouldFailPublicly"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 24,
+        "before": 19,
+        "candidate": {
+          "kind": "move",
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot": 2,
+          "slot_index": 1
+        },
+        "closed_by": "BossAI_ApplyMoveModel.ApplySetupPunishBias",
+        "delta": 5,
+        "helper_symbol": "BossAI_DiscourageScoreHL",
+        "operation": "discourage_score",
+        "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 1050,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyStatusHardAnswerDiscipline"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 26,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 226,
+          "move_name": "BATON_PASS",
+          "slot": 3,
+          "slot_index": 2
+        },
+        "closed_by": "BossAI_ApplyMoveModel.ApplyRevealedAntiSetupAvoidance",
+        "delta": 6,
+        "helper_symbol": "BossAI_DiscourageScoreHL",
+        "operation": "discourage_score",
+        "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2070,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".EnemyHasBoostToPass"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 36,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyScoutMoveBias",
+        "delta": 16,
+        "helper_symbol": "BossAI_DiscourageScoreHL",
+        "operation": "discourage_score",
+        "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 1170,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySelfKOTradeDiscipline"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 46,
+        "before": 44,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 2,
+        "helper_symbol": "BossAI_ApplyMoveModel.DiscourageScoreByA",
+        "operation": "discourage_tier_weight",
+        "rule_id": "move.current_enemy_move_accuracy_risky",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 4010,
+          "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+          "public_reads": [],
+          "rule_id": "move.current_enemy_move_accuracy_risky",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 46,
+        "before": 38,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 8,
+        "helper_symbol": "",
+        "operation": "direct_score_write",
+        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 200,
+          "parent_label": "BossAI_ApplyDamageDominanceBias",
+          "public_reads": [],
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+          "source_label": "BossAI_ApplyDamageDominanceBias"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "after": 1,
+        "before": 15,
+        "candidate": {
+          "kind": "move",
+          "move_id": 126,
+          "move_name": "FIRE_BLAST",
+          "slot": 1,
+          "slot_index": 0
+        },
+        "closed_by": "BossAI_SelectSwitchHedge",
+        "delta": -14,
+        "helper_symbol": "BossAI_ApplySignedDeltaToScore",
+        "operation": "apply_signed_lookahead_delta",
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 5719,
+          "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      }
+    ],
+    "matched_trace_count": 1,
+    "unmatched_trace_ids": []
+  },
+  "rom_evidence": [
+    {
+      "artifact": "",
+      "available": true,
+      "base_route": "koga",
+      "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
+      "decision": {
+        "best_score": 1,
+        "final_scores": [
+          1,
+          24,
+          26,
+          46
+        ],
+        "possible_action_ids": [
+          "move_active_pressure",
+          "move_status_script"
+        ],
+        "post_model_scores": [
+          15,
+          24,
+          26,
+          46
+        ],
+        "rom_best_action_id": "move_active_pressure",
+        "selector_entry_scores": [
+          15,
+          24,
+          26,
+          46
+        ],
+        "selector_path": {
+          "available": true,
+          "best_action_id": "move_active_pressure",
+          "best_move_id": null,
+          "best_roll_threshold": 245,
+          "best_score": 15,
+          "best_slot_index": 0,
+          "candidate_probabilities": {
+            "move_active_pressure": 0.95703125,
+            "move_pivot_out": 0.0,
+            "move_self_ko": 0.0,
+            "move_status_script": 0.04296875
+          },
+          "candidates": [
+            {
+              "action_id": "move_active_pressure",
+              "blocked": false,
+              "move_id": null,
+              "name": "Active Pressure",
+              "score": 15,
+              "slot": 1,
+              "slot_index": 0
+            },
+            {
+              "action_id": "move_status_script",
+              "blocked": false,
+              "move_id": null,
+              "name": "Status Script",
+              "score": 24,
+              "slot": 2,
+              "slot_index": 1
+            },
+            {
+              "action_id": "move_pivot_out",
+              "blocked": false,
+              "move_id": null,
+              "name": "Pivot Out",
+              "score": 26,
+              "slot": 3,
+              "slot_index": 2
+            },
+            {
+              "action_id": "move_self_ko",
+              "blocked": false,
+              "move_id": null,
+              "name": "Self-KO",
+              "score": 46,
+              "slot": 4,
+              "slot_index": 3
+            }
+          ],
+          "chosen_action_id": "",
+          "chosen_has_nonzero_probability": false,
+          "chosen_move_id": null,
+          "chosen_probability": 0.0,
+          "chosen_slot_index": null,
+          "possible_action_ids": [
+            "move_active_pressure",
+            "move_status_script"
+          ],
+          "score_gap": 9,
+          "second_action_id": "move_status_script",
+          "second_move_id": null,
+          "second_score": 24,
+          "second_slot_index": 1,
+          "source": "rom_score_materialization_final_scores"
+        }
+      },
+      "kind": "rom_score_materialization",
+      "policy": {
+        "expected_acceptable_action_ids": [
+          "move_status_script"
+        ],
+        "expected_best_action_ids": [
+          "move_active_pressure"
+        ],
+        "probabilities": {
+          "move_active_pressure": 0.95703125,
+          "move_pivot_out": 0.0,
+          "move_self_ko": 0.0,
+          "move_status_script": 0.04296875
+        },
+        "reason": "ROM score bytes make an expected-best action top",
+        "rolled_bad_action_ids": [],
+        "rolled_catastrophic_action_ids": [],
+        "rom_best_action_id": "move_active_pressure",
+        "rom_best_probability": 0.95703125,
+        "severity": 0,
+        "verdict": "pass",
+        "zero_probability_best_action_ids": []
+      },
+      "python_agreement": {
+        "contribution_mismatches": 8,
+        "hook_equivalence": {
+          "checked": true,
+          "chosen_match": true,
+          "fast_chosen": {
+            "move_id": 126,
+            "move_name": "FIRE_BLAST",
+            "slot_index": 0
+          },
+          "fast_scores": [
+            1,
+            24,
+            26,
+            46
+          ],
+          "match": true,
+          "score_bytes_match": true,
+          "traced_chosen": {
+            "move_id": 126,
+            "move_name": "FIRE_BLAST",
+            "slot_index": 0
+          },
+          "traced_scores": [
+            1,
+            24,
+            26,
+            46
+          ]
+        },
+        "score_bytes_match": false,
+        "selector_top_match": true
+      },
+      "reason": "ROM score bytes make an expected-best action top",
+      "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
+      "status": "pass"
+    }
+  ],
+  "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
+  "schema_version": 1,
+  "source": {
+    "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
+    "scenario_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl"
+  },
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 200,
+      "parent_label": "BossAI_ApplyDamageDominanceBias",
+      "public_reads": [],
+      "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+      "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+      "source_label": "BossAI_ApplyDamageDominanceBias"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 5719,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 172,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyMoveModel"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 1170,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySelfKOTradeDiscipline"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 1050,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyStatusHardAnswerDiscipline"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2070,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyHasBoostToPass"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "public_info",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 492,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".StatusMoveWouldFailPublicly"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 4010,
+      "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_accuracy_risky",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2786,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    }
+  ],
+  "tier": 2
+}

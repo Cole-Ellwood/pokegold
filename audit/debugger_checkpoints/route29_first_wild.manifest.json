@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "route29_first_wild",
+  "description": "Power-on a fresh game, clear the New Bark/Elm opening, take Cyndaquil, and walk to the first deterministic Route 29 wild battle.",
+  "input_logs": [
+    "new_game.input.log",
+    "route29_first_wild.after_new_game.input.log"
+  ],
+  "input_log_sha256_by_name": {
+    "new_game.input.log": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+    "route29_first_wild.after_new_game.input.log": "fcfe840f74f70df16707655e636826e3c0fae5da370eb89c326f3ac5914a7900"
+  },
+  "combined_input_log_sha256": "4d3db7764ff6f8a704e740031443a14b435a7f27d4f7573a6c80a1f0edf3471b",
+  "expected_map": "24:3",
+  "expected_group": 24,
+  "expected_number": 3,
+  "expected_const": "ROUTE_29",
+  "expected_battle_mode": 1,
+  "expected_temp_wild_species": 161,
+  "expected_enemy_species": 161,
+  "expected_enemy_active": "SENTRET",
+  "expected_party_count": 1,
+  "expected_rng_at_reach": {
+    "hRandomAdd": 236,
+    "hRandomSub": 154
+  },
+  "reached_frame": 29712,
+  "total_frames": 29869,
+  "backend": "pyboy",
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "note": "This is an honest reachable-state waypoint, not a fabricated state: it replays fixed inputs from power-on with zeroed in-memory SRAM/RTC, selects Cyndaquil in Elm's lab, accepts the aide potion, walks into Route 29 grass, and reaches the first deterministic wild battle. navigate --verify asserts the predicate, map, frame, checkpoint-log sha, and RAM signature."
+}

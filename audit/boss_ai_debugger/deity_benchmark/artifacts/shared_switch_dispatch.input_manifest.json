@@ -1,0 +1,58 @@
+{
+  "closed_evidence_ids": [
+    "decision_input.auto_resolved",
+    "input_manifest.replay_verified"
+  ],
+  "generated_at": "2026-05-31T01:16:45Z",
+  "hash_basis": {
+    "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+    "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+    "manifest_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+    "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+    "trace_rom_matches_manifest": true,
+    "trace_symbols_matches_manifest": true
+  },
+  "kind": "boss_ai_decision_input_manifest",
+  "known_limits": [
+    "This resolver uses a committed live first-decision trace capture, not deep boss-battle navigation.",
+    "Replay verification proves selector agreement for the captured score bytes; full score-rule provenance still needs rom-contribution-trace when absent."
+  ],
+  "replay_verification": {
+    "chosen_id": 211,
+    "expected_move_ids": [
+      14,
+      211
+    ],
+    "match": true,
+    "method": "BossAI_SelectMove trace replay over captured score bytes",
+    "mode": "exact",
+    "reason": "chosen slot has nonzero selector probability",
+    "verdict": "match",
+    "verified": true
+  },
+  "resolution": {
+    "capture_manifest_id": "shared_switch_loop",
+    "capture_manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+    "capture_status": "FINISHED",
+    "source": "live_capture_manifest",
+    "source_kind": "current_live_trace_capture",
+    "sufficient": true,
+    "trace_capture_id": "Shared switch-loop#1",
+    "trace_path": "audit/boss_ai_trace/shared_switch_loop_live.txt"
+  },
+  "schema_version": 1,
+  "source_state": {
+    "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+    "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+    "trace_artifact_sha256": "C572C9BBCED088173B81D1475994816474096F6DDC3C1F69DEDA4B1D73921F49"
+  },
+  "target": {
+    "boss_route": "shared_switch_loop",
+    "decision_index": 1,
+    "decision_surface": "switch_dispatch",
+    "public_state_predicate": "",
+    "requested_boss_route": "",
+    "requested_capture_id": "shared_switch_loop",
+    "turn": null
+  }
+}

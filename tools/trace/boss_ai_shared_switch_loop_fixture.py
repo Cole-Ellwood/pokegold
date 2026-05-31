@@ -25,6 +25,14 @@ DEFAULT_LOG = ROOT / ".local" / "tmp" / "boss_state_factory" / "shared_switch_lo
 MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 EARTHQUAKE = 0x59
 PARTYMON_STRUCT_LENGTH = 0x30
+JASMINE_CAPTURE_ID = "jasmine"
+SHARED_CAPTURE_ID = "shared_switch_loop"
+GENGAR = 0x5E
+QWILFISH = 0xD3
+STARMIE = 0x79
+POISON = 0x03
+GROUND = 0x04
+WATER = 0x14
 
 
 def fail(message: str) -> None:
@@ -50,6 +58,18 @@ def write_party_hp(
     factory.write_byte(pyboy, capture.Symbol(symbol.bank, address + 1), value & 0xFF)
 
 
+def write_party_byte(
+    pyboy,
+    symbols: dict[str, capture.Symbol],
+    base_name: str,
+    zero_based_index: int,
+    value: int,
+) -> None:
+    symbol = symbols[base_name]
+    address = symbol.address + zero_based_index * PARTYMON_STRUCT_LENGTH
+    factory.write_byte(pyboy, capture.Symbol(symbol.bank, address), value)
+
+
 def read_word(pyboy, symbols: dict[str, capture.Symbol], name: str) -> int:
     symbol = symbols[name]
     high = capture.read_byte(pyboy, symbol)
@@ -59,17 +79,27 @@ def read_word(pyboy, symbols: dict[str, capture.Symbol], name: str) -> int:
 
 def manifest_switch_base_state() -> Path:
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    shared_base_state = ""
     for entry in data.get("captures", []):
-        if entry.get("id") != "shared_switch_loop":
+        if entry.get("id") == JASMINE_CAPTURE_ID:
+            save_state = entry.get("save_state")
+            if isinstance(save_state, str) and save_state:
+                return manifest_path(save_state)
+        if entry.get("id") != SHARED_CAPTURE_ID:
             continue
         save_state = entry.get("switch_materialization_base_state")
-        if not isinstance(save_state, str) or not save_state:
-            break
-        path = Path(save_state)
-        if path.is_absolute():
-            return path
-        return ROOT / path
+        if isinstance(save_state, str) and save_state:
+            shared_base_state = save_state
+    if shared_base_state:
+        return manifest_path(shared_base_state)
     return DEFAULT_BASE_STATE
+
+
+def manifest_path(path_text: str) -> Path:
+    path = Path(path_text)
+    if path.is_absolute():
+        return path
+    return ROOT / path
 
 
 def zero_trace(pyboy, symbols: dict[str, capture.Symbol]) -> None:
@@ -83,17 +113,68 @@ def zero_trace(pyboy, symbols: dict[str, capture.Symbol]) -> None:
             )
 
 
+def clear_switch_materialization_outputs(pyboy, symbols: dict[str, capture.Symbol]) -> None:
+    for name in (
+        "wBossAITraceSwitchConfidence",
+        "wBossAITraceChosenMove",
+        "wEnemySwitchMonParam",
+        "wEnemySwitchMonIndex",
+    ):
+        factory.write_one(pyboy, symbols, name, 0)
+
+
 def prepare_repeated_switch_state(pyboy, symbols: dict[str, capture.Symbol]) -> None:
-    max_hp = read_word(pyboy, symbols, "wEnemyMonMaxHP")
+    max_hp = 100
+    factory.write_one(pyboy, symbols, "wBossAITier", 2)
+    factory.write_one(pyboy, symbols, "wBossAITierWeightRow", 1)
     factory.write_one(pyboy, symbols, "wCurOTMon", 0)
     factory.write_one(pyboy, symbols, "wBossAILastSwitchedOut", 2)
     factory.write_one(pyboy, symbols, "wBossAISwitchCooldown", 2)
+    factory.write_one(pyboy, symbols, "wBossAIRepeatCount", 0)
+    factory.write_one(pyboy, symbols, "wBossAILastChosenMove", 0)
+    factory.write_one(pyboy, symbols, "wBossAIWinconMonIdx", 2)
+    factory.write_one(pyboy, symbols, "wBossAIPlanId", 0)
+    factory.write_one(pyboy, symbols, "wBossAIPlanPhase", 1)
+    factory.write_one(pyboy, symbols, "wBossAIPlanConfidence", 60)
     factory.write_one(pyboy, symbols, "wEnemySwitchMonParam", 0)
     factory.write_one(pyboy, symbols, "wEnemySwitchMonIndex", 0)
     factory.write_one(pyboy, symbols, "wPlayerUsedMoves", EARTHQUAKE)
     factory.write_one(pyboy, symbols, "wLastPlayerCounterMove", 0)
+    factory.write_one(pyboy, symbols, "wOTPartyCount", 2)
+    factory.write_one(pyboy, symbols, "wOTPartySpecies", QWILFISH)
+    factory.write_byte(
+        pyboy,
+        capture.Symbol(
+            symbols["wOTPartySpecies"].bank,
+            symbols["wOTPartySpecies"].address + 1,
+        ),
+        GENGAR,
+    )
+    factory.write_byte(
+        pyboy,
+        capture.Symbol(
+            symbols["wOTPartySpecies"].bank,
+            symbols["wOTPartySpecies"].address + 2,
+        ),
+        0xFF,
+    )
+    factory.write_one(pyboy, symbols, "wEnemyMonSpecies", QWILFISH)
+    factory.write_one(pyboy, symbols, "wEnemyMonType1", POISON)
+    factory.write_one(pyboy, symbols, "wEnemyMonType2", WATER)
+    factory.write_one(pyboy, symbols, "wBattleMonSpecies", STARMIE)
+    factory.write_one(pyboy, symbols, "wBattleMonType1", GROUND)
+    factory.write_one(pyboy, symbols, "wBattleMonType2", GROUND)
+    factory.write_one(pyboy, symbols, "wBattleMonStatus", 0)
+    factory.write_one(pyboy, symbols, "wEnemyMonStatus", 0)
     write_word(pyboy, symbols, "wEnemyMonHP", max_hp)
+    write_word(pyboy, symbols, "wEnemyMonMaxHP", max_hp)
+    write_word(pyboy, symbols, "wBattleMonHP", 80)
+    write_word(pyboy, symbols, "wBattleMonMaxHP", max_hp)
+    write_party_byte(pyboy, symbols, "wOTPartyMon1Species", 0, QWILFISH)
+    write_party_byte(pyboy, symbols, "wOTPartyMon1Species", 1, GENGAR)
+    write_party_byte(pyboy, symbols, "wOTPartyMon1Level", 1, 50)
     write_word(pyboy, symbols, "wOTPartyMon2HP", 100)
+    write_word(pyboy, symbols, "wOTPartyMon2MaxHP", max_hp)
     for party_index in (2, 3, 4):
         write_party_hp(pyboy, symbols, party_index, 0)
     zero_trace(pyboy, symbols)
@@ -107,19 +188,35 @@ def advance_with_a_presses(pyboy, frames: int) -> None:
 
 
 class SwitchEntryCapture:
-    def __init__(self, pyboy, out: Path) -> None:
+    def __init__(
+        self,
+        pyboy,
+        symbols: dict[str, capture.Symbol],
+        out: Path,
+    ) -> None:
         self.pyboy = pyboy
+        self.symbols = symbols
         self.out = out
         self.saved = False
 
 
 def save_switch_entry_state(context: SwitchEntryCapture) -> None:
-    if context.saved:
-        return
     context.out.parent.mkdir(parents=True, exist_ok=True)
     with context.out.open("wb") as fh:
         context.pyboy.save_state(fh)
     context.saved = True
+
+
+def clean_saved_switch_materialization_state(
+    pyboy,
+    symbols: dict[str, capture.Symbol],
+    path: Path,
+) -> None:
+    with path.open("rb") as fh:
+        pyboy.load_state(fh)
+    clear_switch_materialization_outputs(pyboy, symbols)
+    with path.open("wb") as fh:
+        pyboy.save_state(fh)
 
 
 def verify_fixture(pyboy, symbols: dict[str, capture.Symbol], frames: int) -> list[str]:
@@ -207,7 +304,7 @@ def main() -> int:
     pyboy = trace_runtime.open_pyboy(capture.DEFAULT_ROM, "PyBoy is required to build the fixture")
     try:
         trace_runtime.disable_realtime(pyboy)
-        entry_capture = SwitchEntryCapture(pyboy, args.predispatch_out)
+        entry_capture = SwitchEntryCapture(pyboy, symbols, args.predispatch_out)
         pyboy.hook_register(
             switch_entry.bank,
             switch_entry.address,
@@ -226,6 +323,7 @@ def main() -> int:
         with args.predispatch_out.open("rb") as fh:
             pyboy.load_state(fh)
         observed = verify_fixture(pyboy, symbols, args.verify_frames)
+        clean_saved_switch_materialization_state(pyboy, symbols, args.predispatch_out)
     finally:
         pyboy.stop(save=False)
 

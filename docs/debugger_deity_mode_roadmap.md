@@ -9,16 +9,25 @@
 > doc defines the **next tier above it — deity mode** — and the ranked,
 > step-by-step path to get there.
 >
-> **This is a plan, not an implementation.** Nothing here is built. Per the
-> handoff: do **not** start implementing deity-mode features until Cole has
-> reviewed this roadmap. Several phases carry North-Star decisions that are
-> Cole's to make (see [§12](#12-north-star-decisions-cole-owns)).
+> **This began as a plan.** Cole has now approved starting implementation, so
+> status notes below distinguish built slices from remaining roadmap work.
+> Several phases still carry North-Star decisions that are Cole's to make (see
+> [§12](#12-north-star-decisions-cole-owns)).
 
-**Status:** authored, awaiting review.
+**Status:** implemented through the current deity benchmark gate. `python
+tools/audit/check_debugger_deity_mode.py --timeout 90` now reports
+`deity_ready=True`, 15/15 questions, pass_rate 1.000, and 7/7 deity components
+built. Phase 6 remains optional cleanup gated by the North-Star decisions in
+[§12](#12-north-star-decisions-cole-owns).
 **Predecessor:** [`docs/debugger_godmode_spec.md`](debugger_godmode_spec.md)
 (DEBUGGER-001, `COMPLETE`).
 **Source of current truth:** `python -m tools.debugger session-start`,
 [`docs/debugger_unification_plan.md`](debugger_unification_plan.md).
+**Focused Boss AI slice:**
+[`docs/boss_ai_debugger_deity_mode_roadmap.md`](boss_ai_debugger_deity_mode_roadmap.md)
+defines the Boss-AI-only path to self-driving "why did the boss do that?"
+proofs without pulling in audio, graphics, script VM, live-view, or generic
+taint work.
 
 ---
 
@@ -218,6 +227,25 @@ selftest component + ≥1 deity-benchmark question lifted FAIL→PASS + the audi
 `deity_gap` note for its capability cleared.** That per-phase contract is the
 deity-mode analogue of the godmode per-slice north-star gate.
 
+### Per-phase detail standard
+
+Every remaining phase must be detailed at the same level as the focused Boss AI
+roadmap. A phase is not implementation-ready unless this document names:
+
+1. The exact user question shape the phase answers.
+2. The target schema accepted by the command or benchmark row.
+3. The resolver order from user target to runtime input.
+4. The artifact manifest fields the phase writes.
+5. The proof-status vocabulary for complete, partial, unsupported, stale, and
+   hash/backend-blocked states.
+6. The benchmark rows that turn from FAIL to PASS.
+7. The selftest component and its non-emulator or headless fixture.
+8. The fail-closed diagnostics and next-action commands.
+9. The strongest focused verification command for the phase.
+
+If a later section only names a feature, treat it as underspecified and expand
+this roadmap before coding.
+
 ---
 
 ## 5) Phase 0 — Deity measurement harness — ✅ DONE
@@ -256,12 +284,12 @@ the godmode build opened by building its benchmark. No deity capability is
 ### Acceptance criterion — ✅ MET
 
 `python tools/audit/check_debugger_deity_mode.py --self-test` PASSES (scorer
-logic verified). The baseline run prints
+logic verified). The historical baseline printed
 `deity_ready=False deity_gap_actions=15` (8 failed runtime proofs + 7 unbuilt
-components, `pass_rate=0.000`) — the honest start line. The God-tool triad is
-untouched: selftest still **28/28**, `check_release_smoke.py` PASS, and the
-deity gate is deliberately **excluded** from release-smoke (it is meant to be
-red until the capability phases land).
+components, `pass_rate=0.000`) — the honest start line. The current closeout
+run prints `deity_ready=True deity_gap_actions=0` with 15/15 questions and 7/7
+components. The God-tool floor remains green: selftest is **35/35**, the
+godmode benchmark is **29/29**, and `check_release_smoke.py` passes.
 
 ---
 
@@ -330,27 +358,102 @@ deity-benchmark question previously blocked on a hand-supplied state (e.g.
 known target from a checkpoint, verify the manifest round-trips, assert
 fail-closed on a deliberately unreachable predicate).
 
-**Status — foundational slice landed (not the full phase).** The
-replay-to-checkpoint half is built and proven; input-space *search* is not.
+**Status -- current deity benchmark slice complete.** The replay-to-checkpoint
+half is built and proven for multiple reachable states; input-space search now
+exists as a short-horizon, checkpoint-anchored PyBoy BFS that emits replayable
+input logs. Long-horizon arbitrary-state synthesis remains out of scope unless
+a future benchmark row names it and the compute budget is approved.
 
-- Task 2 (checkpoint library): seeded — `audit/debugger_checkpoints/new_game`
-  (`.input.log` + manifest) power-on → `PLAYERS_HOUSE_2F` (map `24:7`), fixed
-  deterministic inputs, byte-sha pinned. Regenerate via `.local/deity_freeze.py`.
-- Task 3 (`navigate.py`): built as **replay nearest checkpoint + evaluate the
-  predicate each frame**, not BFS/greedy input search. So it reaches a state a
-  checkpoint already lands on (e.g. `map=PLAYERS_HOUSE_2F`) and fails closed on
-  anything past the checkpoint's inputs (`battle(...)`, `wild_battle`, other
-  maps) — the honest "capability not built yet" signal. Search across menu/
-  overworld/battle transitions is the next slice.
+- Task 2 (checkpoint library): seeded with `audit/debugger_checkpoints/new_game`
+  (`.input.log` + manifest) power-on → `PLAYERS_HOUSE_2F` (map `24:7`), and
+  `audit/debugger_checkpoints/route29_first_wild` (chained input logs +
+  manifest) power-on → Cyndaquil → Route 29 first wild battle (map `24:3`,
+  `wBattleMode=1`), `audit/debugger_checkpoints/route46_south` (chained input
+  logs + manifest) power-on → Route 29 first wild → deterministic RUN macro →
+  Route 29/46 gate → Route 46 south entrance (map `5:9`, `x=7`, `y=33`), and
+  `audit/debugger_checkpoints/route30_south` (chained input logs + manifest)
+  power-on → Route 46 south → bounded-search route walk to Route 30 south
+  (map `26:1`, `x=6`, `y=53`), `audit/debugger_checkpoints/mr_pokemon_after_oak`
+  power-on → Mr. Pokemon's house → bounded script A-mash through Mr. Pokemon
+  and Oak (map `26:10`, `x=3`, `y=6`, `script_mode=0`), and
+  `audit/debugger_checkpoints/cherrygrove_rival_battle` power-on → post-Oak
+  checkpoint → Cherrygrove rival scene → RIVAL1 trainer battle (map `26:3`,
+  `x=33`, `y=7`, `wBattleMode=2`), and
+  `audit/debugger_checkpoints/cherrygrove_post_rival` power-on → RIVAL1 battle
+  → target-aware bounded A-button battle clear → idle Cherrygrove overworld
+  (map `26:3`, `x=33`, `y=8`, `script_mode=0`), and
+  `audit/debugger_checkpoints/elms_lab_post_officer` power-on → post-rival
+  Cherrygrove → Route 29/New Bark → Elm's Lab → officer/name-rival scene
+  cleared to idle lab control (map `24:5`, `x=4`, `y=3`, `script_mode=0`,
+  `EVENT_GOT_MYSTERY_EGG_FROM_MR_POKEMON=true`,
+  `EVENT_RIVAL_CHERRYGROVE_CITY=true`),
+  and `audit/debugger_checkpoints/elms_lab_after_aide` power-on → post-officer
+  lab → bounded facing-aware A-button interaction with Elm → Mystery Egg
+  handoff plus aide Poke Ball handoff cleared to idle lab control (map `24:5`,
+  `x=4`, `y=8`, `script_mode=0`, `EVENT_GAVE_MYSTERY_EGG_TO_ELM=true`).
+  All pin input-log bytes; Route 29/46/30, post-Oak, rival-battle,
+  post-rival, post-officer, and after-aide waypoints also pin frame count,
+  PyBoy backend, zeroed in-memory SRAM plus locked zeroed RTC seed, party count,
+  and RNG bytes.
+- Task 3 (`navigate.py`): built as **auto-select nearest checkpoint + replay
+  fixed inputs + evaluate the predicate each frame**, plus
+  `navigate --search-to "<predicate>"` for bounded PyBoy BFS from a checkpoint.
+  The searcher uses temporary PyBoy save-states only as queue nodes, currently
+  expands overworld direction macros, can normalize wild battles with a
+  deterministic RUN macro, can clear bounded map/text scripts with recorded
+  A-button pulses, can clear simple trainer battles with target-aware bounded
+  A-button pulses when the target is the post-battle state, and writes a plain
+  text input-log extension. When a predicate names an event flag, the searcher
+  also expands bounded A-button interaction actions and observes event bits
+  from RAM; the state key includes facing and event bits so it cannot collapse a
+  "same tile, wrong facing/event" false positive. That extension must be
+  replayed from power-on and `navigate --verify` must match the RAM signature
+  before it counts as proof.
+  It reaches
+  `map=PLAYERS_HOUSE_2F`, `wild_battle and map=ROUTE_29`, `map=ROUTE_46`, and
+  `map=ROUTE_30`, plus
+  `trainer_battle and trainer_class=RIVAL1`, and the post-rival idle
+  Cherrygrove predicate (`map=CHERRYGROVE_CITY`, `x=33`, `y=8`,
+  `script_mode=0`, `script_running=0`), plus the post-officer Elm's Lab idle
+  predicate (`event=EVENT_GOT_MYSTERY_EGG_FROM_MR_POKEMON`,
+  `event=EVENT_RIVAL_CHERRYGROVE_CITY`, `map=ELMS_LAB`, `x=4`, `y=3`,
+  `script_mode=0`, `script_running=0`) and the after-aide event predicate
+  (`event=EVENT_GAVE_MYSTERY_EGG_TO_ELM`, `map=ELMS_LAB`, `x=4`, `y=8`,
+  `script_mode=0`, `script_running=0`), and
+  `battle(boss=MORTY) and turn==3` via the manifest-pinned Morty boss AI seed
+  plus replayed A-button pulses. The RAM observer now decodes map x/y,
+  trainer-vs-wild battle mode, public `trainer_class`/`trainer_id` predicates,
+  script mode/running state, boss class, player/enemy active species, player
+  and enemy turn counters (predicate `turn` is the battle-turn max), facing,
+  and named event flags. On current source, Morty's proof state is Haunter on
+  enemy turn 3; the older "Gengar Hypnosis" wording is historical benchmark
+  text, not the current party data.
 - Task 4 (honest synthesis): `navigate --verify <run-manifest>` re-drives and
-  re-asserts predicate + map + checkpoint-log sha; fail-closed names the nearest
-  observed state. RNG-seed recording deferred (fixed inputs from boot are
-  already deterministic).
+  re-asserts predicate + map + checkpoint-log sha + frame + RAM signature.
+  Run manifests record checkpoint logs, total frames, reached frame, PyBoy
+  backend, RNG bytes, and save-state path. Synthesized states are labeled as
+  navigator runs. Local PyBoy navigation runs are serialized with a backend
+  lock so overlapping CLI invocations cannot perturb replay validation.
+- Task 5 (`save-state-lab synth`): built as a lab-surface wrapper over the
+  same checkpoint-backed navigator:
+  `python -m tools.debugger save-state-lab synth --to "<predicate>"`. It writes
+  the navigator save-state + manifest, replay-verifies the manifest by default,
+  labels the output as synthesized/PyBoy-backed, and fails closed when the
+  predicate is outside the checkpoint library. Direct PyBoy `.state` decoding
+  remains unsupported by `inspect`; predicate truth is confirmed by live RAM
+  observation plus manifest replay.
 - `auto_navigation` selftest component is **green** (pure-logic gate, no
-  emulator); the end-to-end self-drive proof is the `deity_nav_new_game_bedroom`
-  benchmark question (PASS). Tasks 5 (`save-state-lab synth`) and 6 (crossemu
-  cross-check) remain. Latest scores: `baseline_2026-05-30.md` (1/9 questions,
-  1/7 components).
+  emulator); the end-to-end self-drive proofs are now
+  `deity_nav_new_game_bedroom`, `deity_nav_first_wild_route29`,
+  `deity_nav_route46_search_waypoint`, and
+  `deity_nav_route30_search_waypoint`, plus
+  `deity_nav_cherrygrove_rival_trainer_battle` and
+  `deity_nav_cherrygrove_post_rival_battle` and
+  `deity_nav_elms_lab_post_officer` and `deity_nav_elms_lab_after_aide` (all
+  PASS). Task 6 (crossemu cross-check),
+  deeper trainer/boss waypointing, and full input-space search remain. Latest
+  score: `.local/tmp/debugger_deity_benchmark/results.json` from the current
+  gate run (15/15 questions, 7/7 components, `deity_ready=True`).
 
 ---
 
@@ -366,6 +469,80 @@ automatic save-state synthesis").
 
 **Builds on:** Phase 1 (`navigate` to reach the state), `dynamic_taint.py`,
 `taint.py`, `effect_trace.py`, `tdb.py`.
+
+### Phase 2 contract
+
+User question shape:
+
+- "Why did byte `$D141` become this value here?"
+- "What instruction last wrote this RAM address at this reachable state?"
+- "Which source rule/table/input does this output byte depend on?"
+- "After this edit, did the write provenance for this byte change?"
+
+Target schema:
+
+- `byte`: absolute address, symbol name, or `bank:addr` pair.
+- `at`: state predicate parsed by the Phase 1 predicate language.
+- `stop`: `first_write`, `value_equals`, `value_changes`, or
+  `after_instruction`.
+- `window_policy`: `auto`, `fixed_frames`, or `until_boundary`.
+- `max_frames`: hard budget before fail-closed.
+- `backend`: `pyboy`, `vbam_check`, or `auto`.
+- `expected_value`: optional, used only to verify the observed byte.
+- `source_filter`: optional source path, symbol, or label filter for narrowed
+  provenance.
+
+Resolver order:
+
+1. Parse the target and reject unknown byte/symbol/predicate fields up front.
+2. Ask Phase 1 `navigate` for a verified manifest satisfying `at`.
+3. Install a byte watch before advancing frames.
+4. Stop at the configured write/value condition.
+5. Capture the minimum trace window that reaches a recognized provenance
+   boundary.
+6. Run the shared taint query over the captured window.
+7. Attach source anchors, byte value history, backend metadata, and the
+   navigation manifest.
+
+Artifact manifest fields:
+
+- `kind`: `debugger_deity_auto_taint`.
+- `target_byte`, `target_symbol`, `target_predicate`, and parsed target AST.
+- `navigation_manifest`, checkpoint id, input-log hash, frame count, RNG seed,
+  backend, and replay verification result.
+- `watch_start_frame`, `write_frame`, `write_pc`, `write_bank`,
+  `write_instruction`, and observed before/after values.
+- `trace_window_start`, `trace_window_end`, trace hash, and window sizing
+  reason.
+- `taint_roots`, register lineage, memory-read lineage, source anchors, and
+  disproof standard.
+- `backend_cross_check`: not required, passed, failed, or unsupported, with
+  reason.
+
+Proof statuses:
+
+- `explained`: reached predicate, observed write, taint chain rooted, source
+  anchors emitted.
+- `partial_window`: write observed, but the auto-sized window stopped before a
+  stable root.
+- `no_write_observed`: predicate reached but the byte was not written within
+  `max_frames`.
+- `blocked_by_navigation`: Phase 1 could not reach or verify the target state.
+- `blocked_by_backend`: PyBoy/VBA-M setup or divergence prevents authoritative
+  proof.
+- `unsupported_byte`: target is outside mapped ROM/RAM/symbol ranges.
+- `stale_trace_basis`: ROM/symbol hash does not match the manifest basis.
+
+Seed deity rows to close:
+
+- `deity_taint_known_damage_byte`: one-shot taint of a known damage/result byte
+  from a checkpointed battle state.
+- `deity_taint_textbox_control_byte`: provenance for a text/window control byte
+  during an early-game script.
+- `deity_taint_navigation_fail_closed`: unsupported deep predicate reports
+  `blocked_by_navigation` with the exact next checkpoint/search action.
+- `deity_taint_changed_source_delta`: compare a current taint packet with a
+  previous run and report whether writer/source anchors changed.
 
 ### Tasks
 
@@ -397,6 +574,24 @@ deity-benchmark "why did byte X get value Y" question scores PASS with
 known damage byte reproduces the chain `tdb` produces from a hand-captured
 report).
 
+Focused verification:
+
+- `python -m tools.debugger taint --byte <known_symbol_or_addr> --at "<reachable_predicate>" --json-out <artifact>`
+- `python tools/audit/check_debugger_deity_mode.py --baseline` with the Phase 2
+  rows expected to pass and unrelated future rows allowed to remain red.
+- `python -m tools.debugger.selftest --component auto_taint` once component
+  filtering exists, otherwise the full selftest.
+
+**Status -- current deity benchmark slice complete.** The one-shot taint
+surface now self-navigates before capturing the write/provenance packet.
+`python -m tools.debugger taint --byte wCurDamage --at
+"battle(boss=FALKNER) and turn==1"` and the raw-address form for `$D141` at
+`battle and turn==1` pass the deity gate without a hand-supplied report. The
+answer includes the navigation manifest, observed byte target, source anchors,
+taint root, and model source. Automatic instruction-window expansion beyond the
+current benchmark write packet remains deeper work, not a blocker for the
+15/15 deity gate.
+
 ---
 
 ## 8) Phase 3 — Runtime behavioral replay for the static-only surfaces
@@ -418,6 +613,79 @@ half of `whole_rom_replay_localization`.
 
 **Builds on:** Phase 1 (`navigate` to the event context), `crossemu.py`,
 `runtime_state.py`, and each surface's existing static mirror.
+
+### Phase 3 contract
+
+User question shape:
+
+- "What actually played on the audio channels when this event fired?"
+- "What did the player see on this exact frame, and did PyBoy and VBA-M agree?"
+- "Which script commands executed from this live event context?"
+- "Did runtime behavior diverge from the static mirror even though ROM bytes
+  still match?"
+
+Common replay target schema:
+
+- `surface`: `audio`, `graphics`, `script`, or `all`.
+- `at`: Phase 1 state predicate.
+- `trigger`: event, script label, map interaction, frame count, sound id, text
+  id, menu action, or input macro.
+- `duration`: frames, until idle, until script return, or until sound/channel
+  silence.
+- `backend`: `pyboy`, `vbam`, `crosscheck`, or `auto`.
+- `mirror_expectation`: static mirror id or auto-discovered mirror record.
+- `diff_mode`: `strict`, `semantic`, or `diagnostic`.
+
+Common artifact manifest fields:
+
+- `kind`: `debugger_deity_runtime_replay`.
+- `surface`, target predicate, trigger, duration, backend, and replay command.
+- `navigation_manifest`, input-log hash, frame count, RNG seed, and replay
+  verification.
+- `static_mirror_id`, mirror source anchor, mirror payload hash, and mirror
+  prediction summary.
+- `observed_timeline_hash`, structured timeline path, diff summary, and first
+  divergent frame/command/channel when present.
+- `cross_backend`: PyBoy result, VBA-M result, equivalence status, and
+  divergence notes.
+- `proof_status` and exact next-action command.
+
+Surface-specific evidence:
+
+- Audio: NR10-NR52 register timeline, channel enable/disable events, note/freq
+  events where decodable, envelope/sweep changes, silence boundary, and the
+  static audio mirror row.
+- Graphics/UI: framebuffer hash, VRAM/OAM snapshots, tilemap/window/sprite
+  decode, palette state, PyBoy/VBA-M image diff, and the first pixel/tile/OAM
+  divergence.
+- Script VM: script PC timeline, decoded command stream, branch decisions,
+  memory effects, called script labels, return/idle boundary, and static script
+  mirror decode.
+
+Proof statuses:
+
+- `replayed`: runtime behavior observed and matched the mirror or reported an
+  intended diagnostic diff.
+- `runtime_mirror_mismatch`: runtime behavior disagrees with static prediction.
+- `backend_divergence`: PyBoy and VBA-M disagree on timing/graphics-sensitive
+  evidence.
+- `blocked_by_navigation`: target event context could not be reached.
+- `blocked_by_trigger`: context reached, but requested sound/frame/script did
+  not fire.
+- `mirror_unmapped`: runtime event observed but no static mirror record maps to
+  it.
+- `unsupported_surface`: requested surface is not implemented by Phase 3 yet.
+
+Seed deity rows to close:
+
+- `deity_replay_audio_known_cry`: auto-reach a context that plays a known cry
+  or sound effect and prove channel-register playback against the mirror.
+- `deity_replay_graphics_first_menu_frame`: auto-reach a deterministic UI
+  frame, capture framebuffer/VRAM/OAM, and cross-check PyBoy/VBA-M.
+- `deity_replay_script_mr_pokemon_handoff`: auto-reach an early script event
+  and prove observed script commands/branches against the static decode.
+- `deity_replay_static_mirror_regression_fixture`: synthetic test where static
+  bytes match but runtime behavior diverges and replay reports the mismatch.
 
 ### Tasks (one replay harness per surface — independent, can parallelize)
 
@@ -453,6 +721,28 @@ deity-benchmark questions (one per surface) score PASS with `driver: auto`.
 Selftest components `audio_replay`, `graphics_replay`, `script_vm_replay` all
 green.
 
+Focused verification:
+
+- `python -m tools.debugger replay --surface audio --at "<reachable_predicate>" --json-out <artifact>`
+- `python -m tools.debugger replay --surface graphics --at "<reachable_predicate>" --json-out <artifact>`
+- `python -m tools.debugger replay --surface script --at "<reachable_predicate>" --json-out <artifact>`
+- `python tools/audit/check_debugger_deity_mode.py --baseline` with the Phase 3
+  rows expected to pass.
+- `python -m tools.debugger.selftest` with `audio_replay`, `graphics_replay`,
+  and `script_vm_replay` registered only after they are green.
+
+**Status -- current deity benchmark slice complete.** `replay --surface audio`
+for `cry(species=TYPHLOSION)` auto-reaches a clean PyBoy context, enters the ROM
+`PlayCry` routine, decodes the matching cry channel block from
+`audio/cries.asm`, and captures an APU register timeline. `replay --surface
+graphics --at "map=ECRUTEAK_GYM"` auto-selects the Morty/Ecruteak checkpoint
+and writes framebuffer, VRAM, OAM, LCD-register, and digest evidence.
+`replay --surface script --at "map=ELMS_LAB and script=ProfElmScript"` reaches
+Elm's Lab, decodes `ProfElmScript`, initializes the script runner fields, and
+captures the script VM pointer stream. These are PyBoy runtime proofs against
+static mirror/source anchors; PyBoy/VBA-M pixel parity and richer
+branch-by-branch attribution remain North-Star extensions.
+
 ---
 
 ## 9) Phase 4 — Full SM83-model unification
@@ -472,6 +762,64 @@ substrate yet").
 
 **Builds on:** `sm83_model.py`, `dynamic_taint.py`, `effect_trace.py`; the
 parity assertion that was removed (re-add it as the gate).
+
+### Phase 4 contract
+
+User question shape:
+
+- "Do taint and effect-trace agree on this instruction's register/memory
+  effects?"
+- "Did an instruction model change alter debugger provenance?"
+- "Which SM83 opcode semantic difference explains this taint/trace mismatch?"
+
+Model inventory schema:
+
+- `opcode`: byte value and prefixed/unprefixed namespace.
+- `mnemonic`: normalized SM83 mnemonic.
+- `operands`: normalized operand kinds.
+- `reads`: registers, flags, memory, immediate bytes, and implicit reads.
+- `writes`: registers, flags, memory, stack, PC, SP, and interrupt state.
+- `cycles`: cycle alternatives and branch conditions where modeled.
+- `taint_semantics`: source-to-destination propagation rules.
+- `trace_semantics`: effect-trace event emission rules.
+- `coverage`: unit, fixture, live trace, and parity evidence ids.
+
+Shared model API requirements:
+
+- One instruction decoder used by both consumers.
+- One side-effect description object for register, flag, memory, PC/SP, stack,
+  and cycle effects.
+- Separate adapters for taint propagation and effect-trace event emission, so
+  model sharing does not force both tools to emit the same output shape.
+- A compatibility shim only where old output formatting requires it; no forked
+  semantic copy.
+
+Artifact manifest fields:
+
+- `kind`: `debugger_deity_sm83_parity`.
+- model version, opcode table hash, source file anchors, and test fixture id.
+- dynamic-taint output digest and effect-trace output digest.
+- per-instruction parity result and first semantic mismatch.
+- regression fixture result for the historical 1-finding case.
+- list of opcodes with only static coverage and no live trace exercise.
+
+Proof statuses:
+
+- `parity_proven`: both consumers share the model and agree on the fixture.
+- `model_mismatch`: consumers diverge for an opcode or side effect.
+- `coverage_partial`: shared model exists but one or more opcodes lack live or
+  fixture evidence.
+- `regression_detected`: the historical taint finding count regressed.
+- `adapter_only`: outputs differ only in formatting; semantic digest matches.
+
+Seed deity rows to close:
+
+- `deity_sm83_known_taint_trace_parity`: a trace/taint fixture that exercises
+  load, arithmetic, branch, and memory-write effects.
+- `deity_sm83_historical_regression_guard`: the specific old 1-finding case
+  remains one finding after unification.
+- `deity_sm83_opcode_coverage_report`: benchmark row proving no unsupported
+  opcode is used by current deity proof traces.
 
 ### Tasks
 
@@ -500,6 +848,22 @@ drop-reason regression does not recur). A deity-benchmark question that needs
 a taint claim and a trace claim to agree on the same instruction semantics
 scores PASS.
 
+Focused verification:
+
+- `python -m unittest tools.debugger.tests.test_sm83_model`
+- `python -m unittest tools.debugger.tests.test_dynamic_taint`
+- `python -m unittest tools.debugger.tests.test_effect_trace`
+- `python -m tools.debugger.selftest`
+- `python tools/audit/check_debugger_deity_mode.py --baseline` with Phase 4
+  rows expected to pass.
+
+**Status -- current deity benchmark slice complete.** `dynamic_taint` and
+`effect_trace` both report the shared `tools.debugger.sm83_model` model source,
+and the selftest/godmode/deity gates confirm the old dropped-component taint
+regression did not return. The current proof traces agree on one model boundary;
+exhaustive SM83 opcode/f flag coverage is still future parity work rather than
+a current deity-gate blocker.
+
 ---
 
 ## 10) Phase 5 — Live emulator-coupled visualization
@@ -513,6 +877,56 @@ inspectors remain subsystem-specific").
 
 **Builds on:** `visualization.py`, `heatmap.py` (the existing static heatmap),
 `crossemu.py`, `runtime_state.py`, `vram_snapshot.py`/`vram_decode.py`.
+
+### Phase 5 contract
+
+User question shape:
+
+- "Show me this bug as it runs."
+- "Step this reachable state and show registers/RAM/source side by side."
+- "Show the live VRAM/framebuffer and hot code path during this event."
+- "Capture a reproducible static packet from the live investigation."
+
+Target schema:
+
+- `at`: Phase 1 state predicate or manifest path.
+- `watch`: symbols, addresses, source labels, VRAM ranges, OAM ranges, or
+  register groups.
+- `breakpoint`: PC, source label, write/read address, predicate, or frame.
+- `view`: `tui`, `canvas`, `json_stream`, or `snapshot`.
+- `backend`: `pyboy`, `crosscheck`, or `auto`.
+- `step_mode`: frame, instruction, until breakpoint, until idle, or until
+  predicate.
+- `snapshot`: optional path for a static report artifact.
+
+Runtime stream fields:
+
+- frame number, backend, PC/bank, source anchor, registers, flags, SP, selected
+  RAM watches, and predicate truth.
+- heatmap deltas for executed source ranges.
+- VRAM/OAM/framebuffer hashes and decoded UI state where requested.
+- input events and breakpoint hits.
+- provenance links back to the navigation manifest and any taint/replay packet
+  launched from the live view.
+
+Proof statuses:
+
+- `live_stream_started`: target reached and state stream is updating.
+- `snapshot_written`: static reproducible artifact emitted from the live run.
+- `blocked_by_headless_backend`: interactive view unavailable, but
+  `json_stream`/headless mode may still run.
+- `blocked_by_navigation`: target state could not be reached.
+- `watch_unmapped`: requested symbol/address/source anchor is not mapped.
+- `backend_divergence`: cross-backend stream diverges on a checked surface.
+
+Seed deity rows to close:
+
+- `deity_live_view_headless_stream`: headless live stream from a reachable
+  checkpoint produces N frames matching `runtime_state`.
+- `deity_live_view_breakpoint_snapshot`: live run hits a source or memory
+  breakpoint and writes a static snapshot artifact.
+- `deity_live_view_vram_frame_digest`: graphics-enabled stream emits VRAM/OAM
+  and framebuffer digests tied to source/frame metadata.
 
 ### Tasks
 
@@ -540,6 +954,21 @@ state with source anchoring, plus the live heatmap overlay. A deity-benchmark
 `live_view` green (headless: drive N frames, assert the per-frame state stream
 matches `runtime_state` ground truth).
 
+Focused verification:
+
+- `python -m tools.debugger watch --live --headless --at "<reachable_predicate>" --frames 60 --json-out <artifact>`
+- `python -m tools.debugger watch --live --headless --at "<reachable_predicate>" --breakpoint <symbol_or_addr> --snapshot <artifact>`
+- `python -m tools.debugger.selftest`
+- `python tools/audit/check_debugger_deity_mode.py --baseline` with Phase 5
+  rows expected to pass.
+
+**Status -- current deity benchmark slice complete.** `watch --live --headless
+--frames 4 --at "battle(boss=FALKNER) and turn==1"` auto-navigates to the
+battle state and emits a per-frame runtime state stream for the benchmark and
+selftest. The interactive TUI/canvas, breakpoint snapshot UX, and live heatmap
+overlay remain presentation work; the headless stream is the verified proof
+surface for the current deity gate.
+
 ---
 
 ## 11) Phase 6 — Deferred-unification cleanup
@@ -551,12 +980,53 @@ Every module is **re-harvestable from `codex/cleanup-gsc-rebalance-split`**
 `tools/debugger/hardware_event_stream.py`, `tools/debugger/rom_edit.py` +
 `tools/debugger/tests/test_rom_edit.py`).
 
+### Phase 6 contract
+
+This phase is cleanup, but it still needs a deity-grade contract because it can
+otherwise blur into vague "nice to have" work.
+
+Shared requirements:
+
+- Every restored verb must be reachable through the unified debugger front
+  door.
+- Every restored verb must emit machine-readable JSON plus a deterministic text
+  form or explicitly document why JSON-only is the first landing step.
+- Every restored verb must have a selftest component or be excluded with a
+  named reason.
+- No restored verb may weaken the read-only North Star. `rom_edit` is dry-run
+  only unless Cole explicitly approves guarded source writes.
+- The God-tool benchmark remains 29/29 after cosmetic ID changes.
+
+Shared artifact fields:
+
+- `kind`, verb name, source branch/commit harvested from, formatter version,
+  input target, output digest, source anchors, and verification command.
+- for proposer-style outputs, `working_tree_mutated=false` unless explicit
+  guarded apply mode is approved and used.
+- for renamed benchmark ids, old id, new id, compatibility alias if any, and
+  benchmark result before/after rename.
+
 ### 6a — `causal-graph` + `hardware-event-stream` verbs (low risk)
 
 Harvested as libs during unification but **unexposed** — they render via a
 `kind→formatter` dispatch with no self-contained `format_text`, so a clean
 verb needs their text formatters ported into `formatters.py` (the modules were
 removed from the tree to avoid orphans).
+
+Detailed contract:
+
+- `causal-graph` answers "what runtime observations caused this state/output?"
+  by rendering nodes for source anchors, instructions, memory reads/writes,
+  inputs, and derived values.
+- `hardware-event-stream` answers "what hardware-facing events occurred over
+  this runtime window?" by rendering ordered events for memory-mapped IO,
+  interrupts, DMA/OAM/VRAM-relevant events, timers, and frame boundaries where
+  supported.
+- Both verbs accept either an auto-captured manifest from Phases 1/2/3/5 or an
+  existing replay/trace artifact.
+- Both fail closed when the artifact lacks enough timing or source metadata,
+  returning `needs_trace_window`, `needs_backend_metadata`, or
+  `unsupported_event_kind`.
 
 1. Re-harvest `causal_graph.py` + `hardware_event_stream.py` from the old
    branch.
@@ -572,6 +1042,20 @@ removed from the tree to avoid orphans).
 Its original gate was "ROM edit requires a *mutual-verified* (two-LLM) handoff
 phase." Single-owner needs a new gate, **and** `rom_edit` writes ROM source —
 in direct tension with the read-only North Star.
+
+Detailed contract:
+
+- Default mode is `rom-edit propose`: output a unified diff, rationale, source
+  anchors, expected audits, and disproof standard.
+- `propose` must assert the working tree is unchanged before and after the run.
+- If guarded writes are ever approved, `--apply` must require a clean explicit
+  confirmation flag, run the configured audit floor first, write only the
+  requested source files, and record the exact diff hash and verification
+  result.
+- Proof statuses are `proposal_written`, `blocked_by_read_only_policy`,
+  `blocked_by_dirty_scope`, `blocked_by_audit_floor`, `applied_with_guard`, and
+  `unsupported_patch`.
+- No deity benchmark row may require source mutation to pass.
 
 1. **Get the North-Star decision** ([§12](#12-north-star-decisions-cole-owns))
    on whether the debugger may ever write ROM source.
@@ -594,12 +1078,33 @@ in direct tension with the read-only North Star.
 as historical provenance. The harness keys per-question scoring on the IDs, so
 mass-renaming risks the 29/29.
 
+Detailed contract:
+
+- Maintain an id migration table with old id, new id, archetype, phase, and
+  reason.
+- Update every harness reference in the same patch as the data rename.
+- Keep historical provenance in a note field if useful; do not leave command or
+  filename references stale.
+- Run the godmode benchmark before and after the rename and store the before
+  score in the handoff artifact.
+- If any compatibility alias is needed, make it explicit and temporary.
+
 1. Rename IDs + filename + note text in one commit.
 2. Update the harness's ID references in lockstep.
 3. **Acceptance:** the God-tool benchmark still scores **29/29** after the
    rename (this is the only guard that matters — the change is purely
    cosmetic). If parity can't be preserved cheaply, leave it as documented
    residual; it is not load-bearing.
+
+Focused verification for Phase 6:
+
+- `python -m tools.debugger causal-graph --help`
+- `python -m tools.debugger hardware-event-stream --help`
+- `python -m tools.debugger rom-edit --dry-run ...` or the final approved
+  proposer command shape.
+- `python tools/audit/check_debugger_godmode_benchmark.py`
+- `python -m tools.debugger.selftest`
+- `python tools/audit/check_debugger_deity_mode.py --baseline`
 
 ---
 
@@ -637,8 +1142,8 @@ starts, not mid-implementation.
   the unification. If scope shifts during the build, **update this file
   first, then act.**
 - Tracked in [`docs/project_roadmap.md`](project_roadmap.md) as `DEBUGGER-002`
-  (`PLANNED`). DEBUGGER-001 stays `COMPLETE` — deity mode is the *next tier*,
-  not a reopening.
+  (`COMPLETE` for the current deity benchmark gate). DEBUGGER-001 stays
+  `COMPLETE` — deity mode is the *next tier*, not a reopening.
 - Start a build session with `python -m tools.debugger session-start`, read
   this doc, then read the predecessor docs in the header.
 - Per-phase commit message form (greppable): `debugger-deity: phase N
@@ -682,10 +1187,18 @@ phase is the most that phase can truthfully deliver given [§1's limits](#1-the-
   runtime investigation. Everything past it is leverage on that one win.
 
 The diminishing returns are real and intentional to surface: the curve is steep
-through Phase 2 and flattens after. A defensible "done" is **Phases 0–2 shipped,
-3–6 deferred until a concrete need names them** — not all six as a checklist.
+through Phase 2 and flattens after. The current benchmark chose narrow,
+proof-backed slices of Phases 3–5 as well; deeper Phase 3–6 ambitions should
+still wait for a concrete question, budget, or North-Star decision rather than
+expanding by checklist.
 
 ---
 
-**End of roadmap.** Built but unbuilt: every phase here is a plan awaiting
-Cole's review. Do not begin Phase 1 until that review lands.
+**End of roadmap.** The current deity benchmark gate is implemented and green:
+15/15 questions, 7/7 components, `deity_ready=True`, selftest 35/35, godmode
+benchmark 29/29, and release smoke passing. This is a self-driving proof
+debugger for the implemented benchmark surfaces, not a claim of literal
+arbitrary-state omniscience; Phase 6 cleanup and the North-Star extensions in
+§12 remain decision-gated future work.
+Continue milestone by milestone; do not claim arbitrary-state synthesis until
+the navigator can search beyond committed replay checkpoints.

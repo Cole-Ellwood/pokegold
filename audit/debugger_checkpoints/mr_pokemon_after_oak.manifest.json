@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "mr_pokemon_after_oak",
+  "description": "Power-on a fresh game, chain through Route 30, enter Mr. Pokemon's house, and clear the Mr. Pokemon/Oak scripted scene with legitimate A-button pulses.",
+  "input_logs": [
+    "new_game.input.log",
+    "route29_first_wild.after_new_game.input.log",
+    "route46_south.after_route29.input.log",
+    "route30_south.after_route46.input.log",
+    "mr_pokemon_after_oak.after_route30.input.log"
+  ],
+  "input_log_sha256_by_name": {
+    "new_game.input.log": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+    "route29_first_wild.after_new_game.input.log": "fcfe840f74f70df16707655e636826e3c0fae5da370eb89c326f3ac5914a7900",
+    "route46_south.after_route29.input.log": "8465089ff0ef4188549eb031f1c5bc90d19850284ea97b922f7f7f27609cf123",
+    "route30_south.after_route46.input.log": "d624aebe86006cdf205e178c4b18c730a53daa711b127617b448cf8e9c30c0ec",
+    "mr_pokemon_after_oak.after_route30.input.log": "1f68057d3cc852ad163c98d1297b1037f49ee867d9d78cb15f794447995390b4"
+  },
+  "combined_input_log_sha256": "f2846b8c0ff73a6591e9276a9e95425facc5eba29453092dceb5a23bacb6ecbb",
+  "expected_map": "26:10",
+  "expected_group": 26,
+  "expected_number": 10,
+  "expected_const": "MR_POKEMONS_HOUSE",
+  "expected_x": 3,
+  "expected_y": 6,
+  "expected_battle_mode": 0,
+  "expected_party_count": 1,
+  "expected_script_mode": 0,
+  "expected_script_running": 0,
+  "expected_rng_at_reach": {
+    "hRandomAdd": 10,
+    "hRandomSub": 57
+  },
+  "reached_frame": 48881,
+  "total_frames": 48889,
+  "backend": "pyboy",
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "search": {
+    "mode": "bounded_pyboy_bfs",
+    "source_checkpoint": "route30_south",
+    "target_predicate": "map=MR_POKEMONS_HOUSE and x=3 and y=6 and script_mode=0 and script_running=0",
+    "searched_nodes": 1011,
+    "steps": 38,
+    "normalizers": [
+      "wild battle RUN macro",
+      "bounded script A-mash"
+    ]
+  },
+  "note": "This is an honest reachable-state waypoint, not a fabricated state: the bounded search used temporary PyBoy save-state nodes only as search cache, emitted mr_pokemon_after_oak.after_route30.input.log, and the committed proof is the chained input-log replay from power-on with zeroed in-memory SRAM/RTC."
+}

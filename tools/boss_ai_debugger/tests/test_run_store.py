@@ -59,10 +59,17 @@ class RunStoreTests(unittest.TestCase):
             self.assertTrue((run_dir / "batch_report.json").exists())
             self.assertTrue((run_dir / "review_queue.json").exists())
             self.assertTrue((run_dir / "summary.md").exists())
+            queue = json.loads((run_dir / "review_queue.json").read_text(encoding="utf-8"))
 
         self.assertEqual(metadata["run_id"], "test_run")
         self.assertEqual(metadata["batch_summary"]["scenario_count"], 10)
         self.assertTrue(metadata["validation"]["valid"])
+        if queue["items"]:
+            self.assertTrue(queue["items"][0]["explain_decision"]["available"])
+            self.assertIn(
+                str(run_dir / "scenarios.jsonl"),
+                queue["items"][0]["explain_decision"]["command"],
+            )
 
     def test_cli_run_suite_generated_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -121,6 +128,7 @@ class RunStoreTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
+            queue = json.loads((run_dir / "review_queue.json").read_text(encoding="utf-8"))
 
         self.assertEqual(metadata["profile"], "changed-ai")
         self.assertEqual(metadata["batch_summary"]["scenario_count"], 6)
@@ -147,6 +155,9 @@ class RunStoreTests(unittest.TestCase):
             0,
         )
         self.assertIn("known_gaps", metadata)
+        if queue["items"]:
+            self.assertTrue(queue["items"][0]["explain_decision"]["available"])
+            self.assertIn("explain-decision", queue["items"][0]["explain_decision"]["command"])
 
     def test_changed_ai_suite_records_requested_rebuild_and_trace_commands(self) -> None:
         calls = []
@@ -309,6 +320,48 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(data["run_id"], "cli_changed")
         self.assertEqual(data["batch_summary"]["scenario_count"], 4)
         self.assertEqual(data["rom_contribution_summary"]["covered_rule_count"], 1)
+
+    def test_cli_run_suite_deity_changed_ai_writes_summary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            contribution_trace = Path(tmp) / "unit_rom_trace.json"
+            out = Path(tmp) / "deity_changed_ai.json"
+            write_unit_contribution_trace(contribution_trace)
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = debugger_main(
+                    [
+                        "run-suite",
+                        "--profile",
+                        "deity-changed-ai",
+                        "--count",
+                        "4",
+                        "--seed",
+                        "5",
+                        "--run-id",
+                        "cli_deity_changed",
+                        "--runs-dir",
+                        tmp,
+                        "--trace-dir",
+                        str(Path(tmp) / "missing_traces"),
+                        "--rom-contribution-trace",
+                        str(contribution_trace),
+                        "--json-out",
+                        str(out),
+                    ]
+                )
+            data = json.loads(out.read_text(encoding="utf-8"))
+
+        self.assertEqual(code, 0)
+        self.assertIn("BOSS_AI_DEITY_CHANGED_AI_SUMMARY", stdout.getvalue())
+        self.assertEqual(data["kind"], "boss_ai_deity_changed_ai_summary")
+        self.assertEqual(data["deity_evidence_marker"], "BOSS_AI_DEITY_CHANGED_AI_SUMMARY")
+        self.assertIn("changed_files.detected", data["closed_evidence_ids"])
+        self.assertIn("hash_basis.reported", data["closed_evidence_ids"])
+        self.assertIn("targeted_generators.run", data["closed_evidence_ids"])
+        self.assertIn("review_queue.ranked", data["closed_evidence_ids"])
+        self.assertEqual(data["changed_ai_run"]["run_id"], "cli_deity_changed")
+        self.assertEqual(data["targeted_generators"]["scenario_count"], 4)
+        self.assertIn("hash_basis", data)
 
 
 if __name__ == "__main__":

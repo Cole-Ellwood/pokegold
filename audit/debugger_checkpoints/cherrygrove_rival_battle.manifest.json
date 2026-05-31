@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "cherrygrove_rival_battle",
+  "description": "Power-on a fresh game, clear Mr. Pokemon/Oak, return through Cherrygrove, and enter the first scripted rival trainer battle.",
+  "input_logs": [
+    "new_game.input.log",
+    "route29_first_wild.after_new_game.input.log",
+    "route46_south.after_route29.input.log",
+    "route30_south.after_route46.input.log",
+    "mr_pokemon_after_oak.after_route30.input.log",
+    "cherrygrove_rival_battle.after_mr_pokemon.input.log"
+  ],
+  "input_log_sha256_by_name": {
+    "new_game.input.log": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+    "route29_first_wild.after_new_game.input.log": "fcfe840f74f70df16707655e636826e3c0fae5da370eb89c326f3ac5914a7900",
+    "route46_south.after_route29.input.log": "8465089ff0ef4188549eb031f1c5bc90d19850284ea97b922f7f7f27609cf123",
+    "route30_south.after_route46.input.log": "d624aebe86006cdf205e178c4b18c730a53daa711b127617b448cf8e9c30c0ec",
+    "mr_pokemon_after_oak.after_route30.input.log": "1f68057d3cc852ad163c98d1297b1037f49ee867d9d78cb15f794447995390b4",
+    "cherrygrove_rival_battle.after_mr_pokemon.input.log": "4e3b8fea17e893ff47809e7f4581a66755a38296396e18387c0a6fcb820e80e5"
+  },
+  "combined_input_log_sha256": "081b991da7989a66b7cddc1efa3768a9c6b3e5410090853843c27116158b8c1c",
+  "expected_map": "26:3",
+  "expected_group": 26,
+  "expected_number": 3,
+  "expected_const": "CHERRYGROVE_CITY",
+  "expected_x": 33,
+  "expected_y": 7,
+  "expected_battle_mode": 2,
+  "expected_trainer_class": 9,
+  "expected_trainer_class_name": "RIVAL1",
+  "expected_trainer_id": 3,
+  "expected_enemy_species": 43,
+  "expected_enemy_active": "ODDISH",
+  "expected_party_count": 1,
+  "expected_script_mode": 1,
+  "expected_script_running": 255,
+  "expected_rng_at_reach": {
+    "hRandomAdd": 125,
+    "hRandomSub": 198
+  },
+  "reached_frame": 59891,
+  "total_frames": 59919,
+  "backend": "pyboy",
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "search": {
+    "mode": "bounded_pyboy_bfs",
+    "source_checkpoint": "mr_pokemon_after_oak",
+    "target_predicate": "trainer_battle and trainer_class=RIVAL1",
+    "searched_nodes": 658,
+    "steps": 53,
+    "normalizers": [
+      "wild battle RUN macro",
+      "bounded script A-mash"
+    ]
+  },
+  "note": "This is an honest reachable-state waypoint, not a fabricated state: the bounded search used temporary PyBoy save-state nodes only as search cache, emitted cherrygrove_rival_battle.after_mr_pokemon.input.log, and the committed proof is the chained input-log replay from power-on with zeroed in-memory SRAM/RTC."
+}

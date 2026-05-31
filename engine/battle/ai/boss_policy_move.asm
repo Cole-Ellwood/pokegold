@@ -2839,58 +2839,37 @@ ENDC
 
 	ld a, c ; best index
 	ld [wBossAITemp], a
-	ld a, b
-	push af
+
+; Unpredictability here is a switch-hedge, not a misplay: the boss mixes in a
+; second move only to punish a player pivot the primary cannot answer. Choose the
+; hedge as the most-preferred selectable damaging move (other than the primary)
+; that hits a REVEALED, alive bench switch-in the primary move is resisted/immune
+; by -- public info only. With no such pivot on the table, commit to the primary
+; outright instead of rolling a strictly-worse move into a fixed target (the
+; Falkner Confusion-into-Geodude vs. Tackle throw).
+	call BossAI_SelectSwitchHedge
+	jr nc, .choose_best
+
+	ld c, a ; hedge (second) index
+	ld b, 0
 	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld b, $ff ; second score
-	ld c, $ff ; second index
-	xor a ; current index
-.second_pass
-	cp NUM_MOVES
-	jr nc, .second_done
-	push af
-	ld a, [de]
-	and a
-	jr z, .second_done_pop
-	pop af
-	push af
-	push hl
-	ld hl, wBossAITemp
-	cp [hl]
-	pop hl
-	jr z, .second_next
+	add hl, bc
 	ld a, [hl]
-	cp 80
-	jr nc, .second_next
-	cp b
-	jr nc, .second_next
-	ld b, a
-	pop af
+	ld b, a ; hedge (second) score
+	push bc
+	ld a, [wBossAITemp]
 	ld c, a
-	push af
-.second_next
-	pop af
-	inc hl
-	inc de
-	inc a
-	jr .second_pass
+	ld b, 0
+	ld hl, wEnemyAIMoveScores
+	add hl, bc
+	ld a, [hl]
+	ld e, a ; best score
+	pop bc ; b = hedge score, c = hedge index
 
-.second_done_pop
-	pop af
-
-.second_done
-	pop af
-	ld e, a
-	ld a, c
-	cp $ff
-	jr z, .choose_best
-
-; Pick best vs. second-best move based on score gap.
+; Roll primary vs. the coverage hedge on the score gap.
 ; Gap >= 6: 90% best (230/256)
 ; Gap >= 3: 75% best (192/256)
 ; Gap <  3: 60% best (154/256), with no tier bump so true near-ties mix.
-; Keeps boss decisions weighted but non-deterministic.
 	ld a, b
 	sub e
 	cp 6
@@ -2979,6 +2958,183 @@ ENDC
 
 .done
 	pop bc
+	ret
+
+; ai-layer: POLICY
+BossAI_SelectSwitchHedge:
+; Entry: wBossAITemp = primary (best) move index. Output: carry + a = hedge move
+; index when the boss should mix in a coverage move; nc when it should commit to
+; the primary outright. The hedge is the most-preferred selectable damaging move
+; (other than the primary) that hits a REVEALED, alive bench switch-in the primary
+; move is resisted/immune by -- public info only (seen species + alive mask).
+; Preserves wBossAITemp; uses wBossAITemp2..wBossAITemp5 and wCurSpecies (restored).
+	ld a, [wBossAISeenPlayerSpeciesCount]
+	and a
+	jp z, .no_hedge
+
+	ld a, [wBossAITemp]
+	ld c, a
+	ld b, 0
+	ld hl, wEnemyMonMoves
+	add hl, bc
+	ld a, [hl]
+	and a
+	jp z, .no_hedge
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	ld [wBossAITemp2], a ; primary move type
+
+	ld a, $ff
+	ld [wBossAITemp3], a ; best hedge index so far
+	ld a, 80
+	ld [wBossAITemp4], a ; best hedge score so far (lower is better)
+
+	ld a, [wCurSpecies]
+	push af
+
+	ld a, [wBossAISeenPlayerSpeciesCount]
+	ld b, a
+	ld a, [wBossAISeenPlayerAliveMask]
+	ld [wBossAITemp5], a
+	ld hl, wBossAISeenPlayerSpecies
+.species_loop
+	ld a, [hl]
+	and a
+	jr z, .species_advance
+	push af
+	ld a, [wBossAITemp5]
+	bit 0, a
+	jr z, .species_dead
+	pop af
+	push hl
+	push bc
+	ld c, a
+	ld a, [wBattleMonSpecies]
+	cp c
+	jr z, .species_inner_done ; active mon, not a switch target
+	ld a, c
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBossAITemp2]
+	call BossAI_HedgeMatchup ; a = primary type matchup vs this species
+	cp EFFECTIVE
+	jr nc, .species_inner_done ; primary already pressures it
+	call BossAI_ScanCoverForWall
+.species_inner_done
+	pop bc
+	pop hl
+.species_advance
+	ld a, [wBossAITemp5]
+	srl a
+	ld [wBossAITemp5], a
+	inc hl
+	dec b
+	jr nz, .species_loop
+	jr .finish
+
+.species_dead
+	pop af
+	jr .species_advance
+
+.finish
+	pop af
+	ld [wCurSpecies], a
+	and a
+	call nz, GetBaseData
+	ld a, [wBossAITemp3]
+	cp $ff
+	jr z, .no_hedge
+	scf
+	ret
+
+.no_hedge
+	and a
+	ret
+
+; ai-layer: POLICY
+BossAI_ScanCoverForWall:
+; The wall species' base types are loaded in wBaseType1. Scan our four moves for
+; the most-preferred selectable damaging move (other than the primary) that hits
+; the wall at neutral or better, recording it in wBossAITemp3/wBossAITemp4 when it
+; improves on the tracked hedge. Leaves wBaseType1 and wCurSpecies untouched.
+	push hl
+	push de
+	push bc
+	ld c, 0
+.scan_loop
+	ld a, c
+	cp NUM_MOVES
+	jr nc, .scan_done
+	ld b, 0
+	ld hl, wEnemyMonMoves
+	add hl, bc
+	ld a, [hl]
+	and a
+	jr z, .scan_done ; no move in this slot (and none after)
+	ld a, [wBossAITemp]
+	cp c
+	jr z, .scan_next ; skip the primary
+	ld hl, wEnemyAIMoveScores
+	add hl, bc
+	ld a, [hl]
+	cp 80
+	jr nc, .scan_next ; blocked move
+	ld hl, wBossAITemp4
+	cp [hl]
+	jr nc, .scan_next ; not more preferred than the tracked hedge
+	ld d, a ; d = candidate score
+	ld hl, wEnemyMonMoves
+	add hl, bc
+	ld a, [hl]
+	ld e, a ; e = candidate move id (GetMoveAttr preserves de)
+	dec a
+	ld hl, Moves + MOVE_POWER
+	call BossAI_GetMoveAttr
+	and a
+	jr z, .scan_next ; status move, not a damage hedge
+	ld a, e
+	dec a
+	ld hl, Moves + MOVE_TYPE
+	call BossAI_GetMoveAttr
+	call BossAI_HedgeMatchup ; a = candidate type matchup vs the wall species
+	cp EFFECTIVE
+	jr c, .scan_next ; resisted/immune -> does not cover the pivot
+	ld a, c
+	ld [wBossAITemp3], a
+	ld a, d
+	ld [wBossAITemp4], a
+.scan_next
+	inc c
+	jr .scan_loop
+.scan_done
+	pop bc
+	pop de
+	pop hl
+	ret
+
+; ai-layer: POLICY
+BossAI_HedgeMatchup:
+; a = attacking move type; defender base types preloaded in wBaseType1/wBaseType2.
+; Returns a = wTypeMatchup. Forces the player turn so the no-item chart reads the
+; correct identified-substatus side. Preserves bc/de/hl.
+	push bc
+	push de
+	push hl
+	ld e, a
+	ldh a, [hBattleTurn]
+	ld d, a
+	ld a, 1
+	ldh [hBattleTurn], a
+	ld a, e
+	ld hl, wBaseType1
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, d
+	ldh [hBattleTurn], a
+	pop hl
+	pop de
+	pop bc
+	ld a, [wTypeMatchup]
 	ret
 
 endc

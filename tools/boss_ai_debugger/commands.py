@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -25,7 +26,9 @@ from . import haki_coverage
 from .coverage_report import (
     DEFAULT_COVERAGE_PATH,
     build_coverage_report,
+    build_deity_coverage_worklist,
     format_coverage_report,
+    format_deity_coverage_worklist,
     write_coverage_report,
 )
 from .coverage_search import (
@@ -64,6 +67,16 @@ from .decision_trace import (
     decision_trace_from_path,
     format_decision_trace,
     write_decision_trace_json,
+)
+from .decision_inputs import (
+    resolve_generated_boss_decision_input,
+    resolve_live_boss_decision_input,
+)
+from .explain_decision import (
+    explain_decision_from_path,
+    explain_decision_from_trace_paths,
+    format_explain_decision,
+    write_explain_decision_json,
 )
 from .generators import (
     FAMILIES as GENERATOR_FAMILIES,
@@ -209,6 +222,11 @@ from .trace_replay import (
     replay_trace_paths,
     write_trace_replay_json,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
+DEITY_CHANGED_AI_MARKER = "BOSS_AI_DEITY_CHANGED_AI_SUMMARY"
+LIVE_CAPTURE_MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
+
 
 def _load_fixture(fixtures_path: Path, fixture_id: str) -> dict:
     fixtures = load_fixtures(fixtures_path)
@@ -493,15 +511,207 @@ def cmd_review_queue(args: argparse.Namespace) -> int:
     return 0
 
 
+def write_json_out(data: dict[str, object], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(data, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def repo_rel(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def safe_sha256_file(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest().upper()
+
+
+def boss_ai_trace_hash_basis() -> dict[str, object]:
+    if not LIVE_CAPTURE_MANIFEST.exists():
+        return {
+            "manifest_path": repo_rel(LIVE_CAPTURE_MANIFEST),
+            "manifest_found": False,
+            "ready": False,
+            "status": "missing_manifest",
+            "diagnostics": [],
+        }
+    manifest = json.loads(LIVE_CAPTURE_MANIFEST.read_text(encoding="utf-8"))
+    diagnostics = []
+    for kind, path_key, hash_key in (
+        ("trace_rom", "trace_rom", "trace_rom_sha256"),
+        ("trace_symbols", "trace_symbols", "trace_symbols_sha256"),
+    ):
+        rel_path = str(manifest.get(path_key, ""))
+        expected = str(manifest.get(hash_key, "")).upper()
+        path = ROOT / rel_path if rel_path else ROOT / "__missing_hash_basis_path__"
+        actual = safe_sha256_file(path)
+        if actual is None:
+            status = "missing"
+        elif expected and actual == expected:
+            status = "match"
+        else:
+            status = "mismatch"
+        diagnostics.append(
+            {
+                "kind": kind,
+                "path": repo_rel(path),
+                "expected_sha256": expected or None,
+                "actual_sha256": actual,
+                "status": status,
+            }
+        )
+    statuses = {str(item["status"]) for item in diagnostics}
+    ready = bool(diagnostics) and all(item["status"] == "match" for item in diagnostics)
+    if ready:
+        status = "ready"
+    elif "missing" in statuses:
+        status = "missing"
+    elif "mismatch" in statuses:
+        status = "mismatch"
+    else:
+        status = "unknown"
+    return {
+        "manifest_path": repo_rel(LIVE_CAPTURE_MANIFEST),
+        "manifest_found": True,
+        "ready": ready,
+        "status": status,
+        "diagnostics": diagnostics,
+    }
+
+
+def boss_ai_changed_files(paths: list[str]) -> list[str]:
+    prefixes = (
+        "tools/boss_ai_debugger/",
+        "tools/trace/",
+        "tools/audit/check_boss_ai",
+        "audit/boss_ai_debugger/",
+        "audit/boss_ai_trace/",
+        "docs/boss_ai_debugger",
+        "engine/battle/ai/boss_",
+    )
+    return [
+        path
+        for path in paths
+        if path.startswith(prefixes)
+    ]
+
+
+def changed_ai_refresh_commands() -> list[dict[str, object]]:
+    return [
+        {
+            "purpose": "Rebuild ROMs and refresh live Boss AI trace artifacts",
+            "command": (
+                "python -m tools.boss_ai_debugger run-suite --profile changed-ai "
+                "--rebuild-roms --refresh-live-traces --refresh-rom-contribution-trace "
+                "--refresh-rom-score-materialization"
+            ),
+        },
+        {
+            "purpose": "Record an honest local Boss AI deity baseline after refresh",
+            "command": (
+                "python tools\\audit\\check_boss_ai_debugger_deity.py --baseline "
+                "--allow-hash-mismatch-skip"
+            ),
+        },
+    ]
+
+
+def build_deity_changed_ai_summary(metadata: dict[str, object]) -> dict[str, object]:
+    hash_basis = boss_ai_trace_hash_basis()
+    changed = [
+        str(item)
+        for item in metadata.get("changed_files", [])
+        if isinstance(item, str)
+    ]
+    batch_summary = metadata.get("batch_summary", {})
+    review_summary = metadata.get("review_queue_summary", {})
+    artifact_paths = metadata.get("artifacts", {})
+    closed = ["changed_files.detected", "hash_basis.reported"]
+    if isinstance(batch_summary, dict) and int(batch_summary.get("scenario_count", 0)) > 0:
+        closed.append("targeted_generators.run")
+    if isinstance(review_summary, dict) and "returned_count" in review_summary:
+        closed.append("review_queue.ranked")
+    status = "blocked_by_hash_basis" if not hash_basis["ready"] else "changed_ai_summary_ready"
+    gap_actions = []
+    if not hash_basis["ready"]:
+        gap_actions.append(
+            {
+                "kind": "blocked_by_hash_basis",
+                "reason": (
+                    "local pokegold_trace.gbc or pokegold_trace.sym does not match "
+                    "audit/boss_ai_trace/live_capture_manifest.json"
+                ),
+                "commands": changed_ai_refresh_commands(),
+            }
+        )
+    for item in metadata.get("known_gaps", []):
+        gap_actions.append({"kind": "known_gap", "reason": str(item), "commands": []})
+    return {
+        "schema_version": 1,
+        "kind": "boss_ai_deity_changed_ai_summary",
+        "deity_evidence_marker": DEITY_CHANGED_AI_MARKER,
+        "closed_evidence_ids": closed,
+        "status": status,
+        "hash_basis": hash_basis,
+        "changed_file_count": len(changed),
+        "boss_ai_changed_files": boss_ai_changed_files(changed),
+        "changed_files": changed,
+        "targeted_generators": {
+            "scenario_count": (
+                int(batch_summary.get("scenario_count", 0))
+                if isinstance(batch_summary, dict)
+                else 0
+            ),
+            "artifact": (
+                artifact_paths.get("scenarios", "")
+                if isinstance(artifact_paths, dict)
+                else ""
+            ),
+        },
+        "review_queue": {
+            "returned_count": (
+                int(review_summary.get("returned_count", 0))
+                if isinstance(review_summary, dict)
+                else 0
+            ),
+            "input_reviewable_count": (
+                int(review_summary.get("input_reviewable_count", 0))
+                if isinstance(review_summary, dict)
+                else 0
+            ),
+            "artifact": (
+                artifact_paths.get("review_queue", "")
+                if isinstance(artifact_paths, dict)
+                else ""
+            ),
+        },
+        "changed_ai_run": metadata,
+        "gap_actions": gap_actions,
+    }
+
+
 def cmd_run_suite(args: argparse.Namespace) -> int:
-    if args.profile == "generated-smoke":
+    deity_profile = args.profile == "deity-changed-ai"
+    runner_profile = "changed-ai" if deity_profile else args.profile
+    if runner_profile == "generated-smoke":
         metadata = run_generated_smoke_suite(
             count=args.count,
             seed=args.seed,
             run_id=args.run_id,
             runs_dir=args.runs_dir,
         )
-    elif args.profile == "changed-ai":
+    elif runner_profile == "changed-ai":
         metadata = run_changed_ai_suite(
             count=args.count,
             seed=args.seed,
@@ -517,8 +727,29 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
         )
     else:
         raise PreferenceDataError(f"unknown run-suite profile {args.profile!r}")
+    output: dict[str, object] = (
+        build_deity_changed_ai_summary(metadata)
+        if deity_profile
+        else metadata
+    )
+    if args.json_out != "":
+        write_json_out(output, Path(args.json_out))
     if args.json:
-        print(json.dumps(metadata, indent=2, sort_keys=True))
+        print(json.dumps(output, indent=2, sort_keys=True))
+    elif deity_profile:
+        print(DEITY_CHANGED_AI_MARKER)
+        print(f"status={output['status']}")
+        print(f"closed_evidence_ids={output['closed_evidence_ids']}")
+        print(f"hash_basis_status={output['hash_basis']['status']}")
+        print(
+            "Boss AI deity changed-AI dry run complete: "
+            f"run_id={metadata['run_id']} "
+            f"scenarios={metadata['batch_summary']['scenario_count']} "
+            f"reviewable={metadata['batch_summary']['reviewable_count']} "
+            f"gap_actions={len(output['gap_actions'])}"
+        )
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
     else:
         print(
             "Boss AI debugger run-suite complete: "
@@ -527,6 +758,8 @@ def cmd_run_suite(args: argparse.Namespace) -> int:
             f"reviewable={metadata['batch_summary']['reviewable_count']} "
             f"summary={metadata['artifacts']['summary']}"
         )
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
     return 0
 
 
@@ -583,18 +816,29 @@ def cmd_mastery_index_build(args: argparse.Namespace) -> int:
 
 
 def cmd_coverage_report(args: argparse.Namespace) -> int:
-    data = build_coverage_report(
-        generated_count=args.generated_count,
-        seed=args.seed,
-        rom_contribution_trace_paths=args.rom_contribution_trace,
-        changed_files=args.changed_file,
-    )
+    if args.deity_worklist:
+        data = build_deity_coverage_worklist(
+            generated_count=args.generated_count,
+            seed=args.seed,
+            rom_contribution_trace_paths=args.rom_contribution_trace,
+            changed_files=args.changed_file,
+            limit=args.limit,
+        )
+        formatter = format_deity_coverage_worklist
+    else:
+        data = build_coverage_report(
+            generated_count=args.generated_count,
+            seed=args.seed,
+            rom_contribution_trace_paths=args.rom_contribution_trace,
+            changed_files=args.changed_file,
+        )
+        formatter = format_coverage_report
     if args.json_out != "":
         write_coverage_report(data, Path(args.json_out))
     if args.json:
         print(json.dumps(data, indent=2, sort_keys=True))
     else:
-        print(format_coverage_report(data))
+        print(formatter(data))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
     return 0
@@ -743,6 +987,100 @@ def cmd_decision_trace(args: argparse.Namespace) -> int:
         print(json.dumps(trace, indent=2, sort_keys=True))
     else:
         print(format_decision_trace(trace, limit=args.limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    return 0
+
+
+def cmd_explain_decision(args: argparse.Namespace) -> int:
+    generated_target_requested = any(
+        (
+            args.generated_family,
+            args.policy_question,
+            args.score_rule,
+        )
+    )
+    scenario_path = args.scenario
+    scenario_id = args.scenario_id or None
+    decision_input = None
+    if scenario_path is None and generated_target_requested:
+        resolved_generated = resolve_generated_boss_decision_input(
+            generated_family=args.generated_family or None,
+            case=args.case or None,
+            policy_question=args.policy_question or None,
+            score_rule=args.score_rule or None,
+            output_path=args.decision_input_manifest_out,
+        )
+        scenario_path = resolved_generated["scenario_path"]
+        scenario_id = resolved_generated["scenario_id"]
+        decision_input = resolved_generated["manifest"]
+    elif generated_target_requested:
+        raise PreferenceDataError(
+            "--generated-family, --policy-question, and --score-rule cannot be combined with --scenario"
+        )
+
+    if scenario_path is not None:
+        report = explain_decision_from_path(
+            scenario_path,
+            scenario_id=scenario_id,
+            focus_action_id=args.focus_action_id or None,
+            rom_score_materialization_paths=args.rom_score_materialization,
+            rom_selector_materialization_paths=args.rom_selector_materialization,
+            rom_switch_materialization_paths=args.rom_switch_materialization,
+            rom_contribution_trace_paths=args.rom_contribution_trace,
+            trace_paths=args.trace,
+            trace_capture_id=args.capture_id or None,
+            run_rom_proof=args.run_rom_proof,
+            manifest_path=args.manifest,
+            rom=args.rom,
+            symbols_path=args.symbols,
+            score_base_route=args.score_base_route,
+            selector_base_route=args.selector_base_route,
+            switch_base_route=args.switch_base_route,
+            decision_input=decision_input,
+            limit=args.limit,
+        )
+    else:
+        if args.run_rom_proof in {"selector", "score"}:
+            raise PreferenceDataError("--run-rom-proof selector/score requires --scenario")
+        if args.rom_score_materialization or args.rom_selector_materialization or args.rom_switch_materialization:
+            raise PreferenceDataError("ROM materialization artifacts require --scenario")
+        trace_paths = args.trace or []
+        trace_capture_id = args.capture_id or None
+        decision_input = None
+        if not trace_paths and (args.boss_route or args.capture_id):
+            resolved = resolve_live_boss_decision_input(
+                manifest_path=args.manifest,
+                boss_route=args.boss_route or None,
+                capture_id=args.capture_id or None,
+                decision_index=args.decision_index,
+                turn=args.turn,
+                decision_surface=args.decision_surface or None,
+                public_state_predicate=args.at or None,
+                output_path=args.decision_input_manifest_out,
+            )
+            trace_paths = resolved["trace_paths"]
+            trace_capture_id = resolved["trace_capture_id"]
+            decision_input = resolved["manifest"]
+        report = explain_decision_from_trace_paths(
+            trace_paths,
+            trace_capture_id=trace_capture_id,
+            focus_action_id=args.focus_action_id or None,
+            rom_contribution_trace_paths=args.rom_contribution_trace,
+            decision_input=decision_input,
+            run_rom_proof=args.run_rom_proof,
+            manifest_path=args.manifest,
+            rom=args.rom,
+            symbols_path=args.symbols,
+            switch_base_route=args.switch_base_route,
+            limit=args.limit,
+        )
+    if args.json_out != "":
+        write_explain_decision_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_explain_decision(report, limit=args.limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
     return 0

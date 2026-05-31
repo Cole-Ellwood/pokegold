@@ -27,7 +27,7 @@ Tooling status:
 | Live trainer state factory | `FINISHED` | `python tools\trace\boss_ai_state_factory.py --all --update-manifest` generates real map/script-created decision states for every real trainer row in the manifest. |
 | Morty proof-capsule attempt | `FINISHED` | `audit/boss_ai_trace/morty_proof_capsule_attempt_2026-04-26.md` records the earlier negative attempt and why old RAM was not accepted as proof. |
 | Trainer boss-position save-states | `FINISHED` | `.local/tmp/boss_state_factory/*_chosen_frame_*.state` contains real map/script-created first-decision states for all 16 gym leaders, Koga, and Champion Lance. |
-| Shared switch-loop fixture | `FINISHED` | `tools/trace/boss_ai_shared_switch_loop_fixture.py --update-manifest` writes `.local/tmp/boss_state_factory/shared_switch_loop_frame_200.state` from a real Jasmine battle state, then verifies `switch_confidence=80`, proposed target `2`, last switched-out `2`, cooldown `2`, switch index `0`, and threshold `74 -> 84`. |
+| Shared switch-loop fixture | `FINISHED` | `tools/trace/boss_ai_shared_switch_loop_fixture.py --update-manifest` writes `.local/tmp/boss_state_factory/shared_switch_loop_frame_200.state` from a real Jasmine battle state, then verifies `switch_confidence=85`, proposed target `2`, last switched-out `2`, cooldown `2`, and switch index `0`. |
 
 Any boss row promoted to `FINISHED` must point to a capture excerpt with
 `trace_rom`, `trace_rom_sha256`, `trace_symbols`, and `trace_symbols_sha256`
@@ -37,25 +37,25 @@ Gym-leader and priority boss live captures:
 
 | Boss | Status | Required live checks | Output path |
 | --- | --- | --- | --- |
-| Falkner | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=33`, `chosen_slot=0`, `move_scores=20,20,20,20` | `audit/boss_ai_trace/falkner_live.txt` |
-| Bugsy | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=202`, `chosen_slot=1`, `move_scores=20,20,20,20` | `audit/boss_ai_trace/bugsy_live.txt` |
-| Whitney | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=236`, `chosen_slot=0`, `move_scores=19,19,19,19` | `audit/boss_ai_trace/whitney_live.txt` |
-| Morty | `FINISHED` | strict state preflight passes; exact selector replay: `tier=2`, `cur_enemy_move_id=138`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/morty_live.txt` |
-| Chuck | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=157`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/chuck_live.txt` |
-| Jasmine | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=85`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/jasmine_live.txt` |
-| Pryce | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=57`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/pryce_live.txt` |
-| Clair | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=200`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/clair_live.txt` |
-| Brock | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=57`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/brock_live.txt` |
-| Misty | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=95`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/misty_live.txt` |
-| Lt. Surge | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=86`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/lt_surge_live.txt` |
-| Erika | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=202`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/erika_live.txt` |
-| Janine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=188`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/janine_live.txt` |
-| Sabrina | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=227`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/sabrina_live.txt` |
-| Blaine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=53`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/blaine_live.txt` |
-| Blue | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=161`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/blue_live.txt` |
-| Koga | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=141`, `chosen_slot=2`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/koga_live.txt` |
-| Champion Lance | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=231`, `chosen_slot=1`, `move_scores=38,20,20,20` | `audit/boss_ai_trace/champion_lance_live.txt` |
-| Shared switch-loop | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=85`, `chosen_slot=1`, `move_scores=20,17,17,20`; switch context remains `param=31,index=00,last_out=02,cooldown=02,cur_ot=00` | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
+| Falkner | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=98`, `chosen_slot=3`, `move_scores=20,23,20,19` | `audit/boss_ai_trace/falkner_live.txt` |
+| Bugsy | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=40`, `chosen_slot=0`, `move_scores=20,28,19,28` | `audit/boss_ai_trace/bugsy_live.txt` |
+| Whitney | `FINISHED` | exact selector replay: `tier=1`, `cur_enemy_move_id=104`, `chosen_slot=2`, `move_scores=50,19,17,20` | `audit/boss_ai_trace/whitney_live.txt` |
+| Morty | `FINISHED` | strict state preflight passes; exact selector replay: `tier=2`, `cur_enemy_move_id=95`, `chosen_slot=0`, `move_scores=1,44,20,80` | `audit/boss_ai_trace/morty_live.txt` |
+| Chuck | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=157`, `chosen_slot=1`, `move_scores=1,1,20,20` | `audit/boss_ai_trace/chuck_live.txt` |
+| Jasmine | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=191`, `chosen_slot=0`, `move_scores=1,1,24,28` | `audit/boss_ai_trace/jasmine_live.txt` |
+| Pryce | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=58`, `chosen_slot=2`, `move_scores=10,10,1,44` | `audit/boss_ai_trace/pryce_live.txt` |
+| Clair | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=92`, `chosen_slot=3`, `move_scores=1,80,20,0` | `audit/boss_ai_trace/clair_live.txt` |
+| Brock | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=191`, `chosen_slot=0`, `move_scores=1,28,20,20` | `audit/boss_ai_trace/brock_live.txt` |
+| Misty | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=240`, `chosen_slot=0`, `move_scores=1,1,28,1` | `audit/boss_ai_trace/misty_live.txt` |
+| Lt. Surge | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=191`, `chosen_slot=0`, `move_scores=1,1,23,45` | `audit/boss_ai_trace/lt_surge_live.txt` |
+| Erika | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=78`, `chosen_slot=2`, `move_scores=10,2,1,1` | `audit/boss_ai_trace/erika_live.txt` |
+| Janine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=191`, `chosen_slot=0`, `move_scores=1,1,28,45` | `audit/boss_ai_trace/janine_live.txt` |
+| Sabrina | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=113`, `chosen_slot=0`, `move_scores=2,2,44,2` | `audit/boss_ai_trace/sabrina_live.txt` |
+| Blaine | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=191`, `chosen_slot=0`, `move_scores=1,1,28,1` | `audit/boss_ai_trace/blaine_live.txt` |
+| Blue | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=38`, `chosen_slot=1`, `move_scores=3,1,28,28` | `audit/boss_ai_trace/blue_live.txt` |
+| Koga | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=188`, `chosen_slot=2`, `move_scores=28,28,1,20` | `audit/boss_ai_trace/koga_live.txt` |
+| Champion Lance | `FINISHED` | exact selector replay: `tier=3`, `cur_enemy_move_id=252`, `chosen_slot=3`, `move_scores=10,3,28,1` | `audit/boss_ai_trace/champion_lance_live.txt` |
+| Shared switch-loop | `FINISHED` | exact selector replay: `tier=2`, `cur_enemy_move_id=0`, `chosen_slot=0`, `move_scores=20,1,24,28`; switch context remains `param=31,index=01,last_out=01,cooldown=02,cur_ot=00` | `audit/boss_ai_trace/shared_switch_loop_live.txt` |
 
 Recommended command once a boss-position PyBoy state exists:
 

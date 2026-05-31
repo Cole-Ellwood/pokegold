@@ -13,5 +13,12 @@
   "total_frames": 5416,
   "start_presses": 1,
   "a_presses": 89,
-  "note": "reached_frame/total_frames are authoring-time observations; navigate --verify asserts the reached map, not the exact frame."
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "note": "reached_frame/total_frames are authoring-time observations from zeroed in-memory SRAM/RTC; navigate --verify asserts the reached map and RAM signature."
 }

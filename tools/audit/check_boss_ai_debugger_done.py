@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "done_gate.json"
 
-from _trace_artifacts import require_manifest_basis
+from tools.audit._trace_artifacts import require_manifest_basis
 
 
 @dataclass(frozen=True)

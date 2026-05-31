@@ -43,11 +43,18 @@ COMPARISON_FIELDS: dict[str, str] = {
     "turn": "int",
     "level": "int",
     "badges": "int",
+    "x": "int",
+    "y": "int",
+    "trainer_id": "int",
+    "script_mode": "int",
+    "script_running": "int",
+    "event": "str",
     "map": "str",
     "facing": "str",
     "script": "str",
     "enemy_active": "str",
     "player_active": "str",
+    "trainer_class": "str",
 }
 
 # Predicate functions and the argument names each accepts.
@@ -58,7 +65,7 @@ PREDICATE_FUNCTIONS: dict[str, frozenset[str]] = {
 }
 
 # Bare flags: a clause that is just a name, asserting a boolean condition.
-FLAGS: frozenset[str] = frozenset({"battle", "wild_battle"})
+FLAGS: frozenset[str] = frozenset({"battle", "wild_battle", "trainer_battle", "script_active"})
 
 # Comparison operators, longest first so ``>=`` is matched before ``>``. ``=``
 # is an accepted alias for ``==``.
@@ -276,6 +283,10 @@ def _clause_satisfied(clause: Clause, observed: dict[str, Any]) -> bool:
     if isinstance(clause, Flag):
         return bool(observed.get(clause.name))
     if isinstance(clause, Comparison):
+        if clause.field == "event":
+            event_key = f"event:{clause.value}"
+            event_enabled = bool(observed.get(event_key))
+            return event_enabled if clause.op == "==" else not event_enabled
         if clause.field not in observed:
             return False  # cannot confirm an unobserved field
         return _compare(clause.op, observed[clause.field], clause.value)

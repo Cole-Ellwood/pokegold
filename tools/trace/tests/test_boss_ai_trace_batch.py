@@ -22,6 +22,7 @@ from tools.trace.boss_ai_trace_batch import (
     validate_capture,
     validate_capture_ids,
     validate_manifest_hash,
+    sync_manifest_hashes,
 )
 
 
@@ -131,6 +132,34 @@ class ValidateManifestHashTests(unittest.TestCase):
 
     def test_missing_path_key_returns_none(self) -> None:
         self.assertIsNone(validate_manifest_hash({}, "trace_rom", "trace_rom_sha256"))
+
+
+class SyncManifestHashTests(unittest.TestCase):
+    def test_updates_trace_rom_and_symbol_hash_pins(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            rom = root / "trace.gbc"
+            symbols = root / "trace.sym"
+            manifest_path = root / "manifest.json"
+            rom.write_bytes(b"rom")
+            symbols.write_bytes(b"symbols")
+            data = {
+                "trace_rom": str(rom),
+                "trace_rom_sha256": "old",
+                "trace_symbols": str(symbols),
+                "trace_symbols_sha256": "",
+                "captures": [],
+            }
+            expected_rom = batch.sha256_file(rom)
+            expected_symbols = batch.sha256_file(symbols)
+
+            changes = sync_manifest_hashes(manifest_path, data)
+            stored = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        self.assertTrue(changes["trace_rom"])
+        self.assertTrue(changes["trace_symbols"])
+        self.assertEqual(stored["trace_rom_sha256"], expected_rom)
+        self.assertEqual(stored["trace_symbols_sha256"], expected_symbols)
 
 
 class LoadManifestTests(unittest.TestCase):

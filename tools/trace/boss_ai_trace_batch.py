@@ -103,6 +103,40 @@ def validate_manifest_hash(data: dict[str, Any], path_key: str, hash_key: str) -
     return path
 
 
+def sync_manifest_hash(
+    data: dict[str, Any],
+    *,
+    path_key: str,
+    hash_key: str,
+) -> bool:
+    path = optional_manifest_path(data, path_key)
+    if path is None:
+        return False
+    if not path.exists():
+        fail(f"{path_key} points to a missing file: {path}")
+    digest = sha256_file(path)
+    changed = str(data.get(hash_key, "")).upper() != digest
+    data[hash_key] = digest
+    return changed
+
+
+def sync_manifest_hashes(path: Path, data: dict[str, Any]) -> dict[str, bool]:
+    changes = {
+        "trace_rom": sync_manifest_hash(
+            data,
+            path_key="trace_rom",
+            hash_key="trace_rom_sha256",
+        ),
+        "trace_symbols": sync_manifest_hash(
+            data,
+            path_key="trace_symbols",
+            hash_key="trace_symbols_sha256",
+        ),
+    }
+    path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    return changes
+
+
 def validate_capture(entry: dict[str, Any], index: int) -> None:
     for key in ("id", "boss", "status", "out", "notes"):
         if not isinstance(entry.get(key), str):
@@ -339,9 +373,18 @@ def main() -> int:
         help="fail if any manifest entry lacks a save-state or has an invalid preflight",
     )
     parser.add_argument("--only", action="append", default=[], help="capture id to include; may be repeated")
+    parser.add_argument(
+        "--update-manifest-hashes",
+        action="store_true",
+        help="sync root trace ROM/symbol SHA256 pins to the current files before validation",
+    )
     args = parser.parse_args()
 
     manifest = load_manifest(args.manifest)
+    if args.update_manifest_hashes:
+        changes = sync_manifest_hashes(args.manifest, manifest)
+        changed = ", ".join(name for name, did_change in changes.items() if did_change)
+        print(f"manifest_hashes_updated={changed or 'none'}")
     default_watch_frames = as_int(manifest, "default_watch_frames", 600)
     default_poll_every = as_int(manifest, "default_poll_every", 1)
     trace_rom = validate_manifest_hash(manifest, "trace_rom", "trace_rom_sha256")

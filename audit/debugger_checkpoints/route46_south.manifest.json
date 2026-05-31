@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "route46_south",
+  "description": "Power-on a fresh game, chain through the Route 29 first-wild checkpoint, flee the deterministic wild battle, and bounded-search to the south Route 46 entrance.",
+  "input_logs": [
+    "new_game.input.log",
+    "route29_first_wild.after_new_game.input.log",
+    "route46_south.after_route29.input.log"
+  ],
+  "input_log_sha256_by_name": {
+    "new_game.input.log": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+    "route29_first_wild.after_new_game.input.log": "fcfe840f74f70df16707655e636826e3c0fae5da370eb89c326f3ac5914a7900",
+    "route46_south.after_route29.input.log": "8465089ff0ef4188549eb031f1c5bc90d19850284ea97b922f7f7f27609cf123"
+  },
+  "combined_input_log_sha256": "7cf35074dd44c42fe6e7db4d3a6e7836b712e20fb465b88adddb28ab0c203035",
+  "expected_map": "5:9",
+  "expected_group": 5,
+  "expected_number": 9,
+  "expected_const": "ROUTE_46",
+  "expected_x": 7,
+  "expected_y": 33,
+  "expected_battle_mode": 0,
+  "expected_party_count": 1,
+  "expected_rng_at_reach": {
+    "hRandomAdd": 114,
+    "hRandomSub": 134
+  },
+  "reached_frame": 34410,
+  "total_frames": 34489,
+  "backend": "pyboy",
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "search": {
+    "mode": "bounded_pyboy_bfs",
+    "source_checkpoint": "route29_first_wild",
+    "target_predicate": "map=ROUTE_46",
+    "searched_nodes": 772,
+    "steps": 33,
+    "normalizers": [
+      "wild battle RUN macro only"
+    ]
+  },
+  "note": "This is an honest reachable-state waypoint, not a fabricated state: the bounded search used temporary PyBoy save-state nodes only as search cache, emitted route46_south.after_route29.input.log, and the committed proof is the chained input-log replay from power-on with zeroed in-memory SRAM/RTC."
+}

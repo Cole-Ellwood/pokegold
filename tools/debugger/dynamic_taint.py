@@ -15,6 +15,7 @@ from .explain import base_label
 from .ingest import sha256_file
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
+from .sm83_model import SM83_MODEL_SOURCE
 from .workflow import command_is_runnable
 
 
@@ -146,6 +147,7 @@ def build_dynamic_taint_report(
         "schema_version": 1,
         "kind": "unified_debugger_dynamic_taint_report",
         "root": str(root),
+        "model_source": SM83_MODEL_SOURCE,
         "valid": not errors,
         "error_count": len(errors),
         "warning_count": len(warnings),
@@ -376,6 +378,7 @@ def analyze_instruction_trace(
     )
     return {
         "source": loaded["source"],
+        "model_source": SM83_MODEL_SOURCE,
         "record_count": len(records),
         "instruction_count": len(instructions),
         "frame_count": len(frames),

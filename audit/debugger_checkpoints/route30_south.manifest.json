@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "kind": "deity_navigator_checkpoint",
+  "id": "route30_south",
+  "description": "Power-on a fresh game, chain through Route 29 and Route 46 waypoints, and bounded-search to the south Route 30 entrance near Cherrygrove.",
+  "input_logs": [
+    "new_game.input.log",
+    "route29_first_wild.after_new_game.input.log",
+    "route46_south.after_route29.input.log",
+    "route30_south.after_route46.input.log"
+  ],
+  "input_log_sha256_by_name": {
+    "new_game.input.log": "9e7ab608a918cd6b1ecbf64b4fa3a6662c2daad3b951815be3ffa516571be3db",
+    "route29_first_wild.after_new_game.input.log": "fcfe840f74f70df16707655e636826e3c0fae5da370eb89c326f3ac5914a7900",
+    "route46_south.after_route29.input.log": "8465089ff0ef4188549eb031f1c5bc90d19850284ea97b922f7f7f27609cf123",
+    "route30_south.after_route46.input.log": "d624aebe86006cdf205e178c4b18c730a53daa711b127617b448cf8e9c30c0ec"
+  },
+  "combined_input_log_sha256": "dec305e6f20daf0ffbec4a7498ca1355e0e62aefc283495095b103e3804743e6",
+  "expected_map": "26:1",
+  "expected_group": 26,
+  "expected_number": 1,
+  "expected_const": "ROUTE_30",
+  "expected_x": 6,
+  "expected_y": 53,
+  "expected_battle_mode": 0,
+  "expected_party_count": 1,
+  "expected_rng_at_reach": {
+    "hRandomAdd": 17,
+    "hRandomSub": 111
+  },
+  "reached_frame": 38714,
+  "total_frames": 38789,
+  "backend": "pyboy",
+  "storage_seed": {
+    "ram_file": "zeroed_in_memory",
+    "ram_bytes": 32768,
+    "rtc_file": "zeroed_in_memory",
+    "rtc_bytes": 48,
+    "rtc_locked": true
+  },
+  "search": {
+    "mode": "bounded_pyboy_bfs",
+    "source_checkpoint": "route46_south",
+    "target_predicate": "map=ROUTE_30",
+    "searched_nodes": 1157,
+    "steps": 43,
+    "normalizers": [
+      "wild battle RUN macro only"
+    ]
+  },
+  "note": "This is an honest reachable-state waypoint, not a fabricated state: the bounded search used temporary PyBoy save-state nodes only as search cache, emitted route30_south.after_route46.input.log, and the committed proof is the chained input-log replay from power-on with zeroed in-memory SRAM/RTC."
+}

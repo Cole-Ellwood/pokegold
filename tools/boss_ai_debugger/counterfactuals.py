@@ -48,6 +48,13 @@ def explain_counterfactuals(scenario: dict[str, Any]) -> dict[str, Any]:
         )
         for action_id in verdict.expected_best_action_ids
     ]
+    challenger_flips = score_flips_to_challenge_best(
+        score_by_action,
+        slot_by_action,
+        best_action_id=str(selector.get("best_action_id", "")),
+        best_score=best_score,
+        best_slot=best_slot,
+    )
     return {
         "schema_version": 1,
         "scenario_id": verdict.scenario_id,
@@ -59,6 +66,8 @@ def explain_counterfactuals(scenario: dict[str, Any]) -> dict[str, Any]:
         "score_by_action": score_by_action,
         "score_flips_to_expected_best": score_flips,
         "smallest_score_flip": smallest_score_flip(score_flips),
+        "score_flips_to_challenge_best": challenger_flips,
+        "nearest_challenger_score_flip": smallest_score_flip(challenger_flips),
         "condition_tags": verdict.condition_tags,
         "policy_tags": verdict.policy_tags,
         "public_fact_counterfactuals": public_fact_counterfactuals(verdict.condition_tags),
@@ -91,7 +100,11 @@ def score_flip_for_action(
             "current_score": score,
             "reason": "expected action is blocked from BossAI_SelectMove",
         }
-    if score < best_score or (score == best_score and slot < best_slot):
+    if score == best_score and slot == best_slot:
+        required_delta = 0
+        target_score = score
+        reason = "action is already the current ROM best by score/slot ordering"
+    elif score < best_score or (score == best_score and slot < best_slot):
         required_delta = 0
         target_score = score
         reason = "action already beats current ROM best by score/slot ordering"
@@ -118,6 +131,30 @@ def score_flip_for_action(
         "required_delta": required_delta,
         "reason": reason,
     }
+
+
+def score_flips_to_challenge_best(
+    score_by_action: dict[str, int],
+    slot_by_action: dict[str, int],
+    *,
+    best_action_id: str,
+    best_score: int,
+    best_slot: int,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            **score_flip_for_action(
+                action_id,
+                score_by_action,
+                slot_by_action,
+                best_score=best_score,
+                best_slot=best_slot,
+            ),
+            "current_best_action_id": best_action_id,
+        }
+        for action_id in score_by_action
+        if action_id != best_action_id
+    ]
 
 
 def smallest_score_flip(flips: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -211,6 +248,13 @@ def format_counterfactual_report(report: dict[str, Any]) -> str:
             "smallest score flip: "
             f"{flip['action_id']} {flip['current_score']} -> {flip['target_score']} "
             f"delta={flip['required_delta']:+d}"
+        )
+    challenger = report.get("nearest_challenger_score_flip")
+    if challenger:
+        lines.append(
+            "nearest challenger flip: "
+            f"{challenger['action_id']} {challenger['current_score']} -> "
+            f"{challenger['target_score']} delta={challenger['required_delta']:+d}"
         )
     if report["public_fact_counterfactuals"]:
         lines.append("public fact flips:")

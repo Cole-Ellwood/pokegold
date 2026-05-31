@@ -11,8 +11,10 @@ from pathlib import Path
 from tools.trace import boss_ai_state_factory as factory
 from tools.trace.boss_ai_state_factory import (
     BASE_REQUIRED_SYMBOLS,
+    ROOT,
     ROUTES,
     BossRoute,
+    RunResult,
     TrainerConstant,
     expected_trainer,
     parse_map_consts,
@@ -20,9 +22,11 @@ from tools.trace.boss_ai_state_factory import (
     parse_simple_consts,
     parse_trainer_consts,
     route_ids_from_manifest,
+    score_materialization_state_from_manifest,
     selected_routes,
     strip_asm_comment,
     trace_summary,
+    update_manifest_paths,
 )
 
 
@@ -153,6 +157,86 @@ class RouteIdsFromManifestTests(unittest.TestCase):
             )
             ids = route_ids_from_manifest(manifest)
         self.assertEqual(ids, ["morty", "jasmine"])
+
+
+class ScoreMaterializationManifestTests(unittest.TestCase):
+    def test_reads_existing_score_materialization_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            manifest = Path(tempdir) / "live_capture_manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "captures": [
+                            {
+                                "id": "koga",
+                                "score_materialization_state": (
+                                    ".local/tmp/boss_ai_debugger/koga_score.state"
+                                ),
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            path = score_materialization_state_from_manifest(manifest, "koga")
+
+        self.assertEqual(path, ROOT / ".local/tmp/boss_ai_debugger/koga_score.state")
+
+    def test_update_manifest_paths_keeps_refreshed_score_state_controls_clean(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            manifest = Path(tempdir) / "live_capture_manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "captures": [
+                            {
+                                "id": "koga",
+                                "save_state": "old.state",
+                                "pre_choice_state": "old_pre.state",
+                                "score_materialization_state": (
+                                    ".local/tmp/boss_ai_debugger/old_score.state"
+                                ),
+                                "score_materialization_button": "a",
+                                "score_materialization_button_presses": 1,
+                                "score_materialization_button_interval_frames": 45,
+                                "score_materialization_watch_frames": 90,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            score_state = ROOT / ".local/tmp/boss_ai_debugger/new_score.state"
+            update_manifest_paths(
+                manifest,
+                [
+                    RunResult(
+                        route=ROUTES["koga"],
+                        state_path=ROOT / ".local/tmp/boss_state_factory/koga.state",
+                        pre_choice_state_path=(
+                            ROOT / ".local/tmp/boss_state_factory/koga_pre.state"
+                        ),
+                        pre_choice_frame=1,
+                        choice_button="a",
+                        choice_wait_frames=45,
+                        frame=2,
+                        score_materialization_state_path=score_state,
+                    )
+                ],
+            )
+
+            stored = json.loads(manifest.read_text(encoding="utf-8"))
+
+        entry = stored["captures"][0]
+        self.assertEqual(
+            entry["score_materialization_state"],
+            ".local/tmp/boss_ai_debugger/new_score.state",
+        )
+        self.assertEqual(entry["score_materialization_button"], "")
+        self.assertEqual(entry["score_materialization_button_presses"], 0)
+        self.assertEqual(entry["score_materialization_button_interval_frames"], 0)
+        self.assertEqual(entry["score_materialization_watch_frames"], 120)
 
 
 class TraceSummaryTests(unittest.TestCase):

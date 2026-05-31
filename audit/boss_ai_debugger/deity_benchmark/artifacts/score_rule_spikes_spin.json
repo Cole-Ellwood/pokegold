@@ -1,0 +1,1677 @@
+{
+  "auto_rom_proof": [],
+  "candidate_scores": [
+    {
+      "action_id": "move_spikes",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 19,
+          "before": 20,
+          "delta": -1,
+          "note": "encourage lowers score",
+          "rule": "move.apply_move_model.enemy_under_pressure",
+          "rule_id": "move.apply_move_model.enemy_under_pressure",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 2665,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.enemy_under_pressure",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".EnemyUnderPressure"
+          }
+        },
+        {
+          "after": 37,
+          "before": 19,
+          "delta": 18,
+          "note": "positive signed lookahead delta discourages",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 37,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Spikes",
+      "pre_lookahead_score": 19,
+      "selector_probability": 0.6796875,
+      "slot": 1
+    },
+    {
+      "action_id": "move_sludge_bomb",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 28,
+          "before": 20,
+          "delta": 8,
+          "note": "discourage raises score",
+          "rule": "ko_band_oracle.apply_damage_dominance_bias",
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 200,
+            "parent_label": "BossAI_ApplyDamageDominanceBias",
+            "public_reads": [],
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyDamageDominanceBias"
+          }
+        },
+        {
+          "after": 46,
+          "before": 28,
+          "delta": 18,
+          "note": "positive signed lookahead delta discourages",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 46,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Sludge Bomb",
+      "pre_lookahead_score": 28,
+      "selector_probability": 0.0,
+      "slot": 2
+    },
+    {
+      "action_id": "move_surf",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 38,
+          "before": 20,
+          "delta": 18,
+          "note": "positive signed lookahead delta discourages",
+          "rule": "lookahead",
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 5719,
+            "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+            "public_reads": [],
+            "rule_id": "move.apply_lookahead_to_top_move_candidates",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+          }
+        }
+      ],
+      "final_score": 38,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Surf",
+      "pre_lookahead_score": 20,
+      "selector_probability": 0.3203125,
+      "slot": 3
+    },
+    {
+      "action_id": "move_explosion",
+      "blocked": false,
+      "contributions": [
+        {
+          "after": 36,
+          "before": 20,
+          "delta": 16,
+          "note": "discourage raises score",
+          "rule": "move.apply_move_model.apply_self_kotrade_discipline",
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 1170,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".ApplySelfKOTradeDiscipline"
+          }
+        },
+        {
+          "after": 38,
+          "before": 36,
+          "delta": 2,
+          "note": "discourage raises score",
+          "rule": "move.current_enemy_move_accuracy_risky",
+          "rule_id": "move.current_enemy_move_accuracy_risky",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 4010,
+            "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+            "public_reads": [],
+            "rule_id": "move.current_enemy_move_accuracy_risky",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+          }
+        },
+        {
+          "after": 46,
+          "before": 38,
+          "delta": 8,
+          "note": "discourage raises score",
+          "rule": "ko_band_oracle.apply_damage_dominance_bias",
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 200,
+            "parent_label": "BossAI_ApplyDamageDominanceBias",
+            "public_reads": [],
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyDamageDominanceBias"
+          }
+        }
+      ],
+      "final_score": 46,
+      "initial_score": 20,
+      "kind": "move",
+      "move_id": null,
+      "name": "Explosion",
+      "pre_lookahead_score": 46,
+      "selector_probability": 0.0,
+      "slot": 4
+    }
+  ],
+  "closed_evidence_ids": [
+    "decision_input.generated_auto",
+    "observed_rom_decision",
+    "candidate_scores",
+    "score_bytes",
+    "selector_path",
+    "python_score_contributions",
+    "rom_contribution_deltas",
+    "public_info_inputs",
+    "rom_public_read_provenance",
+    "source_anchors",
+    "counterfactual",
+    "policy_expectation.reported",
+    "counterfactual.decisive",
+    "score_rule.rom_delta_observed",
+    "public_reads.snapshotted",
+    "python_contribution.normalized",
+    "rom_python_agreement.reported"
+  ],
+  "counterfactual": {
+    "answer_changing_information": [
+      "Rapid Spin revealed status",
+      "active or reserve Ghost spinblock state",
+      "whether immediate damage pressure makes the hazard turn too slow"
+    ],
+    "focus_score_flip": null,
+    "nearest_challenger_score_flip": {
+      "action_id": "move_surf",
+      "available": true,
+      "current_best_action_id": "move_spikes",
+      "current_score": 38,
+      "reason": "lower expected action below current ROM best score",
+      "required_delta": -2,
+      "target_score": 36
+    },
+    "public_fact_counterfactuals": [
+      "If Rapid Spin were not publicly revealed, extra Spikes should become more live.",
+      "If the boss active is a non-Foresighted Ghost, revealed Spin should matter less.",
+      "If immediate pressure is removed, a hazard turn should become easier to justify."
+    ],
+    "smallest_score_flip": {
+      "action_id": "move_spikes",
+      "available": true,
+      "current_score": 37,
+      "reason": "action is already the current ROM best by score/slot ordering",
+      "required_delta": 0,
+      "target_score": 37
+    },
+    "why": "When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progress move."
+  },
+  "decision_input": {
+    "artifact_path": ".local/tmp/boss_ai_debugger/generated_inputs/move.spikes.public_rapid_spin_risk.manifest.json",
+    "closed_evidence_ids": [
+      "decision_input.generated_auto"
+    ],
+    "generated_at": "2026-05-31T01:16:47Z",
+    "hash_basis": {
+      "current_trace_rom_sha256": "95069FE405B8C72BFE79B4CB237FF69C3B643F6F2CA915253AAEE676D9A7F2DC",
+      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+    },
+    "kind": "boss_ai_decision_input_manifest",
+    "known_limits": [
+      "Generated decision inputs are deterministic public-state scenarios, not a navigated live battle state.",
+      "ROM materialization support depends on the generated family and current trace basis."
+    ],
+    "resolution": {
+      "generated_count": 12,
+      "generator_seed": 1,
+      "scenario_family": "spikes_spin",
+      "scenario_id": "generated_spikes_spin_1_00000",
+      "scenario_path": ".local/tmp/boss_ai_debugger/generated_inputs/move.spikes.public_rapid_spin_risk.jsonl",
+      "selected_case": "",
+      "source": "generated_scenario",
+      "sufficient": true
+    },
+    "schema_version": 1,
+    "source_state": {
+      "dirty_diff_sha256": "F7933547C4F6885FF6521C9B463D1B7D77FE63DCFAD6CB183A28724C6DEC362A",
+      "git_commit": "b9f2cde35df23badb9ef0dcfc9ce400d56fc5829",
+      "scenario_artifact_sha256": "EF6D261DBFAB1D4C70CA64B89B61D8E521F8C31C4ACAE9A97016074BFA909DC7"
+    },
+    "target": {
+      "case": "",
+      "decision_surface": "score_rule",
+      "generated_family": "spikes_spin",
+      "policy_question": "",
+      "requested_generated_family": "",
+      "score_rule": "move.spikes.public_rapid_spin_risk"
+    }
+  },
+  "decision_summary": {
+    "decisive_counterfactual": "move_surf score 38 -> 36 delta=-2",
+    "evidence_highlights": {
+      "candidate_scores": [
+        {
+          "action_id": "move_spikes",
+          "blocked": false,
+          "final_score": 37,
+          "kind": "move",
+          "name": "Spikes",
+          "selector_probability": 0.6796875
+        },
+        {
+          "action_id": "move_sludge_bomb",
+          "blocked": false,
+          "final_score": 46,
+          "kind": "move",
+          "name": "Sludge Bomb",
+          "selector_probability": 0.0
+        },
+        {
+          "action_id": "move_surf",
+          "blocked": false,
+          "final_score": 38,
+          "kind": "move",
+          "name": "Surf",
+          "selector_probability": 0.3203125
+        },
+        {
+          "action_id": "move_explosion",
+          "blocked": false,
+          "final_score": 46,
+          "kind": "move",
+          "name": "Explosion",
+          "selector_probability": 0.0
+        }
+      ],
+      "public_inputs": [
+        "condition_tags=['spikes_layers_0', 'active_revealed_rapid_spin', 'reserve_ghost_available', 'bench_revealed_rapid_spin']",
+        "policy_tags=['hazard_retention', 'rapid_spin', 'spikes']",
+        "answer_changing_information=['Rapid Spin revealed status', 'active or reserve Ghost spinblock state', 'whether immediate damage pressure makes the hazard turn too slow']",
+        "predicate spikes_existing_layer_count=zero_existing_layers inputs=['wPlayerScreens']"
+      ],
+      "rule_deltas": [
+        {
+          "after": 19,
+          "before": 20,
+          "candidate": "SPIKES",
+          "delta": -1,
+          "rule_id": "move.apply_move_model.enemy_under_pressure",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 2665,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.enemy_under_pressure",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".EnemyUnderPressure"
+          }
+        },
+        {
+          "after": 28,
+          "before": 20,
+          "candidate": "SLUDGE_BOMB",
+          "delta": 8,
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 200,
+            "parent_label": "BossAI_ApplyDamageDominanceBias",
+            "public_reads": [],
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyDamageDominanceBias"
+          }
+        },
+        {
+          "after": 36,
+          "before": 20,
+          "candidate": "EXPLOSION",
+          "delta": 16,
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 1170,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".ApplySelfKOTradeDiscipline"
+          }
+        },
+        {
+          "after": 46,
+          "before": 44,
+          "candidate": "EXPLOSION",
+          "delta": 2,
+          "rule_id": "move.current_enemy_move_accuracy_risky",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 4010,
+            "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+            "public_reads": [],
+            "rule_id": "move.current_enemy_move_accuracy_risky",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+          }
+        }
+      ],
+      "source_anchors": [
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source": "engine\\battle\\ai\\ko_band_oracle.asm:200"
+        },
+        {
+          "classification": "platform_boundary",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+        },
+        {
+          "classification": "internal",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:1170"
+        },
+        {
+          "classification": "internal",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.enemy_under_pressure",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2665"
+        }
+      ]
+    },
+    "focus_action_comparison": {},
+    "missing_evidence": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "observed": "ROM score bytes make move_spikes best with score=37",
+    "path": "selector best=move_spikes score=19 second=move_surf score=20 gap=1 threshold=174/256 prob=move_spikes=68.0%, move_surf=32.0%",
+    "policy_expectation": {
+      "available": true,
+      "confidence": "medium",
+      "evidence_refs": [
+        "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+        "docs/pokemon_mastery/romhack_deltas/spikes_and_rapid_spin.md"
+      ],
+      "expected_acceptable_action_ids": [
+        "move_explosion"
+      ],
+      "expected_bad_action_ids": [],
+      "expected_best_action_ids": [
+        "move_spikes"
+      ],
+      "expected_catastrophic_action_ids": [],
+      "lesson_type": "weight_hint",
+      "policy_reason": "ROM top action is expected-best",
+      "policy_verdict": "pass",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "summary": "verdict=pass; expected_best=move_spikes; acceptable=move_explosion; reason=ROM top action is expected-best; why=When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progres...",
+      "why": "When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progress move.",
+      "zero_probability_best_action_ids": []
+    },
+    "python_agreement": "score_bytes_match=True selector_top_match=True contribution_mismatches=0",
+    "selector_choice_explanation": {
+      "available": true,
+      "best_action_id": "move_spikes",
+      "best_roll_threshold": 174,
+      "best_score": 19,
+      "chosen_action_id": "",
+      "chosen_has_nonzero_probability": false,
+      "chosen_probability": 0.0,
+      "chosen_rank": "unknown",
+      "possible_action_ids": [
+        "move_spikes",
+        "move_surf"
+      ],
+      "reason": "no sampled ROM chosen action is attached; selector surface gives score bytes and probabilities only",
+      "score_gap": 1,
+      "second_action_id": "move_surf",
+      "second_score": 20,
+      "summary": "no sampled chosen action; best=move_spikes; second=move_surf; gap=1; threshold=174/256"
+    },
+    "status": "explained",
+    "why": "selector best=move_spikes score=19 second=move_surf score=20 gap=1 threshold=174/256 prob=move_spikes=68.0%, move_surf=32.0%"
+  },
+  "decision_trace_summary": {
+    "event_count": 15,
+    "event_type_counts": {
+      "candidate": 4,
+      "policy_check": 1,
+      "score_rule": 8,
+      "selector": 1,
+      "state_load": 1
+    }
+  },
+  "deity_evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+  "family": "spikes_spin",
+  "known_limits": [
+    "Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.",
+    "ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids."
+  ],
+  "next_proof_commands": [
+    {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    {
+      "closes_evidence_ids": [
+        "counterfactual"
+      ],
+      "command": "python -m tools.boss_ai_debugger counterfactual --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Smallest score/public-fact flip"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json"
+      ],
+      "purpose": "Live-route ROM contribution trace for rule/source/public-read evidence"
+    },
+    {
+      "closes_evidence_ids": [
+        "rom_contribution_deltas",
+        "rom_public_read_provenance"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000 --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json",
+      "consumes_artifact_paths": [
+        ".local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json"
+      ],
+      "expected_output_paths": [],
+      "purpose": "Re-render this scenario packet after contribution capture"
+    },
+    {
+      "closes_evidence_ids": [
+        "source_anchors"
+      ],
+      "command": "python -m tools.boss_ai_debugger rule-map check",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Verify source-rule anchors are current"
+    }
+  ],
+  "observed_rom_decision": {
+    "artifact": "",
+    "available": true,
+    "base_route": "koga",
+    "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
+    "decision": {
+      "best_score": 37,
+      "final_scores": [
+        37,
+        46,
+        38,
+        46
+      ],
+      "possible_action_ids": [
+        "move_spikes",
+        "move_surf"
+      ],
+      "post_model_scores": [
+        19,
+        28,
+        20,
+        46
+      ],
+      "rom_best_action_id": "move_spikes",
+      "selector_entry_scores": [
+        19,
+        28,
+        20,
+        46
+      ],
+      "selector_path": {
+        "available": true,
+        "best_action_id": "move_spikes",
+        "best_move_id": null,
+        "best_roll_threshold": 174,
+        "best_score": 19,
+        "best_slot_index": 0,
+        "candidate_probabilities": {
+          "move_explosion": 0.0,
+          "move_sludge_bomb": 0.0,
+          "move_spikes": 0.6796875,
+          "move_surf": 0.3203125
+        },
+        "candidates": [
+          {
+            "action_id": "move_spikes",
+            "blocked": false,
+            "move_id": null,
+            "name": "Spikes",
+            "score": 19,
+            "slot": 1,
+            "slot_index": 0
+          },
+          {
+            "action_id": "move_sludge_bomb",
+            "blocked": false,
+            "move_id": null,
+            "name": "Sludge Bomb",
+            "score": 28,
+            "slot": 2,
+            "slot_index": 1
+          },
+          {
+            "action_id": "move_surf",
+            "blocked": false,
+            "move_id": null,
+            "name": "Surf",
+            "score": 20,
+            "slot": 3,
+            "slot_index": 2
+          },
+          {
+            "action_id": "move_explosion",
+            "blocked": false,
+            "move_id": null,
+            "name": "Explosion",
+            "score": 46,
+            "slot": 4,
+            "slot_index": 3
+          }
+        ],
+        "chosen_action_id": "",
+        "chosen_has_nonzero_probability": false,
+        "chosen_move_id": null,
+        "chosen_probability": 0.0,
+        "chosen_slot_index": null,
+        "possible_action_ids": [
+          "move_spikes",
+          "move_surf"
+        ],
+        "score_gap": 1,
+        "second_action_id": "move_surf",
+        "second_move_id": null,
+        "second_score": 20,
+        "second_slot_index": 2,
+        "source": "rom_score_materialization_final_scores"
+      }
+    },
+    "kind": "rom_score_materialization",
+    "policy": {
+      "expected_acceptable_action_ids": [
+        "move_explosion"
+      ],
+      "expected_best_action_ids": [
+        "move_spikes"
+      ],
+      "probabilities": {
+        "move_explosion": 0.0,
+        "move_sludge_bomb": 0.0,
+        "move_spikes": 0.6796875,
+        "move_surf": 0.3203125
+      },
+      "reason": "ROM score bytes make an expected-best action top",
+      "rolled_bad_action_ids": [],
+      "rolled_catastrophic_action_ids": [],
+      "rom_best_action_id": "move_spikes",
+      "rom_best_probability": 0.6796875,
+      "severity": 0,
+      "verdict": "pass",
+      "zero_probability_best_action_ids": []
+    },
+    "python_agreement": {
+      "contribution_mismatches": 0,
+      "hook_equivalence": {
+        "checked": true,
+        "chosen_match": true,
+        "fast_chosen": {
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot_index": 0
+        },
+        "fast_scores": [
+          37,
+          46,
+          38,
+          46
+        ],
+        "match": true,
+        "score_bytes_match": true,
+        "traced_chosen": {
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot_index": 0
+        },
+        "traced_scores": [
+          37,
+          46,
+          38,
+          46
+        ]
+      },
+      "score_bytes_match": true,
+      "selector_top_match": true
+    },
+    "reason": "ROM score bytes make an expected-best action top",
+    "scenario_id": "generated_spikes_spin_1_00000",
+    "status": "pass"
+  },
+  "proof_blockers": [],
+  "proof_status": {
+    "blockers": [],
+    "checks": [
+      {
+        "detail": "generated_spikes_spin_1_00000",
+        "id": "decision_input.generated_auto",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization",
+        "id": "observed_rom_decision",
+        "status": "present"
+      },
+      {
+        "detail": "candidates=4",
+        "id": "candidate_scores",
+        "status": "present"
+      },
+      {
+        "detail": "final_scores=[37, 46, 38, 46]",
+        "id": "score_bytes",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization_final_scores",
+        "id": "selector_path",
+        "status": "present"
+      },
+      {
+        "detail": "no switch-dispatch bytes observed",
+        "id": "switch_path",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "no switch-dispatch proof needed for this packet",
+        "id": "switch_materialization",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "candidate contribution deltas from the Python/debugger model",
+        "id": "python_score_contributions",
+        "status": "present"
+      },
+      {
+        "detail": "matched_events=8",
+        "id": "rom_contribution_deltas",
+        "status": "present"
+      },
+      {
+        "detail": "policy_tags=3 condition_tags=6 evidence_refs=2 trace_fields=0",
+        "id": "public_info_inputs",
+        "status": "present"
+      },
+      {
+        "detail": "predicate branches, public-read probes, or ROM public-read map",
+        "id": "rom_public_read_provenance",
+        "status": "present"
+      },
+      {
+        "detail": "anchors=6",
+        "id": "source_anchors",
+        "status": "present"
+      },
+      {
+        "detail": "score flip or public-fact counterfactual",
+        "id": "counterfactual",
+        "status": "present"
+      },
+      {
+        "detail": "verdict=pass; expected_best=move_spikes; acceptable=move_explosion; reason=ROM top action is expected-best; why=When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progres...",
+        "id": "policy_expectation.reported",
+        "status": "present"
+      },
+      {
+        "detail": "score, selector, switch, or public-fact counterfactual",
+        "id": "counterfactual.decisive",
+        "status": "present"
+      },
+      {
+        "detail": "rom_score_materialization",
+        "id": "selector_materialization.proven",
+        "status": "not_applicable"
+      },
+      {
+        "detail": "matched_rom_delta_events=8",
+        "id": "score_rule.rom_delta_observed",
+        "status": "present"
+      },
+      {
+        "detail": "predicate/public-read snapshot provenance",
+        "id": "public_reads.snapshotted",
+        "status": "present"
+      },
+      {
+        "detail": "Python candidate contribution waterfall normalized",
+        "id": "python_contribution.normalized",
+        "status": "present"
+      },
+      {
+        "detail": "ROM/Python comparison packet reported",
+        "id": "rom_python_agreement.reported",
+        "status": "present"
+      }
+    ],
+    "missing_ids": [],
+    "next_proof_chain": [
+      {
+        "closes_evidence_ids": [
+          "candidate_scores",
+          "python_score_contributions"
+        ],
+        "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+        "consumes_artifact_paths": [],
+        "expected_output_paths": [],
+        "purpose": "Python score waterfall and selector surface"
+      }
+    ],
+    "next_proof_command": {
+      "closes_evidence_ids": [
+        "candidate_scores",
+        "python_score_contributions"
+      ],
+      "command": "python -m tools.boss_ai_debugger decision-trace --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000",
+      "consumes_artifact_paths": [],
+      "expected_output_paths": [],
+      "purpose": "Python score waterfall and selector surface"
+    },
+    "next_proof_reason": "all compact explanation evidence is present; rerun the first proof command to reproduce",
+    "present_ids": [
+      "decision_input.generated_auto",
+      "observed_rom_decision",
+      "candidate_scores",
+      "score_bytes",
+      "selector_path",
+      "python_score_contributions",
+      "rom_contribution_deltas",
+      "public_info_inputs",
+      "rom_public_read_provenance",
+      "source_anchors",
+      "counterfactual",
+      "policy_expectation.reported",
+      "counterfactual.decisive",
+      "score_rule.rom_delta_observed",
+      "public_reads.snapshotted",
+      "python_contribution.normalized",
+      "rom_python_agreement.reported"
+    ],
+    "status": "explained"
+  },
+  "public_info_inputs": {
+    "answer_changing_information": [
+      "Rapid Spin revealed status",
+      "active or reserve Ghost spinblock state",
+      "whether immediate damage pressure makes the hazard turn too slow"
+    ],
+    "condition_tags": [
+      "spikes_layers_0",
+      "active_revealed_rapid_spin",
+      "reserve_ghost_available",
+      "bench_revealed_rapid_spin",
+      "active_species_spin_prior",
+      "immediate_pressure"
+    ],
+    "evidence_refs": [
+      "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+      "docs/pokemon_mastery/romhack_deltas/spikes_and_rapid_spin.md"
+    ],
+    "policy_tags": [
+      "hazard_retention",
+      "rapid_spin",
+      "spikes"
+    ],
+    "predicate_branches": [
+      {
+        "legal_inputs": [
+          "wPlayerScreens"
+        ],
+        "outcome": "zero_existing_layers",
+        "predicate_id": "spikes_existing_layer_count",
+        "snapshot": {
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2121,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [
+            "wBossAITurnsElapsed",
+            "wPlayerScreens"
+          ],
+          "rule_id": "move.apply_move_model.apply_spikes_layer_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySpikesLayerBias"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      }
+    ],
+    "public_read_probes": [
+      {
+        "legal_inputs": [
+          "wPlayerScreens"
+        ],
+        "outcome": "zero_existing_layers",
+        "probe_id": "spikes_existing_layer_count",
+        "snapshot": {
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2121,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [
+            "wBossAITurnsElapsed",
+            "wPlayerScreens"
+          ],
+          "rule_id": "move.apply_move_model.apply_spikes_layer_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySpikesLayerBias"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      }
+    ],
+    "rom_public_reads_by_rule": {
+      "ko_band_oracle.apply_damage_dominance_bias": [],
+      "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank": [],
+      "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank": [],
+      "ko_band_oracle.apply_koband_oracle_pressure": [],
+      "move.add_base_tmhmmoves_to_mask": [],
+      "move.add_current_species_likely_move_threats": [],
+      "move.add_current_species_speculative_move_threats": [],
+      "move.add_move_id_to_likely_mask": [],
+      "move.add_move_id_to_plausible_mask": [],
+      "move.add_public_stabthreats_to_mask": [],
+      "move.add_revealed_damaging_types_to_mask": [
+        "wPlayerUsedMoves"
+      ],
+      "move.add_species_and_pre_evolution_moves_to_mask": [],
+      "move.add_species_egg_moves_to_mask": [],
+      "move.add_species_level_up_moves_to_likely_mask": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "move.add_species_level_up_moves_to_mask": [
+        "EvosAttacks",
+        "wBattleMonLevel",
+        "wPlayerMonSpecies"
+      ],
+      "move.adjust_threat_severity_for_enemy_known_defense": [],
+      "move.advance_to_pre_evolution_threat_source": [],
+      "move.apply_coach_plan_move_bias": [],
+      "move.apply_enemy_held_item_pressure": [],
+      "move.apply_enemy_known_pressure_modifiers": [],
+      "move.apply_enemy_offensive_passive_pressure": [],
+      "move.apply_lookahead_to_top_move_candidates": [],
+      "move.apply_move_model.apply_baton_pass_bias": [],
+      "move.apply_move_model.apply_charge_move_bias": [],
+      "move.apply_move_model.apply_choice_first_lock_regret": [],
+      "move.apply_move_model.apply_counter_coat_trade_bias": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_dark_shield_chance_bias": [],
+      "move.apply_move_model.apply_destiny_bond_trade_bias": [],
+      "move.apply_move_model.apply_life_orb_recoil_bias": [],
+      "move.apply_move_model.apply_phazing_plan_bias": [],
+      "move.apply_move_model.apply_poison_contact_risk_bias": [],
+      "move.apply_move_model.apply_ramp_move_bias": [],
+      "move.apply_move_model.apply_rapid_spin_bias": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_recovery_timing_discipline": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_revealed_anti_setup_avoidance": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_revealed_effect_matrix_bias": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.apply_self_kotrade_discipline": [],
+      "move.apply_move_model.apply_setup_discipline_bias": [],
+      "move.apply_move_model.apply_setup_punish_bias": [],
+      "move.apply_move_model.apply_spikes_layer_bias": [
+        "wBossAITurnsElapsed",
+        "wPlayerScreens"
+      ],
+      "move.apply_move_model.enemy_move_makes_contact": [],
+      "move.apply_move_model.enemy_under_pressure": [],
+      "move.apply_move_model.has_koline": [],
+      "move.apply_move_model.is_boost_setup_move": [],
+      "move.apply_move_model.is_current_enemy_recovery_move": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.player_has_major_setup_boost": [],
+      "move.apply_move_model.player_has_revealed_effect_a": [
+        "wPlayerUsedMoves"
+      ],
+      "move.apply_move_model.player_has_seen_alive_bench_ghost": [
+        "wEnemyMonType1",
+        "wEnemyMonType2"
+      ],
+      "move.apply_move_model.utility_move_would_fail_publicly": [],
+      "move.apply_multi_turn_projection": [],
+      "move.apply_plan_move_bias": [],
+      "move.apply_player_defensive_passive_pressure": [],
+      "move.apply_repeat_penalty": [],
+      "move.apply_scout_move_bias": [],
+      "move.clamp_signed_lookahead_delta": [],
+      "move.compute_player_plausible_type_mask": [],
+      "move.current_enemy_move_accuracy_risky": [],
+      "move.current_enemy_move_has_kopressure": [],
+      "move.current_enemy_move_pressure_score": [],
+      "move.current_enemy_move_scored_power": [],
+      "move.current_plan_is_coach_template": [],
+      "move.dec_pressure_b": [],
+      "move.enemy_known_item_nullifies_threat_type": [],
+      "move.enemy_type_boost_item_matches_move": [],
+      "move.evaluate_action_lookahead": [],
+      "move.get_primary_threat_type": [],
+      "move.get_primary_threat_type_uncached": [],
+      "move.get_revealed_move_threat_type_and_severity": [
+        "wPlayerUsedMoves"
+      ],
+      "move.get_type_threat_severity_vs_enemy_mon": [],
+      "move.has_revealed_super_effective_move": [
+        "wPlayerUsedMoves"
+      ],
+      "move.hedge_matchup": [],
+      "move.is_current_enemy_setup_move": [],
+      "move.is_setup_effect": [],
+      "move.is_status_effect": [],
+      "move.load_public_threat_source_species": [],
+      "move.mark_scouted_if_scout_move": [],
+      "move.player_active_four_move_saturated": [],
+      "move.player_has_public_threat_vs_enemy": [],
+      "move.player_has_public_threat_vs_enemy_uncached": [],
+      "move.player_has_revealed_priority_threat": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.player_has_revealed_priority_threat_uncached": [
+        "Moves + MOVE_EFFECT",
+        "wPlayerUsedMoves"
+      ],
+      "move.player_threat_type_hits_enemy": [],
+      "move.player_threat_type_super_effective_vs_enemy": [],
+      "move.predict_player_switch": [],
+      "move.public_enemy_faster": [],
+      "move.public_enemy_faster_uncached": [],
+      "move.scale_move_power_by_base_stat_ratio": [],
+      "move.scale_move_power_by_base_stat_ratio.apply_stat_stages_to_scored": [],
+      "move.scale_value_by_stat_stage": [],
+      "move.select_plan_if_needed": [],
+      "move.select_switch_hedge": [],
+      "move.should_scout": []
+    },
+    "scenario_public_keys": [
+      "tier",
+      "family",
+      "moves",
+      "expectation"
+    ]
+  },
+  "python_mirror": {
+    "available": true,
+    "best_action_id": "move_spikes",
+    "best_roll_threshold": 174,
+    "best_score": 37,
+    "gap": 1,
+    "policy_reason": "ROM top action is expected-best",
+    "policy_verdict": "pass",
+    "probabilities": {
+      "move_explosion": 0.0,
+      "move_sludge_bomb": 0.0,
+      "move_spikes": 0.6796875,
+      "move_surf": 0.3203125
+    },
+    "rom_comparison": {
+      "contribution_mismatches": 0,
+      "hook_equivalence": {
+        "checked": true,
+        "chosen_match": true,
+        "fast_chosen": {
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot_index": 0
+        },
+        "fast_scores": [
+          37,
+          46,
+          38,
+          46
+        ],
+        "match": true,
+        "score_bytes_match": true,
+        "traced_chosen": {
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot_index": 0
+        },
+        "traced_scores": [
+          37,
+          46,
+          38,
+          46
+        ]
+      },
+      "score_bytes_match": true,
+      "selector_top_match": true
+    },
+    "second_action_id": "move_surf",
+    "second_score": 38
+  },
+  "question": {
+    "confidence": "medium",
+    "evidence_refs": [
+      "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+      "docs/pokemon_mastery/romhack_deltas/spikes_and_rapid_spin.md"
+    ],
+    "expected_acceptable_action_ids": [
+      "move_explosion"
+    ],
+    "expected_bad_action_ids": [],
+    "expected_best_action_ids": [
+      "move_spikes"
+    ],
+    "expected_catastrophic_action_ids": [],
+    "focus_action_id": "",
+    "lesson_type": "weight_hint",
+    "policy_reason": "ROM top action is expected-best",
+    "policy_verdict": "pass",
+    "policy_why": "When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progress move.",
+    "rolled_bad_action_ids": [],
+    "rolled_catastrophic_action_ids": [],
+    "rom_best_action_id": "move_spikes",
+    "zero_probability_best_action_ids": []
+  },
+  "rom_contributions": {
+    "available": true,
+    "event_count": 8,
+    "events": [
+      {
+        "after": 19,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot": 1,
+          "slot_index": 0
+        },
+        "closed_by": "BossAI_ApplyMoveModel.ApplyPhazingPlanBias",
+        "delta": -1,
+        "helper_symbol": "BossAI_ApplyMoveModel.EncourageScoreByA",
+        "operation": "encourage_tier_weight",
+        "rule_id": "move.apply_move_model.enemy_under_pressure",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2665,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.enemy_under_pressure",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".EnemyUnderPressure"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 28,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 188,
+          "move_name": "SLUDGE_BOMB",
+          "slot": 2,
+          "slot_index": 1
+        },
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 8,
+        "helper_symbol": "",
+        "operation": "direct_score_write",
+        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 200,
+          "parent_label": "BossAI_ApplyDamageDominanceBias",
+          "public_reads": [],
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+          "source_label": "BossAI_ApplyDamageDominanceBias"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 36,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyScoutMoveBias",
+        "delta": 16,
+        "helper_symbol": "BossAI_DiscourageScoreHL",
+        "operation": "discourage_score",
+        "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 1170,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySelfKOTradeDiscipline"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 46,
+        "before": 44,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 2,
+        "helper_symbol": "BossAI_ApplyMoveModel.DiscourageScoreByA",
+        "operation": "discourage_tier_weight",
+        "rule_id": "move.current_enemy_move_accuracy_risky",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 4010,
+          "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+          "public_reads": [],
+          "rule_id": "move.current_enemy_move_accuracy_risky",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 46,
+        "before": 38,
+        "candidate": {
+          "kind": "move",
+          "move_id": 153,
+          "move_name": "EXPLOSION",
+          "slot": 4,
+          "slot_index": 3
+        },
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 8,
+        "helper_symbol": "",
+        "operation": "direct_score_write",
+        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 200,
+          "parent_label": "BossAI_ApplyDamageDominanceBias",
+          "public_reads": [],
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+          "source_label": "BossAI_ApplyDamageDominanceBias"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 37,
+        "before": 19,
+        "candidate": {
+          "kind": "move",
+          "move_id": 191,
+          "move_name": "SPIKES",
+          "slot": 1,
+          "slot_index": 0
+        },
+        "closed_by": "BossAI_EvaluateActionLookahead",
+        "delta": 18,
+        "helper_symbol": "BossAI_ApplySignedDeltaToScore",
+        "operation": "apply_signed_lookahead_delta",
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 5719,
+          "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 46,
+        "before": 28,
+        "candidate": {
+          "kind": "move",
+          "move_id": 188,
+          "move_name": "SLUDGE_BOMB",
+          "slot": 2,
+          "slot_index": 1
+        },
+        "closed_by": "BossAI_EvaluateActionLookahead",
+        "delta": 18,
+        "helper_symbol": "BossAI_ApplySignedDeltaToScore",
+        "operation": "apply_signed_lookahead_delta",
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 5719,
+          "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      },
+      {
+        "after": 38,
+        "before": 20,
+        "candidate": {
+          "kind": "move",
+          "move_id": 57,
+          "move_name": "SURF",
+          "slot": 3,
+          "slot_index": 2
+        },
+        "closed_by": "BossAI_SelectSwitchHedge",
+        "delta": 18,
+        "helper_symbol": "BossAI_ApplySignedDeltaToScore",
+        "operation": "apply_signed_lookahead_delta",
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "platform_boundary",
+          "coverage_mode": "rom_execution_hook",
+          "line": 5719,
+          "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+          "public_reads": [],
+          "rule_id": "move.apply_lookahead_to_top_move_candidates",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+        },
+        "trace_id": "generated_spikes_spin_1_00000"
+      }
+    ],
+    "matched_trace_count": 1,
+    "unmatched_trace_ids": []
+  },
+  "rom_evidence": [
+    {
+      "artifact": "",
+      "available": true,
+      "base_route": "koga",
+      "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
+      "decision": {
+        "best_score": 37,
+        "final_scores": [
+          37,
+          46,
+          38,
+          46
+        ],
+        "possible_action_ids": [
+          "move_spikes",
+          "move_surf"
+        ],
+        "post_model_scores": [
+          19,
+          28,
+          20,
+          46
+        ],
+        "rom_best_action_id": "move_spikes",
+        "selector_entry_scores": [
+          19,
+          28,
+          20,
+          46
+        ],
+        "selector_path": {
+          "available": true,
+          "best_action_id": "move_spikes",
+          "best_move_id": null,
+          "best_roll_threshold": 174,
+          "best_score": 19,
+          "best_slot_index": 0,
+          "candidate_probabilities": {
+            "move_explosion": 0.0,
+            "move_sludge_bomb": 0.0,
+            "move_spikes": 0.6796875,
+            "move_surf": 0.3203125
+          },
+          "candidates": [
+            {
+              "action_id": "move_spikes",
+              "blocked": false,
+              "move_id": null,
+              "name": "Spikes",
+              "score": 19,
+              "slot": 1,
+              "slot_index": 0
+            },
+            {
+              "action_id": "move_sludge_bomb",
+              "blocked": false,
+              "move_id": null,
+              "name": "Sludge Bomb",
+              "score": 28,
+              "slot": 2,
+              "slot_index": 1
+            },
+            {
+              "action_id": "move_surf",
+              "blocked": false,
+              "move_id": null,
+              "name": "Surf",
+              "score": 20,
+              "slot": 3,
+              "slot_index": 2
+            },
+            {
+              "action_id": "move_explosion",
+              "blocked": false,
+              "move_id": null,
+              "name": "Explosion",
+              "score": 46,
+              "slot": 4,
+              "slot_index": 3
+            }
+          ],
+          "chosen_action_id": "",
+          "chosen_has_nonzero_probability": false,
+          "chosen_move_id": null,
+          "chosen_probability": 0.0,
+          "chosen_slot_index": null,
+          "possible_action_ids": [
+            "move_spikes",
+            "move_surf"
+          ],
+          "score_gap": 1,
+          "second_action_id": "move_surf",
+          "second_move_id": null,
+          "second_score": 20,
+          "second_slot_index": 2,
+          "source": "rom_score_materialization_final_scores"
+        }
+      },
+      "kind": "rom_score_materialization",
+      "policy": {
+        "expected_acceptable_action_ids": [
+          "move_explosion"
+        ],
+        "expected_best_action_ids": [
+          "move_spikes"
+        ],
+        "probabilities": {
+          "move_explosion": 0.0,
+          "move_sludge_bomb": 0.0,
+          "move_spikes": 0.6796875,
+          "move_surf": 0.3203125
+        },
+        "reason": "ROM score bytes make an expected-best action top",
+        "rolled_bad_action_ids": [],
+        "rolled_catastrophic_action_ids": [],
+        "rom_best_action_id": "move_spikes",
+        "rom_best_probability": 0.6796875,
+        "severity": 0,
+        "verdict": "pass",
+        "zero_probability_best_action_ids": []
+      },
+      "python_agreement": {
+        "contribution_mismatches": 0,
+        "hook_equivalence": {
+          "checked": true,
+          "chosen_match": true,
+          "fast_chosen": {
+            "move_id": 191,
+            "move_name": "SPIKES",
+            "slot_index": 0
+          },
+          "fast_scores": [
+            37,
+            46,
+            38,
+            46
+          ],
+          "match": true,
+          "score_bytes_match": true,
+          "traced_chosen": {
+            "move_id": 191,
+            "move_name": "SPIKES",
+            "slot_index": 0
+          },
+          "traced_scores": [
+            37,
+            46,
+            38,
+            46
+          ]
+        },
+        "score_bytes_match": true,
+        "selector_top_match": true
+      },
+      "reason": "ROM score bytes make an expected-best action top",
+      "scenario_id": "generated_spikes_spin_1_00000",
+      "status": "pass"
+    }
+  ],
+  "scenario_id": "generated_spikes_spin_1_00000",
+  "schema_version": 1,
+  "source": {
+    "scenario_id": "generated_spikes_spin_1_00000",
+    "scenario_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl"
+  },
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 200,
+      "parent_label": "BossAI_ApplyDamageDominanceBias",
+      "public_reads": [],
+      "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+      "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+      "source_label": "BossAI_ApplyDamageDominanceBias"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 5719,
+      "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+      "public_reads": [],
+      "rule_id": "move.apply_lookahead_to_top_move_candidates",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 1170,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplySelfKOTradeDiscipline"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2665,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.enemy_under_pressure",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyUnderPressure"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_execution_hook",
+      "line": 4010,
+      "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+      "public_reads": [],
+      "rule_id": "move.current_enemy_move_accuracy_risky",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "platform_boundary",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 2786,
+      "parent_label": "BossAI_SelectMove",
+      "public_reads": [],
+      "rule_id": "move.select_move",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "BossAI_SelectMove"
+    }
+  ],
+  "tier": 2
+}

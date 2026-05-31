@@ -835,7 +835,7 @@ def check_save_state_lab(root: Path) -> CheckResult:
 
     import tempfile
 
-    from .save_state_lab import build_save_state_inspect_report
+    from .save_state_lab import build_save_state_inspect_report, build_synth_report
 
     def inner() -> str:
         with tempfile.TemporaryDirectory() as tmp:
@@ -888,11 +888,67 @@ def check_save_state_lab(root: Path) -> CheckResult:
                 raise AssertionError(".sgm candidate did not fail closed with decode_supported=false")
             if not any(item.get("status") == "unmapped" for item in sgm_report.get("symbols", [])):
                 raise AssertionError(".sgm candidate unexpectedly decoded requested symbol")
-        return "save_state_lab raw WRAM + .sgm fail-closed round-trip ok"
+
+            synth_state = tmp_root / "synth.state"
+            synth_manifest = tmp_root / "synth.manifest.json"
+
+            def fake_navigator(predicate: str, **kwargs: Any) -> dict[str, Any]:
+                return {
+                    "predicate": predicate,
+                    "checkpoint": kwargs.get("checkpoint", "auto"),
+                    "reached": True,
+                    "frame": 123,
+                    "map": "PLAYERS_HOUSE_2F",
+                    "map_desc": "map=PLAYERS_HOUSE_2F (24:7)",
+                    "state_path": str(synth_state),
+                    "manifest_path": str(synth_manifest),
+                    "observed_signature": {"map": "PLAYERS_HOUSE_2F", "_group": 24, "_number": 7},
+                }
+
+            def fake_verifier(manifest_path: str, **kwargs: Any) -> dict[str, Any]:
+                if Path(manifest_path) != synth_manifest:
+                    raise AssertionError(f"unexpected manifest path {manifest_path!r}")
+                return {"passed": True, "observed": "map=PLAYERS_HOUSE_2F (24:7)"}
+
+            synth = build_synth_report(
+                predicate="map=PLAYERS_HOUSE_2F",
+                save_state=str(synth_state),
+                manifest_out=str(synth_manifest),
+                root=tmp_root,
+                navigator=fake_navigator,
+                verifier=fake_verifier,
+            )
+            if not synth.get("valid", False):
+                raise AssertionError(f"synth wrapper invalid: {synth.get('errors', [])}")
+            if synth.get("backend") != "pyboy":
+                raise AssertionError(f"synth wrapper did not label backend=pyboy: {synth.get('backend')!r}")
+            if not synth.get("verification", {}).get("passed"):
+                raise AssertionError("synth wrapper did not run manifest verification")
+
+            def fake_unreachable(predicate: str, **kwargs: Any) -> dict[str, Any]:
+                return {
+                    "predicate": predicate,
+                    "checkpoint": kwargs.get("checkpoint", "auto"),
+                    "reached": False,
+                    "nearest": "map=PLAYERS_HOUSE_2F (24:7)",
+                    "unmet": ["map == NEVERLAND"],
+                }
+
+            miss = build_synth_report(
+                predicate="map=NEVERLAND",
+                root=tmp_root,
+                navigator=fake_unreachable,
+                verifier=fake_verifier,
+            )
+            if miss.get("valid", True):
+                raise AssertionError("synth wrapper did not fail closed for an unreachable predicate")
+            if not any("could not reach" in error for error in miss.get("errors", [])):
+                raise AssertionError(f"synth wrapper failed without a reachability error: {miss.get('errors', [])}")
+        return "save_state_lab raw WRAM + .sgm fail-closed + synth wrapper round-trip ok"
 
     return _capture(
         component="save_state_lab",
-        next_command="python -m tools.debugger.save_state_lab inspect <state> --symbol <symbol>",
+        next_command='python -m tools.debugger save-state-lab synth --to "map=PLAYERS_HOUSE_2F"',
         fn=inner,
     )
 
@@ -1327,6 +1383,199 @@ def check_auto_navigation(root: Path) -> CheckResult:
     )
 
 
+def check_auto_taint(root: Path) -> CheckResult:
+    """Exercise Phase-2 auto-taint command logic without booting PyBoy."""
+
+    from .deity_runtime import run_auto_taint_self_test
+
+    def inner() -> str:
+        report = run_auto_taint_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"auto_taint self-test failed: {report}")
+        return str(report.get("detail", "auto-taint logic verified"))
+
+    return _capture(
+        component="auto_taint",
+        next_command='python -m tools.debugger taint --byte wCurDamage --at "battle(boss=FALKNER)"',
+        fn=inner,
+    )
+
+
+def check_audio_replay(root: Path) -> CheckResult:
+    """Exercise Phase-3 runtime replay report plumbing for audio."""
+
+    from .deity_runtime import run_surface_replay_self_test
+
+    def inner() -> str:
+        report = run_surface_replay_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"audio_replay self-test failed: {report}")
+        return str(report.get("detail", "surface replay logic verified"))
+
+    return _capture(
+        component="audio_replay",
+        next_command='python -m tools.debugger replay --surface audio --at "cry(species=TYPHLOSION)"',
+        fn=inner,
+    )
+
+
+def check_graphics_replay(root: Path) -> CheckResult:
+    """Exercise Phase-3 runtime replay report plumbing for graphics."""
+
+    from .deity_runtime import run_surface_replay_self_test
+
+    def inner() -> str:
+        report = run_surface_replay_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"graphics_replay self-test failed: {report}")
+        return str(report.get("detail", "surface replay logic verified"))
+
+    return _capture(
+        component="graphics_replay",
+        next_command='python -m tools.debugger replay --surface graphics --at "map=ECRUTEAK_GYM"',
+        fn=inner,
+    )
+
+
+def check_script_vm_replay(root: Path) -> CheckResult:
+    """Exercise Phase-3 runtime replay report plumbing for script VM."""
+
+    from .deity_runtime import run_surface_replay_self_test
+
+    def inner() -> str:
+        report = run_surface_replay_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"script_vm_replay self-test failed: {report}")
+        return str(report.get("detail", "surface replay logic verified"))
+
+    return _capture(
+        component="script_vm_replay",
+        next_command='python -m tools.debugger replay --surface script --at "map=ELMS_LAB and script=ProfElmScript"',
+        fn=inner,
+    )
+
+
+def check_sm83_model_parity(root: Path) -> CheckResult:
+    """Exercise the shared SM83 model handoff across effect-trace and dynamic-taint."""
+
+    import tempfile
+
+    from .dynamic_taint import build_dynamic_taint_report
+    from .effect_trace import build_effect_trace_report
+    from .sm83_model import SM83_MODEL_SOURCE
+
+    def inner() -> str:
+        with tempfile.TemporaryDirectory(prefix="sm83_parity_check_") as tmpdir:
+            tmp_root = Path(tmpdir)
+            (tmp_root / "test.sym").write_text(
+                "01:D141 wCurDamage\n01:4000 BattleCommand_Test\n",
+                encoding="utf-8",
+            )
+            rows = [
+                {
+                    "seq": 0,
+                    "bank": 1,
+                    "pc": 0x4000,
+                    "pc_label": "BattleCommand_Test",
+                    "opcode": 0x4F,
+                    "regs": {"A": 0x37, "C": 0, "HL": 0, "SP": 0xDFF0},
+                    "bank_state": {"wram": 1},
+                },
+                {
+                    "seq": 1,
+                    "bank": 1,
+                    "pc": 0x4001,
+                    "pc_label": "BattleCommand_Test+0x1",
+                    "opcode": 0x79,
+                    "regs": {"A": 0x37, "C": 0x37, "HL": 0, "SP": 0xDFF0},
+                    "bank_state": {"wram": 1},
+                },
+                {
+                    "seq": 2,
+                    "bank": 1,
+                    "pc": 0x4002,
+                    "pc_label": "BattleCommand_Test+0x2",
+                    "opcode": 0x21,
+                    "operand": [0x41, 0xD1],
+                    "regs": {"A": 0x37, "C": 0x37, "HL": 0, "SP": 0xDFF0},
+                    "bank_state": {"wram": 1},
+                },
+                {
+                    "seq": 3,
+                    "bank": 1,
+                    "pc": 0x4005,
+                    "pc_label": "BattleCommand_Test+0x5",
+                    "opcode": 0x22,
+                    "regs": {"A": 0x37, "C": 0x37, "HL": 0xD141, "SP": 0xDFF0},
+                    "bank_state": {"wram": 1},
+                },
+            ]
+            (tmp_root / "trace.jsonl").write_text(
+                "\n".join(json.dumps(row) for row in rows) + "\n",
+                encoding="utf-8",
+            )
+            dynamic = build_dynamic_taint_report(
+                traces=("trace.jsonl",),
+                symbols_path="test.sym",
+                source_regs=("a=move_power",),
+                sink_symbols=("wCurDamage",),
+                root=tmp_root,
+            )
+            effect = build_effect_trace_report(
+                traces=("trace.jsonl",),
+                symbols_path="test.sym",
+                watch_symbols=("wCurDamage",),
+                root=tmp_root,
+            )
+        if not dynamic.get("valid"):
+            raise AssertionError(f"dynamic taint invalid: {dynamic.get('errors')}")
+        if not effect.get("valid"):
+            raise AssertionError(f"effect trace invalid: {effect.get('errors')}")
+        if dynamic.get("model_source") != SM83_MODEL_SOURCE:
+            raise AssertionError(f"dynamic taint model source mismatch: {dynamic.get('model_source')}")
+        if dynamic["trace_runs"][0].get("unsupported_count") != 0:
+            raise AssertionError(f"dynamic taint unsupported opcodes: {dynamic['trace_runs'][0].get('unsupported')}")
+        modeled_effects = [
+            effect_item
+            for event in effect.get("events", [])
+            for effect_item in event.get("effects", [])
+            if effect_item.get("model_source") == SM83_MODEL_SOURCE
+        ]
+        if not modeled_effects:
+            raise AssertionError("effect trace emitted no shared-model effects")
+        if dynamic.get("finding_count") != 1:
+            raise AssertionError(f"dynamic taint finding count regressed: {dynamic.get('finding_count')}")
+        return (
+            "dynamic_taint and effect_trace share "
+            f"{SM83_MODEL_SOURCE}; findings={dynamic.get('finding_count')} "
+            f"modeled_effects={len(modeled_effects)}"
+        )
+
+    return _capture(
+        component="sm83_model_parity",
+        next_command="python -m unittest tools.debugger.tests.test_dynamic_taint",
+        fn=inner,
+    )
+
+
+def check_live_view(root: Path) -> CheckResult:
+    """Exercise Phase-5 headless live-view stream report plumbing."""
+
+    from .deity_runtime import run_live_view_self_test
+
+    def inner() -> str:
+        report = run_live_view_self_test()
+        if not report.get("passed"):
+            raise AssertionError(f"live_view self-test failed: {report}")
+        return str(report.get("detail", "live-view logic verified"))
+
+    return _capture(
+        component="live_view",
+        next_command='python -m tools.debugger watch --live --headless --at "battle(boss=FALKNER)" --frames 4',
+        fn=inner,
+    )
+
+
 NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("capability_audit", check_capability_audit),
     ("inventory", check_inventory),
@@ -1357,6 +1606,12 @@ NAMED_CHECKS: tuple[tuple[str, Check], ...] = (
     ("auto_watch", check_auto_watch),
     ("speedup_harness", check_speedup_harness),
     ("auto_navigation", check_auto_navigation),
+    ("auto_taint", check_auto_taint),
+    ("audio_replay", check_audio_replay),
+    ("graphics_replay", check_graphics_replay),
+    ("script_vm_replay", check_script_vm_replay),
+    ("sm83_model_parity", check_sm83_model_parity),
+    ("live_view", check_live_view),
 )
 
 CHECKS: tuple[Check, ...] = tuple(check for _, check in NAMED_CHECKS)
