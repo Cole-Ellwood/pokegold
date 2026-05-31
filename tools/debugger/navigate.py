@@ -72,6 +72,24 @@ ELMS_LAB_AFTER_AIDE_CHECKPOINT = "elms_lab_after_aide"
 BOSS_AI_CHECKPOINT_PREFIX = "boss_ai_"
 ISOLATED_RAM_BYTES = 0x8000
 ISOLATED_RTC_BYTES = 48
+SEED_BATTLE_CLEAR_TEXT_PULSES = 4
+SEED_BATTLE_DRIVE_STRATEGIES: tuple[
+    tuple[str, tuple[tuple[str, int, int], ...], int],
+    ...,
+] = (
+    ("a_mash", (("a", 2, 45),), 0),
+    ("move_slot_3", (("a", 2, 30), ("down", 2, 30), ("a", 2, 30)), SEED_BATTLE_CLEAR_TEXT_PULSES),
+    (
+        "move_slot_4_down_right",
+        (("a", 2, 30), ("down", 2, 30), ("right", 2, 30), ("a", 2, 30)),
+        SEED_BATTLE_CLEAR_TEXT_PULSES,
+    ),
+    (
+        "move_slot_4_right_down",
+        (("a", 2, 30), ("right", 2, 30), ("down", 2, 30), ("a", 2, 30)),
+        SEED_BATTLE_CLEAR_TEXT_PULSES,
+    ),
+)
 SEARCH_MOVE_BUTTONS = ("up", "left", "right", "down")
 SEARCH_DEFAULT_MAX_STEPS = 60
 SEARCH_DEFAULT_MAX_NODES = 1500
@@ -698,6 +716,7 @@ def navigate_to(
                     )
                     observed = seed_drive["observed"]
                     checkpoint_data["seed_input_events"] = seed_drive["input_events"]
+                    checkpoint_data["seed_input_strategy"] = seed_drive.get("strategy", "")
                     if seed_drive["reached"]:
                         return _build_outcome(
                             pyboy=pyboy,
@@ -865,12 +884,68 @@ def drive_seed_battle_to_turn(
     state.
     """
 
+    initial_state = save_emulator_state(pyboy)
+    best: dict[str, Any] | None = None
+    for strategy_name, pulse_events, clear_text_pulses in SEED_BATTLE_DRIVE_STRATEGIES:
+        load_emulator_state(pyboy, initial_state)
+        result = drive_seed_battle_strategy(
+            pyboy,
+            symbols,
+            catalog,
+            trainer_class_names=trainer_class_names,
+            species_names=species_names,
+            event_constants=event_constants,
+            event_names=event_names,
+            predicate=predicate,
+            target_turn=target_turn,
+            strategy_name=strategy_name,
+            pulse_events=pulse_events,
+            clear_text_pulses=clear_text_pulses,
+            max_pulses=max_pulses,
+        )
+        if result["reached"]:
+            return result
+        if best is None or seed_battle_progress_key(result) > seed_battle_progress_key(best):
+            best = result
+    if best is not None:
+        return best
+    return {
+        "reached": False,
+        "frame": 0,
+        "observed": {},
+        "input_events": [],
+        "strategy": "",
+    }
+
+
+def drive_seed_battle_strategy(
+    pyboy: Any,
+    symbols: dict[str, Any],
+    catalog: dict[str, Any],
+    *,
+    trainer_class_names: dict[int, str],
+    species_names: dict[int, str],
+    event_constants: dict[str, int],
+    event_names: set[str],
+    predicate: state_predicate.Predicate,
+    target_turn: int,
+    strategy_name: str,
+    pulse_events: tuple[tuple[str, int, int], ...],
+    clear_text_pulses: int,
+    max_pulses: int,
+) -> dict[str, Any]:
     input_events: list[dict[str, Any]] = []
     observed: dict[str, Any] = {}
-    for pulse in range(1, max_pulses + 1):
-        pyboy.button("a", delay=2)
-        pyboy.tick(45, False)
-        input_events.append(button_event("a", 2, 45))
+    frame = 0
+    for _pulse in range(1, max_pulses + 1):
+        for button, hold_frames, total_frames in pulse_events:
+            apply_button(pyboy, button, hold_frames=hold_frames, total_frames=total_frames)
+            input_events.append(button_event(button, hold_frames, total_frames))
+            frame += max(hold_frames, total_frames)
+        for _ in range(clear_text_pulses):
+            apply_button(pyboy, "a", hold_frames=2, total_frames=30)
+            input_events.append(button_event("a", 2, 30))
+            frame += 30
         observed = observe(
             pyboy,
             symbols,
@@ -883,9 +958,10 @@ def drive_seed_battle_to_turn(
         if state_predicate.evaluate(predicate, observed).satisfied:
             return {
                 "reached": True,
-                "frame": pulse * 45,
+                "frame": frame,
                 "observed": observed,
                 "input_events": input_events,
+                "strategy": strategy_name,
             }
         if int(observed.get("_battle_mode", 0) or 0) != 2:
             break
@@ -893,10 +969,21 @@ def drive_seed_battle_to_turn(
             break
     return {
         "reached": False,
-        "frame": len(input_events) * 45,
+        "frame": frame,
         "observed": observed,
         "input_events": input_events,
+        "strategy": strategy_name,
     }
+
+
+def seed_battle_progress_key(result: dict[str, Any]) -> tuple[int, int, int, int]:
+    observed = result.get("observed", {})
+    return (
+        int(observed.get("turn", 0) or 0),
+        int(observed.get("_enemy_turns_taken", 0) or 0),
+        int(observed.get("_player_turns_taken", 0) or 0),
+        int(result.get("frame", 0) or 0),
+    )
 
 
 def _build_outcome(
@@ -964,6 +1051,7 @@ def _build_outcome(
         manifest["checkpoint_seed_state_sha256"] = log_sha256(seed_state)
         manifest["checkpoint_log_sha256"] = ""
         manifest["seed_input_events"] = list(checkpoint_data.get("seed_input_events", []))
+        manifest["seed_input_strategy"] = str(checkpoint_data.get("seed_input_strategy", ""))
     manifest_path = Path(manifest_out) if manifest_out else state_path.with_suffix(".manifest.json")
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
