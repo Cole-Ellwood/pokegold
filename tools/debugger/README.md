@@ -127,6 +127,11 @@ proof path used by `next`, including required inputs, source/data anchors,
 evidence and disproof standards, and the regression gate so `rank`, `report`,
 and `visualize` keep that routing intact.
 
+`check_debugger_godmode_benchmark.py` defaults to the same in-process `next`
+planner that `investigate --symptom` embeds, avoiding per-question Python
+startup during the 29-question oracle gate. Use `--subprocess` when the CLI
+process boundary itself is the thing being tested.
+
 `localize` combines symptoms, source changes, symbols, and existing unified JSON
 reports into a prioritized debugging plan. It scores likely symbol and source
 file suspects, folds in static slices, watch hits, trace-index reverse

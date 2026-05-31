@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -957,19 +958,20 @@ def _normalize_path(path: str) -> str:
     return path.replace("\\", "/").strip().lower()
 
 
+@lru_cache(maxsize=8192)
+def _keyword_tokens(text: str) -> tuple[str, ...]:
+    return tuple(re.findall(r"[a-z0-9]+", text.lower()))
+
+
 def _keyword_token_matches(keyword_token: str, text_token: str) -> bool:
     if keyword_token == text_token:
         return True
-    variants = (
-        f"{keyword_token}s",
-        f"{keyword_token}es",
-        f"{keyword_token}ed",
-        f"{keyword_token}ing",
-    )
-    return text_token in variants
+    if not text_token.startswith(keyword_token):
+        return False
+    return text_token[len(keyword_token):] in {"s", "es", "ed", "ing"}
 
 
-def _keyword_phrase_matches(keyword_tokens: list[str], text_tokens: list[str]) -> bool:
+def _keyword_phrase_matches(keyword_tokens: tuple[str, ...], text_tokens: tuple[str, ...]) -> bool:
     if not keyword_tokens or not text_tokens:
         return False
     for start, token in enumerate(text_tokens):
@@ -995,8 +997,8 @@ def _keyword_phrase_matches(keyword_tokens: list[str], text_tokens: list[str]) -
 
 
 def keyword_matches(keyword: str, text: str) -> bool:
-    keyword_tokens = re.findall(r"[a-z0-9]+", keyword.lower())
-    text_tokens = re.findall(r"[a-z0-9]+", text.lower())
+    keyword_tokens = _keyword_tokens(keyword)
+    text_tokens = _keyword_tokens(text)
     if not keyword_tokens or not text_tokens:
         return False
     if len(keyword_tokens) == 1:

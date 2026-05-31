@@ -11,10 +11,10 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.boss_ai_debugger.generators import generate_scenarios
+from tools.boss_ai_debugger.generators import generate_scenarios, generate_scenarios_compact
 from tools.boss_ai_debugger.review_queue import build_review_queue
 from tools.boss_ai_debugger.rom_score_materialize import run_rom_score_materialization
-from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
+from tools.boss_ai_debugger.rom_scenarios import evaluate_batch_compact
 
 from tools.audit._trace_artifacts import require_manifest_basis
 
@@ -33,8 +33,8 @@ REPORT_PATH = ROOT / ".local" / "tmp" / "boss_ai_debugger" / "performance_report
 
 def main() -> int:
     require_manifest_basis()
-    scenarios = generate_scenarios(family="all", count=SCENARIO_COUNT, seed=SEED)
-    batch = evaluate_batch(scenarios)
+    scenarios = generate_scenarios_compact(family="all", count=SCENARIO_COUNT, seed=SEED)
+    batch = evaluate_batch_compact(scenarios)
 
     queue_started = time.perf_counter()
     queue = build_review_queue(batch, limit=50, max_per_lesson=2)
@@ -217,6 +217,7 @@ def reviewable_lesson_keys(batch: dict) -> set[str]:
         batch,
         limit=int(batch["reviewable_count"]),
         max_per_lesson=0,
+        include_followups=False,
     )
     for item in all_items["items"]:
         key = str(item.get("lesson_key", ""))

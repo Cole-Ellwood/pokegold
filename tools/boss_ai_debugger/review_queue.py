@@ -8,7 +8,7 @@ from typing import Any
 from tools.boss_ai_preference.data import PreferenceDataError
 
 from .mastery_index import build_mastery_index
-from .rom_scenarios import evaluate_batch, load_scenario_batch
+from .rom_scenarios import evaluate_batch_compact, load_scenario_batch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,7 +60,7 @@ def build_review_queue_from_scenarios(
     max_per_lesson: int = 5,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path, expectations_path)
-    report = evaluate_batch(scenarios)
+    report = evaluate_batch_compact(scenarios)
     return build_review_queue(
         report,
         limit=limit,
@@ -93,6 +93,7 @@ def build_review_queue(
     max_per_lesson: int = 5,
     source: str = "",
     scenario_source: str = "",
+    include_followups: bool = True,
 ) -> dict[str, Any]:
     if limit < 0:
         raise PreferenceDataError("limit must be non-negative")
@@ -102,9 +103,8 @@ def build_review_queue(
     if not isinstance(verdicts, list):
         raise PreferenceDataError("review queue input must contain verdicts")
 
-    evidence_index = mastery_evidence_index()
     items = [
-        review_item(item, evidence_index=evidence_index)
+        review_item(item, include_evidence_digest=False, include_next_action=False)
         for item in verdicts
         if int(item.get("severity", 0)) > 0
     ]
@@ -116,7 +116,9 @@ def build_review_queue(
         )
     )
     top = select_diverse_items(items, limit=limit, max_per_lesson=max_per_lesson)
-    attach_review_proof_commands(top, scenario_source=scenario_source)
+    if include_followups:
+        attach_evidence_digests(top)
+        attach_review_proof_commands(top, scenario_source=scenario_source)
     return {
         "schema_version": 1,
         "source": source,
@@ -134,6 +136,8 @@ def review_item(
     verdict: dict[str, Any],
     *,
     evidence_index: dict[str, dict[str, Any]] | None = None,
+    include_evidence_digest: bool = True,
+    include_next_action: bool = True,
 ) -> dict[str, Any]:
     severity = int(verdict.get("severity", 0))
     verdict_name = str(verdict.get("verdict", ""))
@@ -152,7 +156,22 @@ def review_item(
         + mastery_tag_priority(policy_tags, condition_tags)
     )
     strata = mastery_strata(policy_tags, condition_tags)
-    digest = evidence_digest(evidence_refs, evidence_index or {})
+    digest = (
+        evidence_digest(evidence_refs, evidence_index or {})
+        if include_evidence_digest
+        else []
+    )
+    next_action = (
+        next_action_hint(
+            verdict_name,
+            rom_best=verdict.get("rom_best_action_id"),
+            expected_best=string_list(verdict.get("expected_best_action_ids")),
+            evidence_digest=digest,
+            answer_changing_information=answer_changing_information,
+        )
+        if include_next_action
+        else ""
+    )
     return {
         "scenario_id": str(verdict.get("scenario_id", "")),
         "verdict": verdict_name,
@@ -180,19 +199,39 @@ def review_item(
         "answer_changing_information": answer_changing_information,
         "evidence_refs": evidence_refs,
         "evidence_digest": digest,
-        "next_action": next_action_hint(
-            verdict_name,
-            rom_best=verdict.get("rom_best_action_id"),
-            expected_best=string_list(verdict.get("expected_best_action_ids")),
-            evidence_digest=digest,
-            answer_changing_information=answer_changing_information,
-        ),
+        "next_action": next_action,
     }
 
 
+def attach_evidence_digests(items: list[dict[str, Any]]) -> None:
+    if not items:
+        return
+    evidence_index = mastery_evidence_index()
+    for item in items:
+        digest = evidence_digest(item["evidence_refs"], evidence_index)
+        item["evidence_digest"] = digest
+        item["next_action"] = next_action_hint(
+            str(item.get("verdict", "")),
+            rom_best=item.get("rom_best_action_id"),
+            expected_best=string_list(item.get("expected_best_action_ids")),
+            evidence_digest=digest,
+            answer_changing_information=string_list(
+                item.get("answer_changing_information")
+            ),
+        )
+
+
 def mastery_tag_priority(policy_tags: list[str], condition_tags: list[str]) -> int:
-    tags = set(policy_tags) | set(condition_tags)
-    return min(70, sum(MASTERY_TAG_BONUS.get(tag, 0) for tag in tags))
+    score = 0
+    seen: set[str] = set()
+    for tag in (*policy_tags, *condition_tags):
+        if tag in seen:
+            continue
+        seen.add(tag)
+        score += MASTERY_TAG_BONUS.get(tag, 0)
+        if score >= 70:
+            return 70
+    return score
 
 
 def mastery_strata(
@@ -441,6 +480,8 @@ def string_list(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, list):
+        if all(isinstance(item, str) for item in value):
+            return value
         return [str(item) for item in value]
     return [str(value)]
 

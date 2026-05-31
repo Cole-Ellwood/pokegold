@@ -154,6 +154,17 @@ Acceptance targets:
 - Preserve exact current rendered packet output for selected cases.
 - Existing unit tests and deity gate pass.
 
+2026-05-31 implementation note: the first speed-core slices are in place.
+`generate_scenarios_compact` skips stamp/hash work for hot-loop model search,
+`evaluate_batch_compact` evaluates generated Boss AI scenario verdicts without
+rendering per-move score-event packets, and review-queue construction now
+renders follow-up text and evidence digests only for selected queue items. The
+rerunnable local gate is:
+
+```powershell
+python tools\audit\check_boss_ai_debugger_speed_targets.py
+```
+
 Stretch targets:
 
 - 7M generated cases/minute.

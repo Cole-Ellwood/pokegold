@@ -31,6 +31,10 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.debugger.next_steps import build_next_step
 DEFAULT_QUESTIONS = ROOT / "audit" / "debugger_godmode_benchmark" / "questions.jsonl"
 DEFAULT_ARTIFACT_DIR = ROOT / ".local" / "tmp" / "debugger_godmode_benchmark"
 DEFAULT_OUT = DEFAULT_ARTIFACT_DIR / "results.json"
@@ -204,9 +208,13 @@ def run_debugger_json(
     args: list[str],
     json_path: Path,
     timeout: int,
+    subprocess_mode: bool,
 ) -> tuple[CommandRun, Any | None]:
     json_path.parent.mkdir(parents=True, exist_ok=True)
     command = [sys.executable, "-m", "tools.debugger", *args, "--json-out", str(json_path)]
+    if not subprocess_mode and name == "next":
+        return run_next_in_process(command=command, args=args, json_path=json_path)
+
     start = time.perf_counter()
     try:
         completed = subprocess.run(
@@ -246,6 +254,59 @@ def run_debugger_json(
     try:
         return run, load_json(json_path)
     except json.JSONDecodeError:
+        return run, None
+
+
+def run_next_in_process(
+    *,
+    command: list[str],
+    args: list[str],
+    json_path: Path,
+) -> tuple[CommandRun, Any | None]:
+    start = time.perf_counter()
+    try:
+        symptom = ""
+        changed_files: list[str] = []
+        index = 0
+        while index < len(args):
+            item = args[index]
+            if item == "--symptom" and index + 1 < len(args):
+                symptom = args[index + 1]
+                index += 2
+                continue
+            if item == "--changed-file" and index + 1 < len(args):
+                changed_files.append(args[index + 1])
+                index += 2
+                continue
+            index += 1
+        payload = build_next_step(changed_files=tuple(changed_files), symptom=symptom)
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(
+            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        duration = time.perf_counter() - start
+        run = CommandRun(
+            name="next",
+            command=command,
+            json_path=repo_rel(json_path),
+            exit_code=0,
+            duration_seconds=round(duration, 3),
+            stdout_tail="",
+            stderr_tail="",
+        )
+        return run, payload
+    except Exception as exc:  # noqa: BLE001 - benchmark should surface row failure.
+        duration = time.perf_counter() - start
+        run = CommandRun(
+            name="next",
+            command=command,
+            json_path=repo_rel(json_path),
+            exit_code=1,
+            duration_seconds=round(duration, 3),
+            stdout_tail="",
+            stderr_tail=str(exc)[-1200:],
+        )
         return run, None
 
 
@@ -297,6 +358,7 @@ def score_question(
     source_anchor_threshold: float,
     standard_token_threshold: int,
     next_only: bool,
+    subprocess_mode: bool,
 ) -> QuestionScore:
     question_id = str(row["id"])
     symptom = str(row["symptom"])
@@ -309,6 +371,7 @@ def score_question(
         args=["next", "--symptom", symptom],
         json_path=next_path,
         timeout=timeout,
+        subprocess_mode=subprocess_mode,
     )
 
     command_runs = [next_run]
@@ -332,6 +395,7 @@ def score_question(
         args=["investigate", "--symptom", symptom],
         json_path=investigate_path,
         timeout=timeout,
+        subprocess_mode=subprocess_mode,
     )
     command_runs.append(investigate_run)
     payloads.append(investigate_payload)
@@ -434,6 +498,7 @@ def summarize(
     source_anchor_threshold: float,
     standard_token_threshold: int,
     next_only: bool,
+    subprocess_mode: bool,
 ) -> dict[str, Any]:
     total = len(results)
     passed = sum(1 for result in results if result.passed)
@@ -455,6 +520,7 @@ def summarize(
         "source_anchor_threshold": source_anchor_threshold,
         "standard_token_threshold": standard_token_threshold,
         "next_only": next_only,
+        "execution_mode": "subprocess" if subprocess_mode else "in_process",
         "question_count": total,
         "passed": passed,
         "failed": total - passed,
@@ -555,6 +621,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Run only `python -m tools.debugger next`; useful for fast harness smoke checks.",
     )
+    parser.add_argument(
+        "--subprocess",
+        action="store_true",
+        help="Run debugger commands through subprocesses instead of the default in-process next planner.",
+    )
     return parser.parse_args(argv)
 
 
@@ -588,6 +659,7 @@ def main(argv: list[str] | None = None) -> int:
             source_anchor_threshold=args.source_anchor_threshold,
             standard_token_threshold=args.standard_token_threshold,
             next_only=args.next_only,
+            subprocess_mode=args.subprocess,
         )
         results.append(result)
         status = "PASS" if result.passed else "FAIL"
@@ -607,6 +679,7 @@ def main(argv: list[str] | None = None) -> int:
         source_anchor_threshold=args.source_anchor_threshold,
         standard_token_threshold=args.standard_token_threshold,
         next_only=args.next_only,
+        subprocess_mode=args.subprocess,
     )
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import random
-from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -1385,6 +1384,22 @@ def generate_scenarios(
         raise PreferenceDataError("count must be non-negative")
     if family not in FAMILIES:
         raise PreferenceDataError(f"unknown generator family {family!r}")
+    return [
+        stamp_scenario(scenario)
+        for scenario in generate_scenarios_compact(family=family, count=count, seed=seed)
+    ]
+
+
+def generate_scenarios_compact(
+    *,
+    family: str,
+    count: int,
+    seed: int,
+) -> list[dict[str, Any]]:
+    if count < 0:
+        raise PreferenceDataError("count must be non-negative")
+    if family not in FAMILIES:
+        raise PreferenceDataError(f"unknown generator family {family!r}")
     rng = random.Random(seed)
     if family == "all":
         families = ALL_FAMILY_SEQUENCE
@@ -1394,9 +1409,9 @@ def generate_scenarios(
             chosen = families[index % len(families)]
             child_index = family_counts[chosen]
             family_counts[chosen] = child_index + 1
-            scenarios.append(stamp_scenario(generate_one(chosen, child_index, rng, seed)))
+            scenarios.append(generate_one(chosen, child_index, rng, seed))
         return scenarios
-    return [stamp_scenario(generate_one(family, index, rng, seed)) for index in range(count)]
+    return [generate_one(family, index, rng, seed) for index in range(count)]
 
 
 def generate_one(
@@ -1741,7 +1756,7 @@ def add_rom_delta(events: list[dict[str, int]], rule: str, delta: int) -> None:
 def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[str, Any]:
     case = MASTERY_POLICY_CASES[index % len(MASTERY_POLICY_CASES)]
     card_id = str(case["card_id"])
-    expectation = deepcopy(case["expectation"])
+    expectation = clone_template(case["expectation"])
     expectation["evidence_refs"] = [POLICY_CARD_REFS[card_id]]
     condition_tags = list(expectation.get("condition_tags", []))
     if card_id not in condition_tags:
@@ -1755,9 +1770,9 @@ def mastery_policy_scenario(index: int, rng: random.Random, seed: int) -> dict[s
         "policy_card": card_id,
         "seed": seed,
         "case_index": index,
-        "tier": rng.choice(list(case["tiers"])),
-        "notes": deepcopy(case["notes"]),
-        "moves": deepcopy(case["moves"]),
+        "tier": rng.choice(case["tiers"]),
+        "notes": clone_template(case["notes"]),
+        "moves": clone_template(case["moves"]),
         "expectation": expectation,
     }
 
@@ -1771,7 +1786,7 @@ def public_policy_scenario(
     cases = PUBLIC_POLICY_CASES[family]
     case = cases[index % len(cases)]
     case_id = str(case["case_id"])
-    expectation = deepcopy(case["expectation"])
+    expectation = clone_template(case["expectation"])
     condition_tags = list(expectation.get("condition_tags", []))
     if family not in condition_tags:
         condition_tags.append(family)
@@ -1786,11 +1801,19 @@ def public_policy_scenario(
         "policy_case": case_id,
         "seed": seed,
         "case_index": index,
-        "tier": rng.choice(list(case["tiers"])),
-        "notes": deepcopy(case["notes"]),
-        "moves": deepcopy(case["moves"]),
+        "tier": rng.choice(case["tiers"]),
+        "notes": clone_template(case["notes"]),
+        "moves": clone_template(case["moves"]),
         "expectation": expectation,
     }
+
+
+def clone_template(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: clone_template(child) for key, child in value.items()}
+    if isinstance(value, list):
+        return [clone_template(child) for child in value]
+    return value
 
 
 def write_jsonl(scenarios: list[dict[str, Any]], path: Path) -> None:
@@ -1801,13 +1824,20 @@ def write_jsonl(scenarios: list[dict[str, Any]], path: Path) -> None:
 
 def stamp_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     stamped = dict(scenario)
-    stamped["generator_source"] = "tools.boss_ai_debugger.generators"
-    stamped["rom"] = display_path(DEFAULT_TRACE_ROM)
-    stamped["rom_sha256"] = sha256_file_cached(str(DEFAULT_TRACE_ROM))
-    stamped["symbols"] = display_path(DEFAULT_TRACE_SYMBOLS)
-    stamped["symbols_sha256"] = sha256_file_cached(str(DEFAULT_TRACE_SYMBOLS))
+    stamped.update(stamp_basis())
     stamped["state_hash"] = scenario_hash(stamped)
     return stamped
+
+
+@lru_cache(maxsize=1)
+def stamp_basis() -> dict[str, str]:
+    return {
+        "generator_source": "tools.boss_ai_debugger.generators",
+        "rom": display_path(DEFAULT_TRACE_ROM),
+        "rom_sha256": sha256_file_cached(str(DEFAULT_TRACE_ROM)),
+        "symbols": display_path(DEFAULT_TRACE_SYMBOLS),
+        "symbols_sha256": sha256_file_cached(str(DEFAULT_TRACE_SYMBOLS)),
+    }
 
 
 def scenario_hash(scenario: dict[str, Any]) -> str:
@@ -1829,6 +1859,12 @@ def sha256_file_cached(path_text: str) -> str:
 
 
 def display_path(path: Path) -> str:
+    return display_path_cached(str(path))
+
+
+@lru_cache(maxsize=None)
+def display_path_cached(path_text: str) -> str:
+    path = Path(path_text)
     try:
         return str(path.relative_to(ROOT)).replace("/", "\\")
     except ValueError:

@@ -5,8 +5,11 @@ import unittest
 from contextlib import redirect_stdout
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
+from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_scenarios import (
     apply_score_delta,
+    evaluate_batch,
+    evaluate_batch_compact,
     format_simulation,
     select_from_score_bytes,
     select_move,
@@ -129,6 +132,41 @@ class RomScenarioTests(unittest.TestCase):
         self.assertEqual(result["second_move_id"], 11)
         self.assertEqual(result["possible_slot_indices"], [0, 1])
         self.assertEqual(result["possible_move_ids"], [10, 11])
+
+    def test_compact_batch_matches_rendered_verdict_fields(self) -> None:
+        scenarios = generate_scenarios(family="all", count=80, seed=23)
+
+        rendered = evaluate_batch(scenarios)
+        compact = evaluate_batch_compact(scenarios)
+
+        self.assertEqual(compact["scenario_count"], rendered["scenario_count"])
+        self.assertEqual(compact["reviewable_count"], rendered["reviewable_count"])
+        self.assertEqual(compact["verdict_counts"], rendered["verdict_counts"])
+        self.assertEqual(compact["policy_tag_counts"], rendered["policy_tag_counts"])
+
+        compared_fields = [
+            "scenario_id",
+            "verdict",
+            "severity",
+            "rom_best_action_id",
+            "rom_best_probability",
+            "expected_best_action_ids",
+            "expected_acceptable_action_ids",
+            "rolled_bad_action_ids",
+            "rolled_catastrophic_action_ids",
+            "zero_probability_best_action_ids",
+            "policy_tags",
+            "condition_tags",
+            "lesson_type",
+            "confidence",
+            "evidence_refs",
+            "why",
+            "answer_changing_information",
+            "reason",
+        ]
+        for rendered_item, compact_item in zip(rendered["verdicts"], compact["verdicts"]):
+            for field in compared_fields:
+                self.assertEqual(compact_item[field], rendered_item[field])
 
     def test_cli_builtin_runs(self) -> None:
         stdout = io.StringIO()

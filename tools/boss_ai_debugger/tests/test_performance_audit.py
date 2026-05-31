@@ -6,6 +6,7 @@ from tools.audit.check_boss_ai_debugger_performance import (
     avoidable_duplicate_lesson_rate,
     performance_errors,
 )
+from tools.audit.check_boss_ai_debugger_speed_targets import speed_target_errors
 
 
 class PerformanceAuditTests(unittest.TestCase):
@@ -57,6 +58,20 @@ class PerformanceAuditTests(unittest.TestCase):
         }
 
         self.assertEqual(len(performance_errors(report)), 6)
+
+    def test_speed_target_errors_use_compact_thresholds(self) -> None:
+        report = {
+            "min_compact_generation_per_minute": 2_500_000,
+            "min_compact_speedup": 2.0,
+            "min_compact_per_minute": 5_000_000,
+            "min_queue_inputs_per_minute": 5_000_000,
+            "generation": {"compact_per_minute": 2_000_000},
+            "compact_speedup": 1.5,
+            "compact": {"scenarios_per_minute": 4_000_000},
+            "queue": {"queue_inputs_per_minute": 4_000_000},
+        }
+
+        self.assertEqual(len(speed_target_errors(report)), 4)
 
 
 if __name__ == "__main__":

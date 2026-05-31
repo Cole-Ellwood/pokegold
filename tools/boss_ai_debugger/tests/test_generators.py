@@ -12,6 +12,7 @@ from tools.boss_ai_debugger.generators import (
     POLICY_CARD_REFS,
     PUBLIC_POLICY_FAMILIES,
     generate_scenarios,
+    generate_scenarios_compact,
     materialized_spikes_spin_rom_deltas,
 )
 from tools.boss_ai_debugger.rom_scenarios import evaluate_batch, select_move
@@ -46,6 +47,25 @@ class GeneratorTests(unittest.TestCase):
         self.assertTrue(validation["valid"])
         self.assertEqual(report["scenario_count"], 20)
         self.assertGreater(report["scenarios_per_minute"], 0)
+
+    def test_compact_generation_matches_rendered_generation_without_stamp_fields(self) -> None:
+        compact = generate_scenarios_compact(family="all", count=80, seed=23)
+        rendered = generate_scenarios(family="all", count=80, seed=23)
+        stamp_keys = {
+            "generator_source",
+            "rom",
+            "rom_sha256",
+            "symbols",
+            "symbols_sha256",
+            "state_hash",
+        }
+
+        stripped = [
+            {key: value for key, value in scenario.items() if key not in stamp_keys}
+            for scenario in rendered
+        ]
+
+        self.assertEqual(compact, stripped)
 
     def test_mastery_policy_generation_covers_policy_cards(self) -> None:
         scenarios = generate_scenarios(

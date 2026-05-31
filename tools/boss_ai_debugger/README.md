@@ -90,6 +90,18 @@ the mastery notes instead of relying on memory. The batch report ranks
 reviewable disagreements first so human/agent attention goes to the
 highest-value checks.
 
+Run the compact god-level speed target audit:
+
+```powershell
+python tools\audit\check_boss_ai_debugger_speed_targets.py
+```
+
+The speed audit compares rich stamped generation against compact generation,
+rich rendered batch evaluation against compact verdict evaluation, verifies the
+compact outputs match the rich outputs for the decision fields they share, and
+checks that review queue reduction can hit the Phase-1 throughput target without
+pre-rendering follow-up text or evidence digests for discarded items.
+
 Replay captured ROM selector traces:
 
 ```powershell

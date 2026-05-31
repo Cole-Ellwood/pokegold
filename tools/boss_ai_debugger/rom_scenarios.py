@@ -677,6 +677,228 @@ def evaluate_scenario(scenario: dict[str, Any]) -> ScenarioVerdict:
     )
 
 
+def evaluate_scenario_compact(scenario: dict[str, Any]) -> dict[str, Any]:
+    """Evaluate a scenario without rendering per-move score event packets."""
+
+    selection = select_move_compact(scenario)
+    expectation = scenario_expectation(scenario)
+    validate_expected_action_ids(scenario, expectation)
+
+    best_ids = string_list(expectation.get("best_action_ids"))
+    acceptable_ids = string_list(expectation.get("acceptable_action_ids"))
+    bad_ids = string_list(expectation.get("bad_action_ids"))
+    catastrophic_ids = string_list(expectation.get("catastrophic_action_ids"))
+    policy_tags = string_list(expectation.get("policy_tags"))
+    condition_tags = string_list(expectation.get("condition_tags"))
+    lesson_type = str(expectation.get("lesson_type", ""))
+    confidence = str(expectation.get("confidence", "medium"))
+    evidence_refs = string_list(expectation.get("evidence_refs"))
+    why = str(expectation.get("why", ""))
+    answer_changing_information = string_list(
+        expectation.get("answer_changing_information")
+    )
+    min_best_probability = float(
+        expectation.get("min_best_probability", DEFAULT_MIN_BEST_PROBABILITY)
+    )
+
+    probabilities = selection["probabilities"]
+    rom_best = selection["best_action_id"]
+    rom_best_probability = float(probabilities.get(rom_best, 0.0)) if rom_best else 0.0
+    rolled_bad = rolled_ids(probabilities, bad_ids)
+    rolled_catastrophic = rolled_ids(probabilities, catastrophic_ids)
+    zero_probability_best = [
+        action_id for action_id in best_ids if probabilities.get(action_id, 0.0) == 0.0
+    ]
+
+    if not selection["ready"]:
+        verdict = "no_rom_choice"
+        severity = 95
+        reason = str(selection["reason"])
+        rom_best_text = None
+        rom_best_probability = 0.0
+    elif rolled_catastrophic:
+        verdict = "catastrophic_roll"
+        severity = 100
+        reason = "ROM gives nonzero probability to catastrophic action(s)"
+        rom_best_text = str(rom_best)
+    elif rolled_bad:
+        verdict = "bad_roll"
+        severity = 80
+        reason = "ROM gives nonzero probability to bad action(s)"
+        rom_best_text = str(rom_best)
+    elif rom_best in best_ids:
+        if rom_best_probability < min_best_probability:
+            verdict = "weak_best"
+            severity = 40
+            reason = "ROM top action is expected-best but below probability floor"
+        else:
+            verdict = "pass"
+            severity = 0
+            reason = "ROM top action is expected-best"
+        rom_best_text = str(rom_best)
+    elif rom_best in acceptable_ids:
+        verdict = "acceptable_top"
+        severity = 30
+        reason = "ROM top action is acceptable but not expected-best"
+        rom_best_text = str(rom_best)
+    elif best_ids and zero_probability_best == best_ids:
+        verdict = "best_never_rolled"
+        severity = 75
+        reason = "all expected-best actions have zero ROM probability"
+        rom_best_text = str(rom_best)
+    elif best_ids:
+        verdict = "mismatch"
+        severity = 70
+        reason = "ROM top action is outside expected best/acceptable sets"
+        rom_best_text = str(rom_best)
+    else:
+        verdict = "needs_expectation"
+        severity = 0
+        reason = "scenario has no expected best action ids"
+        rom_best_text = str(rom_best)
+
+    if verdict in {"pass", "acceptable_top"} and zero_probability_best:
+        verdict = "partial_best_unrolled"
+        severity = max(severity, 45)
+        reason = "some expected-best actions have zero ROM probability"
+
+    return {
+        "scenario_id": str(selection["scenario_id"]),
+        "verdict": verdict,
+        "severity": severity,
+        "rom_best_action_id": rom_best_text,
+        "rom_best_probability": rom_best_probability,
+        "expected_best_action_ids": best_ids,
+        "expected_acceptable_action_ids": acceptable_ids,
+        "rolled_bad_action_ids": rolled_bad,
+        "rolled_catastrophic_action_ids": rolled_catastrophic,
+        "zero_probability_best_action_ids": zero_probability_best,
+        "policy_tags": policy_tags,
+        "condition_tags": condition_tags,
+        "lesson_type": lesson_type,
+        "confidence": confidence,
+        "evidence_refs": evidence_refs,
+        "why": why,
+        "answer_changing_information": answer_changing_information,
+        "reason": reason,
+        "result": {
+            "available": False,
+            "reason": "compact evaluation omits rendered per-move score packets",
+        },
+    }
+
+
+def select_move_compact(scenario: dict[str, Any]) -> dict[str, Any]:
+    tier = normalize_tier(scenario.get("tier", "late"))
+    scored = compact_scores(scenario, tier)
+    best: dict[str, Any] | None = None
+    second: dict[str, Any] | None = None
+    for item in scored:
+        if item["final_score"] >= BLOCKED_SCORE:
+            continue
+        if best is None or compact_score_sort_key(item) < compact_score_sort_key(best):
+            second = best
+            best = item
+        elif second is None or compact_score_sort_key(item) < compact_score_sort_key(second):
+            second = item
+
+    if best is None:
+        return {
+            "scenario_id": scenario.get("id", "unnamed"),
+            "tier": tier,
+            "ready": False,
+            "reason": "no selectable move below score 80",
+            "best_action_id": None,
+            "probabilities": {item["action_id"]: 0.0 for item in scored},
+        }
+
+    probabilities = {item["action_id"]: 0.0 for item in scored}
+    if second is None:
+        probabilities[best["action_id"]] = 1.0
+    else:
+        gap = int(second["final_score"]) - int(best["final_score"])
+        roll_threshold = adjusted_best_roll_threshold(tier, gap)
+        probabilities[best["action_id"]] = roll_threshold / 256
+        probabilities[second["action_id"]] = 1 - probabilities[best["action_id"]]
+
+    return {
+        "scenario_id": scenario.get("id", "unnamed"),
+        "tier": tier,
+        "ready": True,
+        "best_action_id": best["action_id"],
+        "probabilities": probabilities,
+    }
+
+
+def compact_scores(scenario: dict[str, Any], tier: int) -> list[dict[str, Any]]:
+    moves = scenario.get("moves")
+    if not isinstance(moves, list) or not moves:
+        raise PreferenceDataError("scenario must contain a non-empty moves list")
+
+    scored: list[dict[str, Any]] = []
+    for slot, move in enumerate(moves, start=1):
+        if not isinstance(move, dict):
+            raise PreferenceDataError("each move must be an object")
+        action_id = str(move.get("id") or f"slot{slot}")
+        initial = int(move.get("base_score", DEFAULT_BASE_SCORE))
+        if move.get("blocked", False):
+            initial = BLOCKED_SCORE
+        if not 0 <= initial <= 255:
+            raise PreferenceDataError(f"{action_id}: base_score must be 0..255")
+
+        score = initial
+        if score < BLOCKED_SCORE:
+            for raw_delta in move.get("deltas", []):
+                if isinstance(raw_delta, int):
+                    delta = raw_delta
+                elif isinstance(raw_delta, dict):
+                    delta = int(raw_delta["delta"])
+                else:
+                    raise PreferenceDataError(
+                        f"{action_id}: deltas must be ints or objects"
+                    )
+                score = apply_score_delta(score, delta)
+
+        scored.append(
+            {
+                "slot": slot,
+                "action_id": action_id,
+                "pre_lookahead_score": score,
+                "final_score": score,
+                "lookahead_delta": int(move.get("lookahead_delta", 0)),
+            }
+        )
+
+    if tier < AI_TIER_MID or scenario.get("lookahead", True) is False:
+        return scored
+
+    legal_scores = [
+        int(item["pre_lookahead_score"])
+        for item in scored
+        if int(item["pre_lookahead_score"]) < BLOCKED_SCORE
+    ]
+    if not legal_scores:
+        return scored
+
+    best_score = min(legal_scores)
+    margin = int(scenario.get("lookahead_margin", DEFAULT_LOOKAHEAD_MARGIN))
+    limit = int(scenario.get("lookahead_n", DEFAULT_LOOKAHEAD_N))
+    threshold = best_score + margin
+    applied = 0
+    for item in scored:
+        pre_score = int(item["pre_lookahead_score"])
+        if pre_score >= BLOCKED_SCORE or pre_score > threshold or applied >= limit:
+            continue
+        delta = max(-18, min(18, int(item["lookahead_delta"])))
+        item["final_score"] = apply_score_delta(pre_score, delta)
+        applied += 1
+    return scored
+
+
+def compact_score_sort_key(item: dict[str, Any]) -> tuple[int, int]:
+    return int(item["final_score"]), int(item["slot"])
+
+
 def evaluate_batch(scenarios: list[dict[str, Any]]) -> dict[str, Any]:
     started = time.perf_counter()
     verdicts = [evaluate_scenario(scenario) for scenario in scenarios]
@@ -710,6 +932,46 @@ def evaluate_batch(scenarios: list[dict[str, Any]]) -> dict[str, Any]:
         "verdict_counts": dict(sorted(verdict_counts.items())),
         "policy_tag_counts": dict(sorted(policy_counts.items())),
         "verdicts": [verdict_to_json(item) for item in ranked],
+    }
+
+
+def evaluate_batch_compact(scenarios: list[dict[str, Any]]) -> dict[str, Any]:
+    started = time.perf_counter()
+    verdicts = [evaluate_scenario_compact(scenario) for scenario in scenarios]
+    elapsed = time.perf_counter() - started
+    reviewable_count = 0
+    verdict_counts: dict[str, int] = {}
+    policy_counts: dict[str, int] = {}
+    for item in verdicts:
+        verdict = str(item["verdict"])
+        verdict_counts[verdict] = verdict_counts.get(verdict, 0) + 1
+        if int(item["severity"]) <= 0:
+            continue
+        reviewable_count += 1
+        for tag in item["policy_tags"]:
+            policy_counts[tag] = policy_counts.get(tag, 0) + 1
+
+    verdicts.sort(
+        key=lambda item: (
+            -int(item["severity"]),
+            -float(item["rom_best_probability"]),
+            str(item["scenario_id"]),
+        )
+    )
+    per_minute = len(scenarios) / elapsed * 60 if elapsed > 0 else 0.0
+    reviewable_per_minute = (
+        reviewable_count / elapsed * 60 if elapsed > 0 else 0.0
+    )
+    return {
+        "scenario_count": len(scenarios),
+        "elapsed_seconds": elapsed,
+        "scenarios_per_minute": per_minute,
+        "reviewable_count": reviewable_count,
+        "reviewable_per_minute": reviewable_per_minute,
+        "verdict_counts": dict(sorted(verdict_counts.items())),
+        "policy_tag_counts": dict(sorted(policy_counts.items())),
+        "verdicts": verdicts,
+        "compact": True,
     }
 
 

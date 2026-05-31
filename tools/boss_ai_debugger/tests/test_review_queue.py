@@ -138,6 +138,16 @@ class ReviewQueueTests(unittest.TestCase):
         self.assertLessEqual(queue["returned_count"], 3)
         self.assertEqual(queue["input_scenario_count"], 8)
 
+    def test_review_queue_can_skip_followup_rendering_for_hot_path(self) -> None:
+        scenarios = generate_scenarios(family="switch_sack", count=8, seed=5)
+        report = evaluate_batch(scenarios)
+        queue = build_review_queue(report, limit=3, include_followups=False)
+
+        self.assertLessEqual(queue["returned_count"], 3)
+        self.assertEqual(queue["items"][0]["evidence_digest"], [])
+        self.assertEqual(queue["items"][0]["next_action"], "")
+        self.assertNotIn("explain_decision", queue["items"][0])
+
     def test_review_queue_from_run_report_infers_sibling_scenario_source(self) -> None:
         scenarios = generate_scenarios(family="switch_sack", count=8, seed=5)
         report = evaluate_batch(scenarios)

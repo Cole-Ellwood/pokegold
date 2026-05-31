@@ -16,7 +16,7 @@ from tools.boss_ai_debugger.differential import build_differential_report
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.mastery_index import build_mastery_index
 from tools.boss_ai_debugger.review_queue import build_review_queue
-from tools.boss_ai_debugger.rom_scenarios import evaluate_batch
+from tools.boss_ai_debugger.rom_scenarios import evaluate_batch_compact
 from tools.boss_ai_debugger.rom_selector_materialize import (
     DEFAULT_BASE_ROUTE,
     DEFAULT_MANIFEST_PATH,
@@ -148,7 +148,7 @@ def collect_evidence(
         count=generated_count,
         seed=seed,
     )
-    batch = evaluate_batch(scenarios)
+    batch = evaluate_batch_compact(scenarios)
     queue = build_review_queue(batch, limit=50, max_per_lesson=2)
     route_eval = evaluate_route_batch(scenarios, source="roadmap_audit", horizon=3)
     performance_report = load_performance_report()
