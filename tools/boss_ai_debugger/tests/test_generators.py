@@ -153,6 +153,51 @@ class GeneratorTests(unittest.TestCase):
         )
         self.assertEqual(result["probabilities"]["move_surf"], 0.0)
 
+    def test_generated_reserve_ghost_softens_revealed_spin_risk(self) -> None:
+        scenarios = generate_scenarios(family="all", count=128, seed=5312026)
+        scenario = find_scenario(scenarios, "generated_spikes_spin_5312026_00010")
+
+        self.assertEqual(scenario["id"], "generated_spikes_spin_5312026_00010")
+        self.assertIn(
+            "active_revealed_rapid_spin",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "reserve_ghost_available",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn("move_spikes", scenario["expectation"]["best_action_ids"])
+        self.assertNotIn(
+            "move_spikes",
+            scenario["expectation"].get("bad_action_ids", []),
+        )
+
+    def test_soft_spin_risk_uses_materialized_score_best(self) -> None:
+        scenarios = generate_scenarios(family="all", count=128, seed=5312026)
+        scenario = find_scenario(scenarios, "generated_spikes_spin_5312026_00006")
+
+        self.assertEqual(scenario["id"], "generated_spikes_spin_5312026_00006")
+        self.assertIn(
+            "active_revealed_rapid_spin",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "reserve_ghost_available",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "active_species_spin_prior",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertEqual(
+            scenario["expectation"]["best_action_ids"],
+            ["move_sludge_bomb"],
+        )
+        self.assertNotIn(
+            "move_spikes",
+            scenario["expectation"].get("bad_action_ids", []),
+        )
+
     def test_no_spin_second_layer_keeps_spikes_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="late",
@@ -285,6 +330,13 @@ def spikes_spin_score_scenario(**kwargs: Any) -> dict[str, Any]:
             },
         ],
     }
+
+
+def find_scenario(scenarios: list[dict[str, Any]], scenario_id: str) -> dict[str, Any]:
+    for scenario in scenarios:
+        if scenario["id"] == scenario_id:
+            return scenario
+    raise AssertionError(f"missing scenario {scenario_id}")
 
 
 if __name__ == "__main__":

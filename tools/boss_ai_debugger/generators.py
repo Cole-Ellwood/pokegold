@@ -1540,7 +1540,17 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     )
     active_spinblock = active_ghost and not foresighted
     spinblock_available = active_spinblock or reserve_ghost
-    active_spin_risk = active_revealed_spin and layers in {1, 2} and not active_spinblock
+    hard_active_spin_risk = (
+        active_revealed_spin
+        and layers in {1, 2}
+        and not spinblock_available
+    )
+    soft_active_spin_risk = (
+        active_revealed_spin
+        and layers in {1, 2}
+        and not active_spinblock
+        and spinblock_available
+    )
     bench_spin_risk = (
         bench_revealed_spin
         and layers == 2
@@ -1580,11 +1590,16 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
         bad = ["move_spikes"]
         why = "A fourth local Spikes click fails after the stack is already capped."
         lesson_type = "hard_rule"
-    elif active_spin_risk or bench_spin_risk:
+    elif hard_active_spin_risk or bench_spin_risk:
         best = ["move_sludge_bomb"]
         bad = ["move_spikes"]
         why = "Public Rapid Spin pressure threatens to erase the stack before another layer pays off."
         lesson_type = "hard_rule"
+    elif soft_active_spin_risk:
+        best = generated_score_best_action_ids(moves)
+        bad = []
+        why = "Revealed Rapid Spin is softened by an available spinblock, so the score model decides whether another Spikes layer stays live."
+        lesson_type = "weight_hint"
     elif immediate_pressure and layers > 0:
         best = ["move_sludge_bomb"]
         bad = ["move_spikes"]
@@ -1593,7 +1608,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     else:
         best = ["move_spikes"]
         bad = []
-        why = "When spin risk is absent or spinblocked, another useful Spikes layer can be the route-progress move."
+        why = "When spin risk is absent, soft, or spinblocked, another useful Spikes layer can be the route-progress move."
         lesson_type = "weight_hint"
 
     return {
@@ -1628,6 +1643,32 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
             ],
         },
     }
+
+
+def generated_score_best_action_ids(moves: list[dict[str, Any]]) -> list[str]:
+    scored: list[tuple[str, int]] = []
+    for move in moves:
+        score = generated_move_score(move)
+        if score >= 80:
+            continue
+        scored.append((str(move["id"]), score))
+    if not scored:
+        return []
+    best_score = min(score for _, score in scored)
+    return [move_id for move_id, score in scored if score == best_score]
+
+
+def generated_move_score(move: dict[str, Any]) -> int:
+    if move.get("blocked"):
+        return 80
+    score = 20
+    for delta in move.get("deltas", []):
+        if "set_score" in delta:
+            score = int(delta["set_score"])
+        else:
+            score += int(delta.get("delta", 0))
+    score += int(move.get("lookahead_delta", 0))
+    return max(0, min(255, score))
 
 
 def spikes_layer_delta(layers: int) -> int:
