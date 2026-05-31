@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from tools.boss_ai_preference.data import PreferenceDataError
+
 from .contribution_compare import (
     compare_contribution_reports,
     load_python_contribution_reports,
@@ -27,9 +29,7 @@ def differential_from_paths(
     python_contribution_trace_paths: list[Path] | None = None,
 ) -> dict[str, Any]:
     scenarios = load_scenario_batch(scenarios_path) if scenarios_path is not None else []
-    trace_paths = []
-    if trace_dir is not None and trace_dir.exists():
-        trace_paths = sorted(trace_dir.glob(trace_glob))
+    trace_paths = collect_diff_trace_paths(trace_dir, trace_glob)
     return build_differential_report(
         scenarios=scenarios,
         trace_paths=trace_paths,
@@ -40,6 +40,19 @@ def differential_from_paths(
             "trace_dir": str(trace_dir) if trace_dir is not None else "",
         },
     )
+
+
+def collect_diff_trace_paths(trace_dir: Path | None, trace_glob: str) -> list[Path]:
+    if trace_dir is None:
+        return []
+    if not trace_dir.exists() or not trace_dir.is_dir():
+        raise PreferenceDataError(f"missing trace directory: {trace_dir}")
+    trace_paths = sorted(trace_dir.glob(trace_glob))
+    if not trace_paths:
+        raise PreferenceDataError(
+            f"no trace files matched {trace_glob!r} in {trace_dir}"
+        )
+    return trace_paths
 
 
 def build_differential_report(

@@ -9,7 +9,10 @@ from pathlib import Path
 
 from tools.boss_ai_preference.data import PreferenceDataError
 from tools.boss_ai_debugger.__main__ import main as debugger_main
-from tools.boss_ai_debugger.differential import build_differential_report
+from tools.boss_ai_debugger.differential import (
+    build_differential_report,
+    differential_from_paths,
+)
 from tools.boss_ai_debugger.generators import write_jsonl
 
 
@@ -242,6 +245,25 @@ class DifferentialTests(unittest.TestCase):
             "missing Python contribution trace",
         ):
             build_differential_report(python_contribution_trace_paths=[missing])
+
+    def test_missing_requested_trace_dir_fails_closed(self) -> None:
+        missing = Path("missing_trace_dir")
+
+        with self.assertRaisesRegex(
+            PreferenceDataError,
+            "missing trace directory",
+        ):
+            differential_from_paths(trace_dir=missing)
+
+    def test_empty_requested_trace_dir_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            empty = Path(tmp)
+
+            with self.assertRaisesRegex(
+                PreferenceDataError,
+                "no trace files matched",
+            ):
+                differential_from_paths(trace_dir=empty)
 
     def test_scenario_policy_deltas_are_not_treated_as_rom_mirror_rules(self) -> None:
         scenario = {
