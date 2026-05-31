@@ -118,6 +118,10 @@ class GeneratorTests(unittest.TestCase):
             for scenario in scenarios
             for tag in scenario["expectation"]["policy_tags"]
         }
+        condition_tags_by_case = {
+            scenario["policy_case"]: set(scenario["expectation"]["condition_tags"])
+            for scenario in scenarios
+        }
 
         self.assertEqual(
             case_ids,
@@ -131,6 +135,10 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("reversible_before_irreversible", tags)
         self.assertIn("resisted_explosion_board_delta", tags)
         self.assertIn("role_package_ledger", tags)
+        self.assertIn(
+            "active_target_already_statused",
+            condition_tags_by_case["explosion_into_ghost_branch"],
+        )
 
     def test_switch_sack_defensive_sack_is_stay_action(self) -> None:
         scenario = find_scenario(

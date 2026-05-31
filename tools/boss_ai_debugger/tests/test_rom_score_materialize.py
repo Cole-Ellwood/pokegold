@@ -304,6 +304,7 @@ class RomScoreMaterializeTests(unittest.TestCase):
         }
 
         self.assertEqual(materialization.move_ids[:2], [0x99, 0x59])
+        self.assertEqual(patches[("wBattleMonStatus", 0)], 8)
         self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 2)
         self.assertEqual(patches[("wBossAISeenPlayerSpecies", 1)], 0x5E)
         self.assertEqual(patches[("wBossAISeenPlayerAliveMask", 0)], 0b00000011)

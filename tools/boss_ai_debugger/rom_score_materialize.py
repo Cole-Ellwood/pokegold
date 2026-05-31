@@ -1018,7 +1018,7 @@ def base_public_policy_patches(
         patch("wPlayerSubStatus5", 0),
         patch("wBattleMonLevel", 50),
         patch("wEnemyMonLevel", 50),
-        patch("wBattleMonStatus", 0),
+        patch("wBattleMonStatus", 8 if "active_target_already_statused" in tags else 0),
         patch("wEnemyMonStatus", 0),
         patch("wBattleMonSpecies", SPECIES["STARMIE"]),
         patch("wEnemyMonSpecies", SPECIES["QWILFISH"]),

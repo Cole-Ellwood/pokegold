@@ -1293,6 +1293,7 @@ PUBLIC_POLICY_CASES = {
                 ],
                 "condition_tags": [
                     "revealed_ghost_absorber",
+                    "active_target_already_statused",
                     "cashout_immunity_guard",
                     "reversible_line_covers_active_and_branch",
                 ],
@@ -1305,6 +1306,7 @@ PUBLIC_POLICY_CASES = {
                 "why": "Do not make Explosion top when a revealed immunity branch can enter and a reversible line covers more public branches.",
                 "answer_changing_information": [
                     "whether the Ghost branch is actually revealed or only possible",
+                    "whether the active target can still receive status",
                     "whether slow play lets the active target reset",
                 ],
             },
