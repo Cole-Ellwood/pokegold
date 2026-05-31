@@ -84,6 +84,31 @@ class GeneratorTests(unittest.TestCase):
         self.assertEqual(report["scenario_count"], len(POLICY_CARD_REFS))
         self.assertEqual(report["reviewable_count"], 0)
 
+    def test_policy_status_placeholders_carry_public_state_tags(self) -> None:
+        mastery = generate_scenarios(family="mastery_policy", count=8, seed=13)
+        branch_tags = set(mastery[1]["expectation"]["condition_tags"])
+        cashout_tags = set(mastery[2]["expectation"]["condition_tags"])
+        hazard_tags = set(mastery[3]["expectation"]["condition_tags"])
+        sleep_tags = set(mastery[6]["expectation"]["condition_tags"])
+        support_tags = set(mastery[7]["expectation"]["condition_tags"])
+        setup = generate_scenarios(family="setup_heal", count=3, seed=13)[2]
+        prediction = generate_scenarios(family="prediction_mix", count=1, seed=13)[0]
+
+        self.assertIn("status_absorber_named", branch_tags)
+        self.assertIn("resisted_explosion_free_owner", cashout_tags)
+        self.assertIn("spikes_layers_1", hazard_tags)
+        self.assertIn("active_revealed_rapid_spin", hazard_tags)
+        self.assertIn("active_target_already_statused", sleep_tags)
+        self.assertIn("active_target_already_statused", support_tags)
+        self.assertIn(
+            "active_target_already_statused",
+            setup["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "status_absorber_named",
+            prediction["expectation"]["condition_tags"],
+        )
+
     def test_public_policy_families_generate_reviewable_cases(self) -> None:
         for family in PUBLIC_POLICY_FAMILIES:
             with self.subTest(family=family):

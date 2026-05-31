@@ -1128,6 +1128,8 @@ def public_revealed_move_patches(
     policy_case: str,
 ) -> list[MemoryPatch]:
     moves = [0, 0, 0, 0]
+    if "active_revealed_rapid_spin" in tags:
+        moves[0] = MOVES["RAPID_SPIN"]
     if "reset_loop_live" in tags:
         moves[0] = 0xE5
     if "named_receiver_branch" in tags or "prediction_branch_supported" in tags:

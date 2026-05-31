@@ -320,6 +320,63 @@ class RomScoreMaterializeTests(unittest.TestCase):
             materialization.move_ids,
             [0xE2, 0x2E, 0x5C, 0xBC],
         )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+        self.assertEqual(patches[("wBattleMonStatus", 0)], 8)
+
+    def test_branch_policy_materialization_maps_status_absorber(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=2, seed=1)[1]
+
+        self.assertEqual(scenario["policy_card"], "branch_action_after_naming")
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["POISON"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["POISON"])
+
+    def test_cashout_policy_materialization_maps_trade_window(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=3, seed=1)[2]
+
+        self.assertEqual(scenario["policy_card"], "cashout_boundary")
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(patches[("wBattleMonHP", 1)], 22)
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["STEEL"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["GRASS"])
+
+    def test_hazard_policy_materialization_maps_spin_window(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=4, seed=1)[3]
+
+        self.assertEqual(scenario["policy_card"], "hazard_loop_spin_window")
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(materialization.layers, 1)
+        self.assertEqual(patches[("wPlayerUsedMoves", 0)], MOVES["RAPID_SPIN"])
 
     def test_cashout_materialization_patches_revealed_ghost_branch(self) -> None:
         scenario = generate_scenarios(family="cashout_board_delta", count=3, seed=11)[2]
