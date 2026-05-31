@@ -1167,6 +1167,7 @@ PUBLIC_POLICY_CASES = {
                     "reversible_line_covers_active_and_branch",
                     "irreversible_converter_preserved",
                     "delay_does_not_reset_target",
+                    "active_target_already_statused",
                 ],
                 "lesson_type": "hard_rule",
                 "confidence": "medium",
@@ -1179,6 +1180,7 @@ PUBLIC_POLICY_CASES = {
                 "answer_changing_information": [
                     "whether delay lets the target reset, escape, or remove the user",
                     "whether the reversible line still covers the named branch",
+                    "whether the active target can still receive status",
                 ],
             },
         },

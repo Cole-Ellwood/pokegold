@@ -22,6 +22,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     parse_spikes_layers,
     policy_verdict_from_rom_selector,
     replay_controls_from_manifest,
+    score_materialization_skip_reason,
     verdict_from_materialized_trace,
     scenario_condition_tags,
     turn_cache_miss_patches,
@@ -261,6 +262,35 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertLess(
             patches[("wEnemyMonHP", 1)],
             patches[("wEnemyMonMaxHP", 1)],
+        )
+
+    def test_resisted_explosion_case_materializes_target_window(self) -> None:
+        scenario = generate_scenarios(family="cashout_board_delta", count=2, seed=23)[1]
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertIn(
+            "resisted_explosion_free_owner",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertEqual(patches[("wBattleMonHP", 1)], 22)
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["STEEL"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["GRASS"])
+
+    def test_score_materialization_skips_switch_best_cases(self) -> None:
+        scenario = generate_scenarios(family="cashout_board_delta", count=4, seed=23)[3]
+
+        self.assertEqual(scenario["policy_case"], "sleep_plus_cashout_package")
+        self.assertEqual(
+            score_materialization_skip_reason(scenario),
+            "expected best action is switch-only; use rom-switch-materialize",
         )
 
     def test_mastery_policy_materialization_maps_active_pressure_case(self) -> None:

@@ -593,6 +593,10 @@ def run_rom_score_materialization(
                     skipped_verdict(scenario_id, "unsupported scenario family")
                 )
                 continue
+            skip_reason = score_materialization_skip_reason(scenario)
+            if skip_reason:
+                verdicts.append(skipped_verdict(scenario_id, skip_reason))
+                continue
             try:
                 materialization = materialization_for_scenario(
                     scenario,
@@ -985,7 +989,7 @@ def base_public_policy_patches(
     elif "defensive_sack_owner" in tags:
         enemy_hp = 18
     player_hp = 80
-    if "active_pressure_converts" in tags:
+    if "active_pressure_converts" in tags or "resisted_explosion_free_owner" in tags:
         player_hp = 22
 
     player_type1 = TYPES["WATER"]
@@ -993,6 +997,9 @@ def base_public_policy_patches(
     if "status_absorber_named" in tags:
         player_type1 = TYPES["POISON"]
         player_type2 = TYPES["POISON"]
+    elif "resisted_explosion_free_owner" in tags:
+        player_type1 = TYPES["STEEL"]
+        player_type2 = TYPES["GRASS"]
     elif (
         "worst_case_unguarded" in tags
         and "active_pressure_converts" not in tags
@@ -1567,6 +1574,23 @@ def scenario_condition_tags(scenario: dict[str, Any]) -> set[str]:
     if not isinstance(tags, list):
         return set()
     return {str(tag) for tag in tags}
+
+
+def score_materialization_skip_reason(scenario: dict[str, Any]) -> str | None:
+    expectation = scenario.get("expectation", {})
+    if not isinstance(expectation, dict):
+        return None
+    best_ids = list_of_strings(expectation.get("best_action_ids"))
+    if not best_ids:
+        return None
+    move_kinds = {
+        str(move.get("id")): str(move.get("kind", "move"))
+        for move in scenario.get("moves", [])
+        if isinstance(move, dict) and move.get("id") is not None
+    }
+    if all(move_kinds.get(action_id) == "switch" for action_id in best_ids):
+        return "expected best action is switch-only; use rom-switch-materialize"
+    return None
 
 
 def parse_spikes_layers(tags: set[str]) -> int:

@@ -137,6 +137,10 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("role_package_ledger", tags)
         self.assertIn(
             "active_target_already_statused",
+            condition_tags_by_case["reversible_before_irreversible"],
+        )
+        self.assertIn(
+            "active_target_already_statused",
             condition_tags_by_case["explosion_into_ghost_branch"],
         )
 
