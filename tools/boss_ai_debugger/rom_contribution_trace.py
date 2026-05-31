@@ -69,7 +69,7 @@ POINTER_FROM_WRAM_SCORE_PTR = {
 CONTROL_HOOKS = {
     "BossAI_ApplyMoveModel.ScoreMove": "candidate_start",
     "BossAI_ApplyMoveModel.TracePostModelScore": "candidate_end",
-    "BossAI_SelectMove": "selector_start",
+    "BossAI_SelectMove.first_pass": "selector_start",
 }
 
 DIRECT_SCORE_WRITE_RULE_IDS = {

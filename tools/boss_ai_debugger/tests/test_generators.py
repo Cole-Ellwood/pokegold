@@ -132,7 +132,7 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn("resisted_explosion_board_delta", tags)
         self.assertIn("role_package_ledger", tags)
 
-    def test_active_revealed_spin_prefers_surf_over_extra_spikes(self) -> None:
+    def test_active_revealed_spin_with_reserve_ghost_keeps_third_spikes_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="mid",
             layers=2,
@@ -146,11 +146,12 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_surf")
-        self.assertLess(
+        self.assertEqual(result["best_action_id"], "move_spikes")
+        self.assertGreater(
             result["probabilities"]["move_spikes"],
-            result["probabilities"]["move_surf"],
+            result["probabilities"]["move_sludge_bomb"],
         )
+        self.assertEqual(result["probabilities"]["move_surf"], 0.0)
 
     def test_no_spin_second_layer_keeps_spikes_live(self) -> None:
         scenario = spikes_spin_score_scenario(
@@ -168,7 +169,7 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(result["best_action_id"], "move_spikes")
 
-    def test_capped_spikes_prefers_surf_when_active_species_prior_is_live(self) -> None:
+    def test_capped_spikes_prefers_sludge_bomb_when_active_species_prior_is_live(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="late",
             layers=3,
@@ -182,11 +183,11 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_surf")
+        self.assertEqual(result["best_action_id"], "move_sludge_bomb")
         self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
         self.assertTrue(result["moves"][0]["blocked"])
 
-    def test_capped_spikes_active_species_prior_still_prefers_surf_when_ghost_is_identified(self) -> None:
+    def test_capped_spikes_active_species_prior_prefers_sludge_when_ghost_is_identified(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="mid",
             layers=3,
@@ -200,8 +201,12 @@ class GeneratorTests(unittest.TestCase):
 
         result = select_move(scenario)
 
-        self.assertEqual(result["best_action_id"], "move_surf")
+        self.assertEqual(result["best_action_id"], "move_sludge_bomb")
         self.assertEqual(result["probabilities"]["move_spikes"], 0.0)
+        self.assertGreater(
+            result["probabilities"]["move_sludge_bomb"],
+            result["probabilities"]["move_surf"],
+        )
         self.assertTrue(result["moves"][0]["blocked"])
 
     def test_cli_generate_writes_jsonl(self) -> None:

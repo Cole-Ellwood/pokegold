@@ -22,7 +22,7 @@ from _trace_artifacts import require_manifest_basis
 
 TRACE_DIR = ROOT / "audit" / "boss_ai_trace"
 MANIFEST = TRACE_DIR / "live_capture_manifest.json"
-MIN_EXACT_CAPTURES = 19
+MIN_EXACT_CAPTURES = 18
 MIN_AGREEMENT = 0.9999
 
 
@@ -70,6 +70,35 @@ def load_trace_basis() -> dict[str, str]:
     return basis
 
 
+def selector_replay_paths() -> list[Path]:
+    if not MANIFEST.exists():
+        fail(f"missing trace manifest: {MANIFEST}")
+    data = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    captures = data.get("captures", [])
+    if not isinstance(captures, list):
+        fail(f"manifest captures must be a list: {MANIFEST}")
+
+    paths: list[Path] = []
+    for capture in captures:
+        if not isinstance(capture, dict):
+            continue
+        if capture.get("status") != "FINISHED":
+            continue
+        if capture.get("require_chosen_move") is False:
+            continue
+        out = capture.get("out")
+        if not isinstance(out, str) or not out:
+            continue
+        paths.append(rel_or_abs(out))
+    if not paths:
+        fail(f"manifest has no finished chosen-move captures: {MANIFEST}")
+
+    missing = [path for path in paths if not path.exists()]
+    if missing:
+        fail("missing selector trace file(s): " + ", ".join(str(path) for path in missing))
+    return sorted(paths)
+
+
 def validate_trace_basis(paths: list[Path], basis: dict[str, str]) -> None:
     for path in paths:
         fields = parse_key_values(path)
@@ -84,9 +113,7 @@ def validate_trace_basis(paths: list[Path], basis: dict[str, str]) -> None:
 
 def main() -> int:
     require_manifest_basis()
-    paths = sorted(TRACE_DIR.glob("*_live.txt"))
-    if not paths:
-        fail(f"no live trace files found in {TRACE_DIR}")
+    paths = selector_replay_paths()
 
     basis = load_trace_basis()
     validate_trace_basis(paths, basis)

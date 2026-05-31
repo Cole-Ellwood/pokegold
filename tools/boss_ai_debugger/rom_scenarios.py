@@ -274,8 +274,9 @@ def score_moves(scenario: dict[str, Any]) -> list[ScoredMove]:
             raise PreferenceDataError("each move must be an object")
         action_id = str(move.get("id") or f"slot{slot}")
         name = str(move.get("name") or action_id)
+        raw_deltas = move.get("deltas", [])
         initial = int(move.get("base_score", DEFAULT_BASE_SCORE))
-        if move.get("blocked", False):
+        if move.get("blocked", False) and not raw_deltas:
             initial = BLOCKED_SCORE
         if not 0 <= initial <= 255:
             raise PreferenceDataError(f"{action_id}: base_score must be 0..255")
@@ -293,21 +294,33 @@ def score_moves(scenario: dict[str, Any]) -> list[ScoredMove]:
                 )
             )
         else:
-            for raw_delta in move.get("deltas", []):
+            for raw_delta in raw_deltas:
                 if isinstance(raw_delta, int):
                     rule = "delta"
                     delta = raw_delta
+                    set_score = None
                 elif isinstance(raw_delta, dict):
                     rule = str(raw_delta.get("rule", "delta"))
-                    delta = int(raw_delta["delta"])
+                    if "set_score" in raw_delta:
+                        set_score = int(raw_delta["set_score"])
+                        delta = set_score - score
+                    else:
+                        set_score = None
+                        delta = int(raw_delta["delta"])
                 else:
                     raise PreferenceDataError(
                         f"{action_id}: deltas must be ints or objects"
                     )
                 before = score
-                score = apply_score_delta(score, delta)
+                score = (
+                    set_score
+                    if set_score is not None
+                    else apply_score_delta(score, delta)
+                )
                 note = (
-                    "encourage lowers score"
+                    f"set score to {set_score}"
+                    if set_score is not None
+                    else "encourage lowers score"
                     if delta < 0
                     else "discourage raises score"
                     if delta > 0

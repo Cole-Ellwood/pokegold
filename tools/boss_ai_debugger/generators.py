@@ -1574,7 +1574,7 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
     ]
 
     if layers == 3:
-        best = ["move_surf"] if active_species_prior else ["move_sludge_bomb"]
+        best = ["move_sludge_bomb"]
         bad = ["move_spikes"]
         why = "A fourth local Spikes click fails after the stack is already capped."
         lesson_type = "hard_rule"
@@ -1663,7 +1663,7 @@ def materialized_spikes_spin_rom_deltas(
         add_rom_delta(
             spikes,
             "move.apply_move_model.enemy_under_pressure",
-            -status,
+            -status if pressure else -role,
         )
     elif layers == 1:
         if pressure:
@@ -1719,20 +1719,22 @@ def materialized_spikes_spin_rom_deltas(
                     "move.apply_move_model.apply_spikes_layer3_unrevealed_spin_risk",
                     -role,
                 )
-    # layers == 3 is hard-blocked by the generated move's ``blocked`` flag
-    # because BattleCommand_Spikes fails once three layers are already present.
+    else:
+        spikes.append(
+            {"rule": "move.apply_move_model.apply_spikes_layer_bias", "set_score": 80}
+        )
 
     damage_dominance = "ko_band_oracle.apply_damage_dominance_bias"
+    sludge_dominance = not (active_species_prior and not active_ghost)
+    explosion_dominance = active_species_prior and not active_ghost
     return {
         "spikes": spikes,
-        "sludge_bomb": [
-            {"rule": damage_dominance, "delta": 8},
-        ],
-        "surf": (
-            []
-            if active_species_prior
-            else [{"rule": damage_dominance, "delta": 8}]
+        "sludge_bomb": (
+            [{"rule": damage_dominance, "delta": 8}]
+            if sludge_dominance
+            else []
         ),
+        "surf": [{"rule": damage_dominance, "delta": 8}],
         "explosion": [
             {
                 "rule": "move.apply_move_model.apply_self_kotrade_discipline",
@@ -1741,7 +1743,7 @@ def materialized_spikes_spin_rom_deltas(
             {"rule": "move.current_enemy_move_accuracy_risky", "delta": risk},
             *(
                 [{"rule": damage_dominance, "delta": 8}]
-                if active_species_prior
+                if explosion_dominance
                 else []
             ),
         ],

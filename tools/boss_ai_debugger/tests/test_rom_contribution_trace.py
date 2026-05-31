@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from tools.boss_ai_debugger.rom_contribution_trace import (
+    CONTROL_HOOKS,
     drive_replay_to_choice,
     HookTarget,
     MemoryPatch,
@@ -86,6 +87,10 @@ class FakeSymbolIndex:
 
 
 class RomContributionTraceTests(unittest.TestCase):
+    def test_selector_control_hook_records_after_lookahead(self) -> None:
+        self.assertEqual(CONTROL_HOOKS["BossAI_SelectMove.first_pass"], "selector_start")
+        self.assertNotIn("BossAI_SelectMove", CONTROL_HOOKS)
+
     def test_score_helper_event_uses_score_pointer_candidate_and_active_rule(self) -> None:
         pyboy = FakePyBoy()
         pyboy.memory[1, 0xD0D3] = 20

@@ -109,6 +109,40 @@ class RomScenarioTests(unittest.TestCase):
         self.assertEqual(result["probabilities"]["blocked"], 0.0)
         self.assertEqual(result["probabilities"]["legal"], 1.0)
 
+    def test_set_score_delta_records_hard_block_rule(self) -> None:
+        result = select_move(
+            {
+                "id": "set_score",
+                "tier": "late",
+                "moves": [
+                    {
+                        "id": "blocked",
+                        "name": "Blocked",
+                        "blocked": True,
+                        "deltas": [
+                            {
+                                "rule": "move.apply_move_model.apply_spikes_layer_bias",
+                                "set_score": 80,
+                            }
+                        ],
+                    },
+                    {"id": "legal", "name": "Legal"},
+                ],
+            }
+        )
+
+        blocked = result["moves"][0]
+
+        self.assertTrue(blocked["blocked"])
+        self.assertEqual(blocked["initial_score"], 20)
+        self.assertEqual(blocked["final_score"], 80)
+        self.assertEqual(
+            blocked["events"][0]["rule"],
+            "move.apply_move_model.apply_spikes_layer_bias",
+        )
+        self.assertEqual(blocked["events"][0]["delta"], 60)
+        self.assertEqual(result["best_action_id"], "legal")
+
     def test_selector_replay_stops_at_first_blank_move(self) -> None:
         result = select_from_score_bytes(
             scenario_id="blank",

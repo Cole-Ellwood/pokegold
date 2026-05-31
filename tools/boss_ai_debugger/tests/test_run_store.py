@@ -12,6 +12,7 @@ from tools.boss_ai_debugger.run_store import (
     build_previous_run_diff,
     run_changed_ai_suite,
     run_generated_smoke_suite,
+    score_materialization_scenarios,
 )
 
 
@@ -158,6 +159,18 @@ class RunStoreTests(unittest.TestCase):
         if queue["items"]:
             self.assertTrue(queue["items"][0]["explain_decision"]["available"])
             self.assertIn("explain-decision", queue["items"][0]["explain_decision"]["command"])
+
+    def test_changed_ai_score_materialization_sample_is_strict_score_mirror(self) -> None:
+        scenarios = [
+            {"id": "prediction", "family": "prediction_mix", "expectation": {}},
+            {"id": "setup", "family": "setup_heal", "expectation": {}},
+            {"id": "support", "family": "support_handoff", "expectation": {}},
+            {"id": "spikes", "family": "spikes_spin", "expectation": {}},
+        ]
+
+        selected = score_materialization_scenarios(scenarios, limit=10)
+
+        self.assertEqual([scenario["id"] for scenario in selected], ["spikes"])
 
     def test_changed_ai_suite_records_requested_rebuild_and_trace_commands(self) -> None:
         calls = []

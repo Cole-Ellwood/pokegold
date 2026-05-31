@@ -237,9 +237,9 @@ class RomScoreReplaySession:
             fast_score_patch_callback,
             self,
         )
-        selector_start = self.symbols.get("BossAI_SelectMove")
+        selector_start = self.symbols.get("BossAI_SelectMove.first_pass")
         if selector_start is None:
-            raise PreferenceDataError("missing hook symbol: BossAI_SelectMove")
+            raise PreferenceDataError("missing hook symbol: BossAI_SelectMove.first_pass")
         self.pyboy.hook_register(
             selector_start.bank,
             selector_start.address,
@@ -1250,15 +1250,15 @@ def verdict_from_materialized_trace(
 ) -> dict[str, Any]:
     scenario_id = materialization.scenario_id
     python_result = select_move(scenario)
+    observed_scores = selector_scan_scores(rom_report)
     rom_selector = select_from_score_bytes(
         scenario_id=scenario_id,
         tier=scenario.get("tier", "late"),
         move_ids=rom_report["move_ids"],
-        scores=rom_report["move_scores"],
+        scores=observed_scores,
         move_names=move_names,
     )
     expected_scores = [int(move["final_score"]) for move in python_result["moves"][:4]]
-    observed_scores = [int(value) for value in rom_report["move_scores"][: len(expected_scores)]]
     if compare_contributions:
         comparison = compare_contribution_reports(
             rom_reports=[rom_report],
@@ -1295,6 +1295,10 @@ def verdict_from_materialized_trace(
                 for slot in rom_selector.get("possible_slot_indices", [])
             ],
             "final_scores": observed_scores,
+            "replay_end_scores": [
+                int(value)
+                for value in rom_report.get("move_scores", [])[: len(expected_scores)]
+            ],
             "selector_entry_scores": rom_report.get("selector_entry_scores", []),
             "post_model_scores": rom_report.get("post_model_scores", []),
             "changed_event_count": rom_report.get("changed_event_count", 0),
@@ -1322,6 +1326,11 @@ def verdict_from_materialized_trace(
             for item in materialization.patches
         ],
     }
+
+
+def selector_scan_scores(rom_report: dict[str, Any]) -> list[int]:
+    scores = rom_report.get("selector_entry_scores") or rom_report.get("move_scores", [])
+    return [int(value) for value in scores]
 
 
 def policy_verdict_from_rom_selector(
@@ -1435,8 +1444,8 @@ def hook_equivalence_summary(
 ) -> dict[str, Any]:
     if fast_report is None:
         return {"checked": False}
-    traced_scores = [int(value) for value in traced_report.get("move_scores", [])]
-    fast_scores = [int(value) for value in fast_report.get("move_scores", [])]
+    traced_scores = selector_scan_scores(traced_report)
+    fast_scores = selector_scan_scores(fast_report)
     traced_chosen = traced_report.get("chosen", {})
     fast_chosen = fast_report.get("chosen", {})
     score_match = traced_scores == fast_scores

@@ -6,6 +6,7 @@ from pathlib import Path
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
+    ScenarioMaterialization,
     TYPES,
     action_id_for_slot,
     active_boss_type_patches,
@@ -21,6 +22,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     parse_spikes_layers,
     policy_verdict_from_rom_selector,
     replay_controls_from_manifest,
+    verdict_from_materialized_trace,
     scenario_condition_tags,
     validate_score_materialization_base,
 )
@@ -146,6 +148,40 @@ class RomScoreMaterializeTests(unittest.TestCase):
         )
 
         self.assertEqual(report["selector_entry_scores"], [20, 20, 19, 28])
+
+    def test_materialized_verdict_uses_selector_scan_scores(self) -> None:
+        scenario = {
+            "id": "unit_selector_scores",
+            "tier": "mid",
+            "moves": [
+                {"id": "best", "name": "Best"},
+                {"id": "second", "name": "Second", "base_score": 25},
+                {"id": "blocked_a", "name": "Blocked A", "blocked": True},
+                {"id": "blocked_b", "name": "Blocked B", "blocked": True},
+            ],
+            "expectation": {"best_action_ids": ["best"]},
+        }
+        report = verdict_from_materialized_trace(
+            scenario,
+            ScenarioMaterialization(
+                scenario_id="unit_selector_scores",
+                patches=[],
+                move_ids=[1, 2, 3, 4],
+                layers=0,
+            ),
+            {
+                "move_ids": [1, 2, 3, 4],
+                "move_scores": [99, 99, 99, 99],
+                "selector_entry_scores": [20, 25, 80, 80],
+            },
+            move_names={1: "BEST", 2: "SECOND", 3: "BLOCKED_A", 4: "BLOCKED_B"},
+            compare_contributions=False,
+        )
+
+        self.assertTrue(report["score_bytes_match"])
+        self.assertTrue(report["selector_top_match"])
+        self.assertEqual(report["rom"]["final_scores"], [20, 25, 80, 80])
+        self.assertEqual(report["rom"]["replay_end_scores"], [99, 99, 99, 99])
 
     def test_public_policy_materialization_maps_synthetic_moves(self) -> None:
         scenario = generate_scenarios(family="support_handoff", count=1, seed=9)[0]

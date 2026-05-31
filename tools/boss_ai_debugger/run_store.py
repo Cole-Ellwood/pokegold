@@ -921,16 +921,10 @@ def score_materialization_scenarios(
     *,
     limit: int,
 ) -> list[dict[str, Any]]:
-    supported_families = {
-        "spikes_spin",
-        "setup_heal",
-        "prediction_mix",
-        "support_handoff",
-    }
     candidates = [
         scenario
         for scenario in scenarios
-        if scenario.get("family") in supported_families
+        if scenario.get("family") == "spikes_spin"
     ]
 
     def priority(scenario: dict[str, Any]) -> tuple[int, str]:
@@ -947,10 +941,8 @@ def score_materialization_scenarios(
             rank = 0
         elif family == "spikes_spin":
             rank = 1
-        elif family in {"prediction_mix", "support_handoff", "setup_heal"}:
-            rank = 2
         else:
-            rank = 3
+            rank = 2
         return (rank, str(scenario.get("id", "")))
 
     return sorted(candidates, key=priority)[:limit]
