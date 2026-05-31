@@ -97,6 +97,14 @@ class RomBatchTests(unittest.TestCase):
         self.assertEqual(verdict.verdict, "best_never_rolled")
         self.assertEqual(verdict.zero_probability_best_action_ids, ["c"])
 
+    def test_unrolled_tied_expected_best_does_not_downgrade_top_pass(self) -> None:
+        verdict = evaluate_scenario(
+            scenario("tie", expectation={"best_action_ids": ["a", "b", "c"]})
+        )
+
+        self.assertEqual(verdict.verdict, "pass")
+        self.assertEqual(verdict.zero_probability_best_action_ids, ["b", "c"])
+
     def test_all_moves_blocked_is_unready(self) -> None:
         verdict = evaluate_scenario(
             scenario(

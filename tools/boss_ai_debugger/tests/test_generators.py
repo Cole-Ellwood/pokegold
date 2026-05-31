@@ -237,6 +237,26 @@ class GeneratorTests(unittest.TestCase):
 
         self.assertEqual(result["best_action_id"], "move_spikes")
 
+    def test_revealed_bench_spinner_is_soft_third_layer_risk(self) -> None:
+        scenario = find_scenario(
+            generate_scenarios(family="spikes_spin", count=113, seed=20260531),
+            "generated_spikes_spin_20260531_00112",
+        )
+
+        self.assertNotIn(
+            "active_revealed_rapid_spin",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "bench_revealed_rapid_spin",
+            scenario["expectation"]["condition_tags"],
+        )
+        self.assertIn("move_spikes", scenario["expectation"]["best_action_ids"])
+        self.assertNotIn(
+            "move_spikes",
+            scenario["expectation"].get("bad_action_ids", []),
+        )
+
     def test_active_species_spin_prior_does_not_create_immediate_pressure(self) -> None:
         scenario = spikes_spin_score_scenario(
             tier="late",

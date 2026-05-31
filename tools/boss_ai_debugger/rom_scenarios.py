@@ -696,11 +696,6 @@ def evaluate_scenario(scenario: dict[str, Any]) -> ScenarioVerdict:
         severity = 0
         reason = "scenario has no expected best action ids"
 
-    if verdict in {"pass", "acceptable_top"} and zero_probability_best:
-        verdict = "partial_best_unrolled"
-        severity = max(severity, 45)
-        reason = "some expected-best actions have zero ROM probability"
-
     return ScenarioVerdict(
         scenario_id=str(result["scenario_id"]),
         verdict=verdict,
@@ -803,11 +798,6 @@ def evaluate_scenario_compact(scenario: dict[str, Any]) -> dict[str, Any]:
         severity = 0
         reason = "scenario has no expected best action ids"
         rom_best_text = str(rom_best)
-
-    if verdict in {"pass", "acceptable_top"} and zero_probability_best:
-        verdict = "partial_best_unrolled"
-        severity = max(severity, 45)
-        reason = "some expected-best actions have zero ROM probability"
 
     return {
         "scenario_id": str(selection["scenario_id"]),

@@ -1598,11 +1598,16 @@ def spikes_spin_scenario(index: int, rng: random.Random, seed: int) -> dict[str,
         bad = ["move_spikes"]
         why = "A fourth local Spikes click fails after the stack is already capped."
         lesson_type = "hard_rule"
-    elif hard_active_spin_risk or bench_spin_risk:
+    elif hard_active_spin_risk:
         best = ["move_sludge_bomb"]
         bad = ["move_spikes"]
         why = "Public Rapid Spin pressure threatens to erase the stack before another layer pays off."
         lesson_type = "hard_rule"
+    elif bench_spin_risk:
+        best = generated_score_best_action_ids(moves)
+        bad = []
+        why = "A revealed bench spinner is a soft third-layer risk; the score model decides whether finishing the stack still pays off."
+        lesson_type = "weight_hint"
     elif soft_active_spin_risk:
         best = generated_score_best_action_ids(moves)
         bad = []

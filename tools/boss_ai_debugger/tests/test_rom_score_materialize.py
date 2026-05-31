@@ -352,6 +352,27 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(verdict["verdict"], "bad_roll")
         self.assertEqual(verdict["rolled_bad_action_ids"], ["move_reckless_prediction"])
 
+    def test_rom_policy_verdict_allows_unrolled_tied_expected_best(self) -> None:
+        scenario = {
+            "id": "tie",
+            "moves": [
+                {"id": "a", "name": "A"},
+                {"id": "b", "name": "B"},
+                {"id": "c", "name": "C"},
+            ],
+            "expectation": {"best_action_ids": ["a", "b", "c"]},
+        }
+        rom_selector = {
+            "ready": True,
+            "best_slot_index": 0,
+            "probabilities_by_slot": {0: 1.0, 1: 0.0, 2: 0.0},
+        }
+
+        verdict = policy_verdict_from_rom_selector(scenario, rom_selector)
+
+        self.assertEqual(verdict["verdict"], "pass")
+        self.assertEqual(verdict["zero_probability_best_action_ids"], ["b", "c"])
+
     def test_chunk_scenarios_preserves_all_cases(self) -> None:
         scenarios = [{"id": str(index)} for index in range(7)]
 

@@ -1425,11 +1425,6 @@ def policy_verdict_from_rom_selector(
         severity = 0
         reason = "scenario has no expected best action ids"
 
-    if verdict in {"pass", "acceptable_top"} and zero_probability_best:
-        verdict = "partial_best_unrolled"
-        severity = max(severity, 45)
-        reason = "ROM score bytes give some expected-best actions zero probability"
-
     return {
         "verdict": verdict,
         "severity": severity,
