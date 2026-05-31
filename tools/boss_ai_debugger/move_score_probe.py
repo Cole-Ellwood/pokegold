@@ -236,7 +236,7 @@ def _self_test_noctowl_drowzee_inputs(
             trainer_constant.trainer_class,
             trainer_constant.trainer_id,
         ),
-        score_base_route=None,
+        score_base_route=DEFAULT_SCORE_BASE_ROUTE,
         rom=capture.DEFAULT_ROM,
         symbols=capture.DEFAULT_SYMBOLS,
     )
@@ -297,7 +297,7 @@ def _self_test_spearow_gastly_inputs(
             trainer_constant.trainer_class,
             trainer_constant.trainer_id,
         ),
-        score_base_route=None,
+        score_base_route=DEFAULT_SCORE_BASE_ROUTE,
         rom=capture.DEFAULT_ROM,
         symbols=capture.DEFAULT_SYMBOLS,
     )

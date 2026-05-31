@@ -117,6 +117,10 @@ def parse_trainer_constants() -> tuple[dict[str, int], dict[str, int]]:
 
 def run_oracle_helper(*, trainer_id: int) -> dict[str, int | bool]:
     types = parse_constants(ROOT / "constants" / "type_constants.asm", {"GRASS"})
+    tiers = parse_constants(
+        ROOT / "constants" / "trainer_data_constants.asm",
+        {"AI_TIER_LATE"},
+    )
     trainer_classes, trainer_ids = parse_trainer_constants()
     symbols = capture.parse_symbols(TRACE_SYM)
     target = symbols["BossAI_ApplyKOBandOraclePressure"]
@@ -136,6 +140,7 @@ def run_oracle_helper(*, trainer_id: int) -> dict[str, int | bool]:
             [
                 MemoryPatch("wTrainerClass", 0, trainer_classes["KOGA"]),
                 MemoryPatch("wOtherTrainerID", 0, trainer_id),
+                MemoryPatch("wBossAITier", 0, tiers["AI_TIER_LATE"]),
                 # Koga slot 2 is Muk in data/trainers/parties.asm.
                 MemoryPatch("wCurOTMon", 0, 2),
                 # Exact current move is already known super-effective.
