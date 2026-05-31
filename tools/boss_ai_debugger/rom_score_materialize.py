@@ -1687,6 +1687,7 @@ def format_rom_score_materialization(
             or int(verdict.get("rom_policy", {}).get("severity", 0)) > 0
         )
     ]
+    review = sorted(review, key=score_materialization_review_key, reverse=True)
     if review:
         lines.append("")
         lines.append(f"Top {limit} review items:")
@@ -1708,6 +1709,14 @@ def format_rom_score_materialization(
     for limit_text in report["known_limits"]:
         lines.append(f"  - {limit_text}")
     return "\n".join(lines)
+
+
+def score_materialization_review_key(verdict: dict[str, Any]) -> tuple[int, int, int]:
+    return (
+        int(verdict.get("rom_policy", {}).get("severity", 0)),
+        int(verdict.get("contribution_comparison", {}).get("mismatch_count", 0)),
+        0 if verdict.get("score_bytes_match", False) else 1,
+    )
 
 
 def write_rom_score_materialization_json(report: dict[str, Any], path: Path) -> None:

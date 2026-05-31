@@ -15,6 +15,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     chunk_scenarios,
     empty_contribution_comparison,
     fallback_replay_controls_from_manifest,
+    format_rom_score_materialization,
     hook_equivalence_summary,
     materialization_for_scenario,
     move_ids_for_scenario,
@@ -429,6 +430,50 @@ class RomScoreMaterializeTests(unittest.TestCase):
 
         self.assertEqual(verdict["verdict"], "pass")
         self.assertEqual(verdict["zero_probability_best_action_ids"], ["b", "c"])
+
+    def test_score_materialization_report_ranks_policy_items_first(self) -> None:
+        report = {
+            "scenario_count": 2,
+            "checked_count": 2,
+            "skipped_count": 0,
+            "error_count": 0,
+            "score_bytes_match_count": 0,
+            "contribution_matched_count": 0,
+            "hook_equivalence_mismatch_count": 0,
+            "base_route": "koga",
+            "base_state": "state",
+            "button_presses": 0,
+            "button_interval_frames": 0,
+            "score_replay_mode": "fast_score_only",
+            "materializations_per_minute": 1.0,
+            "known_limits": [],
+            "verdicts": [
+                {
+                    "scenario_id": "score_noise",
+                    "status": "pass",
+                    "score_bytes_match": False,
+                    "contribution_comparison": {"mismatch_count": 0},
+                    "hook_equivalence": {},
+                    "rom_policy": {"verdict": "pass", "severity": 0},
+                    "rom": {"best_action_id": "a"},
+                    "python": {"best_action_id": "b"},
+                },
+                {
+                    "scenario_id": "policy_review",
+                    "status": "pass",
+                    "score_bytes_match": False,
+                    "contribution_comparison": {"mismatch_count": 0},
+                    "hook_equivalence": {},
+                    "rom_policy": {"verdict": "acceptable_top", "severity": 30},
+                    "rom": {"best_action_id": "c"},
+                    "python": {"best_action_id": "d"},
+                },
+            ],
+        }
+
+        text = format_rom_score_materialization(report, limit=2)
+
+        self.assertLess(text.index("policy_review"), text.index("score_noise"))
 
     def test_chunk_scenarios_preserves_all_cases(self) -> None:
         scenarios = [{"id": str(index)} for index in range(7)]
