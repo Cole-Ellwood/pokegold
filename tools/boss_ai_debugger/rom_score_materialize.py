@@ -60,6 +60,7 @@ MOVE_FALLBACK_IDS = {
     "move_chip_damage": 0x22,
     "move_counter_handoff": 0xE2,
     "move_counter_switch": 0xE2,
+    "move_cover_worst_branch": 0x2E,
     "move_cover_reset": 0x2E,
     "move_generic_chip": 0xBC,
     "move_generic_damage": 0xBC,

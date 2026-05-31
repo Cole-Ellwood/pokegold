@@ -214,6 +214,21 @@ class RomScoreMaterializeTests(unittest.TestCase):
             [0x7E, 0x5C, 0xE2, 0x99],
         )
 
+    def test_mastery_policy_materialization_maps_support_handoff_case(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=8, seed=1)[7]
+
+        self.assertEqual(scenario["policy_card"], "support_handoff_after_job")
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+
+        self.assertEqual(
+            materialization.move_ids,
+            [0xE2, 0x2E, 0x5C, 0xBC],
+        )
+
     def test_cashout_materialization_patches_revealed_ghost_branch(self) -> None:
         scenario = generate_scenarios(family="cashout_board_delta", count=3, seed=11)[2]
 

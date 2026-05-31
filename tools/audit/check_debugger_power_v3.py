@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -52,8 +53,13 @@ def require_command(command: list[str], *, timeout: int) -> tuple[float, str]:
     return elapsed, proc.stdout
 
 
-def run_campaign(cases: Path, *, timeout: int, max_commands: int) -> tuple[dict[str, Any], float]:
-    out = ROOT / ".local" / "tmp" / "debugger_power_v3_campaign.json"
+def run_campaign(
+    cases: Path,
+    *,
+    json_path: Path,
+    timeout: int,
+    max_commands: int,
+) -> tuple[dict[str, Any], float]:
     elapsed, _stdout = require_command(
         [
             sys.executable,
@@ -69,11 +75,11 @@ def run_campaign(cases: Path, *, timeout: int, max_commands: int) -> tuple[dict[
             "--max-commands",
             str(max_commands),
             "--json-out",
-            str(out),
+            str(json_path),
         ],
         timeout=timeout,
     )
-    return load_json(out), elapsed
+    return load_json(json_path), elapsed
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -92,11 +98,12 @@ def main(argv: list[str] | None = None) -> int:
 
     cases_path = args.cases if args.cases.is_absolute() else ROOT / args.cases
     out_path = args.out if args.out.is_absolute() else ROOT / args.out
+    work_dir = out_path.parent / f"{out_path.stem}_work_{os.getpid()}"
     started = time.perf_counter()
 
     errors: list[str] = []
 
-    v2_out = ROOT / ".local" / "tmp" / "debugger_power_v3_v2.json"
+    v2_out = work_dir / "v2.json"
     v2_elapsed, _stdout = require_command(
         [
             sys.executable,
@@ -120,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
 
     campaign, campaign_elapsed = run_campaign(
         cases_path,
+        json_path=work_dir / "campaign.json",
         timeout=120,
         max_commands=args.max_commands,
     )

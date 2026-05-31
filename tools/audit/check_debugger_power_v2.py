@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -108,8 +109,9 @@ def main(argv: list[str] | None = None) -> int:
     cases_path = args.cases if args.cases.is_absolute() else ROOT / args.cases
     out_path = args.out if args.out.is_absolute() else ROOT / args.out
     cases = load_jsonl(cases_path)
+    work_dir = out_path.parent / f"{out_path.stem}_work_{os.getpid()}"
 
-    benchmark_out = ROOT / ".local" / "tmp" / "debugger_power_v2_godmode.json"
+    benchmark_out = work_dir / "godmode.json"
     benchmark, benchmark_elapsed = run_benchmark(
         json_path=benchmark_out,
         timeout=int(max(args.benchmark_max_seconds, 10) + 30),
@@ -129,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
 
     proof_results = []
     for index, row in enumerate(cases, 1):
-        proof_path = ROOT / ".local" / "tmp" / f"debugger_power_v2_proof_{index:02d}_{row['id']}.json"
+        proof_path = work_dir / f"proof_{index:02d}_{row['id']}.json"
         proof, _elapsed = run_json(
             [
                 sys.executable,
