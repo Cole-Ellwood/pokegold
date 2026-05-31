@@ -16,6 +16,7 @@ from tools.trace.boss_ai_state_factory import (
     BossRoute,
     RunResult,
     TrainerConstant,
+    default_score_materialization_state_path,
     expected_trainer,
     parse_map_consts,
     parse_rgb_int,
@@ -23,6 +24,7 @@ from tools.trace.boss_ai_state_factory import (
     parse_trainer_consts,
     route_ids_from_manifest,
     score_materialization_state_from_manifest,
+    score_materialization_state_path,
     selected_routes,
     strip_asm_comment,
     trace_summary,
@@ -182,6 +184,53 @@ class ScoreMaterializationManifestTests(unittest.TestCase):
             path = score_materialization_state_from_manifest(manifest, "koga")
 
         self.assertEqual(path, ROOT / ".local/tmp/boss_ai_debugger/koga_score.state")
+
+    def test_existing_manifest_reader_returns_none_for_missing_score_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            manifest = Path(tempdir) / "live_capture_manifest.json"
+            manifest.write_text(
+                json.dumps({"captures": [{"id": "falkner"}]}),
+                encoding="utf-8",
+            )
+
+            path = score_materialization_state_from_manifest(manifest, "falkner")
+
+        self.assertIsNone(path)
+
+    def test_score_materialization_state_path_uses_existing_manifest_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            manifest = Path(tempdir) / "live_capture_manifest.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "captures": [
+                            {
+                                "id": "koga",
+                                "score_materialization_state": (
+                                    ".local/tmp/boss_ai_debugger/koga_score.state"
+                                ),
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            path = score_materialization_state_path(manifest, "koga")
+
+        self.assertEqual(path, ROOT / ".local/tmp/boss_ai_debugger/koga_score.state")
+
+    def test_score_materialization_state_path_uses_route_default_when_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            manifest = Path(tempdir) / "live_capture_manifest.json"
+            manifest.write_text(
+                json.dumps({"captures": [{"id": "falkner"}]}),
+                encoding="utf-8",
+            )
+
+            path = score_materialization_state_path(manifest, "falkner")
+
+        self.assertEqual(path, default_score_materialization_state_path("falkner"))
 
     def test_update_manifest_paths_keeps_refreshed_score_state_controls_clean(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

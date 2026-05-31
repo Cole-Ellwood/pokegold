@@ -57,7 +57,7 @@ class RomSwitchMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wOTPartyMon2Species", 0)], 0x5E)  # GENGAR
         self.assertEqual(patches[("wBattleMonType1", 0)], 0x04)  # GROUND
         self.assertEqual(patches[("wEnemyMonType1", 0)], 0x03)  # POISON
-        self.assertEqual(patches[("wEnemyMonType2", 0)], 0x14)  # WATER
+        self.assertEqual(patches[("wEnemyMonType2", 0)], 0x15)  # WATER
         # defensive_sack_owner tag still drives enemy HP to 22.
         self.assertEqual(patches[("wEnemyMonHP", 0)], 0)
         self.assertEqual(patches[("wEnemyMonHP", 1)], 22)

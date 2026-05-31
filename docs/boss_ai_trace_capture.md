@@ -166,17 +166,18 @@ It replays every real-trainer `pre_choice_state` through the trace ROM and
 requires the replayed trace fields to match the baseline live trace before
 checking exact selector-field agreement with the captured chosen move.
 
-Rows that carry a `score_materialization_state` need one extra refresh after a
+Rows that need a `score_materialization_state` get one extra refresh after a
 trace ROM or route-state change:
 
 ```powershell
 python tools\trace\boss_ai_state_factory.py --boss koga --refresh-score-materialization-states --update-manifest
+python tools\trace\boss_ai_state_factory.py --boss clair --refresh-score-materialization-states --update-manifest
 ```
 
-The refresh replays the real Koga route, saves the existing manifest
-`score_materialization_state` at the first `BossAI_ApplyMoveModel.ScoreMove`
-entry, and clears trace output bytes before saving so ROM score materialization
-starts from a clean proof state.
+The refresh replays the selected real trainer route, creates or refreshes that
+route's manifest `score_materialization_state` at the first
+`BossAI_ApplyMoveModel.ScoreMove` entry, and clears trace output bytes before
+saving so ROM score materialization starts from a clean proof state.
 
 As of 2026-04-26, the factory supports all real trainer rows currently in the
 manifest: the 16 gym leaders, Koga, and Champion Lance. It does not generate

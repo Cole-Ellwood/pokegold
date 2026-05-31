@@ -21,6 +21,7 @@ from tools.trace import runtime as trace_runtime
 
 
 DEFAULT_OUT_DIR = ROOT / ".local" / "tmp" / "boss_state_factory"
+DEFAULT_SCORE_MATERIALIZATION_DIR = ROOT / ".local" / "tmp" / "boss_ai_debugger"
 DEFAULT_BATTERY_SAVE = ROOT / "pokegold.sav"
 EVENT_FLAGS = ROOT / "constants" / "event_flags.asm"
 MAP_CONSTANTS = ROOT / "constants" / "map_constants.asm"
@@ -431,6 +432,23 @@ def score_materialization_state_from_manifest(
             return manifest_relative_path(raw)
         return None
     return None
+
+
+def default_score_materialization_state_path(capture_id: str) -> Path:
+    return (
+        DEFAULT_SCORE_MATERIALIZATION_DIR
+        / f"{capture_id}_score_materialization_loop_frame.state"
+    )
+
+
+def score_materialization_state_path(
+    manifest_path: Path,
+    capture_id: str,
+) -> Path:
+    existing = score_materialization_state_from_manifest(manifest_path, capture_id)
+    if existing is not None:
+        return existing
+    return default_score_materialization_state_path(capture_id)
 
 
 def require_symbols(symbols: dict[str, capture.Symbol], routes: list[BossRoute]) -> None:
@@ -847,8 +865,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--refresh-score-materialization-states",
         action="store_true",
         help=(
-            "for manifest rows that already define score_materialization_state, "
-            "refresh that state at the first BossAI_ApplyMoveModel.ScoreMove entry"
+            "generate or refresh each selected route's score_materialization_state "
+            "at the first BossAI_ApplyMoveModel.ScoreMove entry"
         ),
     )
     parser.add_argument(
@@ -895,25 +913,24 @@ def run_route(
     try:
         score_capture = None
         if args.refresh_score_materialization_states:
-            score_state_path = score_materialization_state_from_manifest(
+            score_state_path = score_materialization_state_path(
                 args.manifest,
                 route.capture_id,
             )
-            if score_state_path is not None:
-                score_move = symbols.get("BossAI_ApplyMoveModel.ScoreMove")
-                if score_move is None:
-                    fail("missing required symbol: BossAI_ApplyMoveModel.ScoreMove")
-                score_capture = ScoreMaterializationCapture(
-                    pyboy=pyboy,
-                    symbols=symbols,
-                    out=score_state_path,
-                )
-                pyboy.hook_register(
-                    score_move.bank,
-                    score_move.address,
-                    save_score_materialization_state,
-                    score_capture,
-                )
+            score_move = symbols.get("BossAI_ApplyMoveModel.ScoreMove")
+            if score_move is None:
+                fail("missing required symbol: BossAI_ApplyMoveModel.ScoreMove")
+            score_capture = ScoreMaterializationCapture(
+                pyboy=pyboy,
+                symbols=symbols,
+                out=score_state_path,
+            )
+            pyboy.hook_register(
+                score_move.bank,
+                score_move.address,
+                save_score_materialization_state,
+                score_capture,
+            )
         frame = boot_continue(pyboy, symbols, log)
         frame = setup_route_entry(
             pyboy,

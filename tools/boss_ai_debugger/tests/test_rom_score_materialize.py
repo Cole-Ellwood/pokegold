@@ -6,7 +6,10 @@ from pathlib import Path
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
+    TYPES,
     action_id_for_slot,
+    active_boss_type_patches,
+    active_player_patches,
     build_fast_score_report,
     chunk_scenarios,
     empty_contribution_comparison,
@@ -25,6 +28,31 @@ from tools.boss_ai_preference.data import PreferenceDataError
 
 
 class RomScoreMaterializeTests(unittest.TestCase):
+    def test_type_constants_match_rom_type_ids(self) -> None:
+        self.assertEqual(TYPES["FIRE"], 0x14)
+        self.assertEqual(TYPES["WATER"], 0x15)
+        self.assertEqual(TYPES["GRASS"], 0x16)
+        self.assertEqual(TYPES["ELECTRIC"], 0x17)
+        self.assertEqual(TYPES["PSYCHIC"], 0x18)
+
+    def test_active_boss_water_type_patch_uses_water_id(self) -> None:
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in active_boss_type_patches(active_ghost=False)
+        }
+
+        self.assertEqual(patches[("wEnemyMonType1", 0)], TYPES["POISON"])
+        self.assertEqual(patches[("wEnemyMonType2", 0)], TYPES["WATER"])
+
+    def test_active_player_starmie_patch_uses_water_psychic_ids(self) -> None:
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in active_player_patches(active_species_prior=True)
+        }
+
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["WATER"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["PSYCHIC"])
+
     def test_move_ids_map_generated_spikes_case_to_real_moves(self) -> None:
         scenario = generate_scenarios(family="spikes_spin", count=1, seed=1)[0]
 

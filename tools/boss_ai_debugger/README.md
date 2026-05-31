@@ -565,19 +565,22 @@ Materialize generated score-model state before ROM scoring:
 
 ```powershell
 python tools\trace\boss_ai_state_factory.py --boss koga --refresh-score-materialization-states --update-manifest
+python tools\trace\boss_ai_state_factory.py --boss clair --refresh-score-materialization-states --update-manifest
 python -m tools.boss_ai_debugger generate --family spikes_spin --count 12 --seed 1 --out .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
+python -m tools.boss_ai_debugger rom-score-materialize --base-route clair --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 4 --compare-fast-score
 python -m tools.boss_ai_debugger rom-score-materialize --scenarios .local\tmp\boss_ai_debugger\spikes_score_materialize.jsonl --limit 200 --fast-score-only --workers 4
 python -m tools.boss_ai_debugger rom-switch-materialize --scenarios audit\boss_ai_debugger\generated\expanded_all.jsonl --limit 80
 ```
 
-`rom-score-materialize` loads Koga's real pre-choice trace state and patches a
-generated scenario into public WRAM before `BossAI_ApplyMoveModel.ScoreMove`.
-When the manifest has `score_materialization_state`, refresh it with
-`boss_ai_state_factory.py --boss koga --refresh-score-materialization-states
---update-manifest` after trace-ROM or Koga route-state changes; the state is
-saved at the first score-model entry with trace output bytes cleared.
+`rom-score-materialize` defaults to Koga's real pre-choice trace state, but
+`--base-route` can select any manifest-backed boss route. Before using a route
+for score materialization, generate or refresh that route's
+`score_materialization_state` with
+`boss_ai_state_factory.py --boss <route> --refresh-score-materialization-states
+--update-manifest` after trace-ROM or route-state changes; the state is saved
+at the first score-model entry with trace output bytes cleared.
 For `spikes_spin`, this is an exact generated score-mirror check over concrete
 move ids, tier/weight row, score bytes, Spikes layers, active revealed Rapid
 Spin, Ghost/Foresight spinblock state, reserve Ghost availability, bench
