@@ -9,6 +9,7 @@ and counted.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from pathlib import Path
@@ -120,6 +121,11 @@ def collect_contexts(live_identity: dict) -> list[dict]:
                     "surface": surface,
                     "rule_id": witness.get("rule_id", ""),
                     "origin": path.name,
+                    # Emission filenames key off this, NOT the sort position:
+                    # sort order depends on which rules are still missing, so
+                    # it changes between runs and would map different contexts
+                    # onto the same file.
+                    "context_id": hashlib.sha1(repr(key).encode("utf-8")).hexdigest()[:16],
                 }
             )
     note(f"contexts: {len(contexts)} unique (skipped {skipped_delayed} delayed-patch witnesses)")
@@ -173,6 +179,33 @@ def remap_stale_state(state_path: Path, mapping: dict[str, Path]) -> Path | None
         if name.startswith(route):
             return current
     return None
+
+
+def merge_prior_witnesses(path: Path, witnesses: list[dict], basis: dict) -> list[dict]:
+    """Union new witnesses with an existing same-basis emission for this context.
+
+    A re-run filters witnesses to still-needed rules, so re-emitting the same
+    context can legitimately produce a smaller set; replacing the file would
+    drop rules whose only credit lives here. A file from a different basis is
+    stale (the universe ignores it) and is replaced wholesale.
+    """
+    if not path.exists():
+        return witnesses
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return witnesses
+    if existing.get("basis") != basis:
+        return witnesses
+    merged = list(witnesses)
+    have = {(w.get("rule_id", ""), w.get("witness_role", "")) for w in merged}
+    for prior in existing.get("witnesses") or []:
+        if not isinstance(prior, dict):
+            continue
+        if (prior.get("rule_id", ""), prior.get("witness_role", "")) in have:
+            continue
+        merged.append(prior)
+    return merged
 
 
 def main() -> int:
@@ -237,7 +270,7 @@ def main() -> int:
         if baseline_observable == counterfactual_observable:
             continue
         flips += 1
-        scenario = {"id": f"reexec_{index}_{ctx['origin']}"}
+        scenario = {"id": f"reexec_{ctx['context_id']}_{ctx['origin']}"}
         stamp_trace(baseline, scenario=scenario, trace_id=f"{scenario['id']}__baseline")
         stamp_trace(
             counterfactual,
@@ -263,6 +296,8 @@ def main() -> int:
         since_refresh += 1
         if not witnesses:
             continue
+        out = ART / f"reexec_witnesses_{ctx['context_id']}.json"
+        witnesses = merge_prior_witnesses(out, witnesses, universe["class_identity"])
         report = {
             "schema_version": SCHEMA_VERSION,
             "kind": COUNTERFACTUAL_MATERIALIZATION_KIND,
@@ -293,7 +328,6 @@ def main() -> int:
             "counterfactual_observable": counterfactual_observable,
             "witnesses": witnesses,
         }
-        out = ART / f"reexec_witnesses_{index:03d}.json"
         out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         emitted += 1
         credited = {w.get("rule_id", "") for w in witnesses}
