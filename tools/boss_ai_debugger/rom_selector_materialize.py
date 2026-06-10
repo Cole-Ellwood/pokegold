@@ -10,6 +10,7 @@ from tools.boss_ai_preference.data import PreferenceDataError
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
+from .canonical_classes import scenario_class_fields
 from .rom_scenarios import load_scenario_batch, normalize_tier, select_move
 
 
@@ -252,6 +253,7 @@ def selector_verdict_from_values(
 
     return {
         "scenario_id": python_result["scenario_id"],
+        **scenario_class_fields(scenario),
         "status": "pass" if agreement else "mismatch",
         "agreement": agreement,
         "frame": frame,
@@ -289,6 +291,7 @@ def skipped_unready_verdict(
 ) -> dict[str, Any]:
     return {
         "scenario_id": str(scenario.get("id", "unnamed")),
+        **scenario_class_fields(scenario),
         "status": "skipped_unready",
         "agreement": True,
         "python": {
@@ -301,6 +304,10 @@ def skipped_unready_verdict(
     }
 
 
+def selector_materialization_failure_count(report: dict[str, Any]) -> int:
+    return int(report.get("mismatch_count", 0)) + int(report.get("skipped_count", 0))
+
+
 def timeout_verdict(
     scenario: dict[str, Any],
     python_result: dict[str, Any],
@@ -309,6 +316,7 @@ def timeout_verdict(
 ) -> dict[str, Any]:
     return {
         "scenario_id": str(scenario.get("id", "unnamed")),
+        **scenario_class_fields(scenario),
         "status": "timeout",
         "agreement": False,
         "patched_count": context.patched_count,

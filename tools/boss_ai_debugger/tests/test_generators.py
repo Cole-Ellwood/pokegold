@@ -30,6 +30,9 @@ class GeneratorTests(unittest.TestCase):
         self.assertRegex(first[0]["state_hash"], r"^[0-9A-F]{64}$")
         self.assertIn("rom_sha256", first[0])
         self.assertIn("symbols_sha256", first[0])
+        self.assertRegex(first[0]["class_id"], r"^csc_[0-9A-F]{20}$")
+        self.assertEqual(first[0]["class_id"], first[0]["canonical_state_class"]["class_id"])
+        self.assertTrue(first[0]["canonical_state_class"]["valid"])
 
     def test_generated_scenarios_validate_and_batch_evaluate(self) -> None:
         scenarios = generate_scenarios(family="all", count=20, seed=11)
@@ -57,7 +60,15 @@ class GeneratorTests(unittest.TestCase):
             "rom_sha256",
             "symbols",
             "symbols_sha256",
+            "map",
+            "map_sha256",
+            "rule_map_sha256",
+            "source_tree_sha256",
+            "dirty_diff_hash",
             "state_hash",
+            "canonical_state_class",
+            "class_id",
+            "class_fingerprint",
         }
 
         stripped = [
@@ -167,6 +178,48 @@ class GeneratorTests(unittest.TestCase):
         self.assertIn(
             "active_target_already_statused",
             condition_tags_by_case["explosion_into_ghost_branch"],
+        )
+
+    def test_support_handoff_generation_includes_phaze_setup_boundary(self) -> None:
+        scenarios = generate_scenarios(family="support_handoff", count=4, seed=1)
+        scenario = find_scenario(
+            scenarios,
+            "generated_support_handoff_1_00003_phaze_loop_over_setup_greed_boundary",
+        )
+
+        self.assertEqual(scenario["tier"], "late")
+        self.assertEqual(
+            [move["id"] for move in scenario["moves"]],
+            [
+                "move_setup_greed",
+                "move_roar_loop",
+                "move_spikes_reset",
+                "move_switch_away",
+            ],
+        )
+        self.assertIn("phaze_loop_live", scenario["expectation"]["condition_tags"])
+        self.assertEqual(select_move(scenario)["best_action_id"], "move_roar_loop")
+
+    def test_support_handoff_generation_includes_public_read_probe_cases(self) -> None:
+        scenarios = generate_scenarios(family="support_handoff", count=9, seed=1)
+        cases = {scenario["policy_case"]: scenario for scenario in scenarios}
+
+        self.assertIn("public_read_poison_full_probe", cases)
+        self.assertIn("public_read_poison_half_probe", cases)
+        self.assertIn("public_read_physical_choice_probe", cases)
+        self.assertIn("public_read_ramp_resisted_probe", cases)
+        self.assertIn("public_read_repeated_switch_probe", cases)
+        self.assertIn(
+            "player_full_poison_type",
+            cases["public_read_poison_full_probe"]["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "choice_immune_seen_species",
+            cases["public_read_physical_choice_probe"]["expectation"]["condition_tags"],
+        )
+        self.assertIn(
+            "player_fire_ramp_probe",
+            cases["public_read_ramp_resisted_probe"]["expectation"]["condition_tags"],
         )
 
     def test_switch_sack_defensive_sack_is_stay_action(self) -> None:

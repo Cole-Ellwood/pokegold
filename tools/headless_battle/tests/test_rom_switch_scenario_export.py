@@ -5,6 +5,7 @@ import unittest
 from tools.boss_ai_debugger.rom_switch_materialize import (
     scenario_condition_tags,
 )
+from tools.debugger.canonical_state_class import validate_canonical_state_class
 from tools.headless_battle.rom_switch_scenario_export import (
     DEFENSIVE_SACK_HP_THRESHOLD,
     ACTIVE_PRESSURE_HP_THRESHOLD,
@@ -86,6 +87,35 @@ class RomSwitchScenarioExportTests(unittest.TestCase):
         tags = scenario_condition_tags(scenario)
         self.assertEqual(tags, {"switch_sack"})
         self.assertEqual(scenario["policy_case"], "exported_headless_board")
+
+    def test_exported_board_carries_valid_canonical_state_class(self) -> None:
+        scenario = headless_to_switch_sack_scenario(
+            fixture_state(), scenario_id="canonical", tier="mid"
+        )
+        canonical = scenario["canonical_state_class"]
+
+        self.assertEqual(scenario["class_id"], canonical["class_id"])
+        self.assertEqual(scenario["class_fingerprint"], canonical["class_fingerprint"])
+        self.assertEqual(validate_canonical_state_class(canonical), [])
+        self.assertEqual(canonical["surface"], "headless_battle")
+        self.assertEqual(canonical["surface_facts"]["battle"]["decision_surface"], "headless_switch_sack_export")
+        self.assertIn("rom_switch_materialization_proof", canonical["missing_evidence"])
+
+    def test_canonical_class_id_changes_only_on_public_board_change(self) -> None:
+        base = headless_to_switch_sack_scenario(
+            fixture_state(), scenario_id="same_public_board", tier="mid"
+        )
+        same = headless_to_switch_sack_scenario(
+            fixture_state(), scenario_id="same_public_board", tier="mid"
+        )
+        changed_state = fixture_state()
+        changed_state["player"]["hp"] = 79
+        changed = headless_to_switch_sack_scenario(
+            changed_state, scenario_id="same_public_board", tier="mid"
+        )
+
+        self.assertEqual(base["class_id"], same["class_id"])
+        self.assertNotEqual(base["class_id"], changed["class_id"])
 
     def test_low_enemy_hp_triggers_defensive_sack_owner_tag(self) -> None:
         state = fixture_state()

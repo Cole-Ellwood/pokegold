@@ -19,6 +19,24 @@ from .rule_map import build_rule_map
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_COVERAGE_PATH = ROOT / "audit" / "boss_ai_debugger" / "coverage_report.json"
 DEITY_COVERAGE_MARKER = "BOSS_AI_DEITY_COVERAGE_WORKLIST"
+STATICALLY_UNREACHABLE_PUBLIC_READ_PROBE_OUTCOMES = {
+    "choice_lock_risk:immune_risk": {
+        "reason": "ApplyChoiceFirstLockRegret returns on EnemyUnderPressure before SeenSpeciesChoiceLockRisk; without the public-threat signal rejected by that guard, BossAI_PredictPlayerSwitch tops out below the 60-point threshold.",
+        "source_ref": "engine/battle/ai/boss_policy_move.asm:1562",
+    },
+}
+
+FAINT_REPLACEMENT_RULE_IDS = {
+    "switch.pick_faint_replacement",
+    "switch.faint_repl_eval_candidate",
+    "switch.faint_repl_hpgate_and_pct",
+    "switch.faint_repl_candidate_has_real_coverage",
+}
+
+AFTER_PLAYER_HAKI_RULE_IDS = {
+    "switch.oracle_haki_after_player_action",
+    "switch.rebuild_haki_move_scores",
+}
 
 
 def build_coverage_report(
@@ -172,13 +190,20 @@ def build_deity_coverage_worklist(
         "worklist": items,
         "source_anchors": source_anchors[:limit * 3],
         "reachability_model": {
-            "reachable_status": "reachable_uncovered",
+            "reachable_status": (
+                "reachable_uncovered"
+                if coverage["coverage_targets"]["target_count"]
+                else "reachable_unproven_witness"
+                if items
+                else "complete"
+            ),
             "unreachable_targets": [],
             "unsupported_targets": [],
             "note": (
                 "Rows come from rule-map dynamic coverage targets that are not "
-                "covered by the current ROM contribution/materialization corpus; "
-                "this worklist does not fabricate absent routes such as Red."
+                "covered by the current ROM contribution/materialization corpus. "
+                "Exhaustive witness-role inventory belongs to the God gate, not "
+                "this deity coverage worklist."
             ),
         },
         "known_limits": [
@@ -267,6 +292,24 @@ def deity_next_action_command(
     rule_id: str,
 ) -> str:
     out = f".local\\tmp\\boss_ai_debugger\\coverage_{safe_id(rule_id)}.json"
+    if rule_id in FAINT_REPLACEMENT_RULE_IDS:
+        contribution = f".local\\tmp\\boss_ai_debugger\\coverage_{safe_id(rule_id)}_rom_contribution.json"
+        return (
+            "python -m tools.boss_ai_debugger rom-contribution-trace "
+            "--save-state .local\\tmp\\boss_state_factory\\faint_replacement_predispatch.state "
+            "--button \"\" --button-presses 0 --watch-frames 120 --finish-on switch "
+            f"--json-out {contribution}"
+        )
+    if rule_id in AFTER_PLAYER_HAKI_RULE_IDS:
+        contribution = f".local\\tmp\\boss_ai_debugger\\coverage_{safe_id(rule_id)}_rom_contribution.json"
+        return (
+            "python -m tools.boss_ai_debugger rom-contribution-trace "
+            "--save-state .local\\tmp\\boss_ai_debugger\\haki_after_player_action_entry.state "
+            "--button \"\" --button-presses 0 --watch-frames 120 --finish-on choice "
+            "--patch-symbol wBossAIRevealedMovesBitmapSpare+1=0x04 "
+            "--patch-symbol wBattlePlayerAction=0x00 "
+            f"--json-out {contribution}"
+        )
     if trace_mode == "rom_score_materialization":
         return (
             "python -m tools.boss_ai_debugger explain-decision "
@@ -299,12 +342,15 @@ def summarize_contribution_sources(
     if not rom_contribution_reports:
         return path_summary
     report_summary = summarize_rom_contribution_trace_reports(rom_contribution_reports)
+    combined_artifacts = [
+        artifact
+        for summary in (path_summary, report_summary)
+        if summary.get("available")
+        for artifact in summary.get("artifacts", [])
+        if isinstance(artifact, dict)
+    ]
     return summarize_rom_contribution_trace_summaries(
-        [
-            summary
-            for summary in (path_summary, report_summary)
-            if summary.get("available")
-        ]
+        combined_artifacts
     )
 
 
@@ -494,6 +540,14 @@ def public_read_provenance_summary(
     contribution_summary: dict[str, Any],
 ) -> dict[str, Any]:
     expected_outcomes = expected_public_read_probe_outcomes()
+    unreachable_outcomes = {
+        outcome: proof
+        for outcome, proof in STATICALLY_UNREACHABLE_PUBLIC_READ_PROBE_OUTCOMES.items()
+        if outcome in expected_outcomes
+    }
+    required_outcomes = [
+        outcome for outcome in expected_outcomes if outcome not in unreachable_outcomes
+    ]
     observed_probe_outcomes = set(
         contribution_summary.get("public_read_probe_outcome_counts", {})
     )
@@ -507,7 +561,11 @@ def public_read_provenance_summary(
         if rule.get("requires_public_read_provenance", False)
     ]
     missing_outcomes = [
-        outcome for outcome in expected_outcomes if outcome not in observed_outcomes
+        outcome for outcome in required_outcomes if outcome not in observed_outcomes
+    ]
+    unreachable_rows = [
+        {"outcome": outcome, **proof}
+        for outcome, proof in sorted(unreachable_outcomes.items())
     ]
     snapshot_count = int(
         contribution_summary.get("public_read_probe_snapshot_count", 0)
@@ -516,9 +574,12 @@ def public_read_provenance_summary(
         "available": snapshot_count > 0 and bool(observed_outcomes),
         "target_rule_count": len(target_rules),
         "expected_probe_outcome_count": len(expected_outcomes),
+        "required_probe_outcome_count": len(required_outcomes),
         "observed_probe_outcome_count": len(observed_outcomes),
         "missing_probe_outcome_count": len(missing_outcomes),
         "missing_probe_outcomes": missing_outcomes,
+        "statically_unreachable_probe_outcome_count": len(unreachable_rows),
+        "statically_unreachable_probe_outcomes": unreachable_rows,
         "snapshot_count": snapshot_count,
         "public_read_probe_entry_count": contribution_summary.get(
             "public_read_probe_entry_count",

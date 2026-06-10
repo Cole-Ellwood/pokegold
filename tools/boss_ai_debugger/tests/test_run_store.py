@@ -213,6 +213,10 @@ class RunStoreTests(unittest.TestCase):
             )
 
         self.assertEqual(len(calls), 3)
+        self.assertEqual(calls[0][:2], ["bash", "-lc"])
+        self.assertIn("PYTHON=python3", calls[0][2])
+        self.assertIn("RGBASM=rgbds-1.0.1/rgbasm.exe", calls[0][2])
+        self.assertIn("pokegold_trace.gbc", calls[0][2])
         self.assertTrue(rom_rebuild["requested"])
         self.assertTrue(rom_rebuild["passed"])
         self.assertEqual(rom_rebuild["command_count"], 1)

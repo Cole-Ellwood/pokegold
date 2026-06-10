@@ -49,6 +49,7 @@ from trace_rom import (
     audit_boss_move_attr_bank_safety,
     audit_constants,
     audit_legacy_switch_state_restoration,
+    audit_lookahead_evaluator_preserves_candidate_move_id,
     audit_lookahead_trace_preserves_score_cursor,
     audit_move_model_trace_snapshots,
     audit_no_battle_core_boss_labels,
@@ -96,6 +97,7 @@ def main() -> int:
     audit_lookahead_trace_preserves_score_cursor(boss)
     audit_boss_move_attr_bank_safety(boss)
     audit_ai_get_enemy_move_thunk_preserves_move_id(boss, scoring)
+    audit_lookahead_evaluator_preserves_candidate_move_id(boss)
     audit_public_threat_scan_preserves_source_pointers(boss)
     audit_type_matchup_scan_preserves_table_cursor(boss)
     audit_type_threat_severity_preserves_list_cursor(boss)
@@ -164,6 +166,7 @@ def main() -> int:
         "lookahead trace score-cursor preservation",
         "Boss AI bank-safe move attr reads",
         "AIGetEnemyMove_HL move-id preservation",
+        "lookahead evaluator candidate move-id preservation",
         "public threat scan source pointer preservation",
         "type-matchup scan table cursor preservation",
         "type-threat severity list cursor preservation",

@@ -4413,10 +4413,40 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "This first slice delegates pre-variation damage to the existing ROM-backed damage oracle/smoke surface.",
             },
             {
+                "id": "damage_variation_rng_branching",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_DamageVariation",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "BattleCommand_DamageVariation is ROM-component checked in isolation by damage_variation_component_differential: 0/1 damage skips the roll with no BattleRandom byte consumed; cur_damage 100 with link RNG [0, 179] rejects the rotated 0 and accepts the rotated 179 multiplier 217 for final damage 85 across two consumed bytes; cur_damage 300 with [255] takes the max multiplier 255 for final damage 300 across one byte. ROM final wCurDamage and wLinkBattleRNCount consumption match the simulator damage_variation_results mirror byte for byte. The accepted multiplier is not read back from hMultiplier (Multiply/Divide clobber it through the math union), so it is pinned by the mirror plus the final-damage/consumption agreement. Sample and exhaustive distribution modes remain mirror-only.",
+            },
+            {
+                "id": "basic_critical_hit_rng",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_Critical",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "BattleCommand_Critical is ROM-component checked in isolation by critical_component_differential: zero move power skips the roll with no BattleRandom byte consumed; otherwise one byte rolls against CriticalHitChances[level] (= [17, 32, 64, 85, 128, 128, 128]) and crits iff raw < threshold. Seven cases pin level 0 crit and no-crit at the 17 boundary plus discriminating crits at level 1 (Focus Energy substatus and Scope Lens / HELD_CRITICAL_UP, raw 20 over threshold 32) and level 2 (high-crit move via IsInArray and Chansey + Lucky Punch species/item, raw 40 over threshold 64); each elevated raw would not crit at the base level. ROM wCriticalHit and wLinkBattleRNCount consumption match the simulator critical_results / critical_level mirror. Farfetch'd + Stick and sample/exhaustive distribution modes remain mirror-only.",
+            },
+            {
                 "id": "normal_hit_fixed_rng_differential",
                 "source": "tools.headless_battle.rom_differential",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "One selected NormalHit turn is ROM-differential checked end to end for the supported fixed-RNG subset: enemy Pidgey Tackle into player Cyndaquil with link RNG bytes [255, 255] matches ROM PP decrement, no-critical result, damage variation, final damage, and active HP after BattleCommand_ApplyDamage writes HP. This proves that named golden only; other source-mirrored mechanics remain pending differential.",
+                "notes": "One selected NormalHit turn is ROM-differential checked end to end for the supported fixed-RNG subset: enemy Pidgey Tackle into player Cyndaquil with link RNG bytes [255, 255] matches ROM PP decrement, no-critical result, max damage variation, final damage, and active HP after BattleCommand_ApplyDamage writes HP. This proves that named golden only; other source-mirrored mechanics remain pending differential.",
+            },
+            {
+                "id": "normal_hit_low_variation_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "The same selected NormalHit turn is ROM-differential checked with link RNG bytes [255, 179], proving the low accepted damage-variation multiplier path against ROM bytes for this golden without closing every damage-variation context.",
+            },
+            {
+                "id": "normal_hit_critical_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "The same selected NormalHit turn is ROM-differential checked with link RNG bytes [0, 255], proving the basic critical-hit threshold path against ROM bytes for this golden without closing every critical modifier context.",
+            },
+            {
+                "id": "normal_hit_accuracy_miss_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "The same selected NormalHit turn is ROM-differential checked with Tackle accuracy 242 and link RNG bytes [255, 255, 255], proving the basic accuracy miss branch against ROM bytes for this golden without closing accuracy/evasion stages or other hit blockers.",
             },
             {
                 "id": "damaging_status_component_differential",
@@ -4431,48 +4461,66 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected drain healing is ROM-component checked for BattleCommand_DrainTarget: Giga Drain half-heal, Absorb minimum-one heal, and Giga Drain max-HP cap match the headless drain event and final active HP. This proves the post-damage drain healing component only; full LeechHit parity still relies on the separate damage oracle and NormalHit golden.",
             },
             {
+                "id": "selected_drain_moves",
+                "source": "data/moves/effects.asm:LeechHit + engine/battle/effect_commands.asm:BattleCommand_DoTurn/BattleCommand_DrainTarget",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected EFFECT_LEECH_HIT moves are ROM-checked for player DoTurn PP/turn accounting plus BattleCommand_DrainTarget post-damage HP mutation. The selected drain turn differential covers Absorb, Mega Drain, Leech Life, and Giga Drain alias IDs under fixed hit/damage conditions, plus Absorb minimum-one healing and Giga Drain max-HP cap controls. Hit, critical, accuracy, and damage generation remain delegated to the existing NormalHit and damage-oracle proofs; Substitute blocking, Dream Eater, Leech Seed, Big Root-style modifiers, exact after-hit held-item ordering, and text/animation side effects remain out of scope.",
+            },
+            {
                 "id": "item_restore_component_differential",
                 "source": "tools.headless_battle.rom_differential",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Selected active HP item restoration is ROM-component checked for GetHealingItemAmount plus RestoreHealth: Potion partial heal, Hyper Potion cap, Max Potion full heal, and Full Restore HP heal match the headless item event and final active HP. This proves the HP-restore component only; menus, inventory, trainer item dispatch, and Full Restore status cure remain separate boundaries.",
+            },
+            {
+                "id": "basic_status_residual",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Initial poison, burn, and toxic residual damage is ROM-component checked through ResidualDamage for player and enemy active sides, including toxic counter increment and HP mutation. This proves the supported residual HP component only; full selected-turn parity, text/animation timing, Leech Seed, Nightmare, Curse, sandstorm/weather damage, Leftovers, and unmodeled status cures remain out of scope.",
+            },
+            {
+                "id": "basic_pp_decrement",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected move PP decrement is ROM-component checked through BattleCommand_DoTurn for player active/party PP, wild enemy active/wild PP, and trainer enemy active/OT-party PP, including the turns-taken counter. This proves the supported PP accounting boundary before move effect handling; Struggle, full move legality selection, Mimic/Transform PP routing, and PP Up bit packing remain out of scope.",
+            },
+            {
+                "id": "weather_setup_component_differential",
+                "source": "tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected Rain Dance and Sunny Day setup writes are ROM-component checked through BattleCommand_StartRain and BattleCommand_StartSun: wBattleWeather changes from none to rain/sun and wWeatherCount changes from 0 to 5 before animation/text handling. This proves the setup-byte boundary only; full selected-turn parity and end-of-turn weather lifetime remain pending.",
+            },
+            {
+                "id": "selected_substitute_move",
+                "source": "data/moves/effects.asm:Substitute + engine/battle/effect_commands.asm:BattleCommand_DoTurn + engine/battle/move_effects/substitute.asm:BattleCommand_Substitute",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected Substitute move handling is ROM-checked for player DoTurn PP/turn accounting plus BattleCommand_Substitute create, too-weak, and already-active branches. Create matches active HP cost, Substitute bit, and substitute_hp writes; failed branches are branch-proven by ROM execution hooks and preserve active HP/Substitute state. Text, animation, trapping clear, and inactive substitute_hp buffer bytes remain out of scope.",
+            },
+            {
+                "id": "selected_self_heal_moves",
+                "source": "data/moves/effects.asm:Heal + engine/battle/effect_commands.asm:BattleCommand_DoTurn/BattleCommand_Heal",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected player-side non-Rest EFFECT_HEAL moves are ROM-checked for DoTurn PP/turn accounting plus BattleCommand_Heal branch behavior: Recover half-heal, Milk Drink max-HP cap, and Softboiled full-HP no-effect. Successful HP probes skip move animation after PP accounting because animation/text are out of scope; post-action residual handoff is simulator-tested and residual HP math is byte-proven separately by basic_status_residual.",
+            },
+            {
+                "id": "selected_rest_move",
+                "source": "engine/battle/effect_commands.asm:BattleCommand_DoTurn/BattleCommand_Heal + constants/battle_constants.asm:REST_SLEEP_TURNS",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Selected player-side Rest handling is ROM-checked for DoTurn PP/turn accounting plus BattleCommand_Heal branch behavior: toxic partial-HP Rest restores full HP, writes status byte REST_SLEEP_TURNS+1, and clears wPlayerSubStatus5.SUBSTATUS_TOXIC; full-HP Rest observes the hp_full branch and preserves HP/status/toxic substatus. The ROM report records the raw wPlayerToxicCount byte but does not claim it is cleared. Successful HP probes neutralize animation after the Rest status/stat branch because animation/text are out of scope; post-action residual remains delegated to basic_status_residual. Sleep Clause, held cures, Snore/Sleep Talk execution, Nightmare/Dream Eater, and enemy-side Rest are out of scope.",
+            },
+            {
+                "id": "supported_after_hit_item_effects",
+                "source": "engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far + tools.headless_battle.rom_differential",
+                "gate": "python tools/audit/check_headless_battle_simulator.py",
+                "notes": "Supported after-hit HP item effects are ROM-checked through an aggregate HandleLateGenAfterHitEffects_Far differential: Rocky Helmet contact recoil, Shell Bell healing from a 16-damage basis, Rocky Helmet KO before Shell Bell, and Life Orb recoil match the headless HP events and final active HP for the supported subset. This proves HP mutations and item ordering only; item consumption, text/audio/animation timing, Substitute/contact edge cases, Air Balloon, Focus Punch, and full selected-turn parity remain out of scope.",
             }
         ],
         "source_mirrored_pending_differential": [
-            {
-                "id": "damage_variation_rng_branching",
-                "source": "engine/battle/effect_commands.asm:BattleCommand_DamageVariation",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "0/1 damage skips variation; otherwise RNG bytes are rotated right, rejected below 217, and accepted multipliers 217..255 scale damage over 255. Fixed/sample/exhaustive modes are implemented for this mechanic only.",
-            },
             {
                 "id": "basic_move_accuracy_rng",
                 "source": "engine/battle/effect_commands.asm:BattleCommand_CheckHit",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Move accuracy bytes and always-hit moves are mirrored for the basic raw-byte threshold check. EFFECT_THUNDER uses a dedicated selected path for rain bypass and sun's 50 percent + 1 threshold. Fixed/sample/exhaustive modes branch hit/miss for these supported checks. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
-            },
-            {
-                "id": "basic_critical_hit_rng",
-                "source": "engine/battle/effect_commands.asm:BattleCommand_Critical",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Critical-hit level and raw-byte threshold are mirrored for normal damaging moves, including Focus Energy, high-critical moves, Lucky Punch, Stick, and Scope Lens. Fixed/sample/exhaustive modes branch critical/non-critical before damage variation and accuracy, matching the NormalHit command order.",
-            },
-            {
-                "id": "basic_status_residual",
-                "source": "engine/battle/core.asm:ResidualDamage",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Initial poison, burn, and toxic residual damage is mirrored after a selected move when both active Pokemon remain alive. Status application outside selected poison/paralysis moves, sleep, freeze, Leech Seed, Nightmare, Curse, sandstorm/weather damage, Leftovers, and item/status cures outside the explicit active Full Restore and selected held-status-cure subsets remain out of scope.",
-            },
-            {
-                "id": "basic_pp_decrement",
-                "source": "engine/battle/effect_commands.asm:BattleCommand_DoTurn",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected and executable-selector moves decrement PP once before their supported effect handling. Zero-PP selected moves are rejected because Struggle and full move-legality selection are not implemented.",
-            },
-            {
-                "id": "supported_after_hit_item_effects",
-                "source": "engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far + tools.damage_debugger.clobber_smoke",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Rocky Helmet contact recoil, Shell Bell healing, and Life Orb recoil are mirrored after successful damaging hits. The damage debugger smoke byte-proves these isolated handler effects; the headless path applies the same HP fractions and item order for the supported subset.",
             },
             {
                 "id": "explicit_active_hp_restore_items",
@@ -4484,7 +4532,7 @@ def coverage_report() -> dict[str, Any]:
                 "id": "selected_weather_setup_moves",
                 "source": "data/moves/effects.asm:RainDance/SunnyDay + engine/battle/move_effects/rain_dance.asm + engine/battle/move_effects/sunny_day.asm + engine/battle/core.asm:HandleWeather",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Rain Dance and Sunny Day consume PP, set wBattleWeather to rain/sun, set wWeatherCount to 5, decrement the count once at each completed turn end, and clear weather when the count reaches 0. Damage and Thunder accuracy already read the active weather. Sandstorm damage, weather text timing beyond event records, weather healing moves, SolarBeam charge skipping, and automatic Boss AI weather-choice generation remain out of scope.",
+                "notes": "Rain Dance and Sunny Day consume PP, set wBattleWeather to rain/sun, and set wWeatherCount to 5; those setup bytes are ROM-component checked by weather_setup_component_differential. The current headless countdown/clear-after-5 behavior remains pending a full turn differential and reconciliation with engine/battle/core.asm:HandleWeather, which currently documents weather as permanent and wWeatherCount as trace tooling state. Damage and Thunder accuracy already read the active weather. Sandstorm damage, weather text timing beyond event records, weather healing moves, SolarBeam charge skipping, and automatic Boss AI weather-choice generation remain out of scope.",
             },
             {
                 "id": "selected_spikes_entry_damage",
@@ -4529,22 +4577,10 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Selected Thunder follows its source command order for the modeled subset: critical and damage stats/calculation first, then Thunder weather accuracy, checkhit, secondary effect chance, STAB/pre-variation damage, and damage variation. Rain bypasses accuracy RNG; sun changes the hit threshold to 50 percent + 1. The paralysis secondary uses the supported damaging-secondary status path. Fly/Dig interactions, Protect, BrightPowder, accuracy/evasion stages, Lock-On, and text/animation side effects remain out of scope.",
             },
             {
-                "id": "selected_drain_moves",
-                "source": "data/moves/effects.asm:LeechHit + engine/battle/effect_commands.asm:BattleCommand_DrainTarget/SapHealth",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected EFFECT_LEECH_HIT moves Absorb, Mega Drain, Leech Life, and Giga Drain heal the user after successful active HP damage by half actual damage with a minimum of 1 and a max-HP cap, and carry healed HP into later turns. BattleCommand_DrainTarget's healing component is byte-proven by drain_component_differential for half-heal, minimum-one heal, and max-HP cap cases; full LeechHit turn parity remains pending. Into active Substitute, these moves follow CheckHit's drain-substitute miss path after damage variation and before accuracy RNG. Dream Eater, Leech Seed, Big Root-style modifiers, and exact combined ordering claims with after-hit held items remain out of scope.",
-            },
-            {
                 "id": "selected_sleep_status_moves",
                 "source": "data/moves/effects.asm:DoSleep + engine/battle/effect_commands.asm:BattleCommand_SleepTarget and sleep action checks",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Selected EFFECT_SLEEP moves consume PP, run the basic accuracy check, branch fixed/sample/exhaustive duration RNG over stored sleep counters 3..5, deny sleeping actions while decrementing the counter, and let the waking action continue. Safeguard and Substitute blockers are modeled for caller-supplied active state. Sleep Clause state, held sleep prevent items, Snore/Sleep Talk execution, Nightmare, Dream Eater, tree-mon initial sleep, and text/animation side effects remain out of scope.",
-            },
-            {
-                "id": "selected_rest_move",
-                "source": "engine/battle/effect_commands.asm:BattleCommand_Heal Rest branch + constants/battle_constants.asm:REST_SLEEP_TURNS",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Rest consumes PP through the selected move path, fails at full HP, otherwise restores full HP, clears supported toxic counter state, sets sleep with stored counter REST_SLEEP_TURNS+1, and preserves later sleep action denial/wake handling. Stat recalculation side effects, Sleep Clause, held cures, text/animation side effects, and Snore/Sleep Talk execution remain out of scope.",
             },
             {
                 "id": "selected_held_status_cures",
@@ -4559,22 +4595,10 @@ def coverage_report() -> dict[str, Any]:
                 "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves and blocks selected damaging secondary effect-chance before secondary RNG; Safeguard wins when both are active for BP=0 status moves.",
             },
             {
-                "id": "selected_substitute_move",
-                "source": "engine/battle/move_effects/substitute.asm:BattleCommand_Substitute",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Selected Substitute moves consume PP, fail when the user already has Substitute or would be too weak after paying floor(max_hp/4), otherwise subtract that HP cost, set active Substitute, and store substitute_hp for later damage routing. Trapping clear, animations/text, and volatile side effects outside active Substitute HP remain out of scope.",
-            },
-            {
                 "id": "selected_substitute_hp_routing",
                 "source": "engine/battle/effect_commands.asm:DoEnemyDamage/DoPlayerDamage/DoSubstituteDamage + engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far",
                 "gate": "python tools/audit/check_headless_battle_simulator.py",
                 "notes": "Caller-supplied or move-created active Substitute HP routes selected non-drain damaging hits into the one-byte Substitute HP buffer, leaves active HP unchanged, clears Substitute when damage meets or exceeds remaining Substitute HP, skips after-hit item effects because DoSubstituteDamage resets wCurDamage, and preserves source ordering where Substitute blocks selected damaging secondary effect-chance before damage. Selected drain moves into Substitute are treated as CheckHit misses before accuracy RNG. Baton Pass, multi-hit continuation details, Focus Punch/contact side effects, and text/animations remain out of scope.",
-            },
-            {
-                "id": "selected_self_heal_moves",
-                "source": "engine/battle/effect_commands.asm:BattleCommand_Heal + data/moves/effects.asm:Heal",
-                "gate": "python tools/audit/check_headless_battle_simulator.py",
-                "notes": "Recover, Softboiled, and Milk Drink consume PP, restore half max HP with max-HP cap, report full-HP no-effect cases, and preserve post-action residual.",
             },
             {
                 "id": "selected_poison_status_moves",

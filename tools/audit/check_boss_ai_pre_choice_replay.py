@@ -4,20 +4,23 @@
 from __future__ import annotations
 
 import json
+import argparse
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from _common import fail
-
-
 ROOT = Path(__file__).resolve().parents[2]
+AUDIT_DIR = Path(__file__).resolve().parent
+if str(AUDIT_DIR) not in sys.path:
+    sys.path.insert(0, str(AUDIT_DIR))
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from _common import fail
 from tools.boss_ai_debugger.trace_replay import parse_trace_file, replay_trace_paths
+from tools.debugger.report_envelope import build_report_envelope
 from tools.trace.runtime import sha256_file
 
 from _trace_artifacts import require_manifest_basis
@@ -25,6 +28,7 @@ from _trace_artifacts import require_manifest_basis
 
 MANIFEST = ROOT / "audit" / "boss_ai_trace" / "live_capture_manifest.json"
 STATE_REPLAY = ROOT / "tools" / "trace" / "boss_ai_state_replay.py"
+PRE_CHOICE_REPLAY_EVIDENCE_ID = "boss_ai_pre_choice_replay.exact_match_corpus"
 MIN_EXACT_CAPTURES = 18
 MIN_AGREEMENT = 0.9999
 BASELINE_FIELD_KEYS = (
@@ -189,7 +193,96 @@ def compare_replay_to_baseline(entry: dict[str, Any], replay_path: Path) -> None
         fail(f"{capture_id}: pre-choice replay differs from baseline trace: {detail}")
 
 
-def main() -> int:
+def repo_rel(path: Path, *, root: Path = ROOT) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def build_audit_report(
+    *,
+    manifest: dict[str, Any],
+    entries: list[dict[str, Any]],
+    replay_report: dict[str, Any],
+    rom_path: Path,
+    symbols_path: Path,
+    manifest_path: Path = MANIFEST,
+    root: Path = ROOT,
+) -> dict[str, Any]:
+    capture_ids = [str(entry.get("id", "")) for entry in entries]
+    manifest_hash = sha256_file(manifest_path)
+    report = build_report_envelope(
+        kind="boss_ai_pre_choice_replay_audit",
+        command="python tools\\audit\\check_boss_ai_pre_choice_replay.py",
+        inputs={"manifest": repo_rel(manifest_path, root=root)},
+        rom_path=rom_path,
+        symbols_path=symbols_path,
+        state_basis={
+            "manifest_path": repo_rel(manifest_path, root=root),
+            "manifest_sha256": manifest_hash,
+            "capture_ids": capture_ids,
+            "minimum_exact_captures": MIN_EXACT_CAPTURES,
+            "minimum_agreement": MIN_AGREEMENT,
+            "trace_rom": str(manifest.get("trace_rom", "")),
+            "trace_symbols": str(manifest.get("trace_symbols", "")),
+        },
+        backend="pyboy_trace_replay",
+        proof_status="complete",
+        closed_evidence_ids=[PRE_CHOICE_REPLAY_EVIDENCE_ID],
+        repro_command=(
+            "python tools\\audit\\check_boss_ai_pre_choice_replay.py "
+            "--json-out audit\\boss_ai_debugger\\god_level_benchmark\\artifacts\\pre_choice_replay.json"
+        ),
+        disproof_standard=[
+            "Every manifest move-choice capture replays from its pre-choice state.",
+            "Each replay matches the recorded baseline trace fields and exact score-byte evidence.",
+            "The artifact manifest hash and trace ROM/symbol hashes match the current live capture manifest.",
+        ],
+        root=root,
+    )
+    report.update(
+        {
+            "manifest_path": repo_rel(manifest_path, root=root),
+            "manifest_sha256": manifest_hash,
+            "baseline_field_keys": list(BASELINE_FIELD_KEYS),
+            "excluded_capture_ids": [
+                {
+                    "id": "shared_switch_loop",
+                    "reason": "shared switch-loop capture does not exercise the move-choice replay path",
+                }
+            ],
+            "minimum_exact_captures": MIN_EXACT_CAPTURES,
+            "minimum_agreement": MIN_AGREEMENT,
+            "capture_ids": capture_ids,
+            "capture_count": int(replay_report.get("capture_count", 0) or 0),
+            "checked_count": int(replay_report.get("checked_count", 0) or 0),
+            "failure_count": int(replay_report.get("failure_count", 0) or 0),
+            "partial_count": int(replay_report.get("partial_count", 0) or 0),
+            "exact_count": int(replay_report.get("exact_count", 0) or 0),
+            "exact_match_count": int(replay_report.get("exact_match_count", 0) or 0),
+            "exact_agreement_rate": float(replay_report.get("exact_agreement_rate", 0.0) or 0.0),
+            "verdict_counts": dict(replay_report.get("verdict_counts", {})),
+            "trace_rom_sha256": str(manifest.get("trace_rom_sha256", "")),
+            "trace_symbols_sha256": str(manifest.get("trace_symbols_sha256", "")),
+        }
+    )
+    return report
+
+
+def write_report(report: dict[str, Any], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json-out", type=Path, help="write a complete proof envelope when the audit passes")
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     require_manifest_basis()
     manifest = load_manifest(MANIFEST)
     rom_path, symbols_path = validate_hashes(manifest)
@@ -235,11 +328,22 @@ def main() -> int:
             f"is below {MIN_AGREEMENT:.4%}"
         )
 
+    audit_report = build_audit_report(
+        manifest=manifest,
+        entries=entries,
+        replay_report=report,
+        rom_path=rom_path,
+        symbols_path=symbols_path,
+    )
+    if args.json_out is not None:
+        write_report(audit_report, args.json_out)
     print(
         "Boss AI pre-choice replay audit passed: "
         f"{report['exact_match_count']} / {report['exact_count']} exact captures "
         f"matched ({report['exact_agreement_rate']:.4%})."
     )
+    if args.json_out is not None:
+        print(f"json_out={args.json_out}")
     return 0
 
 

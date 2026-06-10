@@ -42,6 +42,16 @@ DEFAULT_RUNS_DIR = ROOT / "audit" / "boss_ai_debugger" / "runs"
 RUN_STORE_VERSION = "boss-ai-debugger-run-v1"
 SELF_REFERENTIAL_DIFF_ARTIFACTS = {"previous_run_diff"}
 CommandRunner = Callable[[list[str]], dict[str, Any]]
+WSL_REPO_PATH = "/mnt/c/Users/lolno/Downloads/pokemon gold hack"
+WSL_RGBDS_BUILD_COMMAND = (
+    f'cd "{WSL_REPO_PATH}" && '
+    "make -j4 PYTHON=python3 "
+    "RGBASM=rgbds-1.0.1/rgbasm.exe "
+    "RGBLINK=rgbds-1.0.1/rgblink.exe "
+    "RGBFIX=rgbds-1.0.1/rgbfix.exe "
+    "RGBGFX=rgbds-1.0.1/rgbgfx.exe "
+    "pokegold.gbc pokesilver.gbc pokegold_trace.gbc"
+)
 
 
 def run_generated_smoke_suite(
@@ -529,7 +539,7 @@ def run_rom_rebuild_report(
         requested=requested,
         skipped_reason="not requested; pass --rebuild-roms to rebuild normal and trace ROMs",
         commands=[
-            ["wsl", "make", "pokegold.gbc", "pokesilver.gbc", "pokegold_trace.gbc"],
+            ["bash", "-lc", WSL_RGBDS_BUILD_COMMAND],
         ],
         command_runner=command_runner,
     )

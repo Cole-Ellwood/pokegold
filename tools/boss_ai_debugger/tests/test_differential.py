@@ -13,7 +13,12 @@ from tools.boss_ai_debugger.differential import (
     build_differential_report,
     differential_from_paths,
 )
-from tools.boss_ai_debugger.generators import write_jsonl
+from tools.boss_ai_debugger.contribution_compare import (
+    compare_contribution_reports,
+    python_contribution_report_from_scenarios,
+)
+from tools.boss_ai_debugger.generators import generate_scenarios, write_jsonl
+from tools.boss_ai_debugger.rom_contribution_trace import stamp_rom_contribution_trace_class
 
 
 def write_unit_contribution_trace(path: Path) -> None:
@@ -227,6 +232,45 @@ class DifferentialTests(unittest.TestCase):
 
         self.assertEqual(report["contribution_comparison"]["matched_trace_count"], 1)
         self.assertEqual(report["contribution_comparison"]["mismatch_count"], 0)
+
+    def test_contribution_comparison_surfaces_matching_decision_class_ids(self) -> None:
+        scenario = generate_scenarios(family="mastery_policy", count=1, seed=1)[0]
+        rule_id = "move.apply_lookahead_to_top_move_candidates"
+        python_report = python_contribution_report_from_scenarios([scenario])
+        rom_report = {
+            "source": "trace_rom_pyboy_hooks",
+            "trace_id": scenario["id"],
+            "scenario_id": scenario["id"],
+            "save_state": f"scenario:{scenario['id']}",
+            "trace_basis": {},
+            "events": [contribution_event(rule_id, 3)],
+            "event_count": 1,
+            "changed_event_count": 1,
+            "rule_entries": [],
+            "predicate_branch_entries": [],
+            "public_read_probe_entries": [],
+            "known_limits": [],
+            "decision_class_id": scenario["class_id"],
+        }
+        stamp_rom_contribution_trace_class(rom_report)
+
+        comparison = compare_contribution_reports(
+            rom_reports=[rom_report],
+            python_reports=[python_report],
+        )
+
+        self.assertEqual(python_report["class_id_count"], 1)
+        self.assertEqual(comparison["matched_trace_count"], 1)
+        self.assertEqual(comparison["missing_class_id_count"], 0)
+        self.assertEqual(comparison["class_id_mismatch_count"], 0)
+        self.assertEqual(
+            comparison["matched_trace_classes"][0]["rom_class_id"],
+            scenario["class_id"],
+        )
+        self.assertRegex(
+            comparison["matched_trace_classes"][0]["rom_trace_class_id"],
+            r"^csc_[0-9A-F]{20}$",
+        )
 
     def test_missing_requested_rom_contribution_trace_fails_closed(self) -> None:
         missing = Path("missing_rom_contribution_trace.json")

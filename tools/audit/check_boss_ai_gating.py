@@ -81,6 +81,23 @@ def guard_present(lines: list[str], start_idx: int) -> bool:
             pos += 1
             if pos == len(want):
                 return True
+    for i, token in enumerate(tokens):
+        if token != "ld a, [wBossAITier]":
+            continue
+        if i + 2 >= len(tokens) or tokens[i + 1] != "and a":
+            continue
+        jump = tokens[i + 2]
+        if not jump.startswith("jr z, "):
+            continue
+        target = jump.removeprefix("jr z, ").strip()
+        if target not in tokens:
+            continue
+        label_index = tokens.index(target)
+        exit_body = tokens[label_index + 1 : label_index + 5]
+        if exit_body[:3] == ["pop af", "xor a", "ret"]:
+            return True
+        if exit_body[:2] == ["xor a", "ret"]:
+            return True
     return False
 
 

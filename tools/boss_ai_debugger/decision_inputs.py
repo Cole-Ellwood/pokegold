@@ -151,6 +151,12 @@ def default_generated_scenario_path(target_id: str) -> Path:
     return DEFAULT_GENERATED_INPUT_DIR / f"{safe_id(target_id)}.jsonl"
 
 
+def generated_scenario_path_for_manifest(target_id: str, output_path: Path | None) -> Path:
+    if output_path is None:
+        return default_generated_scenario_path(target_id)
+    return output_path.with_name(f"{output_path.stem}.{safe_id(target_id)}.jsonl")
+
+
 def resolve_generated_boss_decision_input(
     *,
     generated_family: str | None = None,
@@ -173,7 +179,7 @@ def resolve_generated_boss_decision_input(
         case=case,
     )
     scenario_id = str(scenario.get("id") or target_id)
-    scenario_path = default_generated_scenario_path(target_id)
+    scenario_path = generated_scenario_path_for_manifest(target_id, output_path)
     write_jsonl([scenario], scenario_path)
 
     trace_rom = ROOT / "pokegold_trace.gbc"

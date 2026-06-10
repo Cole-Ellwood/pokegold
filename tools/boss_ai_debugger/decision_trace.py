@@ -6,6 +6,7 @@ from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
 
+from .canonical_classes import scenario_class_fields
 from .rom_scenarios import evaluate_scenario, load_scenario_batch, select_move
 
 
@@ -108,6 +109,7 @@ def decision_trace_for_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "trace_id": trace_id,
+        **scenario_class_fields(scenario),
         "source": "python_scenario",
         "scenario_id": verdict.scenario_id,
         "event_count": len(events),

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.decision_trace import decision_trace_for_scenario
-from tools.boss_ai_debugger.generators import write_jsonl
+from tools.boss_ai_debugger.generators import generate_scenarios, write_jsonl
 
 
 class DecisionTraceTests(unittest.TestCase):
@@ -35,6 +35,15 @@ class DecisionTraceTests(unittest.TestCase):
         self.assertIn("selector", event_types)
         self.assertIn("policy_check", event_types)
         self.assertEqual(trace["source"], "python_scenario")
+
+    def test_generated_scenario_class_fields_pass_through(self) -> None:
+        scenario = generate_scenarios(family="selector_edges", count=1, seed=1)[0]
+
+        trace = decision_trace_for_scenario(scenario)
+
+        self.assertEqual(trace["class_id"], scenario["class_id"])
+        self.assertEqual(trace["class_fingerprint"], scenario["class_fingerprint"])
+        self.assertEqual(trace["canonical_state_class"]["class_id"], scenario["class_id"])
 
     def test_cli_decision_trace_writes_json(self) -> None:
         scenario = {

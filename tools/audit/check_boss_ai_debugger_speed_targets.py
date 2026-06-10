@@ -196,7 +196,22 @@ def assert_compact_generation_matches_rendered(
 ) -> None:
     if len(compact) != len(rendered):
         raise SystemExit("compact generated count differs from rendered count")
-    stamp_keys = {"generator_source", "rom", "rom_sha256", "symbols", "symbols_sha256", "state_hash"}
+    stamp_keys = {
+        "canonical_state_class",
+        "class_fingerprint",
+        "class_id",
+        "dirty_diff_hash",
+        "generator_source",
+        "map",
+        "map_sha256",
+        "rom",
+        "rom_sha256",
+        "rule_map_sha256",
+        "source_commit",
+        "state_hash",
+        "symbols",
+        "symbols_sha256",
+    }
     for index, (compact_scenario, rendered_scenario) in enumerate(zip(compact, rendered)):
         stripped = {
             key: value

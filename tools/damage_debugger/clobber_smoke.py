@@ -29,7 +29,8 @@ Coverage today:
                                  Expert Belt, Metronome, Life Orb.
     type-effectiveness         — super-effective, resisted, immune rows.
     damage variation           — final 0.85-1.0 random multiplier range.
-    late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects.
+    late-gen after-hit effects — Rocky Helmet, Shell Bell, Life Orb HP effects
+                                 and Rocky-before-Shell KO ordering.
 """
 
 from __future__ import annotations
@@ -486,6 +487,14 @@ def seed_afterhit_shell_bell(pyboy, syms):
     write_byte(pyboy, "wBattleMonItem", syms, SHELL_BELL_ID)
 
 
+def seed_afterhit_rocky_helmet_before_shell_bell(pyboy, syms):
+    """Rocky Helmet KO happens before the user's Shell Bell can heal."""
+    _seed_player_tackle_afterhit_base(pyboy, syms, cur_damage=16)
+    write_be_u16(pyboy, "wBattleMonHP", syms, 5)
+    write_byte(pyboy, "wBattleMonItem", syms, SHELL_BELL_ID)
+    write_byte(pyboy, "wEnemyMonItem", syms, ROCKY_HELMET_ID)
+
+
 def seed_afterhit_life_orb(pyboy, syms):
     """Player Life Orb recoils the user by maxHP/10 after a damaging hit."""
     _seed_player_tackle_afterhit_base(pyboy, syms)
@@ -663,6 +672,14 @@ SCENARIOS = [
         chain=("HandleLateGenAfterHitEffects_Far",),
         post_check=_expect_u16s({"wBattleMonHP": 12, "wEnemyMonHP": 30}),
         call_budget=500,
+        allow_nonreturn=True,
+    ),
+    Scenario(
+        "afterhit_rocky_helmet_before_shell_bell", seed_afterhit_rocky_helmet_before_shell_bell, 16, 16,
+        "Combined after-hit handler: Rocky Helmet KOs a 5/30 HP Shell Bell user before healing.",
+        chain=("HandleLateGenAfterHitEffects_Far",),
+        post_check=_expect_u16s({"wBattleMonHP": 0, "wEnemyMonHP": 30}),
+        call_budget=700,
         allow_nonreturn=True,
     ),
     Scenario(

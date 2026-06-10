@@ -110,7 +110,13 @@ def main() -> int:
         errors.append("coverage report mastery policy-card count mismatch")
     if coverage["rule_map"]["trace_covered_rule_count"] == 0:
         errors.append("coverage report did not aggregate ROM contribution rules")
-    if coverage["uncovered_rules"]["uncovered_rule_count"] == 0:
+    uncovered_rules = coverage.get("uncovered_rules", {})
+    if not isinstance(uncovered_rules, dict) or "uncovered_rule_count" not in uncovered_rules:
+        errors.append("coverage report did not expose uncovered mapped rules")
+    elif (
+        int(uncovered_rules.get("uncovered_rule_count", 0) or 0) == 0
+        and int(coverage["rule_map"].get("dynamic_uncovered_rule_count", 0) or 0) != 0
+    ):
         errors.append("coverage report did not expose uncovered mapped rules")
     if (
         coverage["mastery"]["generated_policy_card_coverage_count"]

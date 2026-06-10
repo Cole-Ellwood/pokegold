@@ -230,6 +230,32 @@ def audit_ai_get_enemy_move_thunk_preserves_move_id(boss: str, scoring: str) -> 
     require_contains(wrapper, "ld a, c", "AIGetEnemyMoveFromC restores move id")
 
 
+def audit_lookahead_evaluator_preserves_candidate_move_id(boss: str) -> None:
+    evaluator = top_block(boss, "BossAI_EvaluateActionLookahead")
+    require_order(
+        evaluator,
+        [
+            "push af",
+            "ld a, [wBossAITier]",
+            "and a",
+            "jr z, .lookahead_disabled",
+            "cp BOSS_AI_LOOKAHEAD_ENABLE_TIER_MIN",
+            "jr nc, .go",
+            ".lookahead_disabled",
+            "pop af",
+            "xor a",
+            "ret",
+            ".go",
+            "pop af",
+            "push hl",
+            "push de",
+            "push bc",
+            "call AIGetEnemyMove_HL",
+        ],
+        "BossAI_EvaluateActionLookahead preserves candidate move id before AIGetEnemyMove_HL",
+    )
+
+
 def audit_public_threat_scan_preserves_source_pointers(boss: str) -> None:
     level_moves = local_block(
         top_block(boss, "BossAI_AddSpeciesLevelUpMovesToMask"),

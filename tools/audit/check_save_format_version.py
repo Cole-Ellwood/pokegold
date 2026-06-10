@@ -30,7 +30,10 @@ import json
 import re
 from pathlib import Path
 
-from _common import fail, load
+try:
+    from ._common import fail, load
+except ImportError:  # pragma: no cover - script execution path
+    from _common import fail, load
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,7 +70,27 @@ BOSS_AI_RESERVE_PAD_RE = re.compile(
 )
 
 
-def normal_build_wram_lines() -> list[str]:
+def constants_path(root: Path = ROOT) -> Path:
+    return root / "constants" / "misc_constants.asm"
+
+
+def wram_path(root: Path = ROOT) -> Path:
+    return root / "ram" / "wram.asm"
+
+
+def sram_path(root: Path = ROOT) -> Path:
+    return root / "ram" / "sram.asm"
+
+
+def layout_path(root: Path = ROOT) -> Path:
+    return root / "layout.link"
+
+
+def data_file_path(root: Path = ROOT) -> Path:
+    return root / "tools" / "audit" / "data" / "save_format_fingerprints.json"
+
+
+def normal_build_wram_lines(*, root: Path = ROOT) -> list[str]:
     """Return wram.asm source lines visible to normal, save-compatible builds.
 
     Also collapses the wBossAI* subrange (wBossAITier..wBossAIStateEnd) to
@@ -81,7 +104,7 @@ def normal_build_wram_lines() -> list[str]:
     block as opaque AND assert the 140-byte reserve invariant remains.
     """
 
-    lines = load(WRAM).splitlines()
+    lines = load(wram_path(root)).splitlines()
     out: list[str] = []
     trace_only_depth = 0
     reserve_pad_found = False
@@ -135,17 +158,18 @@ def normal_build_wram_lines() -> list[str]:
     return out
 
 
-def parse_version() -> int:
-    for line in load(CONSTANTS).splitlines():
+def parse_version(*, root: Path = ROOT) -> int:
+    constants = constants_path(root)
+    for line in load(constants).splitlines():
         match = EQU_RE.match(line)
         if match:
             return int(match.group(1))
-    fail(f"could not parse SAVE_FORMAT_VERSION from {CONSTANTS.relative_to(ROOT)}")
+    fail(f"could not parse SAVE_FORMAT_VERSION from {constants.relative_to(root)}")
     return 0
 
 
-def parse_wram_pairs() -> dict[str, list[str]]:
-    lines = normal_build_wram_lines()
+def parse_wram_pairs(*, root: Path = ROOT) -> dict[str, list[str]]:
+    lines = normal_build_wram_lines(root=root)
     label_at: dict[str, int] = {}
     for idx, line in enumerate(lines):
         match = WRAM_LABEL_RE.match(line)
@@ -170,8 +194,8 @@ def parse_wram_pairs() -> dict[str, list[str]]:
     return out
 
 
-def parse_sram_sections() -> dict[str, list[str]]:
-    lines = load(SRAM).splitlines()
+def parse_sram_sections(*, root: Path = ROOT) -> dict[str, list[str]]:
+    lines = load(sram_path(root)).splitlines()
     section_starts: dict[str, int] = {}
     section_order: list[str] = []
     for idx, line in enumerate(lines):
@@ -197,10 +221,10 @@ def parse_sram_sections() -> dict[str, list[str]]:
     return out
 
 
-def parse_sram_layout() -> dict[str, list[str]]:
+def parse_sram_layout(*, root: Path = ROOT) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {}
     current_bank: str | None = None
-    for line in load(LAYOUT).splitlines():
+    for line in load(layout_path(root)).splitlines():
         bank_match = BANK_HEADER_RE.match(line)
         if bank_match:
             if bank_match.group(1) == "SRAM":
@@ -218,26 +242,28 @@ def parse_sram_layout() -> dict[str, list[str]]:
     return out
 
 
-def compute_fingerprint() -> tuple[str, dict[str, object]]:
+def compute_fingerprint(*, root: Path = ROOT) -> tuple[str, dict[str, object]]:
     payload = {
-        "wram_pairs": parse_wram_pairs(),
-        "sram_sections": parse_sram_sections(),
-        "sram_layout": parse_sram_layout(),
+        "wram_pairs": parse_wram_pairs(root=root),
+        "sram_sections": parse_sram_sections(root=root),
+        "sram_layout": parse_sram_layout(root=root),
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     return digest, payload
 
 
-def load_fingerprints() -> dict[str, str]:
-    if not DATA_FILE.exists():
+def load_fingerprints(*, root: Path = ROOT) -> dict[str, str]:
+    data_file = data_file_path(root)
+    if not data_file.exists():
         return {}
-    return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    return json.loads(data_file.read_text(encoding="utf-8"))
 
 
-def save_fingerprints(data: dict[str, str]) -> None:
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    DATA_FILE.write_text(
+def save_fingerprints(data: dict[str, str], *, root: Path = ROOT) -> None:
+    data_file = data_file_path(root)
+    data_file.parent.mkdir(parents=True, exist_ok=True)
+    data_file.write_text(
         json.dumps(data, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )

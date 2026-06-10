@@ -32,8 +32,18 @@ GENERIC_LOCAL_LABELS = {
     ".none",
     ".none_found",
 }
+EXPLICIT_RULE_LABELS = {
+    "MaybePickAdaptiveEnemyLead",
+}
+PLATFORM_BOUNDARY_LABELS = {
+    "MaybePickAdaptiveEnemyLead",
+}
+UNREACHABLE_STUB_LABELS = {
+    "BossAI_IsScarfSwingPossible",
+}
 
 REQUIRED_LABELS = {
+    "MaybePickAdaptiveEnemyLead",
     "BossAI_ApplyMoveModel",
     "BossAI_SelectMove",
     ".ApplySpikesLayerBias",
@@ -124,6 +134,7 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
         rule_id = make_rule_id(subsystem, label, parent)
         public_reads = tuple(public_reads_for(label, parent))
         executable = is_executable_rule_label(label, parent)
+        dynamic_coverage_target = executable and not is_unreachable_stub_label(label, parent)
         score_trace_target = is_score_trace_rule(path, label, parent)
         rules.append(
             RuleLabel(
@@ -136,18 +147,26 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
                 public_reads=public_reads,
                 expected_public_inputs=public_reads,
                 executable=executable,
-                dynamic_coverage_target=executable,
+                dynamic_coverage_target=dynamic_coverage_target,
                 score_trace_target=score_trace_target,
                 requires_public_read_provenance=(
                     classify_label(label, parent) == "public_info" and bool(public_reads)
                 ),
-                coverage_mode=coverage_mode_for(path, label, parent, executable),
+                coverage_mode=coverage_mode_for(
+                    path,
+                    label,
+                    parent,
+                    executable,
+                    dynamic_coverage_target=dynamic_coverage_target,
+                ),
             )
         )
     return rules
 
 
 def is_rule_label(label: str) -> bool:
+    if label in EXPLICIT_RULE_LABELS:
+        return True
     if label.startswith("BossAI_"):
         return True
     if label in GENERIC_LOCAL_LABELS:
@@ -193,6 +212,8 @@ def make_rule_id(subsystem: str, label: str, parent: str | None) -> str:
 
 def classify_label(label: str, parent: str | None) -> str:
     combined = f"{parent or ''} {label}"
+    if label in PLATFORM_BOUNDARY_LABELS:
+        return "platform_boundary"
     if "Haki" in combined:
         return "haki_exception"
     if any(token in combined for token in ("Revealed", "Public", "Seen", "Known")):
@@ -223,6 +244,10 @@ def is_executable_rule_label(label: str, parent: str | None) -> bool:
     return True
 
 
+def is_unreachable_stub_label(label: str, parent: str | None) -> bool:
+    return full_symbol_for_label(label, parent) in UNREACHABLE_STUB_LABELS
+
+
 def full_symbol_for_label(label: str, parent: str | None) -> str:
     if label.startswith("."):
         if parent is None:
@@ -244,8 +269,12 @@ def coverage_mode_for(
     label: str,
     parent: str | None,
     executable: bool,
+    *,
+    dynamic_coverage_target: bool | None = None,
 ) -> str:
     if not executable:
+        return "static_reference"
+    if dynamic_coverage_target is False:
         return "static_reference"
     if is_score_trace_rule(path, label, parent):
         return "rom_score_execution_hook"

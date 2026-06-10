@@ -6,7 +6,9 @@ from pathlib import Path
 from tools.boss_ai_debugger.generators import generate_scenarios
 from tools.boss_ai_debugger.rom_score_materialize import (
     MOVES,
+    ITEMS,
     ScenarioMaterialization,
+    SPECIES,
     TYPES,
     action_id_for_slot,
     active_boss_type_patches,
@@ -25,6 +27,7 @@ from tools.boss_ai_debugger.rom_score_materialize import (
     replay_controls_from_manifest,
     score_materialization_failure_count,
     score_materialization_skip_reason,
+    skipped_verdict,
     verdict_from_materialized_trace,
     scenario_condition_tags,
     turn_cache_miss_patches,
@@ -102,6 +105,30 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBossAISpeciesUsedMoves", 4)], MOVES["RAPID_SPIN"])
         self.assertEqual(patches[("wBossAIPublicThreatCache", 0)], 0xFF)
         self.assertEqual(patches[("wBossAIPrimaryThreatCache", 0)], 0xFF)
+
+    def test_public_read_probe_tags_patch_public_state(self) -> None:
+        scenarios = generate_scenarios(family="support_handoff", count=9, seed=1)
+        scenario = next(
+            item
+            for item in scenarios
+            if item["policy_case"] == "public_read_physical_choice_probe"
+        )
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+        patches = {
+            (patch.symbol_name, patch.offset): patch.value
+            for patch in materialization.patches
+        }
+
+        self.assertEqual(patches[("wEnemyMonItem", 0)], ITEMS["CHOICE_BAND"])
+        self.assertEqual(patches[("wBattleMonType1", 0)], TYPES["GROUND"])
+        self.assertEqual(patches[("wBattleMonType2", 0)], TYPES["GROUND"])
+        self.assertEqual(patches[("wBossAISeenPlayerSpeciesCount", 0)], 1)
+        self.assertEqual(patches[("wBossAISeenPlayerSpecies", 0)], SPECIES["GENGAR"])
+        self.assertEqual(patches[("wPlayerUsedMoves", 3)], MOVES["RECOVER"])
 
     def test_turn_cache_miss_patches_mirror_boss_ai_reset_turn_caches(self) -> None:
         patches = {
@@ -215,6 +242,30 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(report["rom"]["final_scores"], [20, 25, 80, 80])
         self.assertEqual(report["rom"]["replay_end_scores"], [99, 99, 99, 99])
 
+    def test_score_verdict_preserves_scenario_class_id(self) -> None:
+        scenario = generate_scenarios(family="spikes_spin", count=1, seed=1)[0]
+        report = verdict_from_materialized_trace(
+            scenario,
+            ScenarioMaterialization(
+                scenario_id=scenario["id"],
+                patches=[],
+                move_ids=[0xBF, 0xBC, 0x39, 0x99],
+                layers=0,
+            ),
+            {
+                "move_ids": [0xBF, 0xBC, 0x39, 0x99],
+                "move_scores": [20, 20, 20, 20],
+                "selector_entry_scores": [20, 20, 20, 20],
+            },
+            move_names={},
+            compare_contributions=False,
+        )
+        skipped = skipped_verdict(scenario, "unit skip")
+
+        self.assertEqual(report["class_id"], scenario["class_id"])
+        self.assertEqual(report["class_fingerprint"], scenario["class_fingerprint"])
+        self.assertEqual(skipped["class_id"], scenario["class_id"])
+
     def test_public_policy_materialization_maps_synthetic_moves(self) -> None:
         scenario = generate_scenarios(family="support_handoff", count=1, seed=9)[0]
         scenario["tier"] = "mid"
@@ -232,6 +283,21 @@ class RomScoreMaterializeTests(unittest.TestCase):
         self.assertEqual(patches[("wBossAITier", 0)], 2)
         self.assertEqual(patches[("wEnemyMonMoves", 1)], 0xE2)
         self.assertEqual(patches[("wOTPartyCount", 0)], 2)
+
+    def test_phaze_setup_boundary_materialization_maps_runner_up_setup(self) -> None:
+        scenario = generate_scenarios(family="support_handoff", count=4, seed=1)[3]
+
+        self.assertEqual(
+            scenario["policy_case"],
+            "phaze_loop_over_setup_greed_boundary",
+        )
+
+        materialization = materialization_for_scenario(
+            scenario,
+            move_name_to_id={},
+        )
+
+        self.assertEqual(materialization.move_ids, [0xAE, 0x2E, 0xBF, 0xE2])
 
     def test_reject_reckless_prediction_keeps_active_target_vulnerable(self) -> None:
         scenario = generate_scenarios(family="prediction_mix", count=2, seed=3)[1]

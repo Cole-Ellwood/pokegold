@@ -66,7 +66,11 @@ class ReplayImportTests(unittest.TestCase):
         self.assertEqual(batch["scenario_count"], 1)
         self.assertEqual(rows[0]["state"]["boss"]["active"]["species"], "Cloyster")
         self.assertIn("replay_source", rows[0])
-        self.assertNotIn("hidden", __import__("json").dumps(rows[0]).lower())
+        self.assertEqual(rows[0]["canonical_state_class"]["hidden_facts"], {})
+        without_canonical = {
+            key: value for key, value in rows[0].items() if key != "canonical_state_class"
+        }
+        self.assertNotIn("hidden", __import__("json").dumps(without_canonical).lower())
 
     def test_mastery_document_import_projects_to_debugger_family(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

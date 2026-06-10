@@ -22,19 +22,21 @@ Run modes:
     python -m tools.damage_debugger.fuzz --max=50000 --workers=8
     python -m tools.damage_debugger.fuzz --self-check-workers=4
 
-Eviolite-axis coverage is deferred to a v2 pass: triggering Eviolite
-requires `.SpeciesCanEvolve` which reads from the live EvosAttacks
-table, so we'd need a curated species list to fuzz across. The hand-
-coded `physical_eviolite_def` / `special_eviolite_spd` scenarios in
-`clobber_smoke` cover that axis at fixed stats today.
+The default random strategy keeps species fixed, but BattleInputs carries
+explicit species ids so curated campaigns can exercise live EvosAttacks
+paths such as Eviolite's `.SpeciesCanEvolve` check.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import multiprocessing as mp
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 
 from hypothesis import HealthCheck, given, seed as hypothesis_seed, settings, strategies as st
 
@@ -259,10 +261,9 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
         write_byte(pyboy, f"wPlayer{stage}Level", syms, 7)
         write_byte(pyboy, f"wEnemy{stage}Level", syms, 7)
 
-    # Attacker = Battle slot.
-    # Species 155 (Cyndaquil) is a sane default; we override types directly
-    # so species choice doesn't drive the matchup.
-    write_byte(pyboy, "wBattleMonSpecies", syms, 155)
+    # Attacker = Battle slot. The default species is Cyndaquil, but curated
+    # campaigns can override it for species-sensitive helpers.
+    write_byte(pyboy, "wBattleMonSpecies", syms, inp.attacker_species_id)
     write_byte(pyboy, "wBattleMonLevel", syms, inp.attacker_level)
     write_byte(pyboy, "wBattleMonType1", syms, inp.attacker_types[0])
     write_byte(pyboy, "wBattleMonType2", syms, inp.attacker_types[1])
@@ -283,8 +284,9 @@ def _seed_inputs(pyboy, syms, inp: BattleInputs) -> None:
     for slot in ("wPlayerDefense", "wPlayerSpDef", "wPlayerSpeed"):
         write_be_u16(pyboy, slot, syms, max(5, inp.attacker_atk // 2))
 
-    # Defender = Enemy slot. Species 16 (Pidgey) by default; types overridden.
-    write_byte(pyboy, "wEnemyMonSpecies", syms, 16)
+    # Defender = Enemy slot. The default species is Pidgey, but Eviolite
+    # coverage overrides this so the ROM reads the live evolution table.
+    write_byte(pyboy, "wEnemyMonSpecies", syms, inp.defender_species_id)
     write_byte(pyboy, "wEnemyMonLevel", syms, inp.attacker_level)  # not strictly
     write_byte(pyboy, "wEnemyMonType1", syms, inp.defender_types[0])
     write_byte(pyboy, "wEnemyMonType2", syms, inp.defender_types[1])
@@ -491,6 +493,64 @@ def _run_fuzz_workers(configs: list[FuzzWorkerConfig]) -> list[FuzzWorkerResult]
         return pool.map(_run_hypothesis_worker, configs)
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def _sha256_path(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest().upper()
+
+
+def _hash_basis_json() -> dict[str, object]:
+    basis: dict[str, object] = {
+        "rom_path": "",
+        "rom_sha256": "",
+        "symbols_path": "",
+        "symbols_sha256": "",
+        "errors": [],
+    }
+    errors: list[str] = []
+    try:
+        rom_path = find_rom()
+        basis["rom_path"] = str(rom_path)
+        basis["rom_sha256"] = _sha256_path(rom_path)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"rom:{type(exc).__name__}:{exc}")
+    try:
+        sym_path = find_sym()
+        basis["symbols_path"] = str(sym_path)
+        basis["symbols_sha256"] = _sha256_path(sym_path)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"symbols:{type(exc).__name__}:{exc}")
+    basis["errors"] = errors
+    return basis
+
+
+def _worker_result_json(result: FuzzWorkerResult) -> dict[str, object]:
+    return {
+        "worker_id": result.worker_id,
+        "max_examples": result.max_examples,
+        "seed": result.seed,
+        "ok": result.ok,
+        "rom_damage": result.rom_damage,
+        "oracle_damage": result.oracle_damage,
+        "inputs": asdict(result.inputs) if result.inputs is not None else None,
+        "error": result.error,
+    }
+
+
+def _write_json_report(path: str | None, payload: dict[str, object]) -> None:
+    if not path:
+        return
+    out_path = Path(path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def _reference_corpus() -> list[BattleInputs]:
     """Deterministic corpus for worker-equivalence self-checks.
 
@@ -682,6 +742,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--tolerance", type=int, default=1,
                         help="Allowed |rom - oracle| (default 1, for rounding edges)")
+    parser.add_argument("--json-out", default=None,
+                        help="Write a machine-readable proof report to this path")
     args = parser.parse_args(argv)
 
     if hasattr(sys.stdout, "reconfigure"):
@@ -705,6 +767,20 @@ def main(argv: list[str] | None = None) -> int:
         )
         for line in lines:
             print(line, flush=True)
+        payload = {
+            "kind": "damage_debugger_worker_self_check",
+            "schema_version": 1,
+            "generated_at": _utc_now(),
+            "hash_basis": _hash_basis_json(),
+            "proof_status": "complete" if ok else "missing_evidence",
+            "mode": "worker_self_check",
+            "workers": args.self_check_workers,
+            "tolerance": args.tolerance,
+            "corpus_count": len(_reference_corpus()),
+            "ok": ok,
+            "lines": lines,
+        }
+        _write_json_report(args.json_out, payload)
         if ok:
             print("\nfuzz: PASS -- worker self-check equivalent", flush=True)
             return 0
@@ -733,7 +809,25 @@ def main(argv: list[str] | None = None) -> int:
 
     results = _run_fuzz_workers(configs)
     failures = [r for r in results if not r.ok]
+    total_examples = sum(r.max_examples for r in results)
+    payload = {
+        "kind": "damage_debugger_fuzz_no_divergence",
+        "schema_version": 1,
+        "generated_at": _utc_now(),
+        "hash_basis": _hash_basis_json(),
+        "proof_status": "complete" if not failures else "missing_evidence",
+        "mode": "hypothesis_damage_chain",
+        "base_seed": seed,
+        "workers": args.workers,
+        "max_examples": args.max_examples,
+        "total_examples": total_examples,
+        "tolerance": args.tolerance,
+        "result_count": len(results),
+        "fail_count": len(failures),
+        "results": [_worker_result_json(result) for result in results],
+    }
     if failures:
+        _write_json_report(args.json_out, payload)
         print(f"\nfuzz: FAIL -- {len(failures)} worker(s) found a counterexample", flush=True)
         for result in failures:
             print(f"  worker        = {result.worker_id}")
@@ -746,8 +840,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"\nHypothesis details:\n{result.error}", flush=True)
         return 1
 
+    _write_json_report(args.json_out, payload)
     print(
-        f"\nfuzz: PASS -- no divergence in {sum(r.max_examples for r in results)} examples",
+        f"\nfuzz: PASS -- no divergence in {total_examples} examples",
         flush=True,
     )
     return 0

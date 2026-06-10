@@ -59,6 +59,10 @@ DECISION_SURFACES = {
 }
 
 HASH_MARKER = "BOSS_AI_DEITY_HASH_BASIS_DIAGNOSTIC"
+COMPLETE_COVERAGE_WORKLIST_OPTIONAL_EVIDENCE = {
+    "next_action.command",
+    "source_anchors.present",
+}
 
 
 @dataclass
@@ -481,6 +485,11 @@ def score_question(
     emitted_text = stdout + "\n" + artifact_text(required_artifacts)
     closed_evidence = artifact_closed_evidence_ids(required_artifacts)
     closed_evidence.update(stdout_closed_evidence_ids(stdout))
+    expected_evidence = effective_expected_evidence(
+        question_id=question_id,
+        expected_evidence=expected_evidence,
+        required_artifacts=required_artifacts,
+    )
     evidence_found = bool(evidence_marker) and evidence_marker in emitted_text
     found_evidence = [
         evidence_id
@@ -534,6 +543,48 @@ def score_question(
         stdout_tail=stdout[-1200:],
         stderr_tail=stderr[-1200:],
     )
+
+
+def effective_expected_evidence(
+    *,
+    question_id: str,
+    expected_evidence: list[str],
+    required_artifacts: list[str],
+) -> list[str]:
+    if question_id != "boss_ai_deity_coverage_gap_worklist":
+        return expected_evidence
+    if not coverage_worklist_is_complete(required_artifacts):
+        return expected_evidence
+    return [
+        evidence_id
+        for evidence_id in expected_evidence
+        if evidence_id not in COMPLETE_COVERAGE_WORKLIST_OPTIONAL_EVIDENCE
+    ]
+
+
+def coverage_worklist_is_complete(required_artifacts: list[str]) -> bool:
+    for path_text in required_artifacts:
+        path = resolve_artifact(path_text)
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        reachability = data.get("reachability_model", {})
+        basis = data.get("coverage_basis", {})
+        if not isinstance(reachability, dict) or not isinstance(basis, dict):
+            continue
+        if (
+            data.get("kind") == "boss_ai_deity_coverage_worklist"
+            and reachability.get("reachable_status") == "complete"
+            and int(basis.get("target_count", 0) or 0) == 0
+            and int(basis.get("group_count", 0) or 0) == 0
+        ):
+            return True
+    return False
 
 
 def build_summary(

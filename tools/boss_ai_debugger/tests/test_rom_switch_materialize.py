@@ -16,6 +16,7 @@ from tools.boss_ai_debugger.rom_switch_materialize import (
     switch_observation_status,
     switch_roll_frequency,
     switch_verdict_from_report,
+    skipped_verdict,
     switch_materialization_state_field,
     switch_diagnostics_from_values,
     validate_manifest_hash,
@@ -552,6 +553,15 @@ class RomSwitchMaterializeTests(unittest.TestCase):
 
         self.assertFalse(verdict["expected_switch"])
         self.assertEqual(verdict["rom_policy"]["verdict"], "mismatch")
+        self.assertEqual(verdict["class_id"], scenario["class_id"])
+
+    def test_switch_skipped_verdict_preserves_scenario_class_id(self) -> None:
+        scenario = generate_scenarios(family="switch_sack", count=1, seed=1)[0]
+
+        verdict = skipped_verdict(scenario, "unit skip")
+
+        self.assertEqual(verdict["class_id"], scenario["class_id"])
+        self.assertEqual(verdict["class_fingerprint"], scenario["class_fingerprint"])
 
     def test_source_base_switch_threshold_uses_tier_only_threshold(self) -> None:
         scenario = {"tier": "mid"}

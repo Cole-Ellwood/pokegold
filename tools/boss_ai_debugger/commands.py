@@ -161,6 +161,7 @@ from .rom_scenarios import (
 )
 from .rom_contribution_trace import (
     format_rom_contribution_trace,
+    parse_delayed_memory_patch,
     parse_memory_patch,
     run_rom_contribution_trace,
     run_rom_contribution_trace_for_route,
@@ -171,7 +172,14 @@ from .rom_selector_materialize import (
     DEFAULT_MANIFEST_PATH as DEFAULT_SELECTOR_MATERIALIZE_MANIFEST,
     format_rom_selector_materialization,
     run_rom_selector_materialization_from_path,
+    selector_materialization_failure_count,
     write_rom_selector_materialization_json,
+)
+from .rom_counterfactual_materialize import (
+    counterfactual_materialization_failure_count,
+    format_rom_counterfactual_materialization,
+    run_rom_counterfactual_materialization_from_path,
+    write_rom_counterfactual_materialization_json,
 )
 from .rom_score_materialize import (
     DEFAULT_BASE_ROUTE as DEFAULT_SCORE_MATERIALIZE_ROUTE,
@@ -224,6 +232,7 @@ from .trace_replay import (
     replay_trace_paths,
     write_trace_replay_json,
 )
+from .universe import build_boss_ai_universe_report, format_boss_ai_universe
 
 ROOT = Path(__file__).resolve().parents[2]
 DEITY_CHANGED_AI_MARKER = "BOSS_AI_DEITY_CHANGED_AI_SUMMARY"
@@ -425,6 +434,29 @@ def cmd_rule_map_check(args: argparse.Namespace) -> int:
     compare_errors = compare_rule_maps(data, args.rule_map)
     print(format_rule_map_summary(data, compare_errors=compare_errors))
     return 0 if not compare_errors else 1
+
+
+def cmd_universe(args: argparse.Namespace) -> int:
+    report = build_boss_ai_universe_report(
+        rom_contribution_trace_paths=args.rom_contribution_trace,
+        rom_score_materialization_paths=args.rom_score_materialization,
+        rom_path=args.rom,
+        symbols_path=args.symbols,
+    )
+    if args.json_out != "":
+        Path(args.json_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.json_out).write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_boss_ai_universe(report))
+        if args.json_out != "":
+            print(f"json_out={args.json_out}")
+    return 0 if report["proof_status"] == "complete" else 1
 
 
 def cmd_generate(args: argparse.Namespace) -> int:
@@ -959,7 +991,7 @@ def cmd_diff(args: argparse.Namespace) -> int:
         print(format_differential_report(report, limit=args.limit))
         if args.json_out != "":
             print(f"wrote {args.json_out}")
-    if args.fail_on_mismatch and report["mismatch_count"] > 0:
+    if args.fail_on_mismatch and selector_materialization_failure_count(report) > 0:
         return 1
     return 0
 
@@ -1164,7 +1196,12 @@ def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
         "notes": args.notes,
     }
     memory_patches = [parse_memory_patch(item) for item in args.patch_symbol]
+    delayed_memory_patches = [
+        parse_delayed_memory_patch(item) for item in args.patch_at_symbol
+    ]
     if args.boss_route:
+        if args.finish_on != "choice":
+            raise PreferenceDataError("--finish-on switch requires --save-state")
         report = run_rom_contribution_trace_for_route(
             boss_id=args.boss_route,
             rom=args.rom,
@@ -1175,6 +1212,7 @@ def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
             max_a_presses=args.max_a_presses,
             metadata=metadata,
             memory_patches=memory_patches,
+            delayed_memory_patches=delayed_memory_patches,
         )
     else:
         report = run_rom_contribution_trace(
@@ -1183,9 +1221,13 @@ def cmd_rom_contribution_trace(args: argparse.Namespace) -> int:
             symbols_path=args.symbols,
             button=args.button,
             button_delay=args.button_delay,
+            button_presses=args.button_presses,
+            button_interval_frames=args.button_interval_frames,
             watch_frames=args.watch_frames,
             metadata=metadata,
             memory_patches=memory_patches,
+            delayed_memory_patches=delayed_memory_patches,
+            finish_on=args.finish_on,
         )
     if args.json_out != "":
         write_rom_contribution_trace_json(report, Path(args.json_out))
@@ -1250,6 +1292,34 @@ def cmd_rom_score_materialize(args: argparse.Namespace) -> int:
         report,
         include_skipped=True,
     ) > 0:
+        return 1
+    return 0
+
+
+def cmd_rom_counterfactual_materialize(args: argparse.Namespace) -> int:
+    report = run_rom_counterfactual_materialization_from_path(
+        args.scenarios,
+        scenario_id=args.scenario_id,
+        limit=args.limit,
+        mutation_patch=args.mutation_patch,
+        surface=args.surface,
+        base_route=args.base_route,
+        manifest_path=args.manifest,
+        rom=args.rom,
+        symbols_path=args.symbols,
+        button=args.button,
+        button_delay=args.button_delay,
+        watch_frames=args.watch_frames,
+    )
+    if args.json_out != "":
+        write_rom_counterfactual_materialization_json(report, Path(args.json_out))
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(format_rom_counterfactual_materialization(report, limit=args.display_limit))
+        if args.json_out != "":
+            print(f"wrote {args.json_out}")
+    if args.fail_on_mismatch and counterfactual_materialization_failure_count(report) > 0:
         return 1
     return 0
 

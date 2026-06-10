@@ -14,6 +14,8 @@ from tools.boss_ai_preference.data import PreferenceDataError
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
+from .canonical_classes import scenario_class_fields
+from .canonical_classes import scenario_decision_class_fields
 from .contribution_compare import compare_contribution_reports
 from .contribution_compare import python_contribution_report_from_scenarios
 from .rom_contribution_trace import apply_memory_patches
@@ -24,6 +26,7 @@ from .rom_contribution_trace import MemoryPatch
 from .rom_contribution_trace import no_choice_error
 from .rom_contribution_trace import RomContributionTraceSession
 from .rom_contribution_trace import SimpleTraceArgs
+from .rom_contribution_trace import stamp_rom_contribution_trace_class
 from .rom_scenarios import normalize_tier
 from .rom_scenarios import scenario_expectation
 from .rom_scenarios import select_from_score_bytes
@@ -122,6 +125,11 @@ MOVE_FALLBACK_IDS = {
     "move_preserve_handoff": 0xE2,
     "move_preserve_piece": 0xE2,
     "move_reversible_branch_cover": 0x59,
+    "move_body_slam_probe": 0x22,
+    "move_fury_cutter_probe": 0xD2,
+    "move_recover_probe": 0x69,
+    "move_reflect_probe": 0x73,
+    "move_rollout_probe": 0xCD,
     "move_setup_greed": 0xAE,
     "move_soft_status": 0x5C,
     "move_status_back": 0x5C,
@@ -130,6 +138,7 @@ MOVE_FALLBACK_IDS = {
 
 SPECIES = {
     "PIKACHU": 0x19,
+    "PIDGEY": 0x10,
     "TENTACRUEL": 0x49,
     "MUK": 0x59,
     "GENGAR": 0x5E,
@@ -139,8 +148,12 @@ SPECIES = {
 
 TYPES = {
     "NORMAL": 0x00,
+    "FIGHTING": 0x01,
+    "FLYING": 0x02,
     "POISON": 0x03,
     "GROUND": 0x04,
+    "ROCK": 0x05,
+    "BUG": 0x07,
     "GHOST": 0x08,
     "STEEL": 0x09,
     "FIRE": 0x14,
@@ -152,10 +165,12 @@ TYPES = {
 
 MOVES = {
     "RAPID_SPIN": 0xE5,
+    "RECOVER": 0x69,
 }
 
 ITEMS = {
     "NO_ITEM": 0x00,
+    "CHOICE_BAND": 0x74,
 }
 
 SUBSTATUS_IDENTIFIED_MASK = 1 << 3
@@ -594,12 +609,12 @@ def run_rom_score_materialization(
             scenario_id = str(scenario.get("id", "unnamed"))
             if scenario.get("family") not in SUPPORTED_FAMILIES:
                 verdicts.append(
-                    skipped_verdict(scenario_id, "unsupported scenario family")
+                    skipped_verdict(scenario, "unsupported scenario family")
                 )
                 continue
             skip_reason = score_materialization_skip_reason(scenario)
             if skip_reason:
-                verdicts.append(skipped_verdict(scenario_id, skip_reason))
+                verdicts.append(skipped_verdict(scenario, skip_reason))
                 continue
             try:
                 materialization = materialization_for_scenario(
@@ -642,6 +657,9 @@ def run_rom_score_materialization(
                     }
                 rom_report["trace_id"] = scenario_id
                 rom_report["scenario_id"] = scenario_id
+                if collect_contribution_traces:
+                    stamp_rom_contribution_trace_class(rom_report)
+                    rom_report.update(scenario_decision_class_fields(scenario))
                 fast_report = None
                 if fast_session is not None:
                     fast_report = fast_session.run(
@@ -670,7 +688,7 @@ def run_rom_score_materialization(
                     )
                 )
             except Exception as exc:
-                verdicts.append(skipped_verdict(scenario_id, str(exc), status="error"))
+                verdicts.append(skipped_verdict(scenario, str(exc), status="error"))
 
     elapsed = time.perf_counter() - started
     checked = [verdict for verdict in verdicts if verdict["status"] == "pass"]
@@ -1001,6 +1019,18 @@ def base_public_policy_patches(
     if "status_absorber_named" in tags:
         player_type1 = TYPES["POISON"]
         player_type2 = TYPES["POISON"]
+    elif "player_full_poison_type" in tags:
+        player_type1 = TYPES["POISON"]
+        player_type2 = TYPES["POISON"]
+    elif "player_half_poison_type" in tags:
+        player_type1 = TYPES["POISON"]
+        player_type2 = TYPES["WATER"]
+    elif "player_ground_physical_threat" in tags:
+        player_type1 = TYPES["GROUND"]
+        player_type2 = TYPES["GROUND"]
+    elif "player_fire_ramp_probe" in tags:
+        player_type1 = TYPES["FIRE"]
+        player_type2 = TYPES["FIRE"]
     elif "resisted_explosion_free_owner" in tags:
         player_type1 = TYPES["STEEL"]
         player_type2 = TYPES["GRASS"]
@@ -1014,11 +1044,17 @@ def base_public_policy_patches(
         player_type1 = TYPES["ELECTRIC"]
         player_type2 = TYPES["ELECTRIC"]
 
+    enemy_item = (
+        ITEMS["CHOICE_BAND"]
+        if "choice_immune_seen_species" in tags
+        else ITEMS["NO_ITEM"]
+    )
+
     patches: list[MemoryPatch] = [
         patch("wBossAITier", tier),
         patch("wBossAITierWeightRow", max(0, tier - 1)),
         patch("wEnemyDisabledMove", 0),
-        patch("wEnemyMonItem", ITEMS["NO_ITEM"]),
+        patch("wEnemyMonItem", enemy_item),
         patch("wPlayerScreens", layers & 0x03),
         patch("wEnemyScreens", 0),
         patch("wEnemySubStatus1", 0),
@@ -1070,6 +1106,15 @@ def public_seen_player_patches(tags: set[str]) -> list[MemoryPatch]:
     ]
     for offset in range(6):
         patches.append(patch("wBossAISeenPlayerSpecies", 0, offset))
+    if "choice_immune_seen_species" in tags and "revealed_ghost_absorber" not in tags:
+        patches.extend(
+            [
+                patch("wBossAISeenPlayerSpeciesCount", 1),
+                patch("wBossAISeenPlayerSpecies", SPECIES["GENGAR"], 0),
+                patch("wBossAISeenPlayerAliveMask", 0b00000001),
+            ]
+        )
+        return patches
     if "revealed_ghost_absorber" not in tags:
         return patches
     patches.extend(
@@ -1140,6 +1185,8 @@ def public_revealed_move_patches(
         moves[1] = 0x69
     if "phaze_loop_live" in tags:
         moves[2] = 0x2E
+    if "revealed_recovery" in tags:
+        moves[3] = MOVES["RECOVER"]
     if policy_case == "reject_reckless_prediction":
         moves[0] = 0x55
     return [patch("wPlayerUsedMoves", value, offset) for offset, value in enumerate(moves)]
@@ -1309,6 +1356,7 @@ def verdict_from_materialized_trace(
     rom_policy = policy_verdict_from_rom_selector(scenario, rom_selector)
     return {
         "scenario_id": scenario_id,
+        **scenario_class_fields(scenario),
         "status": "pass",
         "family": scenario.get("family", ""),
         "layers": materialization.layers,
@@ -1552,13 +1600,20 @@ def fast_selector_start_callback(session: RomScoreReplaySession) -> None:
 
 
 def skipped_verdict(
-    scenario_id: str,
+    scenario: dict[str, Any] | str,
     reason: str,
     *,
     status: str = "skipped",
 ) -> dict[str, Any]:
+    if isinstance(scenario, dict):
+        scenario_id = str(scenario.get("id", "unnamed"))
+        class_fields = scenario_class_fields(scenario)
+    else:
+        scenario_id = str(scenario)
+        class_fields = {}
     return {
         "scenario_id": scenario_id,
+        **class_fields,
         "status": status,
         "agreement": status == "skipped",
         "reason": reason,

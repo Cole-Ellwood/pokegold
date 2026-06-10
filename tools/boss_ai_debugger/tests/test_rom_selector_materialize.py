@@ -13,6 +13,7 @@ from tools.boss_ai_debugger.rom_selector_materialize import (
     action_id_for_slot,
     fake_move_ids_for_scenario,
     run_rom_selector_materialization,
+    selector_materialization_failure_count,
     selector_verdict_from_values,
 )
 from tools.trace import boss_ai_trace_capture as capture
@@ -40,8 +41,9 @@ class RomSelectorMaterializeTests(unittest.TestCase):
         self.assertEqual(fake_move_ids_for_scenario(scenario), [1, 57, 0, 0])
 
     def test_verdict_accepts_nonzero_probability_rom_choice(self) -> None:
+        scenario = generate_scenarios(family="selector_edges", count=1, seed=1)[0]
         python_result = {
-            "scenario_id": "unit",
+            "scenario_id": scenario["id"],
             "ready": True,
             "tier": 3,
             "best_action_id": "slot1",
@@ -61,7 +63,7 @@ class RomSelectorMaterializeTests(unittest.TestCase):
         }
 
         verdict = selector_verdict_from_values(
-            {"id": "unit"},
+            scenario,
             python_result,
             values,
             {2: "KARATE_CHOP"},
@@ -71,6 +73,7 @@ class RomSelectorMaterializeTests(unittest.TestCase):
 
         self.assertTrue(verdict["agreement"])
         self.assertEqual(verdict["rom"]["chosen_action_id"], "slot2")
+        self.assertEqual(verdict["class_id"], scenario["class_id"])
 
     def test_verdict_rejects_zero_probability_rom_choice(self) -> None:
         python_result = {
@@ -117,6 +120,14 @@ class RomSelectorMaterializeTests(unittest.TestCase):
         self.assertEqual(action_id_for_slot(python_result, 0), "slot1")
         self.assertEqual(action_id_for_slot(python_result, 1), "slot2")
         self.assertIsNone(action_id_for_slot(python_result, 3))
+
+    def test_selector_materialization_failure_count_includes_skipped_unready(self) -> None:
+        report = {
+            "mismatch_count": 2,
+            "skipped_count": 3,
+        }
+
+        self.assertEqual(selector_materialization_failure_count(report), 5)
 
     @unittest.skipUnless(
         os.environ.get("BOSS_AI_RUN_PYBOY_UNIT") == "1"

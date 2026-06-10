@@ -6,6 +6,7 @@ from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
 
+from .canonical_classes import scenario_class_fields
 from .rom_contribution_trace import load_rom_contribution_trace
 from .rom_scenarios import select_move
 
@@ -62,6 +63,7 @@ def python_trace_from_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     return {
         "trace_id": str(result["scenario_id"]),
         "scenario_id": str(result["scenario_id"]),
+        **scenario_class_fields(scenario),
         "source": "python_scenario",
         "event_count": len(events),
         "changed_event_count": len([event for event in events if event["changed"]]),
@@ -95,6 +97,7 @@ def build_python_report(
         "changed_event_count": changed_event_count,
         "covered_rule_count": len(rule_ids),
         "covered_rule_ids": rule_ids,
+        "class_id_count": sum(1 for trace in traces if trace.get("class_id")),
         "traces": traces,
     }
 
@@ -158,6 +161,11 @@ def decision_trace_to_python_trace(trace: dict[str, Any]) -> dict[str, Any]:
     return {
         "trace_id": str(trace.get("trace_id") or trace.get("scenario_id", "")),
         "scenario_id": str(trace.get("scenario_id", "")),
+        **{
+            key: trace[key]
+            for key in ("class_id", "class_fingerprint", "canonical_state_class")
+            if key in trace
+        },
         "source": "python_scenario",
         "event_count": len(events),
         "changed_event_count": len([event for event in events if event["changed"]]),
@@ -192,6 +200,17 @@ def compare_contribution_reports(
     rom_by_id = collect_rom_events(rom_reports)
     python_by_id = collect_python_events(python_reports)
     matched_ids = sorted(set(rom_by_id) & set(python_by_id))
+    trace_class_rows = contribution_trace_class_rows(
+        matched_ids,
+        rom_reports=rom_reports,
+        python_reports=python_reports,
+    )
+    class_id_mismatches = [
+        row for row in trace_class_rows if row["rom_class_id"] != row["python_class_id"]
+    ]
+    missing_class_ids = [
+        row for row in trace_class_rows if not row["rom_class_id"] or not row["python_class_id"]
+    ]
     mismatches = []
     for trace_id in matched_ids:
         mismatches.extend(
@@ -213,6 +232,9 @@ def compare_contribution_reports(
         "python_trace_count": len(python_by_id),
         "matched_trace_count": len(matched_ids),
         "matched_trace_ids": matched_ids,
+        "matched_trace_classes": trace_class_rows,
+        "class_id_mismatch_count": len(class_id_mismatches),
+        "missing_class_id_count": len(missing_class_ids),
         "unmatched_rom_trace_ids": sorted(set(rom_by_id) - set(python_by_id)),
         "unmatched_python_trace_ids": sorted(set(python_by_id) - set(rom_by_id)),
         "mismatch_count": len(mismatches),
@@ -227,6 +249,43 @@ def compare_contribution_reports(
             "Candidate matching currently uses move slot plus rule id.",
         ],
     }
+
+
+def contribution_trace_class_rows(
+    trace_ids: list[str],
+    *,
+    rom_reports: list[dict[str, Any]],
+    python_reports: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rom_classes = {
+        rom_trace_id(report): str(report.get("decision_class_id") or report.get("class_id", ""))
+        for report in rom_reports
+        if rom_trace_id(report)
+    }
+    rom_trace_classes = {
+        rom_trace_id(report): str(report.get("class_id", ""))
+        for report in rom_reports
+        if rom_trace_id(report)
+    }
+    python_classes: dict[str, str] = {}
+    for report in python_reports:
+        for trace in report.get("traces", []):
+            if not isinstance(trace, dict):
+                continue
+            trace_id = str(trace.get("trace_id") or trace.get("scenario_id") or "")
+            if trace_id:
+                python_classes[trace_id] = str(trace.get("class_id", ""))
+    return [
+        {
+            "trace_id": trace_id,
+            "rom_class_id": rom_classes.get(trace_id, ""),
+            "rom_trace_class_id": rom_trace_classes.get(trace_id, ""),
+            "python_class_id": python_classes.get(trace_id, ""),
+            "class_ids_match": bool(rom_classes.get(trace_id))
+            and rom_classes.get(trace_id) == python_classes.get(trace_id),
+        }
+        for trace_id in trace_ids
+    ]
 
 
 def collect_rom_events(

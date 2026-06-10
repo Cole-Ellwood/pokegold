@@ -11,6 +11,7 @@ from tools.boss_ai_preference.data import PreferenceDataError
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
+from .canonical_classes import build_rom_contribution_trace_class, canonical_class_fields
 from .rule_map import build_rule_map
 
 
@@ -23,6 +24,18 @@ DEFAULT_ROM_CONTRIBUTION_TRACE_PROBE_PATH = (
 )
 DEFAULT_ROM_CONTRIBUTION_TRACE_DIR = ROOT / "audit" / "boss_ai_debugger"
 DEFAULT_ROM_CONTRIBUTION_TRACE_GLOB = "rom_contribution_trace_*.json"
+DEFAULT_ROM_CONTRIBUTION_TRACE_SOURCES = (
+    (DEFAULT_ROM_CONTRIBUTION_TRACE_DIR, DEFAULT_ROM_CONTRIBUTION_TRACE_GLOB),
+    (
+        ROOT
+        / "audit"
+        / "boss_ai_debugger"
+        / "god_level_benchmark"
+        / "artifacts"
+        / "changed_ai_rom_contribution_routes",
+        "*.json",
+    ),
+)
 
 MAX_REPLAY_POLL_CHUNK_FRAMES = 45
 PARTY_LENGTH = 6
@@ -43,12 +56,89 @@ PUBLIC_INPUT_SNAPSHOT_WIDTHS = {
     "wBossAISeenPlayerAliveMask": 1,
     "wBossAISpeciesUsedMoves": PARTY_LENGTH * 4,
     "wBattleMonSpecies": 1,
+    "wBattleMonItem": 1,
+    "wBattleMonHP": 2,
+    "wBattleMonMaxHP": 2,
+    "wEnemyMonMoves": 4,
     "wBattleMonLevel": 1,
+    "wPlayerSubStatus1": 1,
+    "wPlayerSubStatus4": 1,
+    "wBattleMonType1": 1,
+    "wBattleMonType2": 1,
+    "wBattleWeather": 1,
+    "wEnemyMoveStructAnimation": 1,
+    "wEnemyMoveStructEffect": 1,
+    "wEnemyMoveStructPower": 1,
+    "wEnemyMoveStructType": 1,
+    "wEnemyMoveStructAccuracy": 1,
+    "wEnemySubStatus3": 1,
+    "wEnemySubStatus4": 1,
+    "wEnemyMonHP": 2,
+    "wEnemyMonMaxHP": 2,
+    "wEnemyMonStatus": 1,
+    "wEnemyMonSpecies": 1,
+    "wTempEnemyMonSpecies": 1,
+    "wEnemyMonLevel": 1,
+    "wEnemyMonItem": 1,
+    "wEnemyAtkLevel": 1,
+    "wEnemySAtkLevel": 1,
+    "wEnemyMetronomeCount": 1,
+    "wEnemyChoiceLockedMove": 1,
+    "wEnemySleepClauseSlot": 1,
+    "wPlayerDisableCount": 1,
+    "wPlayerStatLevels": 7,
+    "wPlayerDefLevel": 1,
+    "wPlayerSDefLevel": 1,
+    "wBattleMonStatus": 1,
+    "wEnemyStatLevels": 7,
+    "wBossAISwitchCooldown": 1,
+    "wBossAITurnsElapsed": 1,
+    "wBossAIPlayerSwitchCount": 1,
+    "wBossAIPlanId": 1,
+    "wBossAIPlanPhase": 1,
+    "wBossAIPlanConfidence": 1,
+    "wBossAIWinconMonIdx": 1,
+    "wBossAIPublicThreatCache": 1,
+    "wBossAIRevealedPriorityCache": 1,
+    "wBossAIPrimaryThreatCache": 1,
+    "wBossAIPublicEnemyFasterCache": 1,
+    "wBossAILookaheadDepthCache": 1,
+    "wBossAIPlausibleTypeMaskCache": 4,
+    "wBossAILikelyTypeMaskCache": 4,
+    "wBossAIRevealedMovesBitmap": PARTY_LENGTH * 4,
+    "wBossAITemp": 1,
+    "wBossAITemp2": 1,
+    "wBossAITemp3": 1,
+    "wBossAITemp4": 1,
+    "wBossAITemp5": 1,
+    "wTypeMatchup": 1,
+    "wCurOTMon": 1,
+    "wCurSpecies": 1,
+    "wCurPartySpecies": 1,
+    "wPlayerDarkShieldConsumed": 1,
+    "wOTPartyMon1Status": PARTY_LENGTH,
+    "wLastPlayerCounterMove": 1,
+    "wLastPlayerMove": 1,
 }
 
 STATIC_PUBLIC_TABLE_SYMBOLS = {
+    "AdaptiveLeadMap": "AdaptiveLeadMap",
     "BaseData": "BaseData",
     "EvosAttacks": "EvosAttacksPointers",
+    "Moves + MOVE_EFFECT": "Moves",
+    "Moves + MOVE_POWER": "Moves",
+    "Moves + MOVE_TYPE": "Moves",
+    "MoveContactFlags": "MoveContactFlags",
+    "StatLevelMultipliers": "StatLevelMultipliers",
+    "TypeBoostItems": "TypeBoostItems",
+}
+
+REGISTER_PUBLIC_INPUTS = {
+    "register:A": "A",
+    "register:B": "B",
+    "register:C": "C",
+    "register:D": "D",
+    "register:E": "E",
 }
 
 SCORE_HELPERS = {
@@ -67,16 +157,142 @@ POINTER_FROM_WRAM_SCORE_PTR = {
 }
 
 CONTROL_HOOKS = {
+    "MaybePickAdaptiveEnemyLead": "adaptive_lead_start",
     "BossAI_ApplyMoveModel.ScoreMove": "candidate_start",
     "BossAI_ApplyMoveModel.TracePostModelScore": "candidate_end",
     "BossAI_SelectMove.first_pass": "selector_start",
 }
+
+SWITCH_DECISION_FIELDS = (
+    "wBossAITraceSwitchConfidence",
+    "wEnemySwitchMonParam",
+    "wEnemySwitchMonIndex",
+)
 
 DIRECT_SCORE_WRITE_RULE_IDS = {
     "ko_band_oracle.apply_damage_dominance_bias",
 }
 
 PREDICATE_BRANCH_HOOKS = {
+    "MaybePickAdaptiveEnemyLead.enabled": {
+        "predicate_id": "adaptive_lead_trainer_match",
+        "outcome": "enabled",
+        "parent_symbol": "MaybePickAdaptiveEnemyLead.ShouldUseAdaptiveLeadForTrainer",
+        "legal_inputs": (
+            "wOtherTrainerClass",
+            "wOtherTrainerID",
+            "AdaptiveLeadMap",
+        ),
+    },
+    "MaybePickAdaptiveEnemyLead.loop": {
+        "predicate_id": "adaptive_lead_trainer_match",
+        "outcome": "disabled",
+        "parent_symbol": "MaybePickAdaptiveEnemyLead.ShouldUseAdaptiveLeadForTrainer",
+        "legal_inputs": (
+            "wOtherTrainerClass",
+            "wOtherTrainerID",
+            "AdaptiveLeadMap",
+        ),
+        "condition": "hl_points_to_zero_byte",
+    },
+    "MaybePickAdaptiveEnemyLead.first_found": {
+        "predicate_id": "adaptive_lead_first_alive_party_mon",
+        "outcome": "found",
+        "parent_symbol": "MaybePickAdaptiveEnemyLead.FindFirstAliveOTMon",
+        "legal_inputs": ("wOTPartyCount", "wOTPartyMon1HP"),
+    },
+    "MaybePickAdaptiveEnemyLead.next_found": {
+        "predicate_id": "adaptive_lead_next_alive_party_mon",
+        "outcome": "found",
+        "parent_symbol": "MaybePickAdaptiveEnemyLead.FindNextAliveOTMon",
+        "legal_inputs": ("wOTPartyCount", "wOTPartyMon1HP"),
+    },
+    "MaybePickAdaptiveEnemyLead.none_found": {
+        "predicate_id": "adaptive_lead_alive_party_mon",
+        "outcome": "not_found",
+        "parent_symbol": "$active_frame",
+        "legal_inputs": ("wOTPartyCount", "wOTPartyMon1HP"),
+    },
+    "BossAI_ShouldRespectPotentialPlayerRevenge.seen_yes": {
+        "predicate_id": "known_seen_revenge_threat",
+        "outcome": "seen_revenge_threat",
+        "parent_symbol": "BossAI_ShouldRespectPotentialPlayerRevenge.KnownSeenRevengeThreat",
+        "legal_inputs": (
+            "wBossAITier",
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "wBossAISeenPlayerAliveMask",
+            "wBattleMonSpecies",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wBossAISpeciesUsedMoves",
+        ),
+    },
+    "BossAI_SwitchCandidateLowHPBlock.at_quarter": {
+        "predicate_id": "switch_candidate_low_hp",
+        "outcome": "at_or_below_quarter",
+        "parent_symbol": "BossAI_SwitchCandidateLowHPBlock",
+        "legal_inputs": ("wEnemySwitchMonParam", "wOTPartyMon1HP"),
+    },
+    "BossAI_CandidateImmuneToPlayerSTAB.immune_yes": {
+        "predicate_id": "candidate_immune_to_player_stab",
+        "outcome": "immune",
+        "parent_symbol": "BossAI_CandidateImmuneToPlayerSTAB",
+        "legal_inputs": (
+            "wEnemySwitchMonParam",
+            "wOTPartySpecies",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasRevealedEffectA": {
+        "predicate_id": "player_revealed_effect_scan",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedEffectA",
+        "legal_inputs": ("wPlayerUsedMoves", "Moves + MOVE_EFFECT"),
+    },
+    "BossAI_HasRevealedSuperEffectiveMove": {
+        "predicate_id": "revealed_super_effective_move",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_HasRevealedSuperEffectiveMove",
+        "legal_inputs": (
+            "wBattleMonSpecies",
+            "wBossAISeenPlayerSpecies",
+            "wBossAISpeciesUsedMoves",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_PlayerHasRevealedPriorityThreat": {
+        "predicate_id": "revealed_priority_threat",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_PlayerHasRevealedPriorityThreat",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyRapidSpinBias": {
+        "predicate_id": "rapid_spin_bias_public_gate",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRapidSpinBias",
+        "legal_inputs": ("wEnemyScreens", "Moves + MOVE_EFFECT"),
+    },
+    "BossAI_ApplyMoveModel.ApplyRevealedAntiSetupAvoidance": {
+        "predicate_id": "revealed_anti_setup_avoidance",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRevealedAntiSetupAvoidance",
+        "legal_inputs": ("wBossAITier", "wPlayerUsedMoves", "Moves + MOVE_EFFECT"),
+    },
+    "BossAI_ApplyMoveModel.ApplyRevealedEffectMatrixBias": {
+        "predicate_id": "revealed_effect_matrix_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRevealedEffectMatrixBias",
+        "legal_inputs": ("wBossAITier", "wPlayerUsedMoves", "Moves + MOVE_EFFECT"),
+    },
     "BossAI_ApplyMoveModel.spikes_layer1": {
         "predicate_id": "spikes_existing_layer_count",
         "outcome": "zero_existing_layers",
@@ -250,6 +466,921 @@ PREDICATE_BRANCH_HOOKS = {
             "EvosAttacks",
         ),
     },
+    "BossAI_EnemyIsGhostType.yes": {
+        "predicate_id": "enemy_is_ghost_type",
+        "outcome": "ghost_type_present",
+        "parent_symbol": "BossAI_EnemyIsGhostType",
+        "legal_inputs": ("wEnemyMonType1", "wEnemyMonType2"),
+    },
+    "BossAI_ApplyMoveModel.player_cant_act": {
+        "predicate_id": "player_cant_act_this_turn_publicly",
+        "outcome": "status_prevents_action",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerCantActThisTurnPublicly",
+        "legal_inputs": ("wBattleMonStatus",),
+    },
+    "BossAI_ApplyMoveModel.status_ok": {
+        "predicate_id": "status_move_would_fail_publicly",
+        "outcome": "not_publicly_failed",
+        "parent_symbol": "BossAI_ApplyMoveModel.StatusMoveWouldFailPublicly",
+        "legal_inputs": (
+            "wBattleMonStatus",
+            "wPlayerSubStatus1",
+            "wPlayerSubStatus4",
+            "wPlayerScreens",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.status_fail": {
+        "predicate_id": "utility_or_status_public_fail",
+        "outcome": "public_failure",
+        "parent_symbol": "$active_frame",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyScreens",
+            "wEnemySubStatus4",
+            "wPlayerDisableCount",
+            "wPlayerSubStatus1",
+            "wPlayerSubStatus4",
+            "wPlayerSubStatus5",
+            "wPlayerScreens",
+            "wBattleMonStatus",
+            "wBattleWeather",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.status_type_fail": {
+        "predicate_id": "status_move_type_immunity",
+        "outcome": "type_immunity",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyStatusMoveTypeMissesPlayer",
+        "legal_inputs": (
+            "wEnemyMoveStructType",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.UtilityMoveWouldFailPublicly": {
+        "predicate_id": "utility_move_would_fail_publicly",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.UtilityMoveWouldFailPublicly",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyScreens",
+            "wEnemySubStatus4",
+            "wPlayerDisableCount",
+            "wPlayerSubStatus1",
+            "wPlayerSubStatus4",
+            "wPlayerSubStatus5",
+            "wPlayerScreens",
+            "wBattleMonStatus",
+            "wBattleWeather",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.skip_utility_fail": {
+        "predicate_id": "utility_move_would_fail_publicly",
+        "outcome": "not_publicly_failed",
+        "parent_symbol": "BossAI_ApplyMoveModel.UtilityMoveWouldFailPublicly",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyScreens",
+            "wEnemySubStatus4",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "wPlayerDarkShieldConsumed",
+            "wPlayerDisableCount",
+            "wPlayerSubStatus1",
+            "wPlayerSubStatus4",
+            "wPlayerSubStatus5",
+            "wPlayerScreens",
+            "wBattleMonStatus",
+            "wBattleWeather",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wLastPlayerCounterMove",
+            "wLastPlayerMove",
+            "wEnemySleepClauseSlot",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerCantActThisTurnPublicly": {
+        "predicate_id": "player_cant_act_this_turn_publicly",
+        "outcome": "not_status_prevents_action",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerCantActThisTurnPublicly",
+        "legal_inputs": ("wBattleMonStatus",),
+        "condition": "battle_mon_can_act",
+    },
+    "BossAI_ApplyMoveModel.EnemyHasBoostToPass": {
+        "predicate_id": "enemy_boost_to_pass",
+        "outcome": "no_boost_to_pass",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyHasBoostToPass",
+        "legal_inputs": ("wEnemyStatLevels",),
+        "condition": "enemy_has_no_boost_to_pass",
+    },
+    "BossAI_ApplyMoveModel.setup_punish": {
+        "predicate_id": "setup_punish_bias",
+        "outcome": "setup_punish_move",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplySetupPunishBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wPlayerStatLevels",
+        ),
+    },
+    "BossAI_ApplyMoveModel.discourage_recovery": {
+        "predicate_id": "recovery_timing_discipline",
+        "outcome": "recovery_too_slow",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRecoveryTimingDiscipline",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+        ),
+    },
+    "BossAI_ApplyMoveModel.yes_recovery": {
+        "predicate_id": "current_enemy_recovery_move",
+        "outcome": "recovery_move",
+        "parent_symbol": "BossAI_ApplyMoveModel.IsCurrentEnemyRecoveryMove",
+        "legal_inputs": ("wEnemyMoveStructEffect",),
+    },
+    "BossAI_ApplyMoveModel.phaze_good": {
+        "predicate_id": "phazing_plan_bias",
+        "outcome": "phaze_good",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyPhazingPlanBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wPlayerScreens",
+            "wPlayerStatLevels",
+        ),
+    },
+    "BossAI_ApplyMoveModel.baton_bad": {
+        "predicate_id": "baton_pass_bias",
+        "outcome": "bad_pass_context",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyBatonPassBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyStatLevels",
+            "wOTPartyCount",
+            "wOTPartyMon1HP",
+        ),
+    },
+    "BossAI_ApplyMoveModel.baton_good": {
+        "predicate_id": "baton_pass_bias",
+        "outcome": "boost_pass_available",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyBatonPassBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyStatLevels",
+            "wOTPartyCount",
+            "wOTPartyMon1HP",
+        ),
+    },
+    "BossAI_ApplyMoveModel.boost_setup_yes": {
+        "predicate_id": "boost_setup_move",
+        "outcome": "boost_setup_move",
+        "parent_symbol": "BossAI_ApplyMoveModel.IsBoostSetupMove",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplySetupDisciplineBias": {
+        "predicate_id": "setup_discipline_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplySetupDisciplineBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyStatLevels",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.setup_has_value": {
+        "predicate_id": "setup_boost_has_further_value",
+        "outcome": "has_value",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplySetupDisciplineBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyStatLevels",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyStatusHardAnswerDiscipline": {
+        "predicate_id": "status_hard_answer_discipline",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyStatusHardAnswerDiscipline",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wBattleMonHP",
+            "wBattleMonMaxHP",
+        ),
+    },
+    "BossAI_ApplyMoveModel.hsmdm_yes": {
+        "predicate_id": "strong_matchup_damaging_move",
+        "outcome": "found",
+        "parent_symbol": "BossAI_ApplyMoveModel.HasStrongMatchupDamagingMove",
+        "legal_inputs": (
+            "wEnemyMoveStructAnimation",
+            "wEnemyMonMoves",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasRevealedAntiSetup": {
+        "predicate_id": "revealed_anti_setup_scan",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedAntiSetup",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyRampMoveBias": {
+        "predicate_id": "ramp_move_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRampMoveBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMoveStructType",
+            "wEnemyMoveStructPower",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ramp_move": {
+        "predicate_id": "ramp_move_candidate",
+        "outcome": "rollout_or_fury_cutter",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRampMoveBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMoveStructType",
+            "wEnemyMoveStructPower",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ramp_resisted": {
+        "predicate_id": "ramp_move_matchup",
+        "outcome": "resisted",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRampMoveBias",
+        "legal_inputs": (
+            "wEnemyMoveStructType",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ramp_risky": {
+        "predicate_id": "ramp_move_pressure",
+        "outcome": "enemy_under_pressure",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyRampMoveBias",
+        "legal_inputs": (
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyChargeMoveBias": {
+        "predicate_id": "charge_move_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyChargeMoveBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wBattleWeather",
+            "wEnemySubStatus3",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyPoisonContactRiskBias": {
+        "predicate_id": "poison_contact_risk_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyPoisonContactRiskBias",
+        "legal_inputs": (
+            "wEnemyMoveStructAnimation",
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wEnemyMonStatus",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyScreens",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "MoveContactFlags",
+        ),
+    },
+    "BossAI_ApplyMoveModel.full_poison_contact_risk": {
+        "predicate_id": "poison_contact_risk",
+        "outcome": "full_poison_contact_risk",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyPoisonContactRiskBias",
+        "legal_inputs": (
+            "wEnemyMoveStructAnimation",
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wEnemyMonStatus",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyScreens",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "MoveContactFlags",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyDarkShieldChanceBias": {
+        "predicate_id": "dark_shield_chance_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyDarkShieldChanceBias",
+        "legal_inputs": (
+            "wEnemyMoveStructEffect",
+            "wEnemyMoveStructPower",
+            "wPlayerDarkShieldConsumed",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyLifeOrbRecoilBias": {
+        "predicate_id": "life_orb_recoil_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyLifeOrbRecoilBias",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "TypeBoostItems",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyDestinyBondTradeBias": {
+        "predicate_id": "destiny_bond_trade_bias",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyDestinyBondTradeBias",
+        "legal_inputs": (
+            "wBossAITier",
+            "wEnemyMoveStructEffect",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasRevealedCounterCoatCategory": {
+        "predicate_id": "revealed_counter_coat_category",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedCounterCoatCategory",
+        "legal_inputs": (
+            "register:B",
+            "wPlayerUsedMoves",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_ApplyMoveModel.counter_coat_yes": {
+        "predicate_id": "revealed_counter_coat_category",
+        "outcome": "found",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedCounterCoatCategory",
+        "legal_inputs": (
+            "register:B",
+            "wPlayerUsedMoves",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplyChoiceFirstLockRegret": {
+        "predicate_id": "choice_first_lock_regret",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyChoiceFirstLockRegret",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wEnemyChoiceLockedMove",
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.choice_immune_risk": {
+        "predicate_id": "choice_lock_risk",
+        "outcome": "immune_risk",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplyChoiceFirstLockRegret",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasRevealedRecovery": {
+        "predicate_id": "revealed_recovery_scan",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedRecovery",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+        ),
+    },
+    "BossAI_ApplyMoveModel.recovery_yes_pop": {
+        "predicate_id": "revealed_recovery",
+        "outcome": "found",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedRecovery",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+        ),
+    },
+    "BossAI_ApplyMoveModel.EnemyMoveMakesContact": {
+        "predicate_id": "enemy_move_contact_scan",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyMoveMakesContact",
+        "legal_inputs": (
+            "wEnemyMoveStructAnimation",
+            "MoveContactFlags",
+        ),
+    },
+    "BossAI_ApplyMoveModel.no_contact": {
+        "predicate_id": "enemy_move_contact",
+        "outcome": "no_contact",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyMoveMakesContact",
+        "legal_inputs": (
+            "wEnemyMoveStructAnimation",
+            "MoveContactFlags",
+        ),
+    },
+    "BossAI_ApplyMoveModel.EnemyCanBePoisonedByRetaliation": {
+        "predicate_id": "enemy_poison_retaliation_vulnerability",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyCanBePoisonedByRetaliation",
+        "legal_inputs": (
+            "wEnemyMonStatus",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyScreens",
+        ),
+    },
+    "BossAI_ApplyMoveModel.poison_retaliation_safe": {
+        "predicate_id": "enemy_poison_retaliation_vulnerability",
+        "outcome": "not_vulnerable",
+        "parent_symbol": "BossAI_ApplyMoveModel.EnemyCanBePoisonedByRetaliation",
+        "legal_inputs": (
+            "wEnemyMonStatus",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyScreens",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerPoisonTypeContribution": {
+        "predicate_id": "player_poison_type_contribution",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerPoisonTypeContribution",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.half_poison_type": {
+        "predicate_id": "player_poison_type_contribution",
+        "outcome": "half_poison_type",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerPoisonTypeContribution",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.full_poison_type": {
+        "predicate_id": "player_poison_type_contribution",
+        "outcome": "full_poison_type",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerPoisonTypeContribution",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasMajorSetupBoost": {
+        "predicate_id": "player_major_setup_boost",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasMajorSetupBoost",
+        "legal_inputs": ("wPlayerStatLevels",),
+    },
+    "BossAI_ApplyMoveModel.setup_seen": {
+        "predicate_id": "player_major_setup_boost",
+        "outcome": "major_setup_boost",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasMajorSetupBoost",
+        "legal_inputs": ("wPlayerStatLevels",),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasRepeatedSwitchPressure": {
+        "predicate_id": "player_repeated_switch_pressure",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRepeatedSwitchPressure",
+        "legal_inputs": (
+            "wBossAITurnsElapsed",
+            "wBossAIPlayerSwitchCount",
+        ),
+    },
+    "BossAI_ApplyMoveModel.no_switch_pressure": {
+        "predicate_id": "player_repeated_switch_pressure",
+        "outcome": "no_repeated_switch_pressure",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasRepeatedSwitchPressure",
+        "legal_inputs": (
+            "wBossAITurnsElapsed",
+            "wBossAIPlayerSwitchCount",
+        ),
+    },
+    "BossAI_ApplyMoveModel.BossHasSpinblockAvailable": {
+        "predicate_id": "boss_spinblock_available",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.BossHasSpinblockAvailable",
+        "legal_inputs": (
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemySubStatus1",
+            "wOTPartyCount",
+            "wOTPartySpecies",
+            "wOTPartyMon1HP",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerHasSeenAliveBenchGhost": {
+        "predicate_id": "player_seen_alive_bench_ghost",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasSeenAliveBenchGhost",
+        "legal_inputs": (
+            "wBossAISeenPlayerSpecies",
+            "wBossAISeenPlayerAliveMask",
+            "wBattleMonSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.bench_ghost_yes_pop": {
+        "predicate_id": "player_seen_alive_bench_ghost",
+        "outcome": "found",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerHasSeenAliveBenchGhost",
+        "legal_inputs": (
+            "wBossAISeenPlayerSpecies",
+            "wBossAISeenPlayerAliveMask",
+            "wBattleMonSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMoveModel.HasKOLine": {
+        "predicate_id": "current_move_ko_line",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.HasKOLine",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wBattleMonHP",
+            "wBattleMonMaxHP",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.hasko_no": {
+        "predicate_id": "current_move_ko_line",
+        "outcome": "no_ko_line",
+        "parent_symbol": "BossAI_ApplyMoveModel.HasKOLine",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wBattleMonHP",
+            "wBattleMonMaxHP",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.PlayerPublicThreatCategory": {
+        "predicate_id": "player_public_threat_category",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerPublicThreatCategory",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.public_threat_physical": {
+        "predicate_id": "player_public_threat_category",
+        "outcome": "physical_threat",
+        "parent_symbol": "BossAI_ApplyMoveModel.PlayerPublicThreatCategory",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_PlayerHasPublicThreatVsEnemyUncached": {
+        "predicate_id": "player_public_threat_vs_enemy_uncached",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "wBattleMonSpecies",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "wBossAIRevealedMovesBitmap",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyMonItem",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_PlayerHasRevealedPriorityThreatUncached": {
+        "predicate_id": "revealed_priority_threat_uncached",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_PlayerHasRevealedPriorityThreatUncached",
+        "legal_inputs": (
+            "wPlayerUsedMoves",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyMonItem",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "Moves + MOVE_EFFECT",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_ScaleMovePowerByBaseStatRatio.ApplyStatStagesToScored": {
+        "predicate_id": "stat_stage_scaled_power",
+        "outcome": "applied",
+        "parent_symbol": "BossAI_ScaleMovePowerByBaseStatRatio.ApplyStatStagesToScored",
+        "legal_inputs": (
+            "register:A",
+            "wEnemyMoveStructType",
+            "wEnemyAtkLevel",
+            "wEnemySAtkLevel",
+            "wPlayerDefLevel",
+            "wPlayerSDefLevel",
+            "StatLevelMultipliers",
+        ),
+    },
+    "BossAI_ApplyEnemyKnownPressureModifiers": {
+        "predicate_id": "enemy_known_pressure_modifiers",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyEnemyKnownPressureModifiers",
+        "legal_inputs": (
+            "register:B",
+            "wEnemyMoveStructType",
+            "wTypeMatchup",
+            "wEnemyMonItem",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "wBattleMonHP",
+            "wBattleMonMaxHP",
+            "wEnemyMetronomeCount",
+            "wBattleMonStatus",
+            "TypeBoostItems",
+        ),
+    },
+    "BossAI_PublicEnemyFasterUncached": {
+        "predicate_id": "public_enemy_faster_uncached",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_PublicEnemyFasterUncached",
+        "legal_inputs": (
+            "wBattleMonSpecies",
+            "wEnemyMonSpecies",
+            "wTempEnemyMonSpecies",
+            "wEnemyMonItem",
+            "wCurSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_PublicEnemyFasterUncached.enemy_faster": {
+        "predicate_id": "public_enemy_faster_uncached",
+        "outcome": "enemy_faster",
+        "parent_symbol": "BossAI_PublicEnemyFasterUncached",
+        "legal_inputs": (
+            "wBattleMonSpecies",
+            "wEnemyMonSpecies",
+            "wTempEnemyMonSpecies",
+            "wEnemyMonItem",
+            "wCurSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_PublicEnemyFasterUncached.enemy_not_faster": {
+        "predicate_id": "public_enemy_faster_uncached",
+        "outcome": "not_enemy_faster",
+        "parent_symbol": "BossAI_PublicEnemyFasterUncached",
+        "legal_inputs": (
+            "wBattleMonSpecies",
+            "wEnemyMonSpecies",
+            "wTempEnemyMonSpecies",
+            "wEnemyMonItem",
+            "wCurSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_SeenBenchThreatScore": {
+        "predicate_id": "seen_bench_threat_score",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_SeenBenchThreatScore",
+        "legal_inputs": (
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "wBossAISeenPlayerAliveMask",
+            "wBattleMonSpecies",
+            "wCurSpecies",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "BaseData",
+        ),
+    },
+    "BossAI_SeenBenchThreatScore.favorable": {
+        "predicate_id": "seen_bench_threat_score",
+        "outcome": "favorable_bench_threat",
+        "parent_symbol": "BossAI_SeenBenchThreatScore",
+        "legal_inputs": (
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "wBossAISeenPlayerAliveMask",
+            "wBattleMonSpecies",
+            "wCurSpecies",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "BaseData",
+        ),
+    },
+    "BossAI_SelectPlanIfNeeded.IsWinconCompromised": {
+        "predicate_id": "wincon_compromised",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_SelectPlanIfNeeded.IsWinconCompromised",
+        "legal_inputs": (
+            "wBossAIWinconMonIdx",
+            "wOTPartyCount",
+            "wOTPartyMon1Status",
+            "wOTPartyMon1HP",
+        ),
+    },
+    "BossAI_PlayerHasRevealedEffectA_Coach": {
+        "predicate_id": "coach_revealed_effect_scan",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_PlayerHasRevealedEffectA_Coach",
+        "legal_inputs": (
+            "register:A",
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+        ),
+    },
+    "BossAI_AddPublicSTABThreatsToMask": {
+        "predicate_id": "public_stab_threat_mask",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_AddPublicSTABThreatsToMask",
+        "legal_inputs": (
+            "wBattleMonType1",
+            "wBattleMonType2",
+            "wBossAIPlausibleTypeMaskCache",
+            "wBossAILikelyTypeMaskCache",
+        ),
+    },
+    "BossAI_AddRevealedDamagingTypesToMask": {
+        "predicate_id": "revealed_damaging_type_mask",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_AddRevealedDamagingTypesToMask",
+        "legal_inputs": (
+            "wBattleMonSpecies",
+            "wBossAISeenPlayerSpeciesCount",
+            "wBossAISeenPlayerSpecies",
+            "wBossAIRevealedMovesBitmap",
+            "wBossAIPlausibleTypeMaskCache",
+            "wBossAILikelyTypeMaskCache",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_LoadPublicThreatSourceSpecies": {
+        "predicate_id": "public_threat_source_species",
+        "outcome": "loaded",
+        "parent_symbol": "BossAI_LoadPublicThreatSourceSpecies",
+        "legal_inputs": (
+            "wCurPartySpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyMultiTurnProjection.IsUnderPressure": {
+        "predicate_id": "multi_turn_projection_pressure",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyMultiTurnProjection.IsUnderPressure",
+        "legal_inputs": (
+            "wEnemyMonHP",
+            "wEnemyMonMaxHP",
+            "wBossAIRevealedPriorityCache",
+            "wBossAIPublicThreatCache",
+            "wPlayerUsedMoves",
+            "Moves + MOVE_EFFECT",
+            "wBattleMonType1",
+            "wBattleMonType2",
+        ),
+    },
+    "BossAI_GetRevealedMoveThreatTypeAndSeverity": {
+        "predicate_id": "revealed_move_threat_type_and_severity",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_GetRevealedMoveThreatTypeAndSeverity",
+        "legal_inputs": (
+            "register:A",
+            "wPlayerUsedMoves",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyMonItem",
+            "wBossAIPlausibleTypeMaskCache",
+            "wBossAILikelyTypeMaskCache",
+            "Moves + MOVE_EFFECT",
+            "Moves + MOVE_POWER",
+            "Moves + MOVE_TYPE",
+        ),
+    },
+    "BossAI_AdjustThreatSeverityForEnemyKnownDefense": {
+        "predicate_id": "enemy_known_defense_threat_adjustment",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "legal_inputs": (
+            "register:B",
+            "register:C",
+            "wEnemyMoveStructType",
+            "wTypeMatchup",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyMonItem",
+            "wEnemyMonSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_EnemyKnownItemNullifiesThreatType": {
+        "predicate_id": "enemy_known_item_nullifies_threat_type",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "legal_inputs": (
+            "register:A",
+            "wEnemyMoveStructType",
+            "wEnemyMonSpecies",
+            "wEnemyMonItem",
+            "TypeBoostItems",
+        ),
+    },
+    "BossAI_ApplyDamageDominanceBias.CurrentMoveDamageRank": {
+        "predicate_id": "ko_band_current_move_damage_rank",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyDamageDominanceBias.CurrentMoveDamageRank",
+        "legal_inputs": (
+            "wEnemyMoveStructPower",
+            "wEnemyMoveStructType",
+            "wEnemyMoveStructEffect",
+            "wTypeMatchup",
+            "wBossAITemp",
+            "wBossAITemp5",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemyMonSpecies",
+            "wBattleMonSpecies",
+            "BaseData",
+        ),
+    },
+    "BossAI_ApplyDamageDominanceBias.ApplySTABToRank": {
+        "predicate_id": "ko_band_apply_stab_to_rank",
+        "outcome": "entered",
+        "parent_symbol": "BossAI_ApplyDamageDominanceBias.ApplySTABToRank",
+        "legal_inputs": (
+            "register:A",
+            "register:C",
+            "wEnemyMoveStructType",
+            "wBossAITemp4",
+            "wEnemyMonMoves",
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+        ),
+    },
+    "BossAI_ApplyMoveModel.ApplySpikesLayer3UnrevealedSpinRisk": {
+        "predicate_id": "layer3_unrevealed_spin_risk",
+        "outcome": "no_unrevealed_spin_risk",
+        "parent_symbol": "BossAI_ApplyMoveModel.ApplySpikesLayer3UnrevealedSpinRisk",
+        "legal_inputs": (
+            "wEnemyMonType1",
+            "wEnemyMonType2",
+            "wEnemySubStatus1",
+        ),
+        "condition": "enemy_active_spinblock_available",
+    },
+    "BossAI_DecaySwitchCooldown": {
+        "predicate_id": "switch_cooldown_decay",
+        "outcome": "no_cooldown_to_decay",
+        "parent_symbol": "BossAI_DecaySwitchCooldown",
+        "legal_inputs": ("wBossAISwitchCooldown",),
+        "condition": "symbol_zero:wBossAISwitchCooldown",
+    },
 }
 
 PUBLIC_READ_PROBE_HOOKS = {
@@ -258,6 +1389,7 @@ PUBLIC_READ_PROBE_HOOKS = {
         "outcome": spec["outcome"],
         "parent_symbol": spec["parent_symbol"],
         "legal_inputs": spec["legal_inputs"],
+        "condition": spec.get("condition", ""),
     }
     for name, spec in PREDICATE_BRANCH_HOOKS.items()
 }
@@ -274,6 +1406,8 @@ class HookTarget:
     outcome: str = ""
     parent_symbol: str = ""
     legal_inputs: tuple[str, ...] = ()
+    condition: str = ""
+    patches: tuple[MemoryPatch, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -281,6 +1415,12 @@ class MemoryPatch:
     symbol_name: str
     offset: int
     value: int
+
+
+@dataclass(frozen=True)
+class DelayedMemoryPatch:
+    hook_symbol: str
+    patch: MemoryPatch
 
 
 @dataclass(frozen=True)
@@ -327,7 +1467,10 @@ class SymbolIndex:
         for items in self.rules_by_bank.values():
             items.sort()
 
-    def hook_targets(self) -> list[HookTarget]:
+    def hook_targets(
+        self,
+        delayed_memory_patches: list[DelayedMemoryPatch] | None = None,
+    ) -> list[HookTarget]:
         targets: list[HookTarget] = []
         names: dict[str, tuple[str, str]] = {}
         for name in self.rule_by_full_symbol:
@@ -367,6 +1510,7 @@ class SymbolIndex:
                     outcome=str(spec["outcome"]),
                     parent_symbol=str(spec["parent_symbol"]),
                     legal_inputs=tuple(str(item) for item in spec["legal_inputs"]),
+                    condition=str(spec.get("condition", "")),
                 )
             )
         for name, spec in PUBLIC_READ_PROBE_HOOKS.items():
@@ -384,6 +1528,23 @@ class SymbolIndex:
                     outcome=str(spec["outcome"]),
                     parent_symbol=str(spec["parent_symbol"]),
                     legal_inputs=tuple(str(item) for item in spec["legal_inputs"]),
+                    condition=str(spec.get("condition", "")),
+                )
+            )
+        for delayed in delayed_memory_patches or []:
+            symbol = self.symbols.get(delayed.hook_symbol)
+            if symbol is None:
+                raise PreferenceDataError(
+                    f"unknown delayed patch hook symbol: {delayed.hook_symbol}"
+                )
+            targets.append(
+                HookTarget(
+                    kind="memory_patch",
+                    full_symbol=delayed.hook_symbol,
+                    operation="apply_memory_patch",
+                    bank=symbol.bank,
+                    address=symbol.address,
+                    patches=(delayed.patch,),
                 )
             )
         return targets
@@ -419,6 +1580,7 @@ class RomContributionTracer:
         self.rule_entries: list[dict[str, Any]] = []
         self.predicate_branch_entries: list[dict[str, Any]] = []
         self.public_read_probe_entries: list[dict[str, Any]] = []
+        self.delayed_patch_entries: list[dict[str, Any]] = []
         self.selector_entry_scores: list[int] = []
         self.candidate_start_scores: list[int] | None = None
         self.candidate_start_event_index = 0
@@ -433,6 +1595,7 @@ class RomContributionTracer:
         self.rule_entries.clear()
         self.predicate_branch_entries.clear()
         self.public_read_probe_entries.clear()
+        self.delayed_patch_entries.clear()
         self.selector_entry_scores = []
         self.candidate_start_scores = None
         self.candidate_start_event_index = 0
@@ -450,6 +1613,8 @@ class RomContributionTracer:
                 self.handle_predicate_branch(target)
             elif target.kind == "public_read_probe":
                 self.handle_public_read_probe(target)
+            elif target.kind == "memory_patch":
+                self.handle_memory_patch(target)
 
     def handle_rule(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
@@ -470,6 +1635,7 @@ class RomContributionTracer:
                 "sp": f"{sp:04x}",
                 "candidate": self.active_score_candidate(),
                 "move_struct": self.current_move_struct(),
+                "public_input_snapshot": self.public_input_snapshot_for_rule(rule),
                 "source": self.source_for_rule_entry(target, rule),
             }
         )
@@ -478,6 +1644,19 @@ class RomContributionTracer:
         self.close_pending(trigger=target.full_symbol)
         sp = int(self.pyboy.register_file.SP)
         self.pop_returned_frames(sp)
+        rule = self.symbol_index.rule_for(target.full_symbol)
+        if rule is not None:
+            self.rule_entries.append(
+                {
+                    "index": len(self.rule_entries) + 1,
+                    "event_type": "rule_enter",
+                    "sp": f"{sp:04x}",
+                    "candidate": self.active_score_candidate(),
+                    "move_struct": self.current_move_struct(),
+                    "public_input_snapshot": self.public_input_snapshot_for_rule(rule),
+                    "source": self.source_for_rule_entry(target, rule),
+                }
+            )
         pointer = self.score_pointer_for_helper(target)
         before = self.read_addr(pointer)
         amount = int(self.pyboy.register_file.A) & 0xFF
@@ -493,8 +1672,11 @@ class RomContributionTracer:
 
     def handle_predicate_branch(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
+        if not self.predicate_branch_condition_matches(target):
+            return
         sp = int(self.pyboy.register_file.SP)
         self.pop_returned_frames(sp)
+        parent_symbol = self.resolved_predicate_parent_symbol(target)
         self.predicate_branch_entries.append(
             {
                 "index": len(self.predicate_branch_entries) + 1,
@@ -506,7 +1688,7 @@ class RomContributionTracer:
                     "predicate_id": target.predicate_id,
                     "outcome": target.outcome,
                     "branch_symbol": target.full_symbol,
-                    "parent_symbol": target.parent_symbol,
+                    "parent_symbol": parent_symbol,
                     "legal_inputs": list(target.legal_inputs),
                 },
                 "public_input_snapshot": self.public_input_snapshot(
@@ -516,10 +1698,63 @@ class RomContributionTracer:
             }
         )
 
+    def predicate_branch_condition_matches(self, target: HookTarget) -> bool:
+        if not target.condition:
+            return True
+        if target.condition == "hl_points_to_zero_byte":
+            try:
+                hl = int(self.pyboy.register_file.HL) & 0xFFFF
+                value = trace_runtime.read_byte(
+                    self.pyboy,
+                    capture.Symbol(target.bank, hl),
+                )
+            except Exception:
+                return False
+            return value == 0
+        if target.condition.startswith("symbol_zero:"):
+            symbol_name = target.condition.split(":", 1)[1]
+            return self.read_public_symbol_byte(symbol_name) == 0
+        if target.condition == "battle_mon_can_act":
+            status = self.read_public_symbol_byte("wBattleMonStatus")
+            return status is not None and status & 0x27 == 0
+        if target.condition == "enemy_has_no_boost_to_pass":
+            values = self.read_public_symbol_range("wEnemyStatLevels", 7)
+            return values is not None and all(value <= 7 for value in values)
+        if target.condition == "enemy_active_spinblock_available":
+            type1 = self.read_public_symbol_byte("wEnemyMonType1")
+            type2 = self.read_public_symbol_byte("wEnemyMonType2")
+            substatus = self.read_public_symbol_byte("wEnemySubStatus1")
+            if type1 is None or type2 is None or substatus is None:
+                return False
+            return (type1 == 8 or type2 == 8) and substatus & 0x08 == 0
+        return False
+
+    def read_public_symbol_byte(self, symbol_name: str) -> int | None:
+        values = self.read_public_symbol_range(symbol_name, 1)
+        return values[0] if values else None
+
+    def read_public_symbol_range(self, symbol_name: str, width: int) -> list[int] | None:
+        symbol = self.symbols.get(symbol_name)
+        if symbol is None:
+            return None
+        try:
+            return [self.read_symbol_offset(symbol, offset) for offset in range(width)]
+        except Exception:
+            return None
+
+    def resolved_predicate_parent_symbol(self, target: HookTarget) -> str:
+        if target.parent_symbol != "$active_frame":
+            return target.parent_symbol
+        frame = self.active_frame()
+        return frame.full_symbol if frame is not None else ""
+
     def handle_public_read_probe(self, target: HookTarget) -> None:
         self.close_pending(trigger=target.full_symbol)
+        if not self.predicate_branch_condition_matches(target):
+            return
         sp = int(self.pyboy.register_file.SP)
         self.pop_returned_frames(sp)
+        parent_symbol = self.resolved_predicate_parent_symbol(target)
         self.public_read_probe_entries.append(
             {
                 "index": len(self.public_read_probe_entries) + 1,
@@ -531,7 +1766,7 @@ class RomContributionTracer:
                     "probe_id": target.predicate_id,
                     "outcome": target.outcome,
                     "probe_symbol": target.full_symbol,
-                    "parent_symbol": target.parent_symbol,
+                    "parent_symbol": parent_symbol,
                     "legal_inputs": list(target.legal_inputs),
                 },
                 "public_input_snapshot": self.public_input_snapshot(
@@ -562,10 +1797,24 @@ class RomContributionTracer:
             self.candidate_start_scores = self.current_score_bytes()
             self.candidate_start_event_index = len(self.events)
             self.candidate_start_rule_entry_index = len(self.rule_entries)
+        elif target.operation == "adaptive_lead_start":
+            apply_memory_patches(self.pyboy, self.symbols, self.memory_patches)
         elif target.operation == "candidate_end":
             self.record_direct_score_writes(trigger=target.full_symbol)
         elif target.operation == "selector_start":
             self.selector_entry_scores = self.current_score_bytes()
+
+    def handle_memory_patch(self, target: HookTarget) -> None:
+        self.close_pending(trigger=target.full_symbol)
+        apply_memory_patches(self.pyboy, self.symbols, list(target.patches))
+        self.delayed_patch_entries.append(
+            {
+                "index": len(self.delayed_patch_entries) + 1,
+                "event_type": "delayed_memory_patch",
+                "hook_symbol": target.full_symbol,
+                "memory_patches": memory_patches_to_json(list(target.patches)),
+            }
+        )
 
     def current_score_bytes(self) -> list[int]:
         symbol = self.symbols.get("wEnemyAIMoveScores")
@@ -599,6 +1848,7 @@ class RomContributionTracer:
                 "delta": delta,
                 "changed": delta != 0,
                 "candidate": pending.candidate,
+                "public_input_snapshot": self.public_input_snapshot_for_source(pending.source),
                 "source": pending.source,
                 "closed_by": trigger,
             }
@@ -627,6 +1877,7 @@ class RomContributionTracer:
             residual = (after - before) - helper_deltas[slot_index]
             if residual == 0:
                 continue
+            source = self.source_for_direct_score_write(slot_index=slot_index)
             self.events.append(
                 {
                     "index": len(self.events) + 1,
@@ -640,9 +1891,8 @@ class RomContributionTracer:
                     "delta": residual,
                     "changed": True,
                     "candidate": self.candidate_for_slot(slot_index),
-                    "source": self.source_for_direct_score_write(
-                        slot_index=slot_index,
-                    ),
+                    "public_input_snapshot": self.public_input_snapshot_for_source(source),
+                    "source": source,
                     "closed_by": trigger,
                 }
             )
@@ -746,11 +1996,12 @@ class RomContributionTracer:
         }
 
     def source_for_predicate_branch(self, target: HookTarget) -> dict[str, Any]:
-        rule = self.symbol_index.rule_for(target.parent_symbol)
+        parent_symbol = self.resolved_predicate_parent_symbol(target)
+        rule = self.symbol_index.rule_for(parent_symbol)
         return {
             "rule_id": rule.get("rule_id", "") if rule else "",
             "source_label": rule.get("source_label", "") if rule else "",
-            "full_symbol": target.parent_symbol,
+            "full_symbol": parent_symbol,
             "branch_symbol": target.full_symbol,
             "classification": rule.get("classification", "") if rule else "",
             "public_reads": rule.get("public_reads", []) if rule else [],
@@ -761,11 +2012,12 @@ class RomContributionTracer:
         }
 
     def source_for_public_read_probe(self, target: HookTarget) -> dict[str, Any]:
-        rule = self.symbol_index.rule_for(target.parent_symbol)
+        parent_symbol = self.resolved_predicate_parent_symbol(target)
+        rule = self.symbol_index.rule_for(parent_symbol)
         return {
             "rule_id": rule.get("rule_id", "") if rule else "",
             "source_label": rule.get("source_label", "") if rule else "",
-            "full_symbol": target.parent_symbol,
+            "full_symbol": parent_symbol,
             "probe_symbol": target.full_symbol,
             "classification": rule.get("classification", "") if rule else "",
             "public_reads": rule.get("public_reads", []) if rule else [],
@@ -828,12 +2080,32 @@ class RomContributionTracer:
                 continue
         return values
 
+    def public_input_snapshot_for_rule(self, rule: dict[str, Any]) -> dict[str, Any]:
+        reads = rule.get("public_reads", [])
+        if not isinstance(reads, (list, tuple)):
+            return {}
+        names = tuple(str(item) for item in reads if str(item))
+        return self.public_input_snapshot(names) if names else {}
+
+    def public_input_snapshot_for_source(self, source: dict[str, Any]) -> dict[str, Any]:
+        reads = source.get("public_reads", [])
+        if not isinstance(reads, (list, tuple)):
+            return {}
+        names = tuple(str(item) for item in reads if str(item))
+        return self.public_input_snapshot(names) if names else {}
+
     def public_input_snapshot(self, names: tuple[str, ...]) -> dict[str, Any]:
         return {name: self.snapshot_public_input(name) for name in names}
 
     def snapshot_public_input(self, name: str) -> dict[str, Any]:
+        register_name = REGISTER_PUBLIC_INPUTS.get(name)
+        if register_name is not None:
+            return self.register_snapshot(name, register_name)
+
         if name == "wOTPartyMon1HP":
             return self.party_hp_snapshot(name)
+        if name == "wOTPartyMon1Status":
+            return self.party_status_snapshot(name)
 
         static_symbol_name = STATIC_PUBLIC_TABLE_SYMBOLS.get(name)
         if static_symbol_name is not None:
@@ -868,6 +2140,25 @@ class RomContributionTracer:
             "address": f"{symbol.address:04x}",
             "width": width,
             "values": values,
+        }
+
+    def register_snapshot(self, input_name: str, register_name: str) -> dict[str, Any]:
+        try:
+            value = int(getattr(self.pyboy.register_file, register_name)) & 0xFF
+        except Exception as exc:
+            return {
+                "available": False,
+                "kind": "cpu_register",
+                "input": input_name,
+                "register": register_name,
+                "reason": f"read failed: {exc}",
+            }
+        return {
+            "available": True,
+            "kind": "cpu_register",
+            "input": input_name,
+            "register": register_name,
+            "value": value,
         }
 
     def party_hp_snapshot(self, name: str) -> dict[str, Any]:
@@ -911,6 +2202,48 @@ class RomContributionTracer:
             "address": f"{symbol.address:04x}",
             "slot_count": len(slots),
             "slot_width": 4,
+            "stride": PARTYMON_STRUCT_LENGTH,
+            "slots": slots,
+        }
+
+    def party_status_snapshot(self, name: str) -> dict[str, Any]:
+        symbol = self.symbols.get(name)
+        if symbol is None:
+            return {
+                "available": False,
+                "kind": "party_status_slots",
+                "symbol": name,
+                "reason": "symbol not found",
+            }
+        slots: list[dict[str, Any]] = []
+        for slot_index in range(PARTY_LENGTH):
+            try:
+                value = self.read_symbol_offset(
+                    symbol,
+                    slot_index * PARTYMON_STRUCT_LENGTH,
+                )
+            except Exception as exc:
+                slots.append(
+                    {
+                        "slot_index": slot_index,
+                        "available": False,
+                        "reason": f"read failed: {exc}",
+                    }
+                )
+                continue
+            slots.append(
+                {
+                    "slot_index": slot_index,
+                    "status": value,
+                }
+            )
+        return {
+            "available": True,
+            "kind": "party_status_slots",
+            "symbol": name,
+            "bank": f"{symbol.bank:02x}",
+            "address": f"{symbol.address:04x}",
+            "slot_count": len(slots),
             "stride": PARTYMON_STRUCT_LENGTH,
             "slots": slots,
         }
@@ -964,9 +2297,11 @@ class RomContributionTraceSession:
         *,
         rom: Path = capture.DEFAULT_ROM,
         symbols_path: Path = capture.DEFAULT_SYMBOLS,
+        delayed_memory_patches: list[DelayedMemoryPatch] | None = None,
     ) -> None:
         self.rom = rom
         self.symbols_path = symbols_path
+        self.delayed_memory_patches = delayed_memory_patches or []
         self.symbols = capture.parse_symbols(symbols_path)
         capture.require_symbols(self.symbols)
         require_hook_symbols(self.symbols)
@@ -983,7 +2318,11 @@ class RomContributionTraceSession:
             self.symbol_index,
             self.move_names,
         )
-        register_hooks(self.pyboy, self.symbol_index.hook_targets(), self.tracer)
+        register_hooks(
+            self.pyboy,
+            self.symbol_index.hook_targets(self.delayed_memory_patches),
+            self.tracer,
+        )
         self.basis = capture.build_trace_basis_metadata(
             SimpleTraceArgs(rom=rom, symbols=symbols_path)
         )
@@ -1008,40 +2347,76 @@ class RomContributionTraceSession:
         button_interval_frames: int = 0,
         metadata: dict[str, str] | None = None,
         memory_patches: list[MemoryPatch] | None = None,
+        finish_on: str = "choice",
     ) -> dict[str, Any]:
         if not save_state.exists():
             raise PreferenceDataError(f"missing save-state: {save_state}")
+        if finish_on not in {"choice", "switch"}:
+            raise PreferenceDataError("finish_on must be 'choice' or 'switch'")
 
         patches = memory_patches or []
         self.tracer.reset(memory_patches=patches)
         with save_state.open("rb") as fh:
             self.pyboy.load_state(fh)
         apply_memory_patches(self.pyboy, self.symbols, patches)
-        clear_chosen_move(self.pyboy, self.symbols)
-        final_values, presses_issued = drive_replay_to_choice(
-            self.pyboy,
-            self.symbols,
-            button=button,
-            button_delay=button_delay,
-            button_presses=button_presses,
-            button_interval_frames=button_interval_frames,
-            watch_frames=watch_frames,
-        )
+        switch_observation: dict[str, Any] | None = None
+        if finish_on == "switch":
+            clear_switch_decision_fields(self.pyboy, self.symbols)
+            final_values, presses_issued, observed_frame = drive_replay_to_switch_observation(
+                self.pyboy,
+                self.symbols,
+                button=button,
+                button_delay=button_delay,
+                button_presses=button_presses,
+                button_interval_frames=button_interval_frames,
+                watch_frames=watch_frames,
+            )
+            if final_values is not None:
+                switch_observation = switch_observation_from_values(
+                    final_values,
+                    frame=observed_frame,
+                )
+        else:
+            clear_chosen_move(self.pyboy, self.symbols)
+            final_values, presses_issued = drive_replay_to_choice(
+                self.pyboy,
+                self.symbols,
+                button=button,
+                button_delay=button_delay,
+                button_presses=button_presses,
+                button_interval_frames=button_interval_frames,
+                watch_frames=watch_frames,
+            )
         self.tracer.close_pending(trigger="replay_end")
         if final_values is None:
-            raise PreferenceDataError(
-                no_choice_error(
-                    save_state=save_state,
-                    watch_frames=watch_frames,
-                    button=button,
-                    button_delay=button_delay,
-                    button_presses=button_presses,
-                    button_interval_frames=button_interval_frames,
-                    presses_issued=presses_issued,
-                    metadata=metadata,
-                    memory_patches=patches,
+            if finish_on == "switch":
+                raise PreferenceDataError(
+                    no_switch_observation_error(
+                        save_state=save_state,
+                        watch_frames=watch_frames,
+                        button=button,
+                        button_delay=button_delay,
+                        button_presses=button_presses,
+                        button_interval_frames=button_interval_frames,
+                        presses_issued=presses_issued,
+                        metadata=metadata,
+                        memory_patches=patches,
+                    )
                 )
-            )
+            else:
+                raise PreferenceDataError(
+                    no_choice_error(
+                        save_state=save_state,
+                        watch_frames=watch_frames,
+                        button=button,
+                        button_delay=button_delay,
+                        button_presses=button_presses,
+                        button_interval_frames=button_interval_frames,
+                        presses_issued=presses_issued,
+                        metadata=metadata,
+                        memory_patches=patches,
+                    )
+                )
 
         basis = dict(self.basis)
         if metadata:
@@ -1054,9 +2429,15 @@ class RomContributionTraceSession:
             rule_entries=self.tracer.rule_entries,
             predicate_branch_entries=self.tracer.predicate_branch_entries,
             public_read_probe_entries=self.tracer.public_read_probe_entries,
+            delayed_patch_entries=self.tracer.delayed_patch_entries,
             selector_entry_scores=self.tracer.selector_entry_scores,
             move_names=self.move_names,
             memory_patches=patches,
+            delayed_memory_patches=self.delayed_memory_patches,
+            decision_surface=(
+                "switch_dispatch" if finish_on == "switch" else "rom_contribution_trace"
+            ),
+            switch_observation=switch_observation,
         )
 
 
@@ -1072,8 +2453,14 @@ def run_rom_contribution_trace(
     button_interval_frames: int = 0,
     metadata: dict[str, str] | None = None,
     memory_patches: list[MemoryPatch] | None = None,
+    delayed_memory_patches: list[DelayedMemoryPatch] | None = None,
+    finish_on: str = "choice",
 ) -> dict[str, Any]:
-    with RomContributionTraceSession(rom=rom, symbols_path=symbols_path) as session:
+    with RomContributionTraceSession(
+        rom=rom,
+        symbols_path=symbols_path,
+        delayed_memory_patches=delayed_memory_patches,
+    ) as session:
         return session.run(
             save_state=save_state,
             button=button,
@@ -1083,6 +2470,7 @@ def run_rom_contribution_trace(
             button_interval_frames=button_interval_frames,
             metadata=metadata,
             memory_patches=memory_patches,
+            finish_on=finish_on,
         )
 
 
@@ -1097,6 +2485,7 @@ def run_rom_contribution_trace_for_route(
     max_a_presses: int = 0,
     metadata: dict[str, str] | None = None,
     memory_patches: list[MemoryPatch] | None = None,
+    delayed_memory_patches: list[DelayedMemoryPatch] | None = None,
 ) -> dict[str, Any]:
     from tools.trace import boss_ai_state_factory as factory
 
@@ -1143,7 +2532,7 @@ def run_rom_contribution_trace_for_route(
         f"BATTERY_SAVE {capture.display_path(battery)}",
     ]
     try:
-        register_hooks(pyboy, symbol_index.hook_targets(), tracer)
+        register_hooks(pyboy, symbol_index.hook_targets(delayed_memory_patches), tracer)
         frame = factory.boot_continue(pyboy, symbols, log)
         frame = factory.setup_route_entry(
             pyboy,
@@ -1180,9 +2569,11 @@ def run_rom_contribution_trace_for_route(
             rule_entries=tracer.rule_entries,
             predicate_branch_entries=tracer.predicate_branch_entries,
             public_read_probe_entries=tracer.public_read_probe_entries,
+            delayed_patch_entries=tracer.delayed_patch_entries,
             selector_entry_scores=tracer.selector_entry_scores,
             move_names=move_names,
             memory_patches=memory_patches or [],
+            delayed_memory_patches=delayed_memory_patches or [],
         )
         report["boss_route"] = route.capture_id
         report["frame"] = frame
@@ -1260,6 +2651,7 @@ def hook_callback(context: tuple[RomContributionTracer, list[HookTarget]]) -> No
 
 def hook_order(target: HookTarget) -> int:
     return {
+        "memory_patch": -1,
         "control": 0,
         "rule": 1,
         "predicate_branch": 2,
@@ -1272,14 +2664,36 @@ def clear_chosen_move(
     pyboy: Any,
     symbols: dict[str, capture.Symbol],
 ) -> None:
-    symbol = symbols["wBossAITraceChosenMove"]
-    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
-        try:
-            pyboy.memory[symbol.bank, symbol.address] = 0
-            return
-        except Exception:
-            pass
-    pyboy.memory[symbol.address] = 0
+    clear_decision_fields(pyboy, symbols, ("wBossAITraceChosenMove",))
+
+
+def clear_switch_decision_fields(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+) -> None:
+    clear_decision_fields(
+        pyboy,
+        symbols,
+        ("wBossAITraceChosenMove", *SWITCH_DECISION_FIELDS),
+    )
+
+
+def clear_decision_fields(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+    names: tuple[str, ...],
+) -> None:
+    for name in names:
+        symbol = symbols.get(name)
+        if symbol is None:
+            continue
+        if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
+            try:
+                pyboy.memory[symbol.bank, symbol.address] = 0
+                continue
+            except Exception:
+                pass
+        pyboy.memory[symbol.address] = 0
 
 
 def drive_replay_to_choice(
@@ -1305,6 +2719,7 @@ def drive_replay_to_choice(
 
     presses_issued = 0
     frame = 0
+    last_values: dict[str, list[int]] | None = None
     while frame <= watch_frames:
         if should_issue_replay_button(
             frame=frame,
@@ -1329,6 +2744,85 @@ def drive_replay_to_choice(
         pyboy.tick(tick_count, False, False)
         frame += tick_count
     return None, presses_issued
+
+
+def drive_replay_to_switch_observation(
+    pyboy: Any,
+    symbols: dict[str, capture.Symbol],
+    *,
+    button: str,
+    button_delay: int,
+    button_presses: int,
+    button_interval_frames: int,
+    watch_frames: int,
+) -> tuple[dict[str, list[int]] | None, int, int]:
+    if watch_frames <= 0:
+        raise PreferenceDataError("watch_frames must be positive")
+    if button_presses < 0:
+        raise PreferenceDataError("button_presses must be non-negative")
+    if button_presses > 1 and button_interval_frames == 0:
+        raise PreferenceDataError(
+            "button_interval_frames is required when button_presses is greater than 1"
+        )
+
+    presses_issued = 0
+    frame = 0
+    while frame <= watch_frames:
+        if should_issue_replay_button(
+            frame=frame,
+            button=button,
+            button_presses=button_presses,
+            button_interval_frames=button_interval_frames,
+            presses_issued=presses_issued,
+        ):
+            pyboy.button(button, delay=button_delay)
+            presses_issued += 1
+        values = capture.read_trace_values(pyboy, symbols)
+        last_values = values
+        if switch_decision_observed(values):
+            return values, presses_issued, frame
+        tick_count = 1
+        pyboy.tick(tick_count, False, False)
+        frame += tick_count
+    return last_values, presses_issued, watch_frames
+
+
+def switch_decision_observed(values: dict[str, list[int]]) -> bool:
+    return any(
+        int(values.get(name, [0])[0]) != 0
+        for name in (
+            "wBossAITraceChosenMove",
+            "wBossAITraceSwitchConfidence",
+            "wEnemySwitchMonIndex",
+        )
+    )
+
+
+def switch_observation_from_values(
+    values: dict[str, list[int]],
+    *,
+    frame: int,
+) -> dict[str, Any]:
+    confidence = int(values.get("wBossAITraceSwitchConfidence", [0])[0])
+    param = int(values.get("wEnemySwitchMonParam", [0])[0])
+    index = int(values.get("wEnemySwitchMonIndex", [0])[0])
+    chosen = int(values.get("wBossAITraceChosenMove", [0])[0])
+    if index:
+        status = "actual_switch_observed"
+    elif param:
+        status = "switch_proposal_observed"
+    elif confidence:
+        status = "switch_confidence_observed"
+    else:
+        status = "no_switch_observation"
+    return {
+        "frame": frame,
+        "status": status,
+        "switch_confidence": confidence,
+        "switch_param": param,
+        "switch_index": index,
+        "chosen_move": chosen,
+    }
 
 
 def no_choice_error(
@@ -1360,6 +2854,39 @@ def no_choice_error(
             parts.append(f"metadata={metadata_text}")
     parts.append(
         "diagnostic: this usually means the base state is stale, already past the choice window, or needs different manifest replay controls"
+    )
+    return "; ".join(parts)
+
+
+def no_switch_observation_error(
+    *,
+    save_state: Path,
+    watch_frames: int,
+    button: str,
+    button_delay: int,
+    button_presses: int,
+    button_interval_frames: int,
+    presses_issued: int,
+    metadata: dict[str, str] | None,
+    memory_patches: list[MemoryPatch],
+) -> str:
+    parts = [
+        f"no boss switch observation within {watch_frames} frames",
+        f"save_state={trace_runtime.display_path(save_state)}",
+        (
+            f"replay=button:{button or '<none>'} delay:{button_delay} "
+            f"presses:{presses_issued}/{button_presses} interval:{button_interval_frames}"
+        ),
+        f"memory_patches={len(memory_patches)}",
+    ]
+    if metadata:
+        metadata_text = " ".join(
+            f"{key}={value}" for key, value in sorted(metadata.items()) if value
+        )
+        if metadata_text:
+            parts.append(f"metadata={metadata_text}")
+    parts.append(
+        "diagnostic: switch-dispatch traces finalize only after switch confidence, proposal, or index bytes change"
     )
     return "; ".join(parts)
 
@@ -1439,6 +2966,19 @@ def parse_memory_patch(text: str) -> MemoryPatch:
     return MemoryPatch(symbol_name=symbol_name, offset=offset, value=value)
 
 
+def parse_delayed_memory_patch(text: str) -> DelayedMemoryPatch:
+    hook_symbol, sep, patch_text = text.partition(":")
+    if sep != ":" or not hook_symbol or not patch_text:
+        raise PreferenceDataError(
+            "delayed memory patch must look like HOOK_SYMBOL:SYMBOL=VALUE "
+            f"or HOOK_SYMBOL:SYMBOL+OFFSET=VALUE: {text}"
+        )
+    return DelayedMemoryPatch(
+        hook_symbol=hook_symbol,
+        patch=parse_memory_patch(patch_text),
+    )
+
+
 def parse_patch_location(text: str) -> tuple[str, int]:
     symbol_name, plus, offset_text = text.partition("+")
     if not symbol_name:
@@ -1495,6 +3035,18 @@ def memory_patches_to_json(patches: list[MemoryPatch]) -> list[dict[str, Any]]:
     ]
 
 
+def delayed_memory_patches_to_json(
+    patches: list[DelayedMemoryPatch],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "hook_symbol": delayed.hook_symbol,
+            "patch": memory_patches_to_json([delayed.patch])[0],
+        }
+        for delayed in patches
+    ]
+
+
 def build_report(
     *,
     save_state: Path,
@@ -1505,9 +3057,13 @@ def build_report(
     rule_entries: list[dict[str, Any]],
     predicate_branch_entries: list[dict[str, Any]],
     public_read_probe_entries: list[dict[str, Any]],
+    delayed_patch_entries: list[dict[str, Any]],
     selector_entry_scores: list[int],
     move_names: dict[int, str],
     memory_patches: list[MemoryPatch],
+    delayed_memory_patches: list[DelayedMemoryPatch],
+    decision_surface: str = "rom_contribution_trace",
+    switch_observation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     changed = [event for event in events if event["changed"]]
     executed_rule_ids = sorted(
@@ -1516,9 +3072,10 @@ def build_report(
         | rule_ids_from_events(public_read_probe_entries)
         | rule_ids_from_events(events)
     )
-    return {
+    report = {
         "schema_version": 1,
         "source": "trace_rom_pyboy_hooks",
+        "decision_surface": decision_surface,
         "save_state": save_state_label or trace_runtime.display_path(save_state),
         "trace_basis": basis,
         "chosen": {
@@ -1530,6 +3087,7 @@ def build_report(
             "slot_index": values["wCurEnemyMoveNum"][0],
         },
         "memory_patches": memory_patches_to_json(memory_patches),
+        "delayed_memory_patches": delayed_memory_patches_to_json(delayed_memory_patches),
         "move_ids": values["wEnemyMonMoves"],
         "move_scores": values["wEnemyAIMoveScores"],
         "pre_model_scores": values["wBossAITracePreModelScores"],
@@ -1543,6 +3101,8 @@ def build_report(
         "predicate_branch_entries": deepcopy(predicate_branch_entries),
         "public_read_probe_entry_count": len(public_read_probe_entries),
         "public_read_probe_entries": deepcopy(public_read_probe_entries),
+        "delayed_patch_entry_count": len(delayed_patch_entries),
+        "delayed_patch_entries": deepcopy(delayed_patch_entries),
         "event_count": len(events),
         "changed_event_count": len(changed),
         "events": deepcopy(events),
@@ -1553,6 +3113,18 @@ def build_report(
             "Public-read probe entries record legal-input snapshots at configured executable labels; they are not CPU memory-read watchpoints.",
         ],
     }
+    if switch_observation is not None:
+        report["switch_observation"] = switch_observation
+        report["known_limits"].append(
+            "Switch-dispatch contribution traces finalize on observed switch WRAM fields, not on a chosen move."
+        )
+    return stamp_rom_contribution_trace_class(report)
+
+
+def stamp_rom_contribution_trace_class(report: dict[str, Any]) -> dict[str, Any]:
+    canonical = build_rom_contribution_trace_class(report)
+    report.update(canonical_class_fields(canonical))
+    return report
 
 
 def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) -> str:
@@ -1560,7 +3132,8 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
     lines = [
         "Boss AI ROM contribution trace",
         (
-            f"source={report['source']} save_state={report['save_state']} "
+            f"source={report['source']} surface={report.get('decision_surface', 'rom_contribution_trace')} "
+            f"save_state={report['save_state']} "
             f"events={report['event_count']} changed={report['changed_event_count']} "
             f"rule_entries={report.get('rule_entry_count', 0)} "
             f"predicate_branches={report.get('predicate_branch_entry_count', 0)} "
@@ -1576,9 +3149,18 @@ def format_rom_contribution_trace(report: dict[str, Any], *, limit: int = 80) ->
             f"post={csv(report['post_model_scores'])} "
             f"final={csv(report['move_scores'])}"
         ),
-        "",
-        f"First {limit} score events:",
     ]
+    switch_observation = report.get("switch_observation")
+    if isinstance(switch_observation, dict):
+        lines.append(
+            "switch: "
+            f"status={switch_observation.get('status', '')} "
+            f"confidence={switch_observation.get('switch_confidence', 0)} "
+            f"param={switch_observation.get('switch_param', 0)} "
+            f"index={switch_observation.get('switch_index', 0)} "
+            f"frame={switch_observation.get('frame', 0)}"
+        )
+    lines.extend(["", f"First {limit} score events:"])
     for event in report["events"][:limit]:
         candidate = event["candidate"]
         source = event["source"]
@@ -1668,6 +3250,8 @@ def load_rom_contribution_trace(path: Path) -> dict[str, Any]:
         raise PreferenceDataError(f"ROM contribution trace is not an object: {path}")
     if data.get("source") != "trace_rom_pyboy_hooks":
         raise PreferenceDataError(f"unsupported ROM contribution trace source: {path}")
+    if not data.get("class_id") or not isinstance(data.get("canonical_state_class"), dict):
+        stamp_rom_contribution_trace_class(data)
     return data
 
 
@@ -1768,6 +3352,17 @@ def summarize_rom_contribution_trace(
         "chosen": report.get("chosen", {}),
         "known_limits": report.get("known_limits", []),
     }
+    canonical = report.get("canonical_state_class")
+    if not isinstance(canonical, dict):
+        canonical = build_rom_contribution_trace_class(report)
+    result.update(
+        {
+            "class_id": canonical.get("class_id", ""),
+            "class_fingerprint": canonical.get("class_fingerprint", ""),
+            "canonical_state_class_valid": canonical.get("valid", False),
+            "canonical_state_class_errors": canonical.get("validation_errors", []),
+        }
+    )
     return result
 
 
@@ -1807,6 +3402,7 @@ def summarize_rom_contribution_trace_summaries(
             "executed_rule_count": 0,
             "covered_rule_count": 0,
             "changed_rule_count": 0,
+            "class_id_count": 0,
             "executed_rule_ids": [],
             "covered_rule_ids": [],
             "changed_rule_ids": [],
@@ -1874,6 +3470,7 @@ def summarize_rom_contribution_trace_summaries(
         "executed_rule_count": len(executed_rule_ids),
         "covered_rule_count": len(covered_rule_ids),
         "changed_rule_count": len(changed_rule_ids),
+        "class_id_count": sum(1 for summary in loaded if summary.get("class_id")),
         "executed_rule_ids": executed_rule_ids,
         "covered_rule_ids": covered_rule_ids,
         "changed_rule_ids": changed_rule_ids,
@@ -1932,9 +3529,19 @@ def summarize_rom_contribution_trace_summaries(
 def resolve_rom_contribution_trace_paths(paths: list[Path] | None) -> list[Path]:
     if paths is not None:
         return paths
-    return sorted(
-        DEFAULT_ROM_CONTRIBUTION_TRACE_DIR.glob(DEFAULT_ROM_CONTRIBUTION_TRACE_GLOB)
-    )
+    discovered: list[Path] = []
+    for directory, pattern in DEFAULT_ROM_CONTRIBUTION_TRACE_SOURCES:
+        discovered.extend(sorted(directory.glob(pattern)))
+
+    resolved: list[Path] = []
+    seen: set[Path] = set()
+    for path in discovered:
+        key = path.resolve()
+        if key in seen:
+            continue
+        seen.add(key)
+        resolved.append(path)
+    return resolved
 
 
 def expected_public_read_probe_outcomes() -> list[str]:

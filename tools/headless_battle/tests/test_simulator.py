@@ -101,6 +101,28 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertEqual(heal["raw_heal"], max(1, damage // 8))
         self.assertEqual(heal["hp_after"], 10 + heal["heal"])
 
+    def test_rocky_helmet_ko_prevents_later_shell_bell_heal(self) -> None:
+        payload = scenario_template()
+        payload["state"]["player"]["item"] = "SHELL_BELL"
+        payload["state"]["player"]["hp"] = 5
+        payload["state"]["player"]["max_hp"] = 30
+        payload["state"]["enemy"]["hp"] = 30
+        payload["state"]["enemy"]["max_hp"] = 30
+        payload["state"]["enemy"]["item"] = "ROCKY_HELMET"
+        payload["state"]["enemy"]["moves"][0]["bp"] = 0
+
+        report = simulate_payload(payload)
+
+        events = report["outcomes"][0]["events"]
+        item_events = [event.get("source_item") for event in events if event.get("source_item")]
+        recoil = next(event for event in events if event.get("source_item") == "ROCKY_HELMET")
+        self.assertEqual(item_events, ["ROCKY_HELMET"])
+        self.assertEqual(recoil["type"], "after_hit_recoil")
+        self.assertEqual(recoil["damage"], 5)
+        self.assertEqual(recoil["hp_before"], 5)
+        self.assertEqual(recoil["hp_after"], 0)
+        self.assertEqual(report["outcomes"][0]["state"]["player"]["hp"], 0)
+
     def test_life_orb_recoils_after_damage(self) -> None:
         payload = scenario_template()
         payload["state"]["player"]["item"] = "LIFE_ORB"
@@ -2642,12 +2664,17 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         byte_proven = {row["id"] for row in report["coverage"]["byte_proven"]}
         mirrored = {row["id"] for row in report["coverage"]["source_mirrored_pending_differential"]}
         self.assertIn("damage_core_pre_variation", byte_proven)
-        self.assertIn("damage_variation_rng_branching", mirrored)
+        self.assertIn("damage_variation_rng_branching", byte_proven)
+        self.assertIn("basic_critical_hit_rng", byte_proven)
         self.assertIn("basic_move_accuracy_rng", mirrored)
-        self.assertIn("basic_critical_hit_rng", mirrored)
-        self.assertIn("basic_status_residual", mirrored)
-        self.assertIn("basic_pp_decrement", mirrored)
-        self.assertIn("supported_after_hit_item_effects", mirrored)
+        self.assertIn("basic_status_residual", byte_proven)
+        self.assertIn("basic_pp_decrement", byte_proven)
+        self.assertIn("weather_setup_component_differential", byte_proven)
+        self.assertIn("selected_substitute_move", byte_proven)
+        self.assertIn("selected_self_heal_moves", byte_proven)
+        self.assertIn("selected_rest_move", byte_proven)
+        self.assertIn("selected_drain_moves", byte_proven)
+        self.assertIn("supported_after_hit_item_effects", byte_proven)
         self.assertIn("explicit_active_hp_restore_items", mirrored)
         self.assertIn("selected_weather_setup_moves", mirrored)
         self.assertIn("selected_spikes_entry_damage", mirrored)
@@ -2656,12 +2683,16 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
         self.assertIn("selected_stat_stage_only_moves", mirrored)
         self.assertIn("selected_multi_stat_setup_moves", mirrored)
         self.assertIn("selected_damaging_status_secondaries", mirrored)
-        self.assertIn("selected_drain_moves", mirrored)
         self.assertIn("selected_sleep_status_moves", mirrored)
-        self.assertIn("selected_rest_move", mirrored)
         self.assertIn("selected_held_status_cures", mirrored)
         self.assertIn("selected_safeguard_substitute_blockers", mirrored)
-        self.assertIn("selected_self_heal_moves", mirrored)
+        self.assertNotIn("damage_variation_rng_branching", mirrored)
+        self.assertNotIn("basic_critical_hit_rng", mirrored)
+        self.assertNotIn("selected_substitute_move", mirrored)
+        self.assertNotIn("selected_self_heal_moves", mirrored)
+        self.assertNotIn("selected_rest_move", mirrored)
+        self.assertNotIn("selected_drain_moves", mirrored)
+        self.assertNotIn("supported_after_hit_item_effects", mirrored)
         self.assertIn("selected_poison_status_moves", mirrored)
         self.assertIn("selected_paralysis_status_moves", mirrored)
         self.assertIn("repeat_plan_auto_replace_or", mirrored)
@@ -2694,6 +2725,45 @@ class HeadlessBattleSimulatorTests(unittest.TestCase):
             self.assertEqual(code, 0)
             data = json.loads(out.read_text(encoding="utf-8"))
             self.assertEqual(data["kind"], REPORT_KIND)
+
+    def test_damage_variation_component_scenarios_match_mirror(self) -> None:
+        # Pin the hand-verified DamageVariation scenario table to the simulator
+        # mirror that the ROM differential reconciles against. This guards the
+        # expected final damage / multiplier / RNG consumption independent of the
+        # built ROM, so a drifted expectation fails here before the ROM audit.
+        from tools.headless_battle.rom_differential import (
+            DAMAGE_VARIATION_SCENARIOS,
+            run_mirror_damage_variation,
+        )
+
+        self.assertTrue(DAMAGE_VARIATION_SCENARIOS)
+        for scenario in DAMAGE_VARIATION_SCENARIOS:
+            mirror = run_mirror_damage_variation(scenario)
+            self.assertEqual(mirror.final_damage, scenario.expected_final_damage, scenario.scenario_id)
+            self.assertEqual(mirror.multiplier, scenario.expected_multiplier, scenario.scenario_id)
+            self.assertEqual(mirror.applied, scenario.expected_applied, scenario.scenario_id)
+            self.assertEqual(len(mirror.raw_values), scenario.expected_rn_consumed, scenario.scenario_id)
+            if scenario.expected_applied:
+                # Accepted multipliers live in the rotated-right 217..255 band.
+                self.assertGreaterEqual(mirror.multiplier, 217, scenario.scenario_id)
+                self.assertLessEqual(mirror.multiplier, 255, scenario.scenario_id)
+
+    def test_critical_component_scenarios_match_mirror(self) -> None:
+        # Pin the hand-verified BattleCommand_Critical scenario table to the
+        # simulator mirror the ROM differential reconciles against, independent of
+        # the built ROM: expected critical / level / threshold / RNG consumption.
+        from tools.headless_battle.rom_differential import (
+            CRITICAL_SCENARIOS,
+            run_mirror_critical,
+        )
+
+        self.assertTrue(CRITICAL_SCENARIOS)
+        for scenario in CRITICAL_SCENARIOS:
+            mirror = run_mirror_critical(scenario)
+            self.assertEqual(mirror.critical, scenario.expected_critical, scenario.scenario_id)
+            self.assertEqual(mirror.level, scenario.expected_level, scenario.scenario_id)
+            self.assertEqual(mirror.threshold, scenario.expected_threshold, scenario.scenario_id)
+            self.assertEqual(len(mirror.raw_values), scenario.expected_rn_consumed, scenario.scenario_id)
 
 
 if __name__ == "__main__":

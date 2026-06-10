@@ -12,6 +12,7 @@ from tools.headless_battle.simulator import boss_ai_switch_roll_threshold
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
 
+from .canonical_classes import scenario_class_fields
 from .rom_contribution_trace import apply_memory_patches
 from .rom_contribution_trace import MemoryPatch
 from .rom_scenarios import load_scenario_batch
@@ -226,7 +227,7 @@ def run_rom_switch_materialization(
         for scenario in scenarios:
             scenario_id = str(scenario.get("id", "unnamed"))
             if scenario.get("family") not in SUPPORTED_FAMILIES:
-                verdicts.append(skipped_verdict(scenario_id, "unsupported scenario family"))
+                verdicts.append(skipped_verdict(scenario, "unsupported scenario family"))
                 continue
             try:
                 report = session.run(
@@ -247,7 +248,7 @@ def run_rom_switch_materialization(
                     )
                 )
             except Exception as exc:
-                verdicts.append(skipped_verdict(scenario_id, str(exc), status="error"))
+                verdicts.append(skipped_verdict(scenario, str(exc), status="error"))
 
     elapsed = time.perf_counter() - started
     checked = [verdict for verdict in verdicts if verdict["status"] == "pass"]
@@ -682,6 +683,7 @@ def switch_verdict_from_report(
     if report.get("observed_decision") is False:
         return {
             "scenario_id": scenario_id,
+            **scenario_class_fields(scenario),
             "status": "error",
             "family": scenario.get("family", ""),
             "expected_switch": scenario_expects_switch(scenario),
@@ -714,6 +716,7 @@ def switch_verdict_from_report(
         rom_policy = switch_policy_result("pass", 0, "ROM does not propose a switch")
     return {
         "scenario_id": scenario_id,
+        **scenario_class_fields(scenario),
         "status": "pass",
         "family": scenario.get("family", ""),
         "expected_switch": expected_switch,
@@ -1049,13 +1052,20 @@ def resolve_manifest_path(path_text: str) -> Path:
 
 
 def skipped_verdict(
-    scenario_id: str,
+    scenario: dict[str, Any] | str,
     reason: str,
     *,
     status: str = "skipped",
 ) -> dict[str, Any]:
+    if isinstance(scenario, dict):
+        scenario_id = str(scenario.get("id", "unnamed"))
+        class_fields = scenario_class_fields(scenario)
+    else:
+        scenario_id = str(scenario)
+        class_fields = {}
     return {
         "scenario_id": scenario_id,
+        **class_fields,
         "status": status,
         "agreement": status == "skipped",
         "reason": reason,

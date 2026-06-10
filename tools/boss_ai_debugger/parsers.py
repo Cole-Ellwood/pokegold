@@ -42,6 +42,7 @@ from .commands import (
     cmd_review_queue,
     cmd_role_packages,
     cmd_rom_contribution_trace,
+    cmd_rom_counterfactual_materialize,
     cmd_rom_score_materialize,
     cmd_rom_selector_materialize,
     cmd_rom_switch_materialize,
@@ -52,6 +53,7 @@ from .commands import (
     cmd_simulate,
     cmd_state_schema_validate,
     cmd_trace_replay,
+    cmd_universe,
 )
 from .coverage_report import DEFAULT_COVERAGE_PATH
 from .coverage_search import (
@@ -191,6 +193,15 @@ def build_parser() -> argparse.ArgumentParser:
     rule_check = rule_subcommands.add_parser("check")
     rule_check.add_argument("--rule-map", type=path_arg, default=DEFAULT_RULE_MAP_PATH)
     rule_check.set_defaults(func=cmd_rule_map_check)
+
+    universe_cmd = subparsers.add_parser("universe")
+    universe_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    universe_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    universe_cmd.add_argument("--rom-contribution-trace", type=path_arg, action="append")
+    universe_cmd.add_argument("--rom-score-materialization", type=path_arg, action="append")
+    universe_cmd.add_argument("--json", action="store_true")
+    universe_cmd.add_argument("--json-out", default="")
+    universe_cmd.set_defaults(func=cmd_universe)
 
     generate_cmd = subparsers.add_parser("generate")
     generate_cmd.add_argument("--family", choices=GENERATOR_FAMILIES, required=True)
@@ -489,7 +500,15 @@ def build_parser() -> argparse.ArgumentParser:
     rom_trace_cmd.add_argument("--max-a-presses", type=int, default=0)
     rom_trace_cmd.add_argument("--button", default="a")
     rom_trace_cmd.add_argument("--button-delay", type=int, default=8)
+    rom_trace_cmd.add_argument("--button-presses", type=int, default=1)
+    rom_trace_cmd.add_argument("--button-interval-frames", type=int, default=0)
     rom_trace_cmd.add_argument("--watch-frames", type=int, default=60)
+    rom_trace_cmd.add_argument(
+        "--finish-on",
+        choices=("choice", "switch"),
+        default="choice",
+        help="finalize a save-state contribution trace on a move choice or switch-dispatch observation",
+    )
     rom_trace_cmd.add_argument("--boss", default="")
     rom_trace_cmd.add_argument("--turn", default="")
     rom_trace_cmd.add_argument("--enemy", default="")
@@ -502,6 +521,15 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "patch a symbol byte before replay, e.g. "
             "wPlayerScreens=0x01 or wPlayerUsedMoves+1=0xe5"
+        ),
+    )
+    rom_trace_cmd.add_argument(
+        "--patch-at-symbol",
+        action="append",
+        default=[],
+        help=(
+            "patch a symbol byte when a hook label is reached, e.g. "
+            "BossAI_GetSwitchThreshold:wBossAISwitchConfidence=0x00"
         ),
     )
     rom_trace_cmd.add_argument("--json", action="store_true")
@@ -577,6 +605,29 @@ def build_parser() -> argparse.ArgumentParser:
     score_materialize_cmd.add_argument("--workers", type=int, default=1)
     score_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
     score_materialize_cmd.set_defaults(func=cmd_rom_score_materialize)
+
+    counterfactual_materialize_cmd = subparsers.add_parser("rom-counterfactual-materialize")
+    counterfactual_materialize_cmd.add_argument("--scenarios", type=path_arg, required=True)
+    counterfactual_materialize_cmd.add_argument("--scenario-id", default="")
+    counterfactual_materialize_cmd.add_argument("--limit", type=int, default=1)
+    counterfactual_materialize_cmd.add_argument("--mutation-patch", required=True)
+    counterfactual_materialize_cmd.add_argument(
+        "--surface",
+        choices=("move_choice", "switch_dispatch"),
+        default="move_choice",
+    )
+    counterfactual_materialize_cmd.add_argument("--base-route", default=DEFAULT_SCORE_MATERIALIZE_ROUTE)
+    counterfactual_materialize_cmd.add_argument("--manifest", type=path_arg, default=DEFAULT_SELECTOR_MATERIALIZE_MANIFEST)
+    counterfactual_materialize_cmd.add_argument("--rom", type=path_arg, default=Path("pokegold_trace.gbc"))
+    counterfactual_materialize_cmd.add_argument("--symbols", type=path_arg, default=Path("pokegold_trace.sym"))
+    counterfactual_materialize_cmd.add_argument("--button", default="a")
+    counterfactual_materialize_cmd.add_argument("--button-delay", type=int, default=8)
+    counterfactual_materialize_cmd.add_argument("--watch-frames", type=int, default=DEFAULT_SCORE_MATERIALIZE_WATCH_FRAMES)
+    counterfactual_materialize_cmd.add_argument("--json", action="store_true")
+    counterfactual_materialize_cmd.add_argument("--json-out", default="")
+    counterfactual_materialize_cmd.add_argument("--display-limit", type=int, default=12)
+    counterfactual_materialize_cmd.add_argument("--fail-on-mismatch", action="store_true")
+    counterfactual_materialize_cmd.set_defaults(func=cmd_rom_counterfactual_materialize)
 
     switch_materialize_cmd = subparsers.add_parser("rom-switch-materialize")
     switch_materialize_cmd.add_argument("--scenarios", type=path_arg, required=True)

@@ -3898,6 +3898,25 @@ def report_has_proven_switch_materialization(report: dict[str, Any]) -> bool:
         item.get("kind") == "rom_switch_materialization"
         and item.get("status") == "pass"
         for item in candidates
+    ) or any(
+        switch_materialization_batch_complete(item)
+        for item in candidates
+    )
+
+
+def switch_materialization_batch_complete(item: Any) -> bool:
+    if not isinstance(item, dict):
+        return False
+    if item.get("kind") != "rom_switch_materialization":
+        return False
+    if item.get("status") == "pass":
+        return True
+    return (
+        optional_trace_int(item.get("checked_count")) is not None
+        and int(item.get("checked_count", 0)) > 0
+        and optional_trace_int(item.get("error_count")) == 0
+        and optional_trace_int(item.get("skipped_count")) == 0
+        and optional_trace_int(item.get("policy_disagreement_count")) == 0
     )
 
 

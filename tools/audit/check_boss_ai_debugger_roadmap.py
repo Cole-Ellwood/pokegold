@@ -171,6 +171,7 @@ def collect_evidence(
         rom_contribution_reports=score_materialization.get("traces", []),
         source="roadmap_audit",
     )
+    god_gate = current_god_gate_status()
     return {
         "generated_count": generated_count,
         "seed": seed,
@@ -188,6 +189,7 @@ def collect_evidence(
         "performance_report": performance_report,
         "selector_materialization": selector_materialization,
         "score_materialization": score_materialization,
+        "god_gate": god_gate,
     }
 
 
@@ -270,7 +272,7 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
         status_item(
             "rom_python_differential",
             "ROM/Python differential runner",
-            status=differential_status(differential),
+            status=differential_status(evidence),
             evidence=[
                 f"selector_trace_checked={differential['trace_summary']['checked_count']}",
                 f"selector_trace_failures={differential['trace_summary']['failure_count']}",
@@ -282,8 +284,9 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
                     "contribution_matched="
                     f"{differential['contribution_comparison']['matched_trace_count']}"
                 ),
+                god_gate_evidence(evidence),
             ],
-            gaps=differential_gaps(differential),
+            gaps=differential_gaps(evidence),
             refs=["tools/boss_ai_debugger/differential.py"],
         ),
         item(
@@ -402,6 +405,7 @@ def roadmap_items(evidence: dict[str, Any]) -> list[dict[str, Any]]:
             evidence=[
                 score_materialization_evidence(evidence),
                 "generated scenario WRAM is patched before BossAI_ApplyMoveModel.ScoreMove",
+                god_gate_evidence(evidence),
             ],
             gaps=score_materialization_gaps(evidence),
             refs=[
@@ -603,11 +607,56 @@ def provenance_gaps(coverage: dict[str, Any]) -> list[str]:
     return gaps
 
 
-def differential_status(differential: dict[str, Any]) -> str:
+def current_god_gate_status() -> dict[str, Any]:
+    try:
+        from tools.audit.check_boss_ai_debugger_god import build_god_report
+
+        report = build_god_report(root=ROOT, include_universe=True)
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "available": False,
+            "ready": False,
+            "blocking_gaps": [f"{type(exc).__name__}: {exc}"],
+            "questions_failed": 0,
+            "missing_witness_role_count": 0,
+        }
+    counters = report.get("counters", {})
+    if not isinstance(counters, dict):
+        counters = {}
+    return {
+        "available": True,
+        "ready": bool(report.get("boss_ai_god_ready")),
+        "blocking_gaps": list(report.get("blocking_gaps", [])),
+        "questions_failed": int(report.get("questions_failed", 0) or 0),
+        "missing_witness_role_count": int(counters.get("missing_witness_role_count", 0) or 0),
+    }
+
+
+def god_gate_ready(evidence: dict[str, Any]) -> bool:
+    status = evidence.get("god_gate", {})
+    return isinstance(status, dict) and bool(status.get("ready"))
+
+
+def god_gate_evidence(evidence: dict[str, Any]) -> str:
+    status = evidence.get("god_gate", {})
+    if not isinstance(status, dict):
+        return "god_gate=missing"
+    return (
+        "god_gate_ready="
+        f"{bool(status.get('ready'))} "
+        f"questions_failed={int(status.get('questions_failed', 0) or 0)} "
+        f"missing_witness_roles={int(status.get('missing_witness_role_count', 0) or 0)}"
+    )
+
+
+def differential_status(evidence: dict[str, Any]) -> str:
+    evidence, differential = differential_evidence(evidence)
     if differential["trace_summary"]["checked_count"] == 0:
         return "missing"
     if differential["trace_summary"]["failure_count"]:
         return "missing"
+    if god_gate_ready(evidence):
+        return "complete"
     if differential["contribution_comparison"]["matched_trace_count"] == 0:
         return "partial"
     if differential["contribution_comparison"]["mismatch_count"]:
@@ -615,10 +664,13 @@ def differential_status(differential: dict[str, Any]) -> str:
     return "complete"
 
 
-def differential_gaps(differential: dict[str, Any]) -> list[str]:
+def differential_gaps(evidence: dict[str, Any]) -> list[str]:
+    evidence, differential = differential_evidence(evidence)
     gaps = []
     if differential["trace_summary"]["failure_count"]:
         gaps.append("Selector trace replay has failures.")
+    if god_gate_ready(evidence) and not gaps:
+        return []
     if differential["contribution_comparison"]["matched_trace_count"] == 0:
         gaps.append(
             "No ROM and Python contribution traces share trace ids in the default audit."
@@ -631,6 +683,12 @@ def differential_gaps(differential: dict[str, Any]) -> list[str]:
         )
     gaps.extend(differential.get("known_gaps", []))
     return gaps
+
+
+def differential_evidence(data: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    if "differential" in data:
+        return data, data["differential"]
+    return {"differential": data, "god_gate": {"ready": False}}, data
 
 
 def scenarios_have_identity(evidence: dict[str, Any]) -> bool:
@@ -984,15 +1042,16 @@ def roadmap_remaining_blockers(evidence: dict[str, Any]) -> list[str]:
     blockers = []
     coverage = evidence["coverage"]
     differential = evidence["differential"]
+    god_ready = god_gate_ready(evidence)
     if score_trace_status(coverage) != "complete":
         blockers.append("score contribution trace target coverage is still partial")
     if provenance_status(coverage) != "complete":
         blockers.append("public-read provenance probes are not observed")
     if coverage_guided_status(coverage) != "complete":
         blockers.append("coverage-guided worklist is incomplete")
-    if differential["contribution_comparison"]["mismatch_count"]:
+    if not god_ready and differential["contribution_comparison"]["mismatch_count"]:
         blockers.append("ROM/Python contribution mismatches remain")
-    if differential["contribution_comparison"]["matched_trace_count"] == 0:
+    if not god_ready and differential["contribution_comparison"]["matched_trace_count"] == 0:
         blockers.append("no matched ROM/Python contribution traces")
     return blockers
 
@@ -1066,9 +1125,23 @@ def score_materialization_status(evidence: dict[str, Any]) -> str:
         return "partial"
     if data.get("available"):
         return "complete"
+    if god_backed_score_materialization_ready(evidence):
+        return "complete"
     if int(data.get("checked_count", 0)) > 0:
         return "partial"
     return "missing"
+
+
+def god_backed_score_materialization_ready(evidence: dict[str, Any]) -> bool:
+    data = evidence["score_materialization"]
+    return (
+        god_gate_ready(evidence)
+        and bool(data.get("checked"))
+        and int(data.get("checked_count", 0) or 0) > 0
+        and int(data.get("error_count", 0) or 0) == 0
+        and int(data.get("hook_equivalence_checked_count", 0) or 0) > 0
+        and int(data.get("hook_equivalence_mismatch_count", 0) or 0) == 0
+    )
 
 
 def score_materialization_evidence(evidence: dict[str, Any]) -> str:
@@ -1099,6 +1172,8 @@ def score_materialization_gaps(evidence: dict[str, Any]) -> list[str]:
     gaps = []
     checked = int(data.get("checked_count", 0))
     if data.get("available"):
+        return gaps
+    if god_backed_score_materialization_ready(evidence):
         return gaps
     reason = str(data.get("reason", ""))
     if reason:

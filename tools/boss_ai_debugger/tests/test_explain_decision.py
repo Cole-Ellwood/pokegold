@@ -973,6 +973,10 @@ class ExplainDecisionTests(unittest.TestCase):
             input_manifest["resolution"]["scenario_id"],
             data["scenario_id"],
         )
+        self.assertEqual(
+            Path(input_manifest["resolution"]["scenario_path"]).parent,
+            root,
+        )
         self.assertIn("input=auto source=generated_scenario", stdout.getvalue())
 
     def test_trace_explanation_surfaces_switch_path(self) -> None:
@@ -1148,6 +1152,54 @@ class ExplainDecisionTests(unittest.TestCase):
             "blocked_by_hash_basis",
         )
         self.assertIn("blocker=blocked_by_hash_basis switch", text)
+
+    def test_trace_auto_switch_proof_counts_complete_batch_materialization(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_dir:
+            root = Path(temporary_dir)
+            trace_path = root / "shared_switch_loop_live.txt"
+            trace_path.write_text(
+                "\n".join(
+                    [
+                        "boss=Shared switch-loop",
+                        "tier=2",
+                        "move_ids=191,85,86,129",
+                        "move_scores=20,1,24,28",
+                        "pre_model_scores=20,20,20,20",
+                        "post_model_scores=19,13,24,28",
+                        "model_score_deltas=-1,-7,+4,+8",
+                        "chosen_slot=0",
+                        "chosen_id=191",
+                        "chosen=SPIKES",
+                        "switch_confidence=85",
+                        "switch_context=param=31,index=01,last_out=01,cooldown=02,cur_ot=00",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            batch_report = {
+                **switch_materialization_report(),
+                "checked_count": 1,
+                "error_count": 0,
+                "skipped_count": 0,
+                "policy_disagreement_count": 0,
+            }
+            batch_report.pop("status", None)
+            with patch(
+                "tools.boss_ai_debugger.explain_decision.run_rom_switch_materialization",
+                return_value=batch_report,
+            ):
+                report = explain_decision_from_trace_paths(
+                    [trace_path],
+                    run_rom_proof="auto",
+                    auto_artifact_dir=root / "artifacts",
+                )
+
+        present_ids = report["proof_status"]["present_ids"]
+        self.assertIn("switch_materialization", present_ids)
+        self.assertIn("switch_materialization.proven", present_ids)
+        self.assertIn("switch_roll.reported", present_ids)
+        self.assertEqual(report["auto_rom_proof"][0]["status"], "pass")
 
 
 def explain_scenario() -> dict:

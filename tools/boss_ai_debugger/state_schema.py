@@ -10,7 +10,9 @@ from tools.boss_ai_preference.data import (
     PreferenceDataError,
     load_fixtures,
 )
+from tools.debugger.canonical_state_class import validate_canonical_state_class
 
+from .canonical_classes import build_live_trace_class
 from .trace_replay import parse_int_list, parse_trace_file
 
 
@@ -64,6 +66,7 @@ def validate_trace_dir(
 
     errors: list[str] = []
     checked = 0
+    class_id_count = 0
     for trace_path in trace_paths:
         blocks = parse_trace_file(trace_path)
         if not blocks:
@@ -71,8 +74,16 @@ def validate_trace_dir(
             continue
         for index, block in enumerate(blocks, start=1):
             checked += 1
-            errors.extend(validate_trace_block(block, f"{trace_path}:block[{index}]"))
-    return validation_report("trace_dir", checked, errors)
+            block_errors = validate_trace_block(block, f"{trace_path}:block[{index}]", trace_path=trace_path, block_index=index)
+            errors.extend(block_errors)
+            if not block_errors:
+                class_id_count += 1
+    return validation_report(
+        "trace_dir",
+        checked,
+        errors,
+        extras={"class_id_count": class_id_count},
+    )
 
 
 def validate_path(path: Path) -> dict[str, Any]:
@@ -83,9 +94,18 @@ def validate_path(path: Path) -> dict[str, Any]:
     if path.suffix.lower() == ".txt":
         errors: list[str] = []
         blocks = parse_trace_file(path)
+        class_id_count = 0
         for index, block in enumerate(blocks, start=1):
-            errors.extend(validate_trace_block(block, f"{path}:block[{index}]"))
-        return validation_report("trace_file", len(blocks), errors)
+            block_errors = validate_trace_block(block, f"{path}:block[{index}]", trace_path=path, block_index=index)
+            errors.extend(block_errors)
+            if not block_errors:
+                class_id_count += 1
+        return validation_report(
+            "trace_file",
+            len(blocks),
+            errors,
+            extras={"class_id_count": class_id_count},
+        )
     return validate_scenario_file(path)
 
 
@@ -117,6 +137,7 @@ def validate_scenario(scenario: dict[str, Any], source: str) -> list[str]:
         value = scenario.get(key)
         if value is not None and value != "" and not valid_sha256(value):
             errors.append(f"{source}.{key}: must be an uppercase SHA-256 hex digest")
+    errors.extend(validate_scenario_canonical_class(scenario, source))
 
     if "state" in scenario:
         state = scenario["state"]
@@ -134,6 +155,29 @@ def validate_scenario(scenario: dict[str, Any], source: str) -> list[str]:
                 errors.extend(validate_action(move, f"{source}.moves[{index}]"))
 
     errors.extend(find_hidden_fields(scenario, source))
+    return errors
+
+
+def validate_scenario_canonical_class(scenario: dict[str, Any], source: str) -> list[str]:
+    errors: list[str] = []
+    generated = bool(scenario.get("generator_source") or str(scenario.get("generator", "")).startswith("boss-ai-debugger"))
+    canonical = scenario.get("canonical_state_class")
+    if canonical is None:
+        if generated:
+            errors.append(f"{source}: generated scenario missing canonical_state_class")
+        return errors
+    if not isinstance(canonical, dict):
+        return [f"{source}.canonical_state_class: must be an object"]
+    for error in validate_canonical_state_class(canonical):
+        errors.append(f"{source}.canonical_state_class: {error}")
+    class_id = scenario.get("class_id")
+    if class_id is not None and class_id != canonical.get("class_id"):
+        errors.append(f"{source}.class_id: must match canonical_state_class.class_id")
+    fingerprint = scenario.get("class_fingerprint")
+    if fingerprint is not None and fingerprint != canonical.get("class_fingerprint"):
+        errors.append(
+            f"{source}.class_fingerprint: must match canonical_state_class.class_fingerprint"
+        )
     return errors
 
 
@@ -171,7 +215,13 @@ def validate_action(action: Any, source: str) -> list[str]:
     return errors
 
 
-def validate_trace_block(fields: dict[str, str], source: str) -> list[str]:
+def validate_trace_block(
+    fields: dict[str, str],
+    source: str,
+    *,
+    trace_path: Path | str = "",
+    block_index: int | None = None,
+) -> list[str]:
     errors: list[str] = []
     for key in REQUIRED_TRACE_FIELDS:
         if key not in fields:
@@ -219,6 +269,14 @@ def validate_trace_block(fields: dict[str, str], source: str) -> list[str]:
         else:
             if value not in {0, 1, 2, 3}:
                 errors.append(f"{source}: tier must be 0, 1, 2, or 3")
+    if not errors:
+        canonical = build_live_trace_class(
+            fields,
+            trace_path=trace_path,
+            capture_index=block_index,
+        )
+        for error in validate_canonical_state_class(canonical):
+            errors.append(f"{source}.canonical_state_class: {error}")
     return errors
 
 
@@ -311,8 +369,14 @@ def read_scenario_data(path: Path) -> Any:
     return rows
 
 
-def validation_report(kind: str, checked_count: int, errors: list[str]) -> dict[str, Any]:
-    return {
+def validation_report(
+    kind: str,
+    checked_count: int,
+    errors: list[str],
+    *,
+    extras: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    report = {
         "schema_version": 1,
         "kind": kind,
         "checked_count": checked_count,
@@ -320,15 +384,21 @@ def validation_report(kind: str, checked_count: int, errors: list[str]) -> dict[
         "valid": not errors,
         "errors": errors,
     }
+    if extras:
+        report.update(extras)
+    return report
 
 
 def combine_reports(kind: str, reports: list[dict[str, Any]]) -> dict[str, Any]:
     errors: list[str] = []
     checked = 0
+    class_id_count = 0
     for report in reports:
         checked += int(report.get("checked_count", 0))
+        class_id_count += int(report.get("class_id_count", 0))
         errors.extend(str(error) for error in report.get("errors", []))
-    return validation_report(kind, checked, errors)
+    extras = {"class_id_count": class_id_count} if class_id_count else None
+    return validation_report(kind, checked, errors, extras=extras)
 
 
 def format_validation_report(report: dict[str, Any]) -> str:

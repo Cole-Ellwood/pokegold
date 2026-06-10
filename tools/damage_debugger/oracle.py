@@ -247,6 +247,8 @@ class BattleInputs:
     opponent_item: int = HELD_NONE
     can_evolve_attacker: bool = False
     can_evolve_defender: bool = False
+    attacker_species_id: int = 155
+    defender_species_id: int = 16
 
     is_critical: bool = False
 

@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from tools.boss_ai_preference.data import PreferenceDataError
+from tools.boss_ai_debugger.canonical_classes import (
+    boss_ai_generated_identity,
+    build_generated_scenario_class,
+)
 
 
 PUBLIC_POLICY_FAMILIES = (
@@ -1130,6 +1134,322 @@ PUBLIC_POLICY_CASES = {
                 ],
             },
         },
+        {
+            "case_id": "phaze_loop_over_setup_greed_boundary",
+            "tiers": ("late",),
+            "notes": [
+                "generated support case: phazing stays top when greedy setup is the nearest public runner-up",
+            ],
+            "moves": [
+                {
+                    "id": "move_setup_greed",
+                    "name": "Setup Greed",
+                    "kind": "move",
+                    "deltas": [{"rule": "greedy setup into live phaze route", "delta": 5}],
+                },
+                {
+                    "id": "move_roar_loop",
+                    "name": "Roar Phaze Loop",
+                    "kind": "move",
+                    "deltas": [{"rule": "phaze loop underweighted", "delta": -2}],
+                    "lookahead_delta": -2,
+                },
+                {
+                    "id": "move_spikes_reset",
+                    "name": "Spikes Reset",
+                    "kind": "move",
+                    "deltas": [{"rule": "hazard reset acceptable", "delta": -1}],
+                },
+                {
+                    "id": "move_switch_away",
+                    "name": "Switch Away",
+                    "kind": "switch",
+                    "deltas": [{"rule": "abandons phaze loop", "delta": 4}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_roar_loop"],
+                "acceptable_action_ids": ["move_spikes_reset"],
+                "bad_action_ids": ["move_setup_greed", "move_switch_away"],
+                "policy_tags": ["phazing", "hazard_retention", "reset_loop_denial"],
+                "condition_tags": [
+                    "spikes_layers_2",
+                    "phaze_loop_live",
+                    "reset_loop_denied",
+                    "named_current_owner",
+                ],
+                "lesson_type": "hard_rule",
+                "confidence": "medium",
+                "evidence_refs": [
+                    "docs/pokemon_mastery/policy_cards/hazard_loop_spin_window.md",
+                    "docs/pokemon_mastery/heuristic_core/reset_loop_denial.md",
+                ],
+                "why": "When public hazards plus phazing own the route, do not let another setup turn outrank the phaze loop.",
+                "answer_changing_information": [
+                    "whether the opponent can immediately erase the phaze route",
+                    "whether setup changes a faster conversion threshold than Roar plus hazards",
+                ],
+            },
+        },
+        {
+            "case_id": "public_read_poison_full_probe",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated public-read probe: contact risk sees a fully Poison active",
+            ],
+            "moves": [
+                {
+                    "id": "move_body_slam_probe",
+                    "name": "Body Slam Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "poison contact probe", "delta": 1}],
+                },
+                {
+                    "id": "move_recover_probe",
+                    "name": "Recover Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "revealed recovery probe", "delta": 1}],
+                },
+                {
+                    "id": "move_reflect_probe",
+                    "name": "Reflect Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "public threat probe", "delta": 1}],
+                },
+                {
+                    "id": "move_soft_status",
+                    "name": "Soft Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "neutral probe", "delta": 1}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_body_slam_probe"],
+                "acceptable_action_ids": ["move_recover_probe", "move_reflect_probe"],
+                "bad_action_ids": ["move_soft_status"],
+                "policy_tags": ["public_read_probe"],
+                "condition_tags": [
+                    "player_full_poison_type",
+                    "revealed_recovery",
+                    "public_read_probe",
+                ],
+                "lesson_type": "probe",
+                "confidence": "medium",
+                "evidence_refs": [],
+                "why": "Exercise public Poison typing and revealed recovery probe outcomes through ROM scoring.",
+                "answer_changing_information": [
+                    "whether the player is one or two Poison types",
+                    "whether recovery is publicly revealed",
+                ],
+            },
+        },
+        {
+            "case_id": "public_read_poison_half_probe",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated public-read probe: contact risk sees a half-Poison active",
+            ],
+            "moves": [
+                {
+                    "id": "move_body_slam_probe",
+                    "name": "Body Slam Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "poison contact probe", "delta": 1}],
+                },
+                {
+                    "id": "move_recover_probe",
+                    "name": "Recover Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "revealed recovery probe", "delta": 1}],
+                },
+                {
+                    "id": "move_reflect_probe",
+                    "name": "Reflect Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "public threat probe", "delta": 1}],
+                },
+                {
+                    "id": "move_soft_status",
+                    "name": "Soft Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "neutral probe", "delta": 1}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_body_slam_probe"],
+                "acceptable_action_ids": ["move_recover_probe", "move_reflect_probe"],
+                "bad_action_ids": ["move_soft_status"],
+                "policy_tags": ["public_read_probe"],
+                "condition_tags": [
+                    "player_half_poison_type",
+                    "revealed_recovery",
+                    "public_read_probe",
+                ],
+                "lesson_type": "probe",
+                "confidence": "medium",
+                "evidence_refs": [],
+                "why": "Exercise public half-Poison typing and revealed recovery probe outcomes through ROM scoring.",
+                "answer_changing_information": [
+                    "whether the player is one or two Poison types",
+                    "whether recovery is publicly revealed",
+                ],
+            },
+        },
+        {
+            "case_id": "public_read_physical_choice_probe",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated public-read probe: Reflect and Choice-lock risk read public type/seen species state",
+            ],
+            "moves": [
+                {
+                    "id": "move_body_slam_probe",
+                    "name": "Body Slam Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "choice lock immunity probe", "delta": 1}],
+                },
+                {
+                    "id": "move_reflect_probe",
+                    "name": "Reflect Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "physical public threat probe", "delta": 1}],
+                },
+                {
+                    "id": "move_recover_probe",
+                    "name": "Recover Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "revealed recovery probe", "delta": 1}],
+                },
+                {
+                    "id": "move_soft_status",
+                    "name": "Soft Status",
+                    "kind": "move",
+                    "deltas": [{"rule": "neutral probe", "delta": 1}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_reflect_probe"],
+                "acceptable_action_ids": ["move_body_slam_probe", "move_recover_probe"],
+                "bad_action_ids": ["move_soft_status"],
+                "policy_tags": ["public_read_probe"],
+                "condition_tags": [
+                    "player_ground_physical_threat",
+                    "choice_immune_seen_species",
+                    "revealed_recovery",
+                    "public_read_probe",
+                ],
+                "lesson_type": "probe",
+                "confidence": "medium",
+                "evidence_refs": [],
+                "why": "Exercise physical public-threat and Choice immunity-risk probe outcomes through ROM scoring.",
+                "answer_changing_information": [
+                    "whether the active player type is a physical public threat",
+                    "whether a seen reserve is immune to the candidate locked move",
+                ],
+            },
+        },
+        {
+            "case_id": "public_read_ramp_resisted_probe",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated public-read probe: Fury Cutter and Rollout expose ramp-move public branches",
+            ],
+            "moves": [
+                {
+                    "id": "move_fury_cutter_probe",
+                    "name": "Fury Cutter Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "ramp resisted probe", "delta": 1}],
+                },
+                {
+                    "id": "move_rollout_probe",
+                    "name": "Rollout Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "ramp pressure probe", "delta": 1}],
+                },
+                {
+                    "id": "move_body_slam_probe",
+                    "name": "Body Slam Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "contact probe", "delta": 1}],
+                },
+                {
+                    "id": "move_recover_probe",
+                    "name": "Recover Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "recovery probe", "delta": 1}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_rollout_probe"],
+                "acceptable_action_ids": ["move_fury_cutter_probe"],
+                "bad_action_ids": ["move_recover_probe"],
+                "policy_tags": ["public_read_probe"],
+                "condition_tags": [
+                    "player_fire_ramp_probe",
+                    "revealed_recovery",
+                    "public_read_probe",
+                ],
+                "lesson_type": "probe",
+                "confidence": "medium",
+                "evidence_refs": [],
+                "why": "Exercise ramp-move candidate and resisted-matchup probe outcomes through ROM scoring.",
+                "answer_changing_information": [
+                    "whether the ramp move is Rollout or Fury Cutter",
+                    "whether the active player resists the ramp move",
+                ],
+            },
+        },
+        {
+            "case_id": "public_read_repeated_switch_probe",
+            "tiers": ("mid", "late"),
+            "notes": [
+                "generated public-read probe: phazing checks the no repeated-switch-pressure branch",
+            ],
+            "moves": [
+                {
+                    "id": "move_roar_loop",
+                    "name": "Roar Phaze Loop",
+                    "kind": "move",
+                    "deltas": [{"rule": "repeated switch pressure probe", "delta": 1}],
+                },
+                {
+                    "id": "move_spikes_reset",
+                    "name": "Spikes Reset",
+                    "kind": "move",
+                    "deltas": [{"rule": "hazard reset probe", "delta": 1}],
+                },
+                {
+                    "id": "move_body_slam_probe",
+                    "name": "Body Slam Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "contact probe", "delta": 1}],
+                },
+                {
+                    "id": "move_recover_probe",
+                    "name": "Recover Probe",
+                    "kind": "move",
+                    "deltas": [{"rule": "recovery probe", "delta": 1}],
+                },
+            ],
+            "expectation": {
+                "best_action_ids": ["move_roar_loop"],
+                "acceptable_action_ids": ["move_spikes_reset"],
+                "bad_action_ids": ["move_recover_probe"],
+                "policy_tags": ["public_read_probe", "phazing"],
+                "condition_tags": [
+                    "spikes_layers_2",
+                    "public_read_probe",
+                ],
+                "lesson_type": "probe",
+                "confidence": "medium",
+                "evidence_refs": [],
+                "why": "Exercise the public no repeated-switch-pressure branch through a phazing candidate.",
+                "answer_changing_information": [
+                    "whether player switch count has crossed the repeated-pressure threshold",
+                ],
+            },
+        },
     ],
     "cashout_board_delta": [
         {
@@ -1897,25 +2217,47 @@ def stamp_scenario(scenario: dict[str, Any]) -> dict[str, Any]:
     stamped = dict(scenario)
     stamped.update(stamp_basis())
     stamped["state_hash"] = scenario_hash(stamped)
+    canonical = build_generated_scenario_class(stamped, identity=canonical_identity())
+    stamped["canonical_state_class"] = canonical
+    stamped["class_id"] = canonical["class_id"]
+    stamped["class_fingerprint"] = canonical["class_fingerprint"]
     return stamped
 
 
 @lru_cache(maxsize=1)
 def stamp_basis() -> dict[str, str]:
+    identity = canonical_identity()
     return {
         "generator_source": "tools.boss_ai_debugger.generators",
         "rom": display_path(DEFAULT_TRACE_ROM),
-        "rom_sha256": sha256_file_cached(str(DEFAULT_TRACE_ROM)),
+        "rom_sha256": identity["rom_sha256"],
         "symbols": display_path(DEFAULT_TRACE_SYMBOLS),
-        "symbols_sha256": sha256_file_cached(str(DEFAULT_TRACE_SYMBOLS)),
+        "symbols_sha256": identity["symbols_sha256"],
+        "map": display_path(DEFAULT_TRACE_ROM.with_suffix(".map")),
+        "map_sha256": identity["map_sha256"],
+        "rule_map_sha256": identity["rule_map_sha256"],
+        "source_tree_sha256": identity["source_tree_sha256"],
+        "dirty_diff_hash": identity["dirty_diff_hash"],
     }
+
+
+@lru_cache(maxsize=1)
+def canonical_identity() -> dict[str, str]:
+    return boss_ai_generated_identity()
 
 
 def scenario_hash(scenario: dict[str, Any]) -> str:
     canonical = {
         key: value
         for key, value in scenario.items()
-        if key not in {"state_hash", "scenario_hash"}
+        if key
+        not in {
+            "state_hash",
+            "scenario_hash",
+            "canonical_state_class",
+            "class_id",
+            "class_fingerprint",
+        }
     }
     payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest().upper()

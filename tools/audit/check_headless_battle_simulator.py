@@ -14,11 +14,19 @@ if str(ROOT) not in sys.path:
 from tools.boss_ai_debugger.rom_scenarios import select_from_score_bytes
 from tools.boss_ai_debugger.rom_switch_materialize import scenario_condition_tags
 from tools.headless_battle.rom_differential import (
+    compare_basic_pp_decrement_component,
+    compare_critical_component,
+    compare_damage_variation_component,
     compare_damaging_status_component,
     compare_drain_component,
     compare_full_restore_status_cure,
     compare_item_restore_component,
-    compare_normal_hit_fixed_rng,
+    compare_normal_hit_differentials,
+    compare_selected_drain_move_turn,
+    compare_selected_rest_move_turn,
+    compare_selected_self_heal_move_turn,
+    compare_supported_after_hit_item_effects,
+    compare_weather_setup_component,
 )
 from tools.headless_battle.rom_switch_scenario_export import (
     headless_to_switch_sack_scenario,
@@ -42,20 +50,53 @@ def _audit_simulator_self_test() -> None:
 
 
 def _audit_normal_hit_fixed_rng_differential() -> None:
-    differential = compare_normal_hit_fixed_rng()
-    if not differential.ok:
+    differentials = compare_normal_hit_differentials()
+    failed = [differential for differential in differentials if not differential.ok]
+    if failed:
         print(
-            f"Headless battle simulator audit FAILED: {differential.scenario_id} mismatch:",
+            "Headless battle simulator audit FAILED: NormalHit ROM differential mismatch:",
             file=sys.stderr,
         )
-        for error in differential.errors:
+        for differential in failed:
+            print(f"  - {differential.scenario_id}", file=sys.stderr)
+            for error in differential.errors:
+                print(f"    - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "normal_hit_rom_differentials: PASS "
+        + " ".join(differential.scenario_id for differential in differentials)
+    )
+
+
+def _audit_critical_component_differential() -> None:
+    critical_differential = compare_critical_component()
+    if not critical_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {critical_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in critical_differential.errors:
             print(f"  - {error}", file=sys.stderr)
         raise AuditFailure
     print(
-        "normal_hit_fixed_rng_differential: PASS "
-        f"damage={differential.rom['damage']} "
-        f"hp={differential.rom['player_hp_before']}->{differential.rom['player_hp_after']} "
-        f"pp={differential.rom['enemy_pp_before']}->{differential.rom['enemy_pp_after']}"
+        "critical_component_differential: PASS "
+        + " ".join(critical_differential.rom.keys())
+    )
+
+
+def _audit_damage_variation_component_differential() -> None:
+    variation_differential = compare_damage_variation_component()
+    if not variation_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {variation_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in variation_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "damage_variation_component_differential: PASS "
+        + " ".join(variation_differential.rom.keys())
     )
 
 
@@ -88,6 +129,22 @@ def _audit_drain_component_differential() -> None:
     print("drain_component_differential: PASS " + " ".join(drain_differential.rom.keys()))
 
 
+def _audit_selected_drain_move_turn_differential() -> None:
+    drain_differential = compare_selected_drain_move_turn()
+    if not drain_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {drain_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in drain_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "selected_drain_move_turn_differential: PASS "
+        + " ".join(drain_differential.rom.keys())
+    )
+
+
 def _audit_item_restore_component_differential() -> None:
     item_differential = compare_item_restore_component()
     if not item_differential.ok:
@@ -118,6 +175,16 @@ def _audit_full_restore_status_cure_component_differential() -> None:
 
 
 def _audit_basic_pp_decrement() -> None:
+    pp_differential = compare_basic_pp_decrement_component()
+    if not pp_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {pp_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in pp_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+
     pp_payload = scenario_template()
     pp_report = simulate_payload(pp_payload)
     pp_outcome = pp_report["outcomes"][0]
@@ -127,7 +194,71 @@ def _audit_basic_pp_decrement() -> None:
     ):
         print(f"Headless battle simulator audit FAILED: PP decrement mismatch: {pp_outcome}", file=sys.stderr)
         raise AuditFailure
-    print("basic_pp_decrement: PASS pp=35->34")
+    print(
+        "basic_pp_decrement: PASS pp=35->34 "
+        + " ".join(pp_differential.rom.keys())
+    )
+
+
+def _audit_weather_setup_component_differential() -> None:
+    weather_differential = compare_weather_setup_component()
+    if not weather_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {weather_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in weather_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print("weather_setup_component_differential: PASS " + " ".join(weather_differential.rom.keys()))
+
+
+def _audit_selected_self_heal_move_turn_differential() -> None:
+    self_heal_differential = compare_selected_self_heal_move_turn()
+    if not self_heal_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {self_heal_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in self_heal_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "selected_self_heal_move_turn_differential: PASS "
+        + " ".join(self_heal_differential.rom.keys())
+    )
+
+
+def _audit_selected_rest_move_turn_differential() -> None:
+    rest_differential = compare_selected_rest_move_turn()
+    if not rest_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {rest_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in rest_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "selected_rest_move_turn_differential: PASS "
+        + " ".join(rest_differential.rom.keys())
+    )
+
+
+def _audit_supported_after_hit_item_effects_differential() -> None:
+    after_hit_differential = compare_supported_after_hit_item_effects()
+    if not after_hit_differential.ok:
+        print(
+            f"Headless battle simulator audit FAILED: {after_hit_differential.scenario_id} mismatch:",
+            file=sys.stderr,
+        )
+        for error in after_hit_differential.errors:
+            print(f"  - {error}", file=sys.stderr)
+        raise AuditFailure
+    print(
+        "supported_after_hit_item_effects_differential: PASS "
+        + " ".join(after_hit_differential.rom.keys())
+    )
 
 
 def _audit_supported_after_hit_items() -> None:
@@ -165,6 +296,25 @@ def _audit_supported_after_hit_items() -> None:
             file=sys.stderr,
         )
         raise AuditFailure
+    order_payload = scenario_template()
+    order_payload["state"]["player"]["item"] = "SHELL_BELL"
+    order_payload["state"]["player"]["hp"] = 5
+    order_payload["state"]["player"]["max_hp"] = 30
+    order_payload["state"]["enemy"]["hp"] = 30
+    order_payload["state"]["enemy"]["max_hp"] = 30
+    order_payload["state"]["enemy"]["item"] = "ROCKY_HELMET"
+    order_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    order_events = simulate_payload(order_payload)["outcomes"][0]["events"]
+    item_order = [event.get("source_item") for event in order_events if event.get("source_item")]
+    if (
+        item_order != ["ROCKY_HELMET"]
+        or order_events[-1].get("hp_after") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: after-hit item order mismatch: {order_events}",
+            file=sys.stderr,
+        )
+        raise AuditFailure
     life_payload = scenario_template()
     life_payload["state"]["player"]["item"] = "LIFE_ORB"
     life_payload["state"]["player"]["max_hp"] = 30
@@ -178,7 +328,7 @@ def _audit_supported_after_hit_items() -> None:
             file=sys.stderr,
         )
         raise AuditFailure
-    print("supported_after_hit_items: PASS rocky=5 shell_heal>0 life=3")
+    print("supported_after_hit_items: PASS rocky=5 shell_heal>0 rocky_before_shell_ko life=3")
 
 
 def _audit_explicit_active_hp_restore_items() -> None:
@@ -677,7 +827,25 @@ def _audit_selected_substitute_move() -> None:
             file=sys.stderr,
         )
         raise AuditFailure
-    print("selected_substitute_move: PASS create_hp_cost too_weak_no_effect")
+    already_substitute_payload = scenario_template()
+    already_substitute_payload["state"]["player"]["moves"] = [{"name": "SUBSTITUTE"}]
+    already_substitute_payload["state"]["player"]["substitute"] = True
+    already_substitute_payload["state"]["player"]["substitute_hp"] = 4
+    already_substitute_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    already_substitute_outcome = simulate_payload(already_substitute_payload)["outcomes"][0]
+    already_substitute_event = already_substitute_outcome["events"][0]
+    if (
+        already_substitute_event.get("type") != "substitute_no_effect"
+        or already_substitute_event.get("blocked_reason") != "already_has_substitute"
+        or already_substitute_event.get("hp_before") != already_substitute_event.get("hp_after")
+        or already_substitute_outcome["state"]["player"].get("substitute_hp") != 4
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: Substitute already-active mismatch: {already_substitute_outcome}",
+            file=sys.stderr,
+        )
+        raise AuditFailure
+    print("selected_substitute_move: PASS create_hp_cost too_weak_no_effect already_active_no_effect")
 
 
 def _audit_selected_substitute_hp_routing() -> None:
@@ -791,7 +959,62 @@ def _audit_selected_self_heal_moves() -> None:
             file=sys.stderr,
         )
         raise AuditFailure
-    print("selected_self_heal_moves: PASS recover_half_hp")
+    cap_payload = scenario_template()
+    cap_payload["state"]["player"]["hp"] = 35
+    cap_payload["state"]["player"]["max_hp"] = 40
+    cap_payload["state"]["player"]["moves"] = [{"name": "MILK_DRINK"}]
+    cap_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    cap_event = simulate_payload(cap_payload)["outcomes"][0]["events"][0]
+    if (
+        cap_event.get("type") != "self_heal"
+        or cap_event.get("move") != "MILK_DRINK"
+        or cap_event.get("raw_heal") != 20
+        or cap_event.get("heal") != 5
+        or cap_event.get("hp_after") != 40
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: self-heal cap mismatch: {cap_event}",
+            file=sys.stderr,
+        )
+        raise AuditFailure
+    full_payload = scenario_template()
+    full_payload["state"]["player"]["hp"] = 40
+    full_payload["state"]["player"]["max_hp"] = 40
+    full_payload["state"]["player"]["moves"] = [{"name": "SOFTBOILED"}]
+    full_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    full_event = simulate_payload(full_payload)["outcomes"][0]["events"][0]
+    if (
+        full_event.get("type") != "self_heal_no_effect"
+        or full_event.get("move") != "SOFTBOILED"
+        or full_event.get("blocked_reason") != "hp_full"
+        or full_event.get("heal") != 0
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: self-heal full-HP mismatch: {full_event}",
+            file=sys.stderr,
+        )
+        raise AuditFailure
+    residual_payload = scenario_template()
+    residual_payload["state"]["player"]["hp"] = 10
+    residual_payload["state"]["player"]["max_hp"] = 40
+    residual_payload["state"]["player"]["status"] = "poison"
+    residual_payload["state"]["player"]["moves"] = [{"name": "RECOVER"}]
+    residual_payload["state"]["enemy"]["moves"][0]["bp"] = 0
+    residual_events = simulate_payload(residual_payload)["outcomes"][0]["events"]
+    if (
+        len(residual_events) < 2
+        or residual_events[0].get("type") != "self_heal"
+        or residual_events[0].get("hp_after") != 30
+        or residual_events[1].get("type") != "residual_damage"
+        or residual_events[1].get("damage") != 5
+        or residual_events[1].get("hp_after") != 25
+    ):
+        print(
+            f"Headless battle simulator audit FAILED: self-heal residual handoff mismatch: {residual_events}",
+            file=sys.stderr,
+        )
+        raise AuditFailure
+    print("selected_self_heal_moves: PASS recover_half_hp milk_drink_cap softboiled_full residual_handoff")
 
 
 def _audit_selected_poison_status_moves() -> None:
@@ -2427,11 +2650,18 @@ def _audit_clobber_smoke() -> None:
 AUDITS = (
     _audit_simulator_self_test,
     _audit_normal_hit_fixed_rng_differential,
+    _audit_damage_variation_component_differential,
+    _audit_critical_component_differential,
     _audit_damaging_status_component_differential,
     _audit_drain_component_differential,
+    _audit_selected_drain_move_turn_differential,
     _audit_item_restore_component_differential,
     _audit_full_restore_status_cure_component_differential,
     _audit_basic_pp_decrement,
+    _audit_weather_setup_component_differential,
+    _audit_selected_self_heal_move_turn_differential,
+    _audit_selected_rest_move_turn_differential,
+    _audit_supported_after_hit_item_effects_differential,
     _audit_supported_after_hit_items,
     _audit_explicit_active_hp_restore_items,
     _audit_selected_weather_setup_moves,

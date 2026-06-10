@@ -25,9 +25,19 @@ Callers can pass additional tags (``wincon_preservation`` etc) via
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Iterable
 
 from tools.boss_ai_debugger.role_packages import parse_species_order
+from tools.debugger.canonical_state_class import (
+    build_canonical_state_class,
+    stable_json_hash,
+)
+from tools.debugger.report_envelope import (
+    proof_dirty_diff_hash,
+    proof_source_tree_hash,
+    sha256_file,
+)
 from tools.headless_battle.simulator import (
     BattleState,
     PokemonState,
@@ -36,6 +46,7 @@ from tools.headless_battle.simulator import (
 )
 
 
+ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PLAYER_NAME = "STARMIE"
 FIXTURE_PLAYER_TYPES = ("GROUND", "GROUND")
 FIXTURE_ENEMY_NAME = "QWILFISH"
@@ -180,7 +191,110 @@ def headless_to_switch_sack_scenario(
         overrides = scenario.setdefault("overrides", {})
         overrides["player_used_moves"] = [0, 0, 0, 0]
         overrides["species_used_moves"] = [0] * 24
+    canonical = build_headless_switch_sack_class(
+        battle_state,
+        scenario,
+        accept_overrides=accept_overrides,
+        unrevealed_player_moves=unrevealed_player_moves,
+    )
+    scenario["canonical_state_class"] = canonical
+    scenario["class_id"] = canonical.get("class_id", "")
+    scenario["class_fingerprint"] = canonical.get("class_fingerprint", "")
     return scenario
+
+
+def headless_switch_sack_identity(*, root: Path = ROOT) -> dict[str, str]:
+    return {
+        "rom_sha256": sha256_file("pokegold_trace.gbc", root=root) or "missing",
+        "symbols_sha256": sha256_file("pokegold_trace.sym", root=root) or "missing",
+        "map_sha256": sha256_file("pokegold_trace.map", root=root) or "missing",
+        "rule_map_sha256": stable_json_hash(
+            {
+                "surface": "headless_battle",
+                "exporter": "headless_to_switch_sack_scenario",
+                "fixture": "switch_sack",
+                "thresholds": {
+                    "defensive_sack_hp": DEFENSIVE_SACK_HP_THRESHOLD,
+                    "active_pressure_hp": ACTIVE_PRESSURE_HP_THRESHOLD,
+                },
+            }
+        ),
+        "source_tree_sha256": proof_source_tree_hash(root),
+        "dirty_diff_hash": proof_dirty_diff_hash(root),
+    }
+
+
+def build_headless_switch_sack_class(
+    battle_state: BattleState,
+    scenario: dict[str, Any],
+    *,
+    accept_overrides: bool,
+    unrevealed_player_moves: bool,
+    identity: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    bench_lead = battle_state.enemy_bench[0] if battle_state.enemy_bench else None
+    expectation = scenario.get("expectation") if isinstance(scenario.get("expectation"), dict) else {}
+    return build_canonical_state_class(
+        surface="headless_battle",
+        identity=identity or headless_switch_sack_identity(),
+        public_facts={
+            "scenario_id": scenario.get("id", ""),
+            "family": scenario.get("family", ""),
+            "policy_case": scenario.get("policy_case", ""),
+            "tier": scenario.get("tier", ""),
+            "condition_tags": expectation.get("condition_tags", []),
+            "player_active": _mon_public_facts(battle_state.player),
+            "enemy_active": _mon_public_facts(battle_state.enemy),
+            "enemy_bench_lead": _mon_public_facts(bench_lead) if bench_lead else {},
+            "field": {
+                "weather": battle_state.weather,
+                "weather_count": battle_state.weather_count,
+                "player_spikes": battle_state.player_spikes,
+                "enemy_spikes": battle_state.enemy_spikes,
+                "player_safeguard": battle_state.player_safeguard,
+                "enemy_safeguard": battle_state.enemy_safeguard,
+            },
+        },
+        surface_facts={
+            "battle": {
+                "decision_surface": "headless_switch_sack_export",
+                "fixture_domain": scenario.get("exporter", {}).get("fixture_domain", ""),
+                "accept_overrides": accept_overrides,
+                "unrevealed_player_moves": unrevealed_player_moves,
+            }
+        },
+        backend="static_plus_component_rom",
+        proof_status="missing_proof_artifact",
+        raw_state_provenance={
+            "kind": "headless_battle_switch_sack_export",
+            "scenario_id": scenario.get("id", ""),
+        },
+        missing_evidence=["rom_switch_materialization_proof"],
+        blocking_gaps=["headless_battle_switch_sack_class_lacks_rom_proof_artifact"],
+        known_limits=[
+            "Headless switch-sack class ids identify exported turn-level public boards before ROM materialization.",
+            "The exporter is still a fixture/override bridge, not a full-battle proof.",
+        ],
+        source_refs=["tools/headless_battle/rom_switch_scenario_export.py"],
+    )
+
+
+def _mon_public_facts(mon: PokemonState | None) -> dict[str, Any]:
+    if mon is None:
+        return {}
+    return {
+        "name": mon.name,
+        "types": list(mon.type_names),
+        "hp": mon.hp,
+        "max_hp": mon.max_hp,
+        "status": mon.status,
+        "item": mon.item,
+        "stat_stages": list(_stat_stages_for(mon)),
+        "substitute": mon.substitute,
+        "substitute_hp": mon.substitute_hp,
+        "toxic_count": mon.toxic_count,
+        "sleep_turns": mon.sleep_turns,
+    }
 
 
 def _board_to_overrides(battle_state: BattleState) -> dict[str, Any]:

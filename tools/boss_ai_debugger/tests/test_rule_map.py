@@ -36,6 +36,18 @@ class RuleMapTests(unittest.TestCase):
         self.assertTrue(rule["requires_public_read_provenance"])
         self.assertIn("wPlayerUsedMoves", rule["expected_public_inputs"])
 
+    def test_adaptive_lead_entrypoint_is_explicit_rule(self) -> None:
+        data = build_rule_map()
+        by_label = {rule["source_label"]: rule for rule in data["rules"]}
+        rule = by_label["MaybePickAdaptiveEnemyLead"]
+
+        self.assertEqual(rule["rule_id"], "move.maybe_pick_adaptive_enemy_lead")
+        self.assertEqual(rule["classification"], "platform_boundary")
+        self.assertTrue(rule["executable"])
+        self.assertTrue(rule["dynamic_coverage_target"])
+        self.assertFalse(rule["score_trace_target"])
+        self.assertEqual(rule["coverage_mode"], "rom_execution_hook")
+
     def test_static_boss_ai_tables_are_not_dynamic_coverage_targets(self) -> None:
         data = build_rule_map()
         by_label = {rule["source_label"]: rule for rule in data["rules"]}
@@ -44,6 +56,15 @@ class RuleMapTests(unittest.TestCase):
         self.assertFalse(table["executable"])
         self.assertFalse(table["dynamic_coverage_target"])
         self.assertEqual(table["coverage_mode"], "static_reference")
+
+    def test_unreachable_stub_is_not_dynamic_coverage_target(self) -> None:
+        data = build_rule_map()
+        by_label = {rule["source_label"]: rule for rule in data["rules"]}
+        rule = by_label["BossAI_IsScarfSwingPossible"]
+
+        self.assertTrue(rule["executable"])
+        self.assertFalse(rule["dynamic_coverage_target"])
+        self.assertEqual(rule["coverage_mode"], "static_reference")
 
     def test_cli_rule_map_build_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
