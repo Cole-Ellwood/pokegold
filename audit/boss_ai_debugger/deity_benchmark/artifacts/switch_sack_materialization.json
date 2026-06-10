@@ -40,7 +40,7 @@
       "move_id": null,
       "name": "Comfort Damage",
       "pre_lookahead_score": 13,
-      "selector_probability": 0.95703125,
+      "selector_probability": 1.0,
       "slot": 1
     },
     {
@@ -82,7 +82,7 @@
       "move_id": null,
       "name": "Switch Preserve Wincon",
       "pre_lookahead_score": 18,
-      "selector_probability": 0.04296875,
+      "selector_probability": 0.0,
       "slot": 2
     },
     {
@@ -248,10 +248,10 @@
     "closed_evidence_ids": [
       "decision_input.generated_auto"
     ],
-    "generated_at": "2026-05-31T02:20:19Z",
+    "generated_at": "2026-06-04T12:12:32Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+      "current_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+      "current_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
     },
     "kind": "boss_ai_decision_input_manifest",
     "known_limits": [
@@ -270,9 +270,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "5878A47183E87755C55482201780782F1BDEEB709CB24D1C3DB095448CC1D2CC",
-      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
-      "scenario_artifact_sha256": "60BAC64E463541E3473536F69B56D65258535FA86BC01ED563D9A46797D01066"
+      "dirty_diff_sha256": "760C536C32BEE8D9108896941DDA067F05FE0C1B14491A06A08198E18F66704F",
+      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+      "scenario_artifact_sha256": "EEA88D055EFCFFB0E8B4AB583C4471A07A25CCB487B2582C7D770B533E92E2D6"
     },
     "target": {
       "case": "best_review",
@@ -293,7 +293,7 @@
           "final_score": 12,
           "kind": "move",
           "name": "Comfort Damage",
-          "selector_probability": 0.95703125
+          "selector_probability": 1.0
         },
         {
           "action_id": "move_preserve_wincon_switch",
@@ -301,7 +301,7 @@
           "final_score": 18,
           "kind": "switch",
           "name": "Switch Preserve Wincon",
-          "selector_probability": 0.04296875
+          "selector_probability": 0.0
         },
         {
           "action_id": "move_support_status",
@@ -404,13 +404,13 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "switch.compute_switch_confidence",
-          "source": "engine\\battle\\ai\\boss_policy_switch.asm:905"
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:987"
         },
         {
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "switch.get_switch_threshold",
-          "source": "engine\\battle\\ai\\boss_policy_switch.asm:595"
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:677"
         }
       ]
     },
@@ -462,9 +462,11 @@
       "policy_verdict": "acceptable_top",
       "rolled_bad_action_ids": [],
       "rolled_catastrophic_action_ids": [],
-      "summary": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
+      "summary": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; zero_p_best=move_preserve_wincon_switch; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
       "why": "When the active can leave and a preserved owner owns the next board, rank the switch above comfortable chip.",
-      "zero_probability_best_action_ids": []
+      "zero_probability_best_action_ids": [
+        "move_preserve_wincon_switch"
+      ]
     },
     "python_agreement": "policy_agreement=True",
     "selector_choice_explanation": {},
@@ -749,7 +751,7 @@
         "status": "present"
       },
       {
-        "detail": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
+        "detail": "verdict=acceptable_top; expected_best=move_preserve_wincon_switch; acceptable=move_comfort_damage; bad=move_panic_cashout; zero_p_best=move_preserve_wincon_switch; reason=ROM top action is acceptable but not expected-best; why=When the active can leave and a preserved owner owns the next board, rank the switch above co...",
         "id": "policy_expectation.reported",
         "status": "present"
       },
@@ -850,22 +852,22 @@
   "python_mirror": {
     "available": true,
     "best_action_id": "move_comfort_damage",
-    "best_roll_threshold": 245,
+    "best_roll_threshold": null,
     "best_score": 12,
-    "gap": 6,
+    "gap": null,
     "policy_reason": "ROM top action is acceptable but not expected-best",
     "policy_verdict": "acceptable_top",
     "probabilities": {
-      "move_comfort_damage": 0.95703125,
+      "move_comfort_damage": 1.0,
       "move_panic_cashout": 0.0,
-      "move_preserve_wincon_switch": 0.04296875,
+      "move_preserve_wincon_switch": 0.0,
       "move_support_status": 0.0
     },
     "rom_comparison": {
       "policy_agreement": true
     },
-    "second_action_id": "move_preserve_wincon_switch",
-    "second_score": 18
+    "second_action_id": null,
+    "second_score": null
   },
   "question": {
     "confidence": "medium",
@@ -891,7 +893,9 @@
     "rolled_bad_action_ids": [],
     "rolled_catastrophic_action_ids": [],
     "rom_best_action_id": "move_comfort_damage",
-    "zero_probability_best_action_ids": []
+    "zero_probability_best_action_ids": [
+      "move_preserve_wincon_switch"
+    ]
   },
   "rom_contributions": {
     "available": false,
@@ -1062,7 +1066,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_route_execution_hook",
-      "line": 905,
+      "line": 987,
       "parent_label": "BossAI_ComputeSwitchConfidence",
       "public_reads": [],
       "rule_id": "switch.compute_switch_confidence",
@@ -1073,7 +1077,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_route_execution_hook",
-      "line": 595,
+      "line": 677,
       "parent_label": "BossAI_GetSwitchThreshold",
       "public_reads": [],
       "rule_id": "switch.get_switch_threshold",

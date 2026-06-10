@@ -14,114 +14,20 @@
       "status": "pass"
     }
   ],
-  "candidate_scores": [
-    {
-      "action_id": "slot1:SWORDS_DANCE",
-      "blocked": false,
-      "contributions": [
-        {
-          "after": 0,
-          "before": 0,
-          "delta": 0,
-          "note": "Captured pre/post model score byte delta from live trace.",
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source_anchor": null
-        }
-      ],
-      "final_score": 20,
-      "initial_score": 0,
-      "move_id": 14,
-      "name": "SWORDS_DANCE",
-      "pre_lookahead_score": 0,
-      "selector_probability": 0.95703125,
-      "slot": 1,
-      "slot_index": 0
-    },
-    {
-      "action_id": "slot2:STEEL_WING",
-      "blocked": false,
-      "contributions": [
-        {
-          "after": 0,
-          "before": 0,
-          "delta": 0,
-          "note": "Captured pre/post model score byte delta from live trace.",
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source_anchor": null
-        }
-      ],
-      "final_score": 31,
-      "initial_score": 0,
-      "move_id": 211,
-      "name": "STEEL_WING",
-      "pre_lookahead_score": 0,
-      "selector_probability": 0.04296875,
-      "slot": 2,
-      "slot_index": 1
-    },
-    {
-      "action_id": "slot3:QUICK_ATTACK",
-      "blocked": false,
-      "contributions": [
-        {
-          "after": 0,
-          "before": 0,
-          "delta": 0,
-          "note": "Captured pre/post model score byte delta from live trace.",
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source_anchor": null
-        }
-      ],
-      "final_score": 46,
-      "initial_score": 0,
-      "move_id": 98,
-      "name": "QUICK_ATTACK",
-      "pre_lookahead_score": 0,
-      "selector_probability": 0.0,
-      "slot": 3,
-      "slot_index": 2
-    },
-    {
-      "action_id": "slot4:WING_ATTACK",
-      "blocked": false,
-      "contributions": [
-        {
-          "after": 0,
-          "before": 0,
-          "delta": 0,
-          "note": "Captured pre/post model score byte delta from live trace.",
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source_anchor": null
-        }
-      ],
-      "final_score": 46,
-      "initial_score": 0,
-      "move_id": 17,
-      "name": "WING_ATTACK",
-      "pre_lookahead_score": 0,
-      "selector_probability": 0.0,
-      "slot": 4,
-      "slot_index": 3
-    }
-  ],
+  "candidate_scores": [],
   "closed_evidence_ids": [
     "decision_input.auto_resolved",
     "input_manifest.replay_verified",
     "observed_rom_decision",
-    "candidate_scores",
     "score_bytes",
-    "selector_path",
     "switch_path",
     "switch_materialization",
-    "python_score_contributions",
     "public_info_inputs",
     "source_anchors",
     "counterfactual",
-    "counterfactual.decisive"
+    "counterfactual.decisive",
+    "switch_materialization.proven",
+    "switch_roll.reported"
   ],
   "counterfactual": {
     "answer_changing_information": [],
@@ -129,57 +35,7 @@
     "public_fact_counterfactuals": [
       "Attach a ROM contribution trace for this route to identify which public branch or score rule would move the score bytes."
     ],
-    "selector_roll_counterfactual": {
-      "alternate_action_id": "slot1:SWORDS_DANCE",
-      "alternate_roll_range": {
-        "count": 245,
-        "max": 244,
-        "min": 0
-      },
-      "available": true,
-      "best_action_id": "slot1:SWORDS_DANCE",
-      "best_probability": 0.95703125,
-      "best_roll_range": {
-        "count": 245,
-        "max": 244,
-        "min": 0
-      },
-      "best_roll_threshold": 245,
-      "best_score": 20,
-      "chosen_action_id": "slot2:STEEL_WING",
-      "chosen_rank": "second",
-      "chosen_roll_range": {
-        "count": 11,
-        "max": 255,
-        "min": 245
-      },
-      "observed_choice_due_to_random_roll": true,
-      "reason": "observed action was the selector second candidate, so score bytes favored the best candidate but the BossAI_SelectMove roll selected the second candidate",
-      "roll_denominator": 256,
-      "score_gap": 11,
-      "second_action_id": "slot2:STEEL_WING",
-      "second_probability": 0.04296875,
-      "second_roll_range": {
-        "count": 11,
-        "max": 255,
-        "min": 245
-      },
-      "second_score": 31,
-      "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
-      "summary": "chosen=slot2:STEEL_WING roll=245..255 (11/256); alternate=slot1:SWORDS_DANCE if roll=0..244 (245/256); threshold=245/256"
-    },
-    "smallest_score_flip": {
-      "action_id": "slot2:STEEL_WING",
-      "available": true,
-      "current_score": 31,
-      "move_id": 211,
-      "name": "STEEL_WING",
-      "reason": "lower expected action below current ROM best score",
-      "required_delta": -12,
-      "slot": 2,
-      "slot_index": 1,
-      "target_score": 19
-    },
+    "smallest_score_flip": null,
     "switch_roll_counterfactual": {
       "available": true,
       "confidence": 99,
@@ -197,7 +53,7 @@
       "nonzero_guaranteed_at_confidence": 88,
       "nonzero_possible_at_confidence": 70,
       "note": "Switch counterfactuals move the source-mirrored confidence/threshold roll surface; actual switching can still depend on RNG when probability is nonzero.",
-      "observation_status": "switch_proposal_observed",
+      "observation_status": "actual_switch_observed",
       "possible_effective_thresholds": [
         70,
         78,
@@ -217,12 +73,12 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified"
     ],
-    "generated_at": "2026-05-31T02:20:16Z",
+    "generated_at": "2026-06-04T12:12:27Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "manifest_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+      "current_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+      "current_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
+      "manifest_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+      "manifest_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
       "trace_rom_matches_manifest": true,
       "trace_symbols_matches_manifest": true
     },
@@ -232,16 +88,13 @@
       "Replay verification proves selector agreement for the captured score bytes; full score-rule provenance still needs rom-contribution-trace when absent."
     ],
     "replay_verification": {
-      "chosen_id": 211,
-      "expected_move_ids": [
-        14,
-        211
-      ],
+      "chosen_id": 0,
+      "expected_move_ids": [],
       "match": true,
       "method": "BossAI_SelectMove trace replay over captured score bytes",
-      "mode": "exact",
-      "reason": "chosen slot has nonzero selector probability",
-      "verdict": "match",
+      "mode": "none",
+      "reason": "trace has no chosen move",
+      "verdict": "no_decision",
       "verified": true
     },
     "resolution": {
@@ -256,9 +109,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "6C6560626F5AF81C74B64222089D0DFDD852A3F7B8F4F9B85B0452F276A5C571",
-      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
-      "trace_artifact_sha256": "55A8137A4F721889550453FFB255FC43AB39E049E35AD2925EE3B88E513C09BB"
+      "dirty_diff_sha256": "A9D7525211AFBE3F9573D33D3F1673AB688169FAB8C6E4ECE445954300542DB0",
+      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+      "trace_artifact_sha256": "F42D744A6A9EBE81EA057BDA76CA0EC2B004D529BD88CF677C7736FD5571FE57"
     },
     "target": {
       "boss_route": "shared_switch_loop",
@@ -273,88 +126,14 @@
   "decision_summary": {
     "decisive_counterfactual": "switch confidence=99 probability=75.0%-89.8%; force_zero_delta=-30 guarantee_nonzero_delta=0",
     "evidence_highlights": {
-      "candidate_scores": [
-        {
-          "action_id": "slot1:SWORDS_DANCE",
-          "blocked": false,
-          "final_score": 20,
-          "kind": "move",
-          "name": "SWORDS_DANCE",
-          "selector_probability": 0.95703125
-        },
-        {
-          "action_id": "slot2:STEEL_WING",
-          "blocked": false,
-          "final_score": 31,
-          "kind": "move",
-          "name": "STEEL_WING",
-          "selector_probability": 0.04296875
-        },
-        {
-          "action_id": "slot3:QUICK_ATTACK",
-          "blocked": false,
-          "final_score": 46,
-          "kind": "move",
-          "name": "QUICK_ATTACK",
-          "selector_probability": 0.0
-        },
-        {
-          "action_id": "slot4:WING_ATTACK",
-          "blocked": false,
-          "final_score": 46,
-          "kind": "move",
-          "name": "WING_ATTACK",
-          "selector_probability": 0.0
-        }
-      ],
+      "candidate_scores": [],
       "public_inputs": [
         "trace.boss=Shared switch-loop",
         "trace.notes=synthetic Jasmine battle context; repeated-switch state records current switc...",
         "trace.tier=2",
         "trace.plan_id=2"
       ],
-      "rule_deltas": [
-        {
-          "after": 0,
-          "before": 0,
-          "candidate": "slot1:SWORDS_DANCE",
-          "delta": 0,
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source": "python_or_live_score_delta",
-          "source_anchor": null
-        },
-        {
-          "after": 0,
-          "before": 0,
-          "candidate": "slot2:STEEL_WING",
-          "delta": 0,
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source": "python_or_live_score_delta",
-          "source_anchor": null
-        },
-        {
-          "after": 0,
-          "before": 0,
-          "candidate": "slot3:QUICK_ATTACK",
-          "delta": 0,
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source": "python_or_live_score_delta",
-          "source_anchor": null
-        },
-        {
-          "after": 0,
-          "before": 0,
-          "candidate": "slot4:WING_ATTACK",
-          "delta": 0,
-          "rule": "captured_model_score_delta",
-          "rule_id": "live_trace.model_score_delta",
-          "source": "python_or_live_score_delta",
-          "source_anchor": null
-        }
-      ],
+      "rule_deltas": [],
       "source_anchors": [
         {
           "classification": "platform_boundary",
@@ -372,22 +151,23 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "switch.compute_switch_confidence",
-          "source": "engine\\battle\\ai\\boss_policy_switch.asm:905"
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:987"
         },
         {
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "switch.get_switch_threshold",
-          "source": "engine\\battle\\ai\\boss_policy_switch.asm:595"
+          "source": "engine\\battle\\ai\\boss_policy_switch.asm:677"
         }
       ]
     },
     "focus_action_comparison": {},
     "missing_evidence": [
+      "candidate_scores",
+      "selector_path",
+      "python_score_contributions",
       "rom_contribution_deltas",
-      "rom_public_read_provenance",
-      "switch_materialization.proven",
-      "switch_roll.reported"
+      "rom_public_read_provenance"
     ],
     "next_proof_chain": [
       {
@@ -427,31 +207,13 @@
       ],
       "purpose": "Capture ROM score-rule contribution deltas for this route"
     },
-    "observed": "ROM live trace chose NO_MOVE slot=2 score=31",
-    "path": "selector best=slot1:SWORDS_DANCE score=20 second=slot2:STEEL_WING score=31 gap=11 threshold=245/256 prob=slot1:SWORDS_DANCE=95.7%, slot2:STEEL_WING=4.3%; switch switch_proposal_observed confidence=99 target=2 switch_probability=75.0%-89.8%",
+    "observed": "ROM live trace chose NO_MOVE slot=2 score=None",
+    "path": "switch actual_switch_observed confidence=99 target=2 switch_probability=75.0%-89.8%",
     "policy_expectation": {},
-    "python_agreement": "agreement=True reason=chosen slot has nonzero selector probability",
-    "selector_choice_explanation": {
-      "available": true,
-      "best_action_id": "slot1:SWORDS_DANCE",
-      "best_roll_threshold": 245,
-      "best_score": 20,
-      "chosen_action_id": "slot2:STEEL_WING",
-      "chosen_has_nonzero_probability": true,
-      "chosen_probability": 0.04296875,
-      "chosen_rank": "second",
-      "possible_action_ids": [
-        "slot1:SWORDS_DANCE",
-        "slot2:STEEL_WING"
-      ],
-      "reason": "observed action was the second selector candidate with nonzero BossAI_SelectMove roll probability",
-      "score_gap": 11,
-      "second_action_id": "slot2:STEEL_WING",
-      "second_score": 31,
-      "summary": "chosen second candidate via selector roll; chosen=slot2:STEEL_WING; p=4.3%; best=slot1:SWORDS_DANCE; second=slot2:STEEL_WING; gap=11; threshold=245/256"
-    },
+    "python_agreement": "agreement=True reason=trace has no chosen move",
+    "selector_choice_explanation": {},
     "status": "needs_contribution_proof",
-    "why": "selector best=slot1:SWORDS_DANCE score=20 second=slot2:STEEL_WING score=31 gap=11 threshold=245/256 prob=slot1:SWORDS_DANCE=95.7%, slot2:STEEL_WING=4.3%; switch switch_proposal_observed confidence=99 target=2 switch_probability=75.0%-89.8%"
+    "why": "switch actual_switch_observed confidence=99 target=2 switch_probability=75.0%-89.8%"
   },
   "decision_trace_summary": {
     "event_count": 0,
@@ -555,16 +317,13 @@
     "available": true,
     "capture_id": "Shared switch-loop#1",
     "decision": {
-      "chosen_id": 211,
+      "chosen_id": 0,
       "chosen_move_name": "NO_MOVE",
-      "chosen_score": 31,
+      "chosen_score": null,
       "chosen_slot": 1,
       "chosen_slot_1_based": 2,
       "chosen_slot_index": 1,
-      "expected_move_ids": [
-        14,
-        211
-      ],
+      "expected_move_ids": [],
       "model_score_deltas": [
         0,
         0,
@@ -572,25 +331,19 @@
         0
       ],
       "move_ids": [
-        14,
-        211,
-        98,
-        17
+        229,
+        92,
+        182,
+        153
       ],
       "move_scores": [
         20,
-        31,
-        46,
-        46
+        37,
+        38,
+        38
       ],
-      "possible_action_ids": [
-        "slot1:SWORDS_DANCE",
-        "slot2:STEEL_WING"
-      ],
-      "possible_move_ids": [
-        14,
-        211
-      ],
+      "possible_action_ids": [],
+      "possible_move_ids": [],
       "post_model_scores": [
         0,
         0,
@@ -603,110 +356,21 @@
         0,
         0
       ],
-      "selector": {
-        "best_move_id": 14,
-        "best_roll_threshold": 245,
-        "best_score": 20,
-        "best_slot_index": 0,
-        "gap": 11,
-        "possible_move_ids": [
-          14,
-          211
-        ],
-        "possible_slot_indices": [
-          0,
-          1
-        ],
-        "probabilities_by_slot": {
-          "0": 0.95703125,
-          "1": 0.04296875,
-          "2": 0.0,
-          "3": 0.0
-        },
-        "ready": true,
-        "scenario_id": "Shared switch-loop#1",
-        "second_move_id": 211,
-        "second_score": 31,
-        "second_slot_index": 1,
-        "slots": [
-          {
-            "blocked": false,
-            "move_id": 14,
-            "name": "SWORDS_DANCE",
-            "score": 20,
-            "slot": 1,
-            "slot_index": 0
-          },
-          {
-            "blocked": false,
-            "move_id": 211,
-            "name": "STEEL_WING",
-            "score": 31,
-            "slot": 2,
-            "slot_index": 1
-          },
-          {
-            "blocked": false,
-            "move_id": 98,
-            "name": "QUICK_ATTACK",
-            "score": 46,
-            "slot": 3,
-            "slot_index": 2
-          },
-          {
-            "blocked": false,
-            "move_id": 17,
-            "name": "WING_ATTACK",
-            "score": 46,
-            "slot": 4,
-            "slot_index": 3
-          }
-        ],
-        "tier": 2
-      },
+      "selector": {},
       "selector_path": {
         "agreement": true,
-        "agreement_reason": "chosen slot has nonzero selector probability",
-        "available": true,
-        "best_action_id": "slot1:SWORDS_DANCE",
-        "best_move_id": 14,
-        "best_roll_threshold": 245,
-        "best_score": 20,
-        "best_slot_index": 0,
-        "candidate_probabilities": {
-          "slot1:SWORDS_DANCE": 0.95703125,
-          "slot2:STEEL_WING": 0.04296875,
-          "slot3:QUICK_ATTACK": 0.0,
-          "slot4:WING_ATTACK": 0.0
-        },
-        "chosen_action_id": "slot2:STEEL_WING",
-        "chosen_has_nonzero_probability": true,
-        "chosen_move_id": 211,
-        "chosen_probability": 0.04296875,
-        "chosen_slot_index": 1,
-        "possible_action_ids": [
-          "slot1:SWORDS_DANCE",
-          "slot2:STEEL_WING"
-        ],
-        "possible_move_ids": [
-          14,
-          211
-        ],
-        "score_gap": 11,
-        "second_action_id": "slot2:STEEL_WING",
-        "second_move_id": 211,
-        "second_score": 31,
-        "second_slot_index": 1,
-        "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+        "agreement_reason": "trace has no chosen move",
+        "available": false,
+        "reason": "exact score-byte selector fields unavailable"
       },
       "switch_confidence": 99,
-      "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+      "switch_context": "param=31,index=02,last_out=01,cooldown=02,cur_ot=00",
       "switch_path": {
-        "actual_switch": false,
+        "actual_switch": true,
         "cooldown": 2,
         "cur_ot": 0,
-        "last_switched_out": 2,
-        "observation_status": "switch_proposal_observed",
+        "last_switched_out": 1,
+        "observation_status": "actual_switch_observed",
         "observed": true,
         "proposed_switch": true,
         "proposed_target_1_based": 2,
@@ -714,11 +378,11 @@
         "switch_context": {
           "cooldown": 2,
           "cur_ot": 0,
-          "index": 0,
-          "last_out": 2,
+          "index": 2,
+          "last_out": 1,
           "param": 49
         },
-        "switch_index": 0,
+        "switch_index": 2,
         "switch_param": 49,
         "switch_roll": {
           "available": true,
@@ -764,10 +428,10 @@
     "python_agreement": {
       "agreement": true,
       "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
-      "reason": "chosen slot has nonzero selector probability"
+      "reason": "trace has no chosen move"
     },
-    "reason": "chosen slot has nonzero selector probability",
-    "status": "match"
+    "reason": "trace has no chosen move",
+    "status": "no_decision"
   },
   "proof_blockers": [],
   "proof_status": {
@@ -779,7 +443,7 @@
         "status": "present"
       },
       {
-        "detail": "chosen slot has nonzero selector probability",
+        "detail": "trace has no chosen move",
         "id": "input_manifest.replay_verified",
         "status": "present"
       },
@@ -789,22 +453,22 @@
         "status": "present"
       },
       {
-        "detail": "candidates=4",
+        "detail": "candidates=0",
         "id": "candidate_scores",
-        "status": "present"
+        "status": "missing"
       },
       {
-        "detail": "move_scores=[20, 31, 46, 46]",
+        "detail": "move_scores=[20, 37, 38, 38]",
         "id": "score_bytes",
         "status": "present"
       },
       {
-        "detail": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
+        "detail": "exact score-byte selector fields unavailable",
         "id": "selector_path",
-        "status": "present"
+        "status": "missing"
       },
       {
-        "detail": "switch_proposal_observed",
+        "detail": "actual_switch_observed",
         "id": "switch_path",
         "status": "present"
       },
@@ -816,7 +480,7 @@
       {
         "detail": "candidate contribution deltas from the Python/debugger model",
         "id": "python_score_contributions",
-        "status": "present"
+        "status": "missing"
       },
       {
         "detail": "matched_events=0",
@@ -859,21 +523,22 @@
         "status": "not_applicable"
       },
       {
-        "detail": "switch materialization not attached",
+        "detail": "ROM switch materialization attached",
         "id": "switch_materialization.proven",
-        "status": "missing"
+        "status": "present"
       },
       {
-        "detail": "switch materialization not attached",
+        "detail": "ROM switch roll packet available",
         "id": "switch_roll.reported",
-        "status": "missing"
+        "status": "present"
       }
     ],
     "missing_ids": [
+      "candidate_scores",
+      "selector_path",
+      "python_score_contributions",
       "rom_contribution_deltas",
-      "rom_public_read_provenance",
-      "switch_materialization.proven",
-      "switch_roll.reported"
+      "rom_public_read_provenance"
     ],
     "next_proof_chain": [
       {
@@ -918,16 +583,15 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified",
       "observed_rom_decision",
-      "candidate_scores",
       "score_bytes",
-      "selector_path",
       "switch_path",
       "switch_materialization",
-      "python_score_contributions",
       "public_info_inputs",
       "source_anchors",
       "counterfactual",
-      "counterfactual.decisive"
+      "counterfactual.decisive",
+      "switch_materialization.proven",
+      "switch_roll.reported"
     ],
     "status": "needs_contribution_proof"
   },
@@ -952,37 +616,32 @@
       "revealed_masks": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
       "risk_flags": "00 (none)",
       "switch_confidence": "99",
-      "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+      "switch_context": "param=31,index=02,last_out=01,cooldown=02,cur_ot=00",
       "tier": "2"
     }
   },
   "python_mirror": {
     "available": true,
-    "best_action_id": "slot1:SWORDS_DANCE",
-    "best_roll_threshold": 245,
-    "best_score": 20,
-    "gap": 11,
+    "best_action_id": null,
+    "best_roll_threshold": null,
+    "best_score": null,
+    "gap": null,
     "mirror_scope": "selector_from_rom_score_bytes",
     "policy_reason": "live trace input has no generated scenario expectation",
     "policy_verdict": "not_applicable_without_scenario_expectation",
-    "probabilities": {
-      "slot1:SWORDS_DANCE": 0.95703125,
-      "slot2:STEEL_WING": 0.04296875,
-      "slot3:QUICK_ATTACK": 0.0,
-      "slot4:WING_ATTACK": 0.0
-    },
+    "probabilities": {},
     "rom_comparison": {
       "agreement": true,
-      "reason": "chosen slot has nonzero selector probability"
+      "reason": "trace has no chosen move"
     },
-    "second_action_id": "slot2:STEEL_WING",
-    "second_score": 31
+    "second_action_id": null,
+    "second_score": null
   },
   "question": {
     "expected_acceptable_action_ids": [],
     "expected_best_action_ids": [],
     "focus_action_id": "",
-    "rom_best_action_id": "slot1:SWORDS_DANCE"
+    "rom_best_action_id": null
   },
   "rom_contributions": {
     "available": false,
@@ -997,16 +656,13 @@
       "available": true,
       "capture_id": "Shared switch-loop#1",
       "decision": {
-        "chosen_id": 211,
+        "chosen_id": 0,
         "chosen_move_name": "NO_MOVE",
-        "chosen_score": 31,
+        "chosen_score": null,
         "chosen_slot": 1,
         "chosen_slot_1_based": 2,
         "chosen_slot_index": 1,
-        "expected_move_ids": [
-          14,
-          211
-        ],
+        "expected_move_ids": [],
         "model_score_deltas": [
           0,
           0,
@@ -1014,25 +670,19 @@
           0
         ],
         "move_ids": [
-          14,
-          211,
-          98,
-          17
+          229,
+          92,
+          182,
+          153
         ],
         "move_scores": [
           20,
-          31,
-          46,
-          46
+          37,
+          38,
+          38
         ],
-        "possible_action_ids": [
-          "slot1:SWORDS_DANCE",
-          "slot2:STEEL_WING"
-        ],
-        "possible_move_ids": [
-          14,
-          211
-        ],
+        "possible_action_ids": [],
+        "possible_move_ids": [],
         "post_model_scores": [
           0,
           0,
@@ -1045,110 +695,21 @@
           0,
           0
         ],
-        "selector": {
-          "best_move_id": 14,
-          "best_roll_threshold": 245,
-          "best_score": 20,
-          "best_slot_index": 0,
-          "gap": 11,
-          "possible_move_ids": [
-            14,
-            211
-          ],
-          "possible_slot_indices": [
-            0,
-            1
-          ],
-          "probabilities_by_slot": {
-            "0": 0.95703125,
-            "1": 0.04296875,
-            "2": 0.0,
-            "3": 0.0
-          },
-          "ready": true,
-          "scenario_id": "Shared switch-loop#1",
-          "second_move_id": 211,
-          "second_score": 31,
-          "second_slot_index": 1,
-          "slots": [
-            {
-              "blocked": false,
-              "move_id": 14,
-              "name": "SWORDS_DANCE",
-              "score": 20,
-              "slot": 1,
-              "slot_index": 0
-            },
-            {
-              "blocked": false,
-              "move_id": 211,
-              "name": "STEEL_WING",
-              "score": 31,
-              "slot": 2,
-              "slot_index": 1
-            },
-            {
-              "blocked": false,
-              "move_id": 98,
-              "name": "QUICK_ATTACK",
-              "score": 46,
-              "slot": 3,
-              "slot_index": 2
-            },
-            {
-              "blocked": false,
-              "move_id": 17,
-              "name": "WING_ATTACK",
-              "score": 46,
-              "slot": 4,
-              "slot_index": 3
-            }
-          ],
-          "tier": 2
-        },
+        "selector": {},
         "selector_path": {
           "agreement": true,
-          "agreement_reason": "chosen slot has nonzero selector probability",
-          "available": true,
-          "best_action_id": "slot1:SWORDS_DANCE",
-          "best_move_id": 14,
-          "best_roll_threshold": 245,
-          "best_score": 20,
-          "best_slot_index": 0,
-          "candidate_probabilities": {
-            "slot1:SWORDS_DANCE": 0.95703125,
-            "slot2:STEEL_WING": 0.04296875,
-            "slot3:QUICK_ATTACK": 0.0,
-            "slot4:WING_ATTACK": 0.0
-          },
-          "chosen_action_id": "slot2:STEEL_WING",
-          "chosen_has_nonzero_probability": true,
-          "chosen_move_id": 211,
-          "chosen_probability": 0.04296875,
-          "chosen_slot_index": 1,
-          "possible_action_ids": [
-            "slot1:SWORDS_DANCE",
-            "slot2:STEEL_WING"
-          ],
-          "possible_move_ids": [
-            14,
-            211
-          ],
-          "score_gap": 11,
-          "second_action_id": "slot2:STEEL_WING",
-          "second_move_id": 211,
-          "second_score": 31,
-          "second_slot_index": 1,
-          "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
+          "agreement_reason": "trace has no chosen move",
+          "available": false,
+          "reason": "exact score-byte selector fields unavailable"
         },
         "switch_confidence": 99,
-        "switch_context": "param=31,index=00,last_out=02,cooldown=02,cur_ot=00",
+        "switch_context": "param=31,index=02,last_out=01,cooldown=02,cur_ot=00",
         "switch_path": {
-          "actual_switch": false,
+          "actual_switch": true,
           "cooldown": 2,
           "cur_ot": 0,
-          "last_switched_out": 2,
-          "observation_status": "switch_proposal_observed",
+          "last_switched_out": 1,
+          "observation_status": "actual_switch_observed",
           "observed": true,
           "proposed_switch": true,
           "proposed_target_1_based": 2,
@@ -1156,11 +717,11 @@
           "switch_context": {
             "cooldown": 2,
             "cur_ot": 0,
-            "index": 0,
-            "last_out": 2,
+            "index": 2,
+            "last_out": 1,
             "param": 49
           },
-          "switch_index": 0,
+          "switch_index": 2,
           "switch_param": 49,
           "switch_roll": {
             "available": true,
@@ -1206,17 +767,17 @@
       "python_agreement": {
         "agreement": true,
         "mirror_scope": "BossAI_SelectMove replay from captured ROM score bytes",
-        "reason": "chosen slot has nonzero selector probability"
+        "reason": "trace has no chosen move"
       },
-      "reason": "chosen slot has nonzero selector probability",
-      "status": "match"
+      "reason": "trace has no chosen move",
+      "status": "no_decision"
     },
     {
       "base_route": "shared_switch_loop",
       "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
       "base_state_field": "switch_materialization_state",
       "checked_count": 12,
-      "elapsed_seconds": 0.6243496999959461,
+      "elapsed_seconds": 0.5885053999954835,
       "error_count": 0,
       "kind": "rom_switch_materialization",
       "known_limits": [
@@ -1224,14 +785,128 @@
         "This proves switch-dispatch proposal behavior and reports the final source-mirrored switch-roll frequency from observed confidence plus an explicit or source-derived threshold; it does not prove move score bytes.",
         "Only public battle facts and boss-owned party state are patched; hidden player party, hidden moves, PP, held items, and current input are not read."
       ],
-      "materializations_per_minute": 1153.1998814201,
-      "policy_disagreement_count": 7,
+      "materializations_per_minute": 1223.438221646778,
+      "policy_disagreement_count": 0,
       "scenario_count": 12,
       "schema_version": 1,
       "skipped_count": 0,
       "source": ".local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl",
       "verdicts": [
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "E92915F3D92FDB26EC87D656C37463F8CEFB7679944C2C35926B80B1F8E3948B",
+            "class_id": "csc_E92915F3D92FDB26EC87",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_comfort_damage"
+              ],
+              "bad_action_ids": [
+                "move_panic_cashout"
+              ],
+              "best_action_ids": [
+                "move_preserve_wincon_switch"
+              ],
+              "case_index": 0,
+              "condition_tags": [
+                "named_next_board_owner",
+                "safe_entry_available",
+                "ace_preservation",
+                "public_threat_to_active",
+                "switch_sack",
+                "preserve_wincon_over_comfort_damage"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_comfort_damage",
+                  "kind": "move",
+                  "name": "Comfort Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_preserve_wincon_switch",
+                  "kind": "switch",
+                  "name": "Switch Preserve Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_support_status",
+                  "kind": "move",
+                  "name": "Support Status"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_panic_cashout",
+                  "kind": "move",
+                  "name": "Panic Explosion"
+                }
+              ],
+              "policy_case": "preserve_wincon_over_comfort_damage",
+              "policy_tags": [
+                "switching",
+                "ace_preservation",
+                "route_owner"
+              ],
+              "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+              "seed": 1,
+              "tier": "mid"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
+              "state_hash": "6FA6E3884B09DD6736870130748A9A5F9B993F0CB183A516ECFAFEC907DB0B83"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "6FA6E3884B09DD6736870130748A9A5F9B993F0CB183A516ECFAFEC907DB0B83"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "E92915F3D92FDB26EC87D656C37463F8CEFB7679944C2C35926B80B1F8E3948B",
+          "class_id": "csc_E92915F3D92FDB26EC87",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -1286,7 +961,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 78,
             "memory_patches": [
               {
                 "offset": 0,
@@ -1371,7 +1046,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -1529,9 +1204,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
@@ -1593,7 +1268,121 @@
           }
         },
         {
-          "expected_switch": true,
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "4679DF1A6A69F036C7B38D04E44A61C6D5FB5998AEFBDBBF92A23D6FCC91181D",
+            "class_id": "csc_4679DF1A6A69F036C7B3",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_switch_wincon_raw"
+              ],
+              "bad_action_ids": [
+                "move_repeat_support"
+              ],
+              "best_action_ids": [
+                "move_defensive_sack"
+              ],
+              "case_index": 1,
+              "condition_tags": [
+                "defensive_sack_owner",
+                "safe_entry_available",
+                "wincon_preservation",
+                "support_job_completed",
+                "switch_sack",
+                "defensive_sack_for_safe_entry"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_switch_wincon_raw",
+                  "kind": "switch",
+                  "name": "Raw Switch To Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_defensive_sack",
+                  "kind": "move",
+                  "name": "Defensive Sack For Safe Entry"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_last_chip",
+                  "kind": "move",
+                  "name": "Last Chip"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_repeat_support",
+                  "kind": "move",
+                  "name": "Repeat Support"
+                }
+              ],
+              "policy_case": "defensive_sack_for_safe_entry",
+              "policy_tags": [
+                "switching",
+                "defensive_sack",
+                "safe_entry"
+              ],
+              "scenario_id": "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+              "seed": 1,
+              "tier": "late"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
+              "state_hash": "3982C9BC77C09A89D30071534B60D9C6C172B162325AE7BAD42437D54620BB30"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "3982C9BC77C09A89D30071534B60D9C6C172B162325AE7BAD42437D54620BB30"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "4679DF1A6A69F036C7B38D04E44A61C6D5FB5998AEFBDBBF92A23D6FCC91181D",
+          "class_id": "csc_4679DF1A6A69F036C7B3",
+          "expected_switch": false,
           "family": "switch_sack",
           "rom": {
             "actual_switch": false,
@@ -1645,19 +1434,19 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 5
             },
-            "frame": 78,
+            "frame": 180,
             "memory_patches": [
               {
                 "offset": 0,
                 "symbol_name": "wBossAITier",
-                "value": 2
+                "value": 3
               },
               {
                 "offset": 0,
                 "symbol_name": "wBossAITierWeightRow",
-                "value": 1
+                "value": 2
               },
               {
                 "offset": 0,
@@ -1732,7 +1521,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -1875,99 +1664,168 @@
                 "value": 100
               }
             ],
-            "observation_status": "switch_proposal_observed",
+            "observation_status": "switch_gate_evaluated_no_proposal",
             "observed_decision": true,
-            "observed_switch_path": true,
-            "proposed_switch": true,
-            "proposed_target_1_based": 2,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
             "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
             "source": "trace_rom_pyboy_switch",
-            "switch_confidence": 99,
+            "switch_confidence": 0,
             "switch_gate_evaluated": true,
             "switch_index": 0,
-            "switch_param": 49,
+            "switch_param": 0,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM proposes a switch",
+            "reason": "ROM does not propose a switch",
             "severity": 0,
             "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
           "status": "pass",
           "switch_roll": {
-            "assumed_effective_threshold": 70,
-            "available": true,
-            "base_threshold": 70,
-            "confidence": 99,
-            "possible_effective_thresholds": [
-              70,
-              78,
-              80,
-              88
-            ],
-            "possible_switch_probabilities": [
-              {
-                "effective_threshold": 70,
-                "switch_chance_threshold": 230,
-                "switch_probability": 0.8984375
-              },
-              {
-                "effective_threshold": 78,
-                "switch_chance_threshold": 230,
-                "switch_probability": 0.8984375
-              },
-              {
-                "effective_threshold": 80,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              },
-              {
-                "effective_threshold": 88,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              }
-            ],
-            "probability_exact": false,
-            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
-            "stay_probability": 0.1015625,
-            "switch_chance_threshold": 230,
-            "switch_probability": 0.8984375,
-            "threshold_components": {
-              "class_threshold_mod": 0,
-              "loop_penalty": false,
-              "sack_bias": "untraced_possible",
-              "threshold": 70,
-              "tier": "mid",
-              "trainer_class": "JASMINE",
-              "wincon_bias": "untraced_possible"
-            },
-            "threshold_exact": false,
-            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "DCE8D89BDE04230A37FA937091C9C70ABB29BF4A6EBD1E4B6D47E2EF12E695DD",
+            "class_id": "csc_DCE8D89BDE04230A37FA",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_safe_switch"
+              ],
+              "bad_action_ids": [
+                "move_cashout"
+              ],
+              "best_action_ids": [
+                "move_route_damage"
+              ],
+              "case_index": 2,
+              "condition_tags": [
+                "active_pressure_converts",
+                "named_current_owner",
+                "switch_sack",
+                "stay_when_current_move_converts"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_route_damage",
+                  "kind": "move",
+                  "name": "Route Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_safe_switch",
+                  "kind": "switch",
+                  "name": "Safe Switch"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_status_script",
+                  "kind": "move",
+                  "name": "Status Script"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_cashout",
+                  "kind": "move",
+                  "name": "Explosion Cashout"
+                }
+              ],
+              "policy_case": "stay_when_current_move_converts",
+              "policy_tags": [
+                "active_pressure",
+                "switching",
+                "converter"
+              ],
+              "scenario_id": "generated_switch_sack_1_00002_stay_when_current_move_converts",
+              "seed": 1,
+              "tier": "mid"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00002_stay_when_current_move_converts",
+              "state_hash": "748F9880FA51007ED846591E07134031658C923F44763F9909AAC9E26453D772"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+              "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "748F9880FA51007ED846591E07134031658C923F44763F9909AAC9E26453D772"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "DCE8D89BDE04230A37FA937091C9C70ABB29BF4A6EBD1E4B6D47E2EF12E695DD",
+          "class_id": "csc_DCE8D89BDE04230A37FA",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": true,
+            "actual_switch": false,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
-                17,
+                1,
                 0,
                 32,
-                0
+                1
               ],
               "plausible_type_mask_cache": [
-                17,
+                1,
                 0,
                 160,
                 131
@@ -2008,7 +1866,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 180,
             "memory_patches": [
               {
                 "offset": 0,
@@ -2073,12 +1931,12 @@
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType1",
-                "value": 4
+                "value": 21
               },
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType2",
-                "value": 4
+                "value": 24
               },
               {
                 "offset": 0,
@@ -2093,7 +1951,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -2236,85 +2094,156 @@
                 "value": 100
               }
             ],
-            "observation_status": "actual_switch_observed",
+            "observation_status": "switch_gate_evaluated_no_proposal",
             "observed_decision": true,
-            "observed_switch_path": true,
-            "proposed_switch": true,
-            "proposed_target_1_based": 2,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
             "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
             "source": "trace_rom_pyboy_switch",
-            "switch_confidence": 97,
+            "switch_confidence": 0,
             "switch_gate_evaluated": true,
-            "switch_index": 2,
-            "switch_param": 49,
+            "switch_index": 0,
+            "switch_param": 0,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00002_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
-            "severity": 70,
-            "verdict": "mismatch"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00002_stay_when_current_move_converts",
           "status": "pass",
           "switch_roll": {
-            "assumed_effective_threshold": 70,
-            "available": true,
-            "base_threshold": 70,
-            "confidence": 97,
-            "possible_effective_thresholds": [
-              70,
-              78,
-              80,
-              88
-            ],
-            "possible_switch_probabilities": [
-              {
-                "effective_threshold": 70,
-                "switch_chance_threshold": 230,
-                "switch_probability": 0.8984375
-              },
-              {
-                "effective_threshold": 78,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              },
-              {
-                "effective_threshold": 80,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              },
-              {
-                "effective_threshold": 88,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              }
-            ],
-            "probability_exact": false,
-            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
-            "stay_probability": 0.1015625,
-            "switch_chance_threshold": 230,
-            "switch_probability": 0.8984375,
-            "threshold_components": {
-              "class_threshold_mod": 0,
-              "loop_penalty": false,
-              "sack_bias": "untraced_possible",
-              "threshold": 70,
-              "tier": "mid",
-              "trainer_class": "JASMINE",
-              "wincon_bias": "untraced_possible"
-            },
-            "threshold_exact": false,
-            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "873DDA3F01DC446CED88CBCC72254EDB0865AE15BE59E034073FEA6CFF83C743",
+            "class_id": "csc_873DDA3F01DC446CED88",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_comfort_damage"
+              ],
+              "bad_action_ids": [
+                "move_panic_cashout"
+              ],
+              "best_action_ids": [
+                "move_preserve_wincon_switch"
+              ],
+              "case_index": 3,
+              "condition_tags": [
+                "named_next_board_owner",
+                "safe_entry_available",
+                "ace_preservation",
+                "public_threat_to_active",
+                "switch_sack",
+                "preserve_wincon_over_comfort_damage"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_comfort_damage",
+                  "kind": "move",
+                  "name": "Comfort Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_preserve_wincon_switch",
+                  "kind": "switch",
+                  "name": "Switch Preserve Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_support_status",
+                  "kind": "move",
+                  "name": "Support Status"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_panic_cashout",
+                  "kind": "move",
+                  "name": "Panic Explosion"
+                }
+              ],
+              "policy_case": "preserve_wincon_over_comfort_damage",
+              "policy_tags": [
+                "switching",
+                "ace_preservation",
+                "route_owner"
+              ],
+              "scenario_id": "generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
+              "seed": 1,
+              "tier": "mid"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
+              "state_hash": "C3D2BCEEC807A83D3C26C12FC6D7898806D8CBDC6DBEC1CA12F8BF72C2CADE5D"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "C3D2BCEEC807A83D3C26C12FC6D7898806D8CBDC6DBEC1CA12F8BF72C2CADE5D"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "873DDA3F01DC446CED88CBCC72254EDB0865AE15BE59E034073FEA6CFF83C743",
+          "class_id": "csc_873DDA3F01DC446CED88",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -2369,7 +2298,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 78,
             "memory_patches": [
               {
                 "offset": 0,
@@ -2454,7 +2383,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -2612,9 +2541,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
@@ -2676,7 +2605,121 @@
           }
         },
         {
-          "expected_switch": true,
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "E633CA9544C4A12F3856DBF24FB4536A7C2A4A85B1D2C6F595F42FB484E74A28",
+            "class_id": "csc_E633CA9544C4A12F3856",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_switch_wincon_raw"
+              ],
+              "bad_action_ids": [
+                "move_repeat_support"
+              ],
+              "best_action_ids": [
+                "move_defensive_sack"
+              ],
+              "case_index": 4,
+              "condition_tags": [
+                "defensive_sack_owner",
+                "safe_entry_available",
+                "wincon_preservation",
+                "support_job_completed",
+                "switch_sack",
+                "defensive_sack_for_safe_entry"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_switch_wincon_raw",
+                  "kind": "switch",
+                  "name": "Raw Switch To Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_defensive_sack",
+                  "kind": "move",
+                  "name": "Defensive Sack For Safe Entry"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_last_chip",
+                  "kind": "move",
+                  "name": "Last Chip"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_repeat_support",
+                  "kind": "move",
+                  "name": "Repeat Support"
+                }
+              ],
+              "policy_case": "defensive_sack_for_safe_entry",
+              "policy_tags": [
+                "switching",
+                "defensive_sack",
+                "safe_entry"
+              ],
+              "scenario_id": "generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
+              "seed": 1,
+              "tier": "late"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
+              "state_hash": "0C6FC8FB8F4E557CC1112ABE53BAB72F130C349F9E3329A75E2880C003EDEB2C"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "0C6FC8FB8F4E557CC1112ABE53BAB72F130C349F9E3329A75E2880C003EDEB2C"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "E633CA9544C4A12F3856DBF24FB4536A7C2A4A85B1D2C6F595F42FB484E74A28",
+          "class_id": "csc_E633CA9544C4A12F3856",
+          "expected_switch": false,
           "family": "switch_sack",
           "rom": {
             "actual_switch": false,
@@ -2728,7 +2771,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 182
+              "type_matchup": 5
             },
             "frame": 180,
             "memory_patches": [
@@ -2815,7 +2858,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -2973,15 +3016,15 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch does not propose the expected switch",
-            "severity": 75,
-            "verdict": "best_never_rolled"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
           "status": "pass",
@@ -2994,20 +3037,132 @@
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "23543E2B08AE9541D1C19185F8CBF715DE8A2F0A0158BA6BD7C4605CF0A7B227",
+            "class_id": "csc_23543E2B08AE9541D1C1",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_safe_switch"
+              ],
+              "bad_action_ids": [
+                "move_cashout"
+              ],
+              "best_action_ids": [
+                "move_route_damage"
+              ],
+              "case_index": 5,
+              "condition_tags": [
+                "active_pressure_converts",
+                "named_current_owner",
+                "switch_sack",
+                "stay_when_current_move_converts"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_route_damage",
+                  "kind": "move",
+                  "name": "Route Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_safe_switch",
+                  "kind": "switch",
+                  "name": "Safe Switch"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_status_script",
+                  "kind": "move",
+                  "name": "Status Script"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_cashout",
+                  "kind": "move",
+                  "name": "Explosion Cashout"
+                }
+              ],
+              "policy_case": "stay_when_current_move_converts",
+              "policy_tags": [
+                "active_pressure",
+                "switching",
+                "converter"
+              ],
+              "scenario_id": "generated_switch_sack_1_00005_stay_when_current_move_converts",
+              "seed": 1,
+              "tier": "mid"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00005_stay_when_current_move_converts",
+              "state_hash": "6E164D24940893264D7383063DAFB505C9B4740F316A9EBB2249D5B6BF5A3D74"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+              "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "6E164D24940893264D7383063DAFB505C9B4740F316A9EBB2249D5B6BF5A3D74"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "23543E2B08AE9541D1C19185F8CBF715DE8A2F0A0158BA6BD7C4605CF0A7B227",
+          "class_id": "csc_23543E2B08AE9541D1C1",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": true,
+            "actual_switch": false,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
-                17,
+                1,
                 0,
                 32,
-                0
+                1
               ],
               "plausible_type_mask_cache": [
-                17,
+                1,
                 0,
                 160,
                 131
@@ -3048,7 +3203,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 180,
             "memory_patches": [
               {
                 "offset": 0,
@@ -3113,12 +3268,12 @@
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType1",
-                "value": 4
+                "value": 21
               },
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType2",
-                "value": 4
+                "value": 24
               },
               {
                 "offset": 0,
@@ -3133,7 +3288,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -3276,89 +3431,160 @@
                 "value": 100
               }
             ],
-            "observation_status": "actual_switch_observed",
+            "observation_status": "switch_gate_evaluated_no_proposal",
             "observed_decision": true,
-            "observed_switch_path": true,
-            "proposed_switch": true,
-            "proposed_target_1_based": 2,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
             "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
             "source": "trace_rom_pyboy_switch",
-            "switch_confidence": 97,
+            "switch_confidence": 0,
             "switch_gate_evaluated": true,
-            "switch_index": 2,
-            "switch_param": 49,
+            "switch_index": 0,
+            "switch_param": 0,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00005_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
-            "severity": 70,
-            "verdict": "mismatch"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00005_stay_when_current_move_converts",
           "status": "pass",
           "switch_roll": {
-            "assumed_effective_threshold": 70,
-            "available": true,
-            "base_threshold": 70,
-            "confidence": 97,
-            "possible_effective_thresholds": [
-              70,
-              78,
-              80,
-              88
-            ],
-            "possible_switch_probabilities": [
-              {
-                "effective_threshold": 70,
-                "switch_chance_threshold": 230,
-                "switch_probability": 0.8984375
-              },
-              {
-                "effective_threshold": 78,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              },
-              {
-                "effective_threshold": 80,
-                "switch_chance_threshold": 192,
-                "switch_probability": 0.75
-              },
-              {
-                "effective_threshold": 88,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              }
-            ],
-            "probability_exact": false,
-            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
-            "stay_probability": 0.1015625,
-            "switch_chance_threshold": 230,
-            "switch_probability": 0.8984375,
-            "threshold_components": {
-              "class_threshold_mod": 0,
-              "loop_penalty": false,
-              "sack_bias": "untraced_possible",
-              "threshold": 70,
-              "tier": "mid",
-              "trainer_class": "JASMINE",
-              "wincon_bias": "untraced_possible"
-            },
-            "threshold_exact": false,
-            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "82A254F3ED90800A929AFFC43CC3933B7021461A8B800BE46D91A2FB8A306527",
+            "class_id": "csc_82A254F3ED90800A929A",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_comfort_damage"
+              ],
+              "bad_action_ids": [
+                "move_panic_cashout"
+              ],
+              "best_action_ids": [
+                "move_preserve_wincon_switch"
+              ],
+              "case_index": 6,
+              "condition_tags": [
+                "named_next_board_owner",
+                "safe_entry_available",
+                "ace_preservation",
+                "public_threat_to_active",
+                "switch_sack",
+                "preserve_wincon_over_comfort_damage"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_comfort_damage",
+                  "kind": "move",
+                  "name": "Comfort Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_preserve_wincon_switch",
+                  "kind": "switch",
+                  "name": "Switch Preserve Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_support_status",
+                  "kind": "move",
+                  "name": "Support Status"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_panic_cashout",
+                  "kind": "move",
+                  "name": "Panic Explosion"
+                }
+              ],
+              "policy_case": "preserve_wincon_over_comfort_damage",
+              "policy_tags": [
+                "switching",
+                "ace_preservation",
+                "route_owner"
+              ],
+              "scenario_id": "generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
+              "seed": 1,
+              "tier": "late"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
+              "state_hash": "DCF3CBD6495405BD3CCEE4603FBCB3EA61E151DB83DABE8D2525745FE2E920DF"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "DCF3CBD6495405BD3CCEE4603FBCB3EA61E151DB83DABE8D2525745FE2E920DF"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "82A254F3ED90800A929AFFC43CC3933B7021461A8B800BE46D91A2FB8A306527",
+          "class_id": "csc_82A254F3ED90800A929A",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": true,
+            "actual_switch": false,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
@@ -3407,9 +3633,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 10
+              "type_matchup": 20
             },
-            "frame": 83,
+            "frame": 78,
             "memory_patches": [
               {
                 "offset": 0,
@@ -3494,7 +3720,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -3637,7 +3863,7 @@
                 "value": 100
               }
             ],
-            "observation_status": "actual_switch_observed",
+            "observation_status": "switch_proposal_observed",
             "observed_decision": true,
             "observed_switch_path": true,
             "proposed_switch": true,
@@ -3646,15 +3872,15 @@
             "source": "trace_rom_pyboy_switch",
             "switch_confidence": 99,
             "switch_gate_evaluated": true,
-            "switch_index": 2,
+            "switch_index": 0,
             "switch_param": 49,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
@@ -3716,7 +3942,121 @@
           }
         },
         {
-          "expected_switch": true,
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "145AD4204C541D1384DA79EDD5C7A9B13A3EF420D0ACA88C479C16C592845AC7",
+            "class_id": "csc_145AD4204C541D1384DA",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_switch_wincon_raw"
+              ],
+              "bad_action_ids": [
+                "move_repeat_support"
+              ],
+              "best_action_ids": [
+                "move_defensive_sack"
+              ],
+              "case_index": 7,
+              "condition_tags": [
+                "defensive_sack_owner",
+                "safe_entry_available",
+                "wincon_preservation",
+                "support_job_completed",
+                "switch_sack",
+                "defensive_sack_for_safe_entry"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_switch_wincon_raw",
+                  "kind": "switch",
+                  "name": "Raw Switch To Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_defensive_sack",
+                  "kind": "move",
+                  "name": "Defensive Sack For Safe Entry"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_last_chip",
+                  "kind": "move",
+                  "name": "Last Chip"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_repeat_support",
+                  "kind": "move",
+                  "name": "Repeat Support"
+                }
+              ],
+              "policy_case": "defensive_sack_for_safe_entry",
+              "policy_tags": [
+                "switching",
+                "defensive_sack",
+                "safe_entry"
+              ],
+              "scenario_id": "generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
+              "seed": 1,
+              "tier": "late"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
+              "state_hash": "FC494EC59D06B0527A8F3F4330E15A97017B9044ACEE0C1C91032E3816532CC8"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "FC494EC59D06B0527A8F3F4330E15A97017B9044ACEE0C1C91032E3816532CC8"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "145AD4204C541D1384DA79EDD5C7A9B13A3EF420D0ACA88C479C16C592845AC7",
+          "class_id": "csc_145AD4204C541D1384DA",
+          "expected_switch": false,
           "family": "switch_sack",
           "rom": {
             "actual_switch": false,
@@ -3768,7 +4108,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 182
+              "type_matchup": 5
             },
             "frame": 180,
             "memory_patches": [
@@ -3855,7 +4195,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -4013,15 +4353,15 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch does not propose the expected switch",
-            "severity": 75,
-            "verdict": "best_never_rolled"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
           "status": "pass",
@@ -4034,6 +4374,118 @@
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "C6F8C544F1AA269E1AD1796FA2B62C8E733091F889937869CE299BF1377C98A8",
+            "class_id": "csc_C6F8C544F1AA269E1AD1",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_safe_switch"
+              ],
+              "bad_action_ids": [
+                "move_cashout"
+              ],
+              "best_action_ids": [
+                "move_route_damage"
+              ],
+              "case_index": 8,
+              "condition_tags": [
+                "active_pressure_converts",
+                "named_current_owner",
+                "switch_sack",
+                "stay_when_current_move_converts"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_route_damage",
+                  "kind": "move",
+                  "name": "Route Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_safe_switch",
+                  "kind": "switch",
+                  "name": "Safe Switch"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_status_script",
+                  "kind": "move",
+                  "name": "Status Script"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_cashout",
+                  "kind": "move",
+                  "name": "Explosion Cashout"
+                }
+              ],
+              "policy_case": "stay_when_current_move_converts",
+              "policy_tags": [
+                "active_pressure",
+                "switching",
+                "converter"
+              ],
+              "scenario_id": "generated_switch_sack_1_00008_stay_when_current_move_converts",
+              "seed": 1,
+              "tier": "early"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00008_stay_when_current_move_converts",
+              "state_hash": "D7C93DAAD8284297D334C4F42BB4114728826CAFC88C96AF90EAB955EBF1C49C"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+              "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "D7C93DAAD8284297D334C4F42BB4114728826CAFC88C96AF90EAB955EBF1C49C"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "C6F8C544F1AA269E1AD1796FA2B62C8E733091F889937869CE299BF1377C98A8",
+          "class_id": "csc_C6F8C544F1AA269E1AD1",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -4041,13 +4493,13 @@
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
-                17,
+                1,
                 0,
                 32,
-                0
+                1
               ],
               "plausible_type_mask_cache": [
-                17,
+                1,
                 0,
                 160,
                 131
@@ -4086,9 +4538,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 182
+              "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 180,
             "memory_patches": [
               {
                 "offset": 0,
@@ -4153,12 +4605,12 @@
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType1",
-                "value": 4
+                "value": 21
               },
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType2",
-                "value": 4
+                "value": 24
               },
               {
                 "offset": 0,
@@ -4173,7 +4625,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -4316,85 +4768,156 @@
                 "value": 100
               }
             ],
-            "observation_status": "switch_proposal_observed",
+            "observation_status": "switch_gate_evaluated_no_proposal",
             "observed_decision": true,
-            "observed_switch_path": true,
-            "proposed_switch": true,
-            "proposed_target_1_based": 2,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
             "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
             "source": "trace_rom_pyboy_switch",
-            "switch_confidence": 89,
+            "switch_confidence": 0,
             "switch_gate_evaluated": true,
             "switch_index": 0,
-            "switch_param": 49,
+            "switch_param": 0,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00008_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
-            "severity": 70,
-            "verdict": "mismatch"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00008_stay_when_current_move_converts",
           "status": "pass",
           "switch_roll": {
-            "assumed_effective_threshold": 80,
-            "available": true,
-            "base_threshold": 80,
-            "confidence": 89,
-            "possible_effective_thresholds": [
-              80,
-              88,
-              90,
-              98
-            ],
-            "possible_switch_probabilities": [
-              {
-                "effective_threshold": 80,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              },
-              {
-                "effective_threshold": 88,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              },
-              {
-                "effective_threshold": 90,
-                "switch_chance_threshold": 0,
-                "switch_probability": 0.0
-              },
-              {
-                "effective_threshold": 98,
-                "switch_chance_threshold": 0,
-                "switch_probability": 0.0
-              }
-            ],
-            "probability_exact": false,
-            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
-            "stay_probability": 0.44921875,
-            "switch_chance_threshold": 141,
-            "switch_probability": 0.55078125,
-            "threshold_components": {
-              "class_threshold_mod": 0,
-              "loop_penalty": false,
-              "sack_bias": "untraced_possible",
-              "threshold": 80,
-              "tier": "early",
-              "trainer_class": "JASMINE",
-              "wincon_bias": "untraced_possible"
-            },
-            "threshold_exact": false,
-            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "B01C0433E37A316F60C8CF727DE0AED711DC897FEDBCB56CCFE47F636E76C1D0",
+            "class_id": "csc_B01C0433E37A316F60C8",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_comfort_damage"
+              ],
+              "bad_action_ids": [
+                "move_panic_cashout"
+              ],
+              "best_action_ids": [
+                "move_preserve_wincon_switch"
+              ],
+              "case_index": 9,
+              "condition_tags": [
+                "named_next_board_owner",
+                "safe_entry_available",
+                "ace_preservation",
+                "public_threat_to_active",
+                "switch_sack",
+                "preserve_wincon_over_comfort_damage"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_comfort_damage",
+                  "kind": "move",
+                  "name": "Comfort Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_preserve_wincon_switch",
+                  "kind": "switch",
+                  "name": "Switch Preserve Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_support_status",
+                  "kind": "move",
+                  "name": "Support Status"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_panic_cashout",
+                  "kind": "move",
+                  "name": "Panic Explosion"
+                }
+              ],
+              "policy_case": "preserve_wincon_over_comfort_damage",
+              "policy_tags": [
+                "switching",
+                "ace_preservation",
+                "route_owner"
+              ],
+              "scenario_id": "generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
+              "seed": 1,
+              "tier": "mid"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
+              "state_hash": "5D10D0A57D952EF04DEDABB25FF19B4A51087EAB115054C6750C31D8F3AC7A9A"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/heuristic_core/name_next_board_owner.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "5D10D0A57D952EF04DEDABB25FF19B4A51087EAB115054C6750C31D8F3AC7A9A"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "B01C0433E37A316F60C8CF727DE0AED711DC897FEDBCB56CCFE47F636E76C1D0",
+          "class_id": "csc_B01C0433E37A316F60C8",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -4449,7 +4972,7 @@
               "switch_gate_evaluated": true,
               "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 78,
             "memory_patches": [
               {
                 "offset": 0,
@@ -4534,7 +5057,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -4692,9 +5215,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
@@ -4756,7 +5279,121 @@
           }
         },
         {
-          "expected_switch": true,
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "FB006825EF4581C90AE0FF65E9CC844BB720F846356602F63DDDA375901964D1",
+            "class_id": "csc_FB006825EF4581C90AE0",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_switch_wincon_raw"
+              ],
+              "bad_action_ids": [
+                "move_repeat_support"
+              ],
+              "best_action_ids": [
+                "move_defensive_sack"
+              ],
+              "case_index": 10,
+              "condition_tags": [
+                "defensive_sack_owner",
+                "safe_entry_available",
+                "wincon_preservation",
+                "support_job_completed",
+                "switch_sack",
+                "defensive_sack_for_safe_entry"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_switch_wincon_raw",
+                  "kind": "switch",
+                  "name": "Raw Switch To Wincon"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_defensive_sack",
+                  "kind": "move",
+                  "name": "Defensive Sack For Safe Entry"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_last_chip",
+                  "kind": "move",
+                  "name": "Last Chip"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_repeat_support",
+                  "kind": "move",
+                  "name": "Repeat Support"
+                }
+              ],
+              "policy_case": "defensive_sack_for_safe_entry",
+              "policy_tags": [
+                "switching",
+                "defensive_sack",
+                "safe_entry"
+              ],
+              "scenario_id": "generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
+              "seed": 1,
+              "tier": "late"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
+              "state_hash": "EE65E11BDE12479A45FE2AB26B7E3326DE2B593A52FFB6F87583151829FD1080"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/cashout_boundary.md",
+              "docs/pokemon_mastery/heuristic_core/spend_or_save_piece.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "EE65E11BDE12479A45FE2AB26B7E3326DE2B593A52FFB6F87583151829FD1080"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "FB006825EF4581C90AE0FF65E9CC844BB720F846356602F63DDDA375901964D1",
+          "class_id": "csc_FB006825EF4581C90AE0",
+          "expected_switch": false,
           "family": "switch_sack",
           "rom": {
             "actual_switch": false,
@@ -4808,7 +5445,7 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 182
+              "type_matchup": 5
             },
             "frame": 180,
             "memory_patches": [
@@ -4895,7 +5532,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -5053,15 +5690,15 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch does not propose the expected switch",
-            "severity": 75,
-            "verdict": "best_never_rolled"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
           "status": "pass",
@@ -5074,6 +5711,118 @@
           }
         },
         {
+          "canonical_state_class": {
+            "backend": "static_plus_generated_scenario",
+            "blocking_gaps": [
+              "boss_ai_generated_scenario_lacks_rom_proof_artifact"
+            ],
+            "checkpoint": {},
+            "class_fingerprint": "A907458814862B94F5250D5E0E572D21C49E565B43A0D9EC4588764123364B95",
+            "class_id": "csc_A907458814862B94F525",
+            "hidden_facts": {},
+            "identity": {
+              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
+              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+            },
+            "kind": "canonical_state_class",
+            "known_limits": [
+              "Generated scenario class ids identify public scenario classes before ROM proof."
+            ],
+            "known_to_engine_facts": {},
+            "legal_exception_facts": {},
+            "minimization": {},
+            "missing_evidence": [
+              "rom_backed_proof_artifact"
+            ],
+            "proof_status": "missing_proof_artifact",
+            "public_facts": {
+              "acceptable_action_ids": [
+                "move_safe_switch"
+              ],
+              "bad_action_ids": [
+                "move_cashout"
+              ],
+              "best_action_ids": [
+                "move_route_damage"
+              ],
+              "case_index": 11,
+              "condition_tags": [
+                "active_pressure_converts",
+                "named_current_owner",
+                "switch_sack",
+                "stay_when_current_move_converts"
+              ],
+              "family": "switch_sack",
+              "moves": [
+                {
+                  "blocked": false,
+                  "id": "move_route_damage",
+                  "kind": "move",
+                  "name": "Route Damage"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_safe_switch",
+                  "kind": "switch",
+                  "name": "Safe Switch"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_status_script",
+                  "kind": "move",
+                  "name": "Status Script"
+                },
+                {
+                  "blocked": false,
+                  "id": "move_cashout",
+                  "kind": "move",
+                  "name": "Explosion Cashout"
+                }
+              ],
+              "policy_case": "stay_when_current_move_converts",
+              "policy_tags": [
+                "active_pressure",
+                "switching",
+                "converter"
+              ],
+              "scenario_id": "generated_switch_sack_1_00011_stay_when_current_move_converts",
+              "seed": 1,
+              "tier": "early"
+            },
+            "public_info_scope": "public_only",
+            "raw_state_provenance": {
+              "kind": "boss_ai_generated_scenario",
+              "scenario_id": "generated_switch_sack_1_00011_stay_when_current_move_converts",
+              "state_hash": "BABD2B1747B29A35E4CD8FAC508D3FDD406B426A5430606561F3511EC6FF6DB3"
+            },
+            "reachable_proof": {},
+            "rng_assumptions": {},
+            "rtc_assumptions": {},
+            "schema_version": 1,
+            "source_refs": [
+              "docs/pokemon_mastery/policy_cards/active_pressure_before_status.md",
+              "docs/pokemon_mastery/heuristic_core/converter_before_script.md"
+            ],
+            "surface": "boss_ai",
+            "surface_facts": {
+              "boss_ai": {
+                "decision_surface": "generated_scenario",
+                "generator": "boss-ai-debugger-generator-v1",
+                "generator_source": "tools.boss_ai_debugger.generators",
+                "mastery_source": {},
+                "replay_source": {},
+                "state_hash": "BABD2B1747B29A35E4CD8FAC508D3FDD406B426A5430606561F3511EC6FF6DB3"
+              }
+            },
+            "valid": true,
+            "validation_errors": []
+          },
+          "class_fingerprint": "A907458814862B94F5250D5E0E572D21C49E565B43A0D9EC4588764123364B95",
+          "class_id": "csc_A907458814862B94F525",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -5081,13 +5830,13 @@
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
-                17,
+                1,
                 0,
                 32,
-                0
+                1
               ],
               "plausible_type_mask_cache": [
-                17,
+                1,
                 0,
                 160,
                 131
@@ -5126,9 +5875,9 @@
                 0
               ],
               "switch_gate_evaluated": true,
-              "type_matchup": 182
+              "type_matchup": 10
             },
-            "frame": 83,
+            "frame": 180,
             "memory_patches": [
               {
                 "offset": 0,
@@ -5193,12 +5942,12 @@
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType1",
-                "value": 4
+                "value": 21
               },
               {
                 "offset": 0,
                 "symbol_name": "wBattleMonType2",
-                "value": 4
+                "value": 24
               },
               {
                 "offset": 0,
@@ -5213,7 +5962,7 @@
               {
                 "offset": 0,
                 "symbol_name": "wEnemyMonType2",
-                "value": 20
+                "value": 21
               },
               {
                 "offset": 0,
@@ -5356,82 +6105,39 @@
                 "value": 100
               }
             ],
-            "observation_status": "switch_proposal_observed",
+            "observation_status": "switch_gate_evaluated_no_proposal",
             "observed_decision": true,
-            "observed_switch_path": true,
-            "proposed_switch": true,
-            "proposed_target_1_based": 2,
+            "observed_switch_path": false,
+            "proposed_switch": false,
+            "proposed_target_1_based": 0,
             "save_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
             "source": "trace_rom_pyboy_switch",
-            "switch_confidence": 89,
+            "switch_confidence": 0,
             "switch_gate_evaluated": true,
             "switch_index": 0,
-            "switch_param": 49,
+            "switch_param": 0,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00011_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
             }
           },
           "rom_policy": {
-            "reason": "ROM switch dispatch proposes a switch when policy expects staying",
-            "severity": 70,
-            "verdict": "mismatch"
+            "reason": "ROM does not propose a switch",
+            "severity": 0,
+            "verdict": "pass"
           },
           "scenario_id": "generated_switch_sack_1_00011_stay_when_current_move_converts",
           "status": "pass",
           "switch_roll": {
-            "assumed_effective_threshold": 80,
-            "available": true,
-            "base_threshold": 80,
-            "confidence": 89,
-            "possible_effective_thresholds": [
-              80,
-              88,
-              90,
-              98
-            ],
-            "possible_switch_probabilities": [
-              {
-                "effective_threshold": 80,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              },
-              {
-                "effective_threshold": 88,
-                "switch_chance_threshold": 141,
-                "switch_probability": 0.55078125
-              },
-              {
-                "effective_threshold": 90,
-                "switch_chance_threshold": 0,
-                "switch_probability": 0.0
-              },
-              {
-                "effective_threshold": 98,
-                "switch_chance_threshold": 0,
-                "switch_probability": 0.0
-              }
-            ],
-            "probability_exact": false,
-            "proof_status": "source_mirrored_final_switch_roll_from_observed_confidence",
-            "stay_probability": 0.44921875,
-            "switch_chance_threshold": 141,
-            "switch_probability": 0.55078125,
-            "threshold_components": {
-              "class_threshold_mod": 0,
-              "loop_penalty": false,
-              "sack_bias": "untraced_possible",
-              "threshold": 80,
-              "tier": "early",
-              "trainer_class": "JASMINE",
-              "wincon_bias": "untraced_possible"
-            },
-            "threshold_exact": false,
-            "threshold_source": "source_mirrored_base_threshold_with_untraced_bias_range"
+            "available": false,
+            "confidence": 0,
+            "observation_status": "switch_gate_evaluated_no_proposal",
+            "proof_status": "no_final_switch_roll_observed",
+            "reason": "no_switch_dispatch_observation"
           }
         }
       ]
@@ -5470,7 +6176,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_route_execution_hook",
-      "line": 905,
+      "line": 987,
       "parent_label": "BossAI_ComputeSwitchConfidence",
       "public_reads": [],
       "rule_id": "switch.compute_switch_confidence",
@@ -5481,7 +6187,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_route_execution_hook",
-      "line": 595,
+      "line": 677,
       "parent_label": "BossAI_GetSwitchThreshold",
       "public_reads": [],
       "rule_id": "switch.get_switch_threshold",
@@ -5500,5 +6206,5 @@
       "source_label": "BossAI_TrySwitch"
     }
   ],
-  "tier": 2
+  "tier": null
 }

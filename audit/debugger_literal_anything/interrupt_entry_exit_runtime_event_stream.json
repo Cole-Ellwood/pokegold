@@ -1,0 +1,2382 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime interrupt entry/exit event stream",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence for VBlank, LCD STAT, timer, serial, and joypad interrupt entry/exit pairs.",
+    "It does not claim serial transfer behavior, cycle-exact IME timing, or LCD mode/timer overflow event streams."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 5,
+    "cases": [
+      {
+        "case_id": "vblank_interrupt_entry_exit",
+        "entry_count": 102,
+        "entry_samples": [
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 79,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 80,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 81,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 82,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 83,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 84,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 85,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 86,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 87,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 88,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 89,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 64,
+            "phase": "entry",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          }
+        ],
+        "exit_count": 101,
+        "exit_label": "",
+        "exit_pc": "$016F",
+        "exit_samples": [
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 80,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 81,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 82,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 83,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 84,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 85,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 86,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 87,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 88,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 89,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "vblank_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 31,
+            "if": 2,
+            "interrupt_name": "vblank",
+            "pc": 367,
+            "phase": "exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          }
+        ],
+        "ie_bit": 1,
+        "interrupt_name": "vblank",
+        "paired_entry_exit_count": 101,
+        "return_address_consistent": true,
+        "sampled_entry_count": 12,
+        "sampled_exit_count": 12,
+        "transition_kind": "interrupt_entry_exit",
+        "transition_observed": true,
+        "vector": "$0040",
+        "vector_label": ""
+      },
+      {
+        "case_id": "lcd_stat_interrupt_entry_exit",
+        "entry_count": 14395,
+        "entry_samples": [
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 72,
+            "phase": "entry",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          }
+        ],
+        "exit_count": 14395,
+        "exit_label": "",
+        "exit_pc": "$0417",
+        "exit_samples": [
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "lcd_stat",
+            "pc": 1047,
+            "phase": "exit",
+            "sp": 56928,
+            "stack_top_return_address": 817
+          }
+        ],
+        "ie_bit": 2,
+        "interrupt_name": "lcd_stat",
+        "paired_entry_exit_count": 14395,
+        "return_address_consistent": true,
+        "sampled_entry_count": 12,
+        "sampled_exit_count": 12,
+        "transition_kind": "interrupt_entry_exit",
+        "transition_observed": true,
+        "vector": "$0048",
+        "vector_label": ""
+      },
+      {
+        "case_id": "timer_interrupt_entry_exit",
+        "entry_count": 28,
+        "entry_samples": [
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56930,
+            "stack_top_return_address": 1645
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 80,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 84,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 88,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 91,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56910,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 95,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 99,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 816
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 103,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 106,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56912,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 110,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56900,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 114,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56900,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 118,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56908,
+            "stack_top_return_address": 817
+          }
+        ],
+        "exit_count": 28,
+        "exit_label": "",
+        "exit_pc": "$0050",
+        "exit_samples": [
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 78,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56930,
+            "stack_top_return_address": 1645
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 80,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 84,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 88,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56918,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 91,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56910,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 95,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 99,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 816
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 103,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56920,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 106,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56912,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 110,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56900,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 114,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56900,
+            "stack_top_return_address": 817
+          },
+          {
+            "case_id": "timer_interrupt_entry_exit",
+            "frame": 118,
+            "ie": 31,
+            "if": 0,
+            "interrupt_name": "timer",
+            "pc": 80,
+            "phase": "entry_exit",
+            "sp": 56908,
+            "stack_top_return_address": 817
+          }
+        ],
+        "ie_bit": 4,
+        "interrupt_name": "timer",
+        "paired_entry_exit_count": 28,
+        "return_address_consistent": true,
+        "sampled_entry_count": 12,
+        "sampled_exit_count": 12,
+        "transition_kind": "interrupt_entry_exit",
+        "transition_observed": true,
+        "vector": "$0050",
+        "vector_label": ""
+      },
+      {
+        "case_id": "serial_interrupt_entry_exit",
+        "entry_count": 2,
+        "entry_samples": [
+          {
+            "case_id": "serial_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 8,
+            "if": 0,
+            "interrupt_name": "serial",
+            "pc": 88,
+            "phase": "entry",
+            "sp": 53246,
+            "stack_top_return_address": 65419
+          },
+          {
+            "case_id": "serial_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 8,
+            "if": 0,
+            "interrupt_name": "serial",
+            "pc": 88,
+            "phase": "entry",
+            "sp": 53246,
+            "stack_top_return_address": 65424
+          }
+        ],
+        "exit_count": 2,
+        "exit_label": "",
+        "exit_pc": "$06F3",
+        "exit_samples": [
+          {
+            "case_id": "serial_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 8,
+            "if": 2,
+            "interrupt_name": "serial",
+            "pc": 1779,
+            "phase": "exit",
+            "sp": 53246,
+            "stack_top_return_address": 65419
+          },
+          {
+            "case_id": "serial_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 8,
+            "if": 0,
+            "interrupt_name": "serial",
+            "pc": 1779,
+            "phase": "exit",
+            "sp": 53246,
+            "stack_top_return_address": 65424
+          }
+        ],
+        "ie_bit": 8,
+        "interrupt_name": "serial",
+        "paired_entry_exit_count": 2,
+        "return_address_consistent": true,
+        "sampled_entry_count": 2,
+        "sampled_exit_count": 2,
+        "transition_kind": "interrupt_entry_exit",
+        "transition_observed": true,
+        "vector": "$0058",
+        "vector_label": ""
+      },
+      {
+        "case_id": "joypad_interrupt_entry_exit",
+        "entry_count": 2,
+        "entry_samples": [
+          {
+            "case_id": "joypad_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 16,
+            "if": 0,
+            "interrupt_name": "joypad",
+            "pc": 96,
+            "phase": "entry",
+            "sp": 53246,
+            "stack_top_return_address": 65419
+          },
+          {
+            "case_id": "joypad_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 16,
+            "if": 0,
+            "interrupt_name": "joypad",
+            "pc": 96,
+            "phase": "entry",
+            "sp": 53246,
+            "stack_top_return_address": 65424
+          }
+        ],
+        "exit_count": 2,
+        "exit_label": "Joypad",
+        "exit_pc": "$08C3",
+        "exit_samples": [
+          {
+            "case_id": "joypad_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 16,
+            "if": 0,
+            "interrupt_name": "joypad",
+            "pc": 2243,
+            "phase": "exit",
+            "sp": 53246,
+            "stack_top_return_address": 65419
+          },
+          {
+            "case_id": "joypad_interrupt_entry_exit",
+            "frame": 90,
+            "ie": 16,
+            "if": 0,
+            "interrupt_name": "joypad",
+            "pc": 2243,
+            "phase": "exit",
+            "sp": 53246,
+            "stack_top_return_address": 65424
+          }
+        ],
+        "ie_bit": 16,
+        "interrupt_name": "joypad",
+        "paired_entry_exit_count": 2,
+        "return_address_consistent": true,
+        "sampled_entry_count": 2,
+        "sampled_exit_count": 2,
+        "transition_kind": "interrupt_entry_exit",
+        "transition_observed": true,
+        "vector": "$0060",
+        "vector_label": ""
+      }
+    ],
+    "errors": [],
+    "frame_count": 180,
+    "kind": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+    "known_limits": [
+      "The stream is PyBoy evidence for VBlank, LCD STAT, timer, serial, and joypad interrupt entry/exit.",
+      "Serial transfer, cycle-exact IME timing, and timer/LCD mode event streams remain separate proof gaps."
+    ],
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 5,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_interrupt_runtime",
+          "precision": {
+            "entry_count": 102,
+            "exit_count": 101,
+            "paired_entry_exit_count": 101,
+            "return_address_consistent": true,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "interrupt_name": "vblank",
+            "surface": "interrupts"
+          },
+          "source_kind": "pyboy_interrupt_runtime",
+          "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+          "subjects": {
+            "exit_pc": "$016F",
+            "registers": [
+              "PC",
+              "SP",
+              "IE",
+              "IF"
+            ],
+            "vector": "$0040"
+          },
+          "validation": {
+            "case_id": "vblank_interrupt_entry_exit",
+            "transition_kind": "interrupt_entry_exit"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "vblank_interrupt_entry_exit",
+          "entry_count": 102,
+          "entry_samples": [
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 79,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 80,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 81,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 82,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 83,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 84,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 85,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 86,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 87,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 88,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 89,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 64,
+              "phase": "entry",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            }
+          ],
+          "exit_count": 101,
+          "exit_label": "",
+          "exit_pc": "$016F",
+          "exit_samples": [
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 80,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 81,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 82,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 83,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 84,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 85,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 86,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 87,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 88,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 89,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "vblank_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 31,
+              "if": 2,
+              "interrupt_name": "vblank",
+              "pc": 367,
+              "phase": "exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            }
+          ],
+          "ie_bit": 1,
+          "interrupt_name": "vblank",
+          "paired_entry_exit_count": 101,
+          "return_address_consistent": true,
+          "sampled_entry_count": 12,
+          "sampled_exit_count": 12,
+          "transition_kind": "interrupt_entry_exit",
+          "transition_observed": true,
+          "vector": "$0040",
+          "vector_label": ""
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "entry_count": 102,
+          "exit_count": 101,
+          "paired_entry_exit_count": 101,
+          "return_address_consistent": true,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "interrupt_name": "vblank",
+          "surface": "interrupts"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_interrupt_runtime",
+        "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+        "subjects": {
+          "exit_pc": "$016F",
+          "registers": [
+            "PC",
+            "SP",
+            "IE",
+            "IF"
+          ],
+          "vector": "$0040"
+        },
+        "validation": {
+          "case_id": "vblank_interrupt_entry_exit",
+          "transition_kind": "interrupt_entry_exit"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_interrupt_runtime",
+          "precision": {
+            "entry_count": 14395,
+            "exit_count": 14395,
+            "paired_entry_exit_count": 14395,
+            "return_address_consistent": true,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "interrupt_name": "lcd_stat",
+            "surface": "interrupts"
+          },
+          "source_kind": "pyboy_interrupt_runtime",
+          "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+          "subjects": {
+            "exit_pc": "$0417",
+            "registers": [
+              "PC",
+              "SP",
+              "IE",
+              "IF"
+            ],
+            "vector": "$0048"
+          },
+          "validation": {
+            "case_id": "lcd_stat_interrupt_entry_exit",
+            "transition_kind": "interrupt_entry_exit"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "lcd_stat_interrupt_entry_exit",
+          "entry_count": 14395,
+          "entry_samples": [
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 72,
+              "phase": "entry",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            }
+          ],
+          "exit_count": 14395,
+          "exit_label": "",
+          "exit_pc": "$0417",
+          "exit_samples": [
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "lcd_stat_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "lcd_stat",
+              "pc": 1047,
+              "phase": "exit",
+              "sp": 56928,
+              "stack_top_return_address": 817
+            }
+          ],
+          "ie_bit": 2,
+          "interrupt_name": "lcd_stat",
+          "paired_entry_exit_count": 14395,
+          "return_address_consistent": true,
+          "sampled_entry_count": 12,
+          "sampled_exit_count": 12,
+          "transition_kind": "interrupt_entry_exit",
+          "transition_observed": true,
+          "vector": "$0048",
+          "vector_label": ""
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "entry_count": 14395,
+          "exit_count": 14395,
+          "paired_entry_exit_count": 14395,
+          "return_address_consistent": true,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "interrupt_name": "lcd_stat",
+          "surface": "interrupts"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_interrupt_runtime",
+        "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+        "subjects": {
+          "exit_pc": "$0417",
+          "registers": [
+            "PC",
+            "SP",
+            "IE",
+            "IF"
+          ],
+          "vector": "$0048"
+        },
+        "validation": {
+          "case_id": "lcd_stat_interrupt_entry_exit",
+          "transition_kind": "interrupt_entry_exit"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_interrupt_runtime",
+          "precision": {
+            "entry_count": 28,
+            "exit_count": 28,
+            "paired_entry_exit_count": 28,
+            "return_address_consistent": true,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "interrupt_name": "timer",
+            "surface": "interrupts"
+          },
+          "source_kind": "pyboy_interrupt_runtime",
+          "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+          "subjects": {
+            "exit_pc": "$0050",
+            "registers": [
+              "PC",
+              "SP",
+              "IE",
+              "IF"
+            ],
+            "vector": "$0050"
+          },
+          "validation": {
+            "case_id": "timer_interrupt_entry_exit",
+            "transition_kind": "interrupt_entry_exit"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "timer_interrupt_entry_exit",
+          "entry_count": 28,
+          "entry_samples": [
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56930,
+              "stack_top_return_address": 1645
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 80,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 84,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 88,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 91,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56910,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 95,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 99,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 816
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 103,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 106,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56912,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 110,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56900,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 114,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56900,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 118,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56908,
+              "stack_top_return_address": 817
+            }
+          ],
+          "exit_count": 28,
+          "exit_label": "",
+          "exit_pc": "$0050",
+          "exit_samples": [
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 78,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56930,
+              "stack_top_return_address": 1645
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 80,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 84,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 88,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56918,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 91,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56910,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 95,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 99,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 816
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 103,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56920,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 106,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56912,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 110,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56900,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 114,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56900,
+              "stack_top_return_address": 817
+            },
+            {
+              "case_id": "timer_interrupt_entry_exit",
+              "frame": 118,
+              "ie": 31,
+              "if": 0,
+              "interrupt_name": "timer",
+              "pc": 80,
+              "phase": "entry_exit",
+              "sp": 56908,
+              "stack_top_return_address": 817
+            }
+          ],
+          "ie_bit": 4,
+          "interrupt_name": "timer",
+          "paired_entry_exit_count": 28,
+          "return_address_consistent": true,
+          "sampled_entry_count": 12,
+          "sampled_exit_count": 12,
+          "transition_kind": "interrupt_entry_exit",
+          "transition_observed": true,
+          "vector": "$0050",
+          "vector_label": ""
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "entry_count": 28,
+          "exit_count": 28,
+          "paired_entry_exit_count": 28,
+          "return_address_consistent": true,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "interrupt_name": "timer",
+          "surface": "interrupts"
+        },
+        "seq": 2,
+        "source_kind": "pyboy_interrupt_runtime",
+        "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+        "subjects": {
+          "exit_pc": "$0050",
+          "registers": [
+            "PC",
+            "SP",
+            "IE",
+            "IF"
+          ],
+          "vector": "$0050"
+        },
+        "validation": {
+          "case_id": "timer_interrupt_entry_exit",
+          "transition_kind": "interrupt_entry_exit"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_interrupt_runtime",
+          "precision": {
+            "entry_count": 2,
+            "exit_count": 2,
+            "paired_entry_exit_count": 2,
+            "return_address_consistent": true,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "interrupt_name": "serial",
+            "surface": "interrupts"
+          },
+          "source_kind": "pyboy_interrupt_runtime",
+          "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+          "subjects": {
+            "exit_pc": "$06F3",
+            "registers": [
+              "PC",
+              "SP",
+              "IE",
+              "IF"
+            ],
+            "vector": "$0058"
+          },
+          "validation": {
+            "case_id": "serial_interrupt_entry_exit",
+            "transition_kind": "interrupt_entry_exit"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "serial_interrupt_entry_exit",
+          "entry_count": 2,
+          "entry_samples": [
+            {
+              "case_id": "serial_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 8,
+              "if": 0,
+              "interrupt_name": "serial",
+              "pc": 88,
+              "phase": "entry",
+              "sp": 53246,
+              "stack_top_return_address": 65419
+            },
+            {
+              "case_id": "serial_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 8,
+              "if": 0,
+              "interrupt_name": "serial",
+              "pc": 88,
+              "phase": "entry",
+              "sp": 53246,
+              "stack_top_return_address": 65424
+            }
+          ],
+          "exit_count": 2,
+          "exit_label": "",
+          "exit_pc": "$06F3",
+          "exit_samples": [
+            {
+              "case_id": "serial_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 8,
+              "if": 2,
+              "interrupt_name": "serial",
+              "pc": 1779,
+              "phase": "exit",
+              "sp": 53246,
+              "stack_top_return_address": 65419
+            },
+            {
+              "case_id": "serial_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 8,
+              "if": 0,
+              "interrupt_name": "serial",
+              "pc": 1779,
+              "phase": "exit",
+              "sp": 53246,
+              "stack_top_return_address": 65424
+            }
+          ],
+          "ie_bit": 8,
+          "interrupt_name": "serial",
+          "paired_entry_exit_count": 2,
+          "return_address_consistent": true,
+          "sampled_entry_count": 2,
+          "sampled_exit_count": 2,
+          "transition_kind": "interrupt_entry_exit",
+          "transition_observed": true,
+          "vector": "$0058",
+          "vector_label": ""
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "entry_count": 2,
+          "exit_count": 2,
+          "paired_entry_exit_count": 2,
+          "return_address_consistent": true,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "interrupt_name": "serial",
+          "surface": "interrupts"
+        },
+        "seq": 3,
+        "source_kind": "pyboy_interrupt_runtime",
+        "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+        "subjects": {
+          "exit_pc": "$06F3",
+          "registers": [
+            "PC",
+            "SP",
+            "IE",
+            "IF"
+          ],
+          "vector": "$0058"
+        },
+        "validation": {
+          "case_id": "serial_interrupt_entry_exit",
+          "transition_kind": "interrupt_entry_exit"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_interrupt_runtime",
+          "precision": {
+            "entry_count": 2,
+            "exit_count": 2,
+            "paired_entry_exit_count": 2,
+            "return_address_consistent": true,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "interrupt_name": "joypad",
+            "surface": "interrupts"
+          },
+          "source_kind": "pyboy_interrupt_runtime",
+          "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+          "subjects": {
+            "exit_pc": "$08C3",
+            "registers": [
+              "PC",
+              "SP",
+              "IE",
+              "IF"
+            ],
+            "vector": "$0060"
+          },
+          "validation": {
+            "case_id": "joypad_interrupt_entry_exit",
+            "transition_kind": "interrupt_entry_exit"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "joypad_interrupt_entry_exit",
+          "entry_count": 2,
+          "entry_samples": [
+            {
+              "case_id": "joypad_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 16,
+              "if": 0,
+              "interrupt_name": "joypad",
+              "pc": 96,
+              "phase": "entry",
+              "sp": 53246,
+              "stack_top_return_address": 65419
+            },
+            {
+              "case_id": "joypad_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 16,
+              "if": 0,
+              "interrupt_name": "joypad",
+              "pc": 96,
+              "phase": "entry",
+              "sp": 53246,
+              "stack_top_return_address": 65424
+            }
+          ],
+          "exit_count": 2,
+          "exit_label": "Joypad",
+          "exit_pc": "$08C3",
+          "exit_samples": [
+            {
+              "case_id": "joypad_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 16,
+              "if": 0,
+              "interrupt_name": "joypad",
+              "pc": 2243,
+              "phase": "exit",
+              "sp": 53246,
+              "stack_top_return_address": 65419
+            },
+            {
+              "case_id": "joypad_interrupt_entry_exit",
+              "frame": 90,
+              "ie": 16,
+              "if": 0,
+              "interrupt_name": "joypad",
+              "pc": 2243,
+              "phase": "exit",
+              "sp": 53246,
+              "stack_top_return_address": 65424
+            }
+          ],
+          "ie_bit": 16,
+          "interrupt_name": "joypad",
+          "paired_entry_exit_count": 2,
+          "return_address_consistent": true,
+          "sampled_entry_count": 2,
+          "sampled_exit_count": 2,
+          "transition_kind": "interrupt_entry_exit",
+          "transition_observed": true,
+          "vector": "$0060",
+          "vector_label": ""
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "entry_count": 2,
+          "exit_count": 2,
+          "paired_entry_exit_count": 2,
+          "return_address_consistent": true,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "interrupt_name": "joypad",
+          "surface": "interrupts"
+        },
+        "seq": 4,
+        "source_kind": "pyboy_interrupt_runtime",
+        "source_report": "debugger_deity_interrupt_entry_exit_runtime_event_stream",
+        "subjects": {
+          "exit_pc": "$08C3",
+          "registers": [
+            "PC",
+            "SP",
+            "IE",
+            "IF"
+          ],
+          "vector": "$0060"
+        },
+        "validation": {
+          "case_id": "joypad_interrupt_entry_exit",
+          "transition_kind": "interrupt_entry_exit"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "bd36b16d2896ebbb3e1a23d2d5df5796e9e4ae9f266d9757531bea0e4893504d",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "interrupts",
+  "valid": true
+}

@@ -1,0 +1,38 @@
+{
+  "corpus_count": 16,
+  "generated_at": "2026-05-31T17:58:59Z",
+  "hash_basis": {
+    "errors": [],
+    "rom_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\pokegold_debug.gbc",
+    "rom_sha256": "B447295A9BAC08C6A3274880B7CAC4C51E12D7A952EAFD09030A4B23DCD6AEE0",
+    "symbols_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\pokegold_debug.sym",
+    "symbols_sha256": "21CCD316260D86F8CBFC00C750E7C427984F0BD3541BD7EC47637D11523F40C6"
+  },
+  "kind": "damage_debugger_worker_self_check",
+  "lines": [
+    "worker self-check: corpus=16 workers=2",
+    "index  single(rom/oracle/ok)  multi(rom/oracle/ok)",
+    "    0     4/4   /True      4/4   /True   PASS",
+    "    1    13/13  /True     13/13  /True   PASS",
+    "    2    21/21  /True     21/21  /True   PASS",
+    "    3    14/14  /True     14/14  /True   PASS",
+    "    4    19/19  /True     19/19  /True   PASS",
+    "    5    37/37  /True     37/37  /True   PASS",
+    "    6   460/460 /True    460/460 /True   PASS",
+    "    7    15/15  /True     15/15  /True   PASS",
+    "    8    15/15  /True     15/15  /True   PASS",
+    "    9   775/775 /True    775/775 /True   PASS",
+    "   10    41/41  /True     41/41  /True   PASS",
+    "   11    38/38  /True     38/38  /True   PASS",
+    "   12    82/82  /True     82/82  /True   PASS",
+    "   13    54/54  /True     54/54  /True   PASS",
+    "   14    44/44  /True     44/44  /True   PASS",
+    "   15     9/9   /True      9/9   /True   PASS"
+  ],
+  "mode": "worker_self_check",
+  "ok": true,
+  "proof_status": "complete",
+  "schema_version": 1,
+  "tolerance": 1,
+  "workers": 2
+}

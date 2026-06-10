@@ -1,0 +1,2462 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime timer/LCD hardware event stream",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence from controlled CPU polling loops over selected timer and LCD registers.",
+    "It is not cycle-exact hardware parity and does not claim cross-backend LCD/timer correctness."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 2,
+    "cases": [
+      {
+        "case_id": "timer_tima_overflow_interrupt_request",
+        "event_family": "timer",
+        "first_interrupt_request_sample": 4,
+        "if_timer_bit": 4,
+        "initial_tima": 240,
+        "interrupt_request_observed": true,
+        "overflow_drop_count": 5,
+        "overflow_drop_observed": true,
+        "overflow_drop_samples": [
+          {
+            "after_if": 4,
+            "after_index": 4,
+            "after_tima": 166,
+            "before_index": 3,
+            "before_tima": 253
+          },
+          {
+            "after_if": 4,
+            "after_index": 30,
+            "after_tima": 166,
+            "before_index": 29,
+            "before_tima": 253
+          },
+          {
+            "after_if": 4,
+            "after_index": 56,
+            "after_tima": 166,
+            "before_index": 55,
+            "before_tima": 253
+          },
+          {
+            "after_if": 4,
+            "after_index": 82,
+            "after_tima": 166,
+            "before_index": 81,
+            "before_tima": 253
+          },
+          {
+            "after_if": 4,
+            "after_index": 108,
+            "after_tima": 166,
+            "before_index": 107,
+            "before_tima": 253
+          }
+        ],
+        "pc_after": 65445,
+        "registers": [
+          "FF05",
+          "FF06",
+          "FF07",
+          "FF0F",
+          "FFFF"
+        ],
+        "runtime_event_observed": true,
+        "sample_count": 128,
+        "sample_head": [
+          {
+            "if": 0,
+            "sample_index": 0,
+            "tima": 243
+          },
+          {
+            "if": 0,
+            "sample_index": 1,
+            "tima": 246
+          },
+          {
+            "if": 0,
+            "sample_index": 2,
+            "tima": 250
+          },
+          {
+            "if": 0,
+            "sample_index": 3,
+            "tima": 253
+          },
+          {
+            "if": 4,
+            "sample_index": 4,
+            "tima": 166
+          },
+          {
+            "if": 4,
+            "sample_index": 5,
+            "tima": 169
+          },
+          {
+            "if": 4,
+            "sample_index": 6,
+            "tima": 173
+          },
+          {
+            "if": 4,
+            "sample_index": 7,
+            "tima": 176
+          },
+          {
+            "if": 4,
+            "sample_index": 8,
+            "tima": 180
+          },
+          {
+            "if": 4,
+            "sample_index": 9,
+            "tima": 183
+          },
+          {
+            "if": 4,
+            "sample_index": 10,
+            "tima": 187
+          },
+          {
+            "if": 4,
+            "sample_index": 11,
+            "tima": 190
+          }
+        ],
+        "sample_tail": [
+          {
+            "if": 4,
+            "sample_index": 116,
+            "tima": 194
+          },
+          {
+            "if": 4,
+            "sample_index": 117,
+            "tima": 197
+          },
+          {
+            "if": 4,
+            "sample_index": 118,
+            "tima": 201
+          },
+          {
+            "if": 4,
+            "sample_index": 119,
+            "tima": 204
+          },
+          {
+            "if": 4,
+            "sample_index": 120,
+            "tima": 208
+          },
+          {
+            "if": 4,
+            "sample_index": 121,
+            "tima": 211
+          },
+          {
+            "if": 4,
+            "sample_index": 122,
+            "tima": 215
+          },
+          {
+            "if": 4,
+            "sample_index": 123,
+            "tima": 218
+          },
+          {
+            "if": 4,
+            "sample_index": 124,
+            "tima": 222
+          },
+          {
+            "if": 4,
+            "sample_index": 125,
+            "tima": 225
+          },
+          {
+            "if": 4,
+            "sample_index": 126,
+            "tima": 229
+          },
+          {
+            "if": 4,
+            "sample_index": 127,
+            "tima": 232
+          }
+        ],
+        "tac": 5,
+        "tma": 165,
+        "transition_kind": "timer_tima_overflow_if_request"
+      },
+      {
+        "case_id": "lcd_stat_mode_poll_sequence",
+        "event_family": "lcd",
+        "ly_max": 153,
+        "ly_min": 0,
+        "mode_counts": {
+          "0": 533,
+          "1": 81,
+          "2": 213,
+          "3": 453
+        },
+        "mode_sequence_observed": true,
+        "observed_modes": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "pc_after": 65432,
+        "registers": [
+          "FF40",
+          "FF41",
+          "FF44"
+        ],
+        "runtime_event_observed": true,
+        "sample_count": 1280,
+        "sample_head": [
+          {
+            "ly": 0,
+            "mode": 2,
+            "sample_index": 0,
+            "stat": 134
+          },
+          {
+            "ly": 0,
+            "mode": 3,
+            "sample_index": 1,
+            "stat": 135
+          },
+          {
+            "ly": 0,
+            "mode": 3,
+            "sample_index": 2,
+            "stat": 135
+          },
+          {
+            "ly": 0,
+            "mode": 3,
+            "sample_index": 3,
+            "stat": 135
+          },
+          {
+            "ly": 0,
+            "mode": 0,
+            "sample_index": 4,
+            "stat": 132
+          },
+          {
+            "ly": 0,
+            "mode": 0,
+            "sample_index": 5,
+            "stat": 132
+          },
+          {
+            "ly": 0,
+            "mode": 0,
+            "sample_index": 6,
+            "stat": 132
+          },
+          {
+            "ly": 0,
+            "mode": 0,
+            "sample_index": 7,
+            "stat": 132
+          },
+          {
+            "ly": 1,
+            "mode": 2,
+            "sample_index": 8,
+            "stat": 130
+          },
+          {
+            "ly": 1,
+            "mode": 3,
+            "sample_index": 9,
+            "stat": 131
+          },
+          {
+            "ly": 1,
+            "mode": 3,
+            "sample_index": 10,
+            "stat": 131
+          },
+          {
+            "ly": 1,
+            "mode": 3,
+            "sample_index": 11,
+            "stat": 131
+          }
+        ],
+        "sample_tail": [
+          {
+            "ly": 2,
+            "mode": 0,
+            "sample_index": 1268,
+            "stat": 128
+          },
+          {
+            "ly": 2,
+            "mode": 2,
+            "sample_index": 1269,
+            "stat": 130
+          },
+          {
+            "ly": 2,
+            "mode": 3,
+            "sample_index": 1270,
+            "stat": 131
+          },
+          {
+            "ly": 2,
+            "mode": 3,
+            "sample_index": 1271,
+            "stat": 131
+          },
+          {
+            "ly": 2,
+            "mode": 3,
+            "sample_index": 1272,
+            "stat": 131
+          },
+          {
+            "ly": 2,
+            "mode": 0,
+            "sample_index": 1273,
+            "stat": 128
+          },
+          {
+            "ly": 2,
+            "mode": 0,
+            "sample_index": 1274,
+            "stat": 128
+          },
+          {
+            "ly": 2,
+            "mode": 0,
+            "sample_index": 1275,
+            "stat": 128
+          },
+          {
+            "ly": 2,
+            "mode": 0,
+            "sample_index": 1276,
+            "stat": 128
+          },
+          {
+            "ly": 3,
+            "mode": 2,
+            "sample_index": 1277,
+            "stat": 130
+          },
+          {
+            "ly": 3,
+            "mode": 3,
+            "sample_index": 1278,
+            "stat": 131
+          },
+          {
+            "ly": 3,
+            "mode": 3,
+            "sample_index": 1279,
+            "stat": 131
+          }
+        ],
+        "transition_count": 503,
+        "transition_kind": "lcd_stat_mode_ly_sequence",
+        "transition_samples": [
+          {
+            "from_index": 0,
+            "from_ly": 0,
+            "from_mode": 2,
+            "to_index": 1,
+            "to_ly": 0,
+            "to_mode": 3
+          },
+          {
+            "from_index": 3,
+            "from_ly": 0,
+            "from_mode": 3,
+            "to_index": 4,
+            "to_ly": 0,
+            "to_mode": 0
+          },
+          {
+            "from_index": 7,
+            "from_ly": 0,
+            "from_mode": 0,
+            "to_index": 8,
+            "to_ly": 1,
+            "to_mode": 2
+          },
+          {
+            "from_index": 8,
+            "from_ly": 1,
+            "from_mode": 2,
+            "to_index": 9,
+            "to_ly": 1,
+            "to_mode": 3
+          },
+          {
+            "from_index": 12,
+            "from_ly": 1,
+            "from_mode": 3,
+            "to_index": 13,
+            "to_ly": 1,
+            "to_mode": 0
+          },
+          {
+            "from_index": 15,
+            "from_ly": 1,
+            "from_mode": 0,
+            "to_index": 16,
+            "to_ly": 2,
+            "to_mode": 2
+          },
+          {
+            "from_index": 17,
+            "from_ly": 2,
+            "from_mode": 2,
+            "to_index": 18,
+            "to_ly": 2,
+            "to_mode": 3
+          },
+          {
+            "from_index": 20,
+            "from_ly": 2,
+            "from_mode": 3,
+            "to_index": 21,
+            "to_ly": 2,
+            "to_mode": 0
+          },
+          {
+            "from_index": 23,
+            "from_ly": 2,
+            "from_mode": 0,
+            "to_index": 24,
+            "to_ly": 3,
+            "to_mode": 2
+          },
+          {
+            "from_index": 25,
+            "from_ly": 3,
+            "from_mode": 2,
+            "to_index": 26,
+            "to_ly": 3,
+            "to_mode": 3
+          },
+          {
+            "from_index": 28,
+            "from_ly": 3,
+            "from_mode": 3,
+            "to_index": 29,
+            "to_ly": 3,
+            "to_mode": 0
+          },
+          {
+            "from_index": 31,
+            "from_ly": 3,
+            "from_mode": 0,
+            "to_index": 32,
+            "to_ly": 4,
+            "to_mode": 2
+          },
+          {
+            "from_index": 33,
+            "from_ly": 4,
+            "from_mode": 2,
+            "to_index": 34,
+            "to_ly": 4,
+            "to_mode": 3
+          },
+          {
+            "from_index": 36,
+            "from_ly": 4,
+            "from_mode": 3,
+            "to_index": 37,
+            "to_ly": 4,
+            "to_mode": 0
+          },
+          {
+            "from_index": 39,
+            "from_ly": 4,
+            "from_mode": 0,
+            "to_index": 40,
+            "to_ly": 5,
+            "to_mode": 0
+          },
+          {
+            "from_index": 40,
+            "from_ly": 5,
+            "from_mode": 0,
+            "to_index": 41,
+            "to_ly": 5,
+            "to_mode": 2
+          },
+          {
+            "from_index": 41,
+            "from_ly": 5,
+            "from_mode": 2,
+            "to_index": 42,
+            "to_ly": 5,
+            "to_mode": 3
+          },
+          {
+            "from_index": 44,
+            "from_ly": 5,
+            "from_mode": 3,
+            "to_index": 45,
+            "to_ly": 5,
+            "to_mode": 0
+          },
+          {
+            "from_index": 47,
+            "from_ly": 5,
+            "from_mode": 0,
+            "to_index": 48,
+            "to_ly": 6,
+            "to_mode": 0
+          },
+          {
+            "from_index": 48,
+            "from_ly": 6,
+            "from_mode": 0,
+            "to_index": 49,
+            "to_ly": 6,
+            "to_mode": 2
+          },
+          {
+            "from_index": 49,
+            "from_ly": 6,
+            "from_mode": 2,
+            "to_index": 50,
+            "to_ly": 6,
+            "to_mode": 3
+          },
+          {
+            "from_index": 52,
+            "from_ly": 6,
+            "from_mode": 3,
+            "to_index": 53,
+            "to_ly": 6,
+            "to_mode": 0
+          },
+          {
+            "from_index": 56,
+            "from_ly": 6,
+            "from_mode": 0,
+            "to_index": 57,
+            "to_ly": 7,
+            "to_mode": 2
+          },
+          {
+            "from_index": 57,
+            "from_ly": 7,
+            "from_mode": 2,
+            "to_index": 58,
+            "to_ly": 7,
+            "to_mode": 3
+          },
+          {
+            "from_index": 60,
+            "from_ly": 7,
+            "from_mode": 3,
+            "to_index": 61,
+            "to_ly": 7,
+            "to_mode": 0
+          },
+          {
+            "from_index": 64,
+            "from_ly": 7,
+            "from_mode": 0,
+            "to_index": 65,
+            "to_ly": 8,
+            "to_mode": 2
+          },
+          {
+            "from_index": 65,
+            "from_ly": 8,
+            "from_mode": 2,
+            "to_index": 66,
+            "to_ly": 8,
+            "to_mode": 3
+          },
+          {
+            "from_index": 69,
+            "from_ly": 8,
+            "from_mode": 3,
+            "to_index": 70,
+            "to_ly": 8,
+            "to_mode": 0
+          },
+          {
+            "from_index": 72,
+            "from_ly": 8,
+            "from_mode": 0,
+            "to_index": 73,
+            "to_ly": 9,
+            "to_mode": 2
+          },
+          {
+            "from_index": 74,
+            "from_ly": 9,
+            "from_mode": 2,
+            "to_index": 75,
+            "to_ly": 9,
+            "to_mode": 3
+          },
+          {
+            "from_index": 77,
+            "from_ly": 9,
+            "from_mode": 3,
+            "to_index": 78,
+            "to_ly": 9,
+            "to_mode": 0
+          },
+          {
+            "from_index": 80,
+            "from_ly": 9,
+            "from_mode": 0,
+            "to_index": 81,
+            "to_ly": 10,
+            "to_mode": 2
+          },
+          {
+            "from_index": 82,
+            "from_ly": 10,
+            "from_mode": 2,
+            "to_index": 83,
+            "to_ly": 10,
+            "to_mode": 3
+          },
+          {
+            "from_index": 85,
+            "from_ly": 10,
+            "from_mode": 3,
+            "to_index": 86,
+            "to_ly": 10,
+            "to_mode": 0
+          },
+          {
+            "from_index": 88,
+            "from_ly": 10,
+            "from_mode": 0,
+            "to_index": 89,
+            "to_ly": 11,
+            "to_mode": 2
+          },
+          {
+            "from_index": 90,
+            "from_ly": 11,
+            "from_mode": 2,
+            "to_index": 91,
+            "to_ly": 11,
+            "to_mode": 3
+          },
+          {
+            "from_index": 93,
+            "from_ly": 11,
+            "from_mode": 3,
+            "to_index": 94,
+            "to_ly": 11,
+            "to_mode": 0
+          },
+          {
+            "from_index": 96,
+            "from_ly": 11,
+            "from_mode": 0,
+            "to_index": 97,
+            "to_ly": 12,
+            "to_mode": 0
+          },
+          {
+            "from_index": 97,
+            "from_ly": 12,
+            "from_mode": 0,
+            "to_index": 98,
+            "to_ly": 12,
+            "to_mode": 2
+          },
+          {
+            "from_index": 98,
+            "from_ly": 12,
+            "from_mode": 2,
+            "to_index": 99,
+            "to_ly": 12,
+            "to_mode": 3
+          },
+          {
+            "from_index": 101,
+            "from_ly": 12,
+            "from_mode": 3,
+            "to_index": 102,
+            "to_ly": 12,
+            "to_mode": 0
+          },
+          {
+            "from_index": 104,
+            "from_ly": 12,
+            "from_mode": 0,
+            "to_index": 105,
+            "to_ly": 13,
+            "to_mode": 0
+          },
+          {
+            "from_index": 105,
+            "from_ly": 13,
+            "from_mode": 0,
+            "to_index": 106,
+            "to_ly": 13,
+            "to_mode": 2
+          },
+          {
+            "from_index": 106,
+            "from_ly": 13,
+            "from_mode": 2,
+            "to_index": 107,
+            "to_ly": 13,
+            "to_mode": 3
+          },
+          {
+            "from_index": 109,
+            "from_ly": 13,
+            "from_mode": 3,
+            "to_index": 110,
+            "to_ly": 13,
+            "to_mode": 0
+          },
+          {
+            "from_index": 113,
+            "from_ly": 13,
+            "from_mode": 0,
+            "to_index": 114,
+            "to_ly": 14,
+            "to_mode": 2
+          },
+          {
+            "from_index": 114,
+            "from_ly": 14,
+            "from_mode": 2,
+            "to_index": 115,
+            "to_ly": 14,
+            "to_mode": 3
+          },
+          {
+            "from_index": 117,
+            "from_ly": 14,
+            "from_mode": 3,
+            "to_index": 118,
+            "to_ly": 14,
+            "to_mode": 0
+          },
+          {
+            "from_index": 121,
+            "from_ly": 14,
+            "from_mode": 0,
+            "to_index": 122,
+            "to_ly": 15,
+            "to_mode": 2
+          },
+          {
+            "from_index": 122,
+            "from_ly": 15,
+            "from_mode": 2,
+            "to_index": 123,
+            "to_ly": 15,
+            "to_mode": 3
+          },
+          {
+            "from_index": 126,
+            "from_ly": 15,
+            "from_mode": 3,
+            "to_index": 127,
+            "to_ly": 15,
+            "to_mode": 0
+          },
+          {
+            "from_index": 129,
+            "from_ly": 15,
+            "from_mode": 0,
+            "to_index": 130,
+            "to_ly": 16,
+            "to_mode": 2
+          },
+          {
+            "from_index": 131,
+            "from_ly": 16,
+            "from_mode": 2,
+            "to_index": 132,
+            "to_ly": 16,
+            "to_mode": 3
+          },
+          {
+            "from_index": 134,
+            "from_ly": 16,
+            "from_mode": 3,
+            "to_index": 135,
+            "to_ly": 16,
+            "to_mode": 0
+          },
+          {
+            "from_index": 137,
+            "from_ly": 16,
+            "from_mode": 0,
+            "to_index": 138,
+            "to_ly": 17,
+            "to_mode": 2
+          },
+          {
+            "from_index": 139,
+            "from_ly": 17,
+            "from_mode": 2,
+            "to_index": 140,
+            "to_ly": 17,
+            "to_mode": 3
+          },
+          {
+            "from_index": 142,
+            "from_ly": 17,
+            "from_mode": 3,
+            "to_index": 143,
+            "to_ly": 17,
+            "to_mode": 0
+          },
+          {
+            "from_index": 145,
+            "from_ly": 17,
+            "from_mode": 0,
+            "to_index": 146,
+            "to_ly": 18,
+            "to_mode": 2
+          },
+          {
+            "from_index": 147,
+            "from_ly": 18,
+            "from_mode": 2,
+            "to_index": 148,
+            "to_ly": 18,
+            "to_mode": 3
+          },
+          {
+            "from_index": 150,
+            "from_ly": 18,
+            "from_mode": 3,
+            "to_index": 151,
+            "to_ly": 18,
+            "to_mode": 0
+          },
+          {
+            "from_index": 153,
+            "from_ly": 18,
+            "from_mode": 0,
+            "to_index": 154,
+            "to_ly": 19,
+            "to_mode": 0
+          },
+          {
+            "from_index": 154,
+            "from_ly": 19,
+            "from_mode": 0,
+            "to_index": 155,
+            "to_ly": 19,
+            "to_mode": 2
+          },
+          {
+            "from_index": 155,
+            "from_ly": 19,
+            "from_mode": 2,
+            "to_index": 156,
+            "to_ly": 19,
+            "to_mode": 3
+          },
+          {
+            "from_index": 158,
+            "from_ly": 19,
+            "from_mode": 3,
+            "to_index": 159,
+            "to_ly": 19,
+            "to_mode": 0
+          },
+          {
+            "from_index": 161,
+            "from_ly": 19,
+            "from_mode": 0,
+            "to_index": 162,
+            "to_ly": 20,
+            "to_mode": 0
+          },
+          {
+            "from_index": 162,
+            "from_ly": 20,
+            "from_mode": 0,
+            "to_index": 163,
+            "to_ly": 20,
+            "to_mode": 2
+          },
+          {
+            "from_index": 163,
+            "from_ly": 20,
+            "from_mode": 2,
+            "to_index": 164,
+            "to_ly": 20,
+            "to_mode": 3
+          },
+          {
+            "from_index": 166,
+            "from_ly": 20,
+            "from_mode": 3,
+            "to_index": 167,
+            "to_ly": 20,
+            "to_mode": 0
+          },
+          {
+            "from_index": 170,
+            "from_ly": 20,
+            "from_mode": 0,
+            "to_index": 171,
+            "to_ly": 21,
+            "to_mode": 2
+          },
+          {
+            "from_index": 171,
+            "from_ly": 21,
+            "from_mode": 2,
+            "to_index": 172,
+            "to_ly": 21,
+            "to_mode": 3
+          },
+          {
+            "from_index": 174,
+            "from_ly": 21,
+            "from_mode": 3,
+            "to_index": 175,
+            "to_ly": 21,
+            "to_mode": 0
+          },
+          {
+            "from_index": 178,
+            "from_ly": 21,
+            "from_mode": 0,
+            "to_index": 179,
+            "to_ly": 22,
+            "to_mode": 2
+          },
+          {
+            "from_index": 179,
+            "from_ly": 22,
+            "from_mode": 2,
+            "to_index": 180,
+            "to_ly": 22,
+            "to_mode": 3
+          },
+          {
+            "from_index": 183,
+            "from_ly": 22,
+            "from_mode": 3,
+            "to_index": 184,
+            "to_ly": 22,
+            "to_mode": 0
+          },
+          {
+            "from_index": 186,
+            "from_ly": 22,
+            "from_mode": 0,
+            "to_index": 187,
+            "to_ly": 23,
+            "to_mode": 2
+          },
+          {
+            "from_index": 188,
+            "from_ly": 23,
+            "from_mode": 2,
+            "to_index": 189,
+            "to_ly": 23,
+            "to_mode": 3
+          },
+          {
+            "from_index": 191,
+            "from_ly": 23,
+            "from_mode": 3,
+            "to_index": 192,
+            "to_ly": 23,
+            "to_mode": 0
+          },
+          {
+            "from_index": 194,
+            "from_ly": 23,
+            "from_mode": 0,
+            "to_index": 195,
+            "to_ly": 24,
+            "to_mode": 2
+          },
+          {
+            "from_index": 196,
+            "from_ly": 24,
+            "from_mode": 2,
+            "to_index": 197,
+            "to_ly": 24,
+            "to_mode": 3
+          },
+          {
+            "from_index": 199,
+            "from_ly": 24,
+            "from_mode": 3,
+            "to_index": 200,
+            "to_ly": 24,
+            "to_mode": 0
+          },
+          {
+            "from_index": 202,
+            "from_ly": 24,
+            "from_mode": 0,
+            "to_index": 203,
+            "to_ly": 25,
+            "to_mode": 2
+          },
+          {
+            "from_index": 204,
+            "from_ly": 25,
+            "from_mode": 2,
+            "to_index": 205,
+            "to_ly": 25,
+            "to_mode": 3
+          },
+          {
+            "from_index": 207,
+            "from_ly": 25,
+            "from_mode": 3,
+            "to_index": 208,
+            "to_ly": 25,
+            "to_mode": 0
+          },
+          {
+            "from_index": 210,
+            "from_ly": 25,
+            "from_mode": 0,
+            "to_index": 211,
+            "to_ly": 26,
+            "to_mode": 0
+          },
+          {
+            "from_index": 211,
+            "from_ly": 26,
+            "from_mode": 0,
+            "to_index": 212,
+            "to_ly": 26,
+            "to_mode": 2
+          },
+          {
+            "from_index": 212,
+            "from_ly": 26,
+            "from_mode": 2,
+            "to_index": 213,
+            "to_ly": 26,
+            "to_mode": 3
+          },
+          {
+            "from_index": 215,
+            "from_ly": 26,
+            "from_mode": 3,
+            "to_index": 216,
+            "to_ly": 26,
+            "to_mode": 0
+          },
+          {
+            "from_index": 218,
+            "from_ly": 26,
+            "from_mode": 0,
+            "to_index": 219,
+            "to_ly": 27,
+            "to_mode": 0
+          },
+          {
+            "from_index": 219,
+            "from_ly": 27,
+            "from_mode": 0,
+            "to_index": 220,
+            "to_ly": 27,
+            "to_mode": 2
+          },
+          {
+            "from_index": 220,
+            "from_ly": 27,
+            "from_mode": 2,
+            "to_index": 221,
+            "to_ly": 27,
+            "to_mode": 3
+          },
+          {
+            "from_index": 223,
+            "from_ly": 27,
+            "from_mode": 3,
+            "to_index": 224,
+            "to_ly": 27,
+            "to_mode": 0
+          },
+          {
+            "from_index": 227,
+            "from_ly": 27,
+            "from_mode": 0,
+            "to_index": 228,
+            "to_ly": 28,
+            "to_mode": 2
+          },
+          {
+            "from_index": 228,
+            "from_ly": 28,
+            "from_mode": 2,
+            "to_index": 229,
+            "to_ly": 28,
+            "to_mode": 3
+          },
+          {
+            "from_index": 231,
+            "from_ly": 28,
+            "from_mode": 3,
+            "to_index": 232,
+            "to_ly": 28,
+            "to_mode": 0
+          },
+          {
+            "from_index": 235,
+            "from_ly": 28,
+            "from_mode": 0,
+            "to_index": 236,
+            "to_ly": 29,
+            "to_mode": 2
+          },
+          {
+            "from_index": 236,
+            "from_ly": 29,
+            "from_mode": 2,
+            "to_index": 237,
+            "to_ly": 29,
+            "to_mode": 3
+          }
+        ],
+        "vblank_entry": {
+          "ly": 144,
+          "mode": 1,
+          "sample_index": 1171
+        },
+        "vblank_observed": true
+      }
+    ],
+    "errors": [],
+    "frame_count": 3,
+    "kind": "debugger_deity_timer_lcd_mode_runtime_event_stream",
+    "known_limits": [
+      "Timer evidence is a CPU polling loop observing TIMA wrap/drop and IF timer-bit request, not a cycle-exact reload timestamp.",
+      "LCD evidence is a CPU polling loop observing STAT mode and LY transitions, not full PPU dot timing.",
+      "Cross-backend timer/LCD parity remains out of scope."
+    ],
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 2,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_timer_lcd_runtime",
+          "precision": {
+            "interrupt_request_observed": true,
+            "overflow_drop_count": 5,
+            "overflow_drop_observed": true,
+            "sample_count": 128
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "event_family": "timer",
+            "surface": "timer_lcd"
+          },
+          "source_kind": "pyboy_timer_lcd_runtime",
+          "source_report": "debugger_deity_timer_lcd_mode_runtime_event_stream",
+          "subjects": {
+            "registers": [
+              "FF05",
+              "FF06",
+              "FF07",
+              "FF0F",
+              "FFFF"
+            ]
+          },
+          "validation": {
+            "case_id": "timer_tima_overflow_interrupt_request",
+            "transition_kind": "timer_tima_overflow_if_request"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "timer_tima_overflow_interrupt_request",
+          "event_family": "timer",
+          "first_interrupt_request_sample": 4,
+          "if_timer_bit": 4,
+          "initial_tima": 240,
+          "interrupt_request_observed": true,
+          "overflow_drop_count": 5,
+          "overflow_drop_observed": true,
+          "overflow_drop_samples": [
+            {
+              "after_if": 4,
+              "after_index": 4,
+              "after_tima": 166,
+              "before_index": 3,
+              "before_tima": 253
+            },
+            {
+              "after_if": 4,
+              "after_index": 30,
+              "after_tima": 166,
+              "before_index": 29,
+              "before_tima": 253
+            },
+            {
+              "after_if": 4,
+              "after_index": 56,
+              "after_tima": 166,
+              "before_index": 55,
+              "before_tima": 253
+            },
+            {
+              "after_if": 4,
+              "after_index": 82,
+              "after_tima": 166,
+              "before_index": 81,
+              "before_tima": 253
+            },
+            {
+              "after_if": 4,
+              "after_index": 108,
+              "after_tima": 166,
+              "before_index": 107,
+              "before_tima": 253
+            }
+          ],
+          "pc_after": 65445,
+          "registers": [
+            "FF05",
+            "FF06",
+            "FF07",
+            "FF0F",
+            "FFFF"
+          ],
+          "runtime_event_observed": true,
+          "sample_count": 128,
+          "sample_head": [
+            {
+              "if": 0,
+              "sample_index": 0,
+              "tima": 243
+            },
+            {
+              "if": 0,
+              "sample_index": 1,
+              "tima": 246
+            },
+            {
+              "if": 0,
+              "sample_index": 2,
+              "tima": 250
+            },
+            {
+              "if": 0,
+              "sample_index": 3,
+              "tima": 253
+            },
+            {
+              "if": 4,
+              "sample_index": 4,
+              "tima": 166
+            },
+            {
+              "if": 4,
+              "sample_index": 5,
+              "tima": 169
+            },
+            {
+              "if": 4,
+              "sample_index": 6,
+              "tima": 173
+            },
+            {
+              "if": 4,
+              "sample_index": 7,
+              "tima": 176
+            },
+            {
+              "if": 4,
+              "sample_index": 8,
+              "tima": 180
+            },
+            {
+              "if": 4,
+              "sample_index": 9,
+              "tima": 183
+            },
+            {
+              "if": 4,
+              "sample_index": 10,
+              "tima": 187
+            },
+            {
+              "if": 4,
+              "sample_index": 11,
+              "tima": 190
+            }
+          ],
+          "sample_tail": [
+            {
+              "if": 4,
+              "sample_index": 116,
+              "tima": 194
+            },
+            {
+              "if": 4,
+              "sample_index": 117,
+              "tima": 197
+            },
+            {
+              "if": 4,
+              "sample_index": 118,
+              "tima": 201
+            },
+            {
+              "if": 4,
+              "sample_index": 119,
+              "tima": 204
+            },
+            {
+              "if": 4,
+              "sample_index": 120,
+              "tima": 208
+            },
+            {
+              "if": 4,
+              "sample_index": 121,
+              "tima": 211
+            },
+            {
+              "if": 4,
+              "sample_index": 122,
+              "tima": 215
+            },
+            {
+              "if": 4,
+              "sample_index": 123,
+              "tima": 218
+            },
+            {
+              "if": 4,
+              "sample_index": 124,
+              "tima": 222
+            },
+            {
+              "if": 4,
+              "sample_index": 125,
+              "tima": 225
+            },
+            {
+              "if": 4,
+              "sample_index": 126,
+              "tima": 229
+            },
+            {
+              "if": 4,
+              "sample_index": 127,
+              "tima": 232
+            }
+          ],
+          "tac": 5,
+          "tma": 165,
+          "transition_kind": "timer_tima_overflow_if_request"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "interrupt_request_observed": true,
+          "overflow_drop_count": 5,
+          "overflow_drop_observed": true,
+          "sample_count": 128
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "event_family": "timer",
+          "surface": "timer_lcd"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_timer_lcd_runtime",
+        "source_report": "debugger_deity_timer_lcd_mode_runtime_event_stream",
+        "subjects": {
+          "registers": [
+            "FF05",
+            "FF06",
+            "FF07",
+            "FF0F",
+            "FFFF"
+          ]
+        },
+        "validation": {
+          "case_id": "timer_tima_overflow_interrupt_request",
+          "transition_kind": "timer_tima_overflow_if_request"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_timer_lcd_runtime",
+          "precision": {
+            "mode_sequence_observed": true,
+            "observed_modes": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "sample_count": 1280,
+            "transition_count": 503,
+            "vblank_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "event_family": "lcd",
+            "surface": "timer_lcd"
+          },
+          "source_kind": "pyboy_timer_lcd_runtime",
+          "source_report": "debugger_deity_timer_lcd_mode_runtime_event_stream",
+          "subjects": {
+            "registers": [
+              "FF40",
+              "FF41",
+              "FF44"
+            ]
+          },
+          "validation": {
+            "case_id": "lcd_stat_mode_poll_sequence",
+            "transition_kind": "lcd_stat_mode_ly_sequence"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "lcd_stat_mode_poll_sequence",
+          "event_family": "lcd",
+          "ly_max": 153,
+          "ly_min": 0,
+          "mode_counts": {
+            "0": 533,
+            "1": 81,
+            "2": 213,
+            "3": 453
+          },
+          "mode_sequence_observed": true,
+          "observed_modes": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "pc_after": 65432,
+          "registers": [
+            "FF40",
+            "FF41",
+            "FF44"
+          ],
+          "runtime_event_observed": true,
+          "sample_count": 1280,
+          "sample_head": [
+            {
+              "ly": 0,
+              "mode": 2,
+              "sample_index": 0,
+              "stat": 134
+            },
+            {
+              "ly": 0,
+              "mode": 3,
+              "sample_index": 1,
+              "stat": 135
+            },
+            {
+              "ly": 0,
+              "mode": 3,
+              "sample_index": 2,
+              "stat": 135
+            },
+            {
+              "ly": 0,
+              "mode": 3,
+              "sample_index": 3,
+              "stat": 135
+            },
+            {
+              "ly": 0,
+              "mode": 0,
+              "sample_index": 4,
+              "stat": 132
+            },
+            {
+              "ly": 0,
+              "mode": 0,
+              "sample_index": 5,
+              "stat": 132
+            },
+            {
+              "ly": 0,
+              "mode": 0,
+              "sample_index": 6,
+              "stat": 132
+            },
+            {
+              "ly": 0,
+              "mode": 0,
+              "sample_index": 7,
+              "stat": 132
+            },
+            {
+              "ly": 1,
+              "mode": 2,
+              "sample_index": 8,
+              "stat": 130
+            },
+            {
+              "ly": 1,
+              "mode": 3,
+              "sample_index": 9,
+              "stat": 131
+            },
+            {
+              "ly": 1,
+              "mode": 3,
+              "sample_index": 10,
+              "stat": 131
+            },
+            {
+              "ly": 1,
+              "mode": 3,
+              "sample_index": 11,
+              "stat": 131
+            }
+          ],
+          "sample_tail": [
+            {
+              "ly": 2,
+              "mode": 0,
+              "sample_index": 1268,
+              "stat": 128
+            },
+            {
+              "ly": 2,
+              "mode": 2,
+              "sample_index": 1269,
+              "stat": 130
+            },
+            {
+              "ly": 2,
+              "mode": 3,
+              "sample_index": 1270,
+              "stat": 131
+            },
+            {
+              "ly": 2,
+              "mode": 3,
+              "sample_index": 1271,
+              "stat": 131
+            },
+            {
+              "ly": 2,
+              "mode": 3,
+              "sample_index": 1272,
+              "stat": 131
+            },
+            {
+              "ly": 2,
+              "mode": 0,
+              "sample_index": 1273,
+              "stat": 128
+            },
+            {
+              "ly": 2,
+              "mode": 0,
+              "sample_index": 1274,
+              "stat": 128
+            },
+            {
+              "ly": 2,
+              "mode": 0,
+              "sample_index": 1275,
+              "stat": 128
+            },
+            {
+              "ly": 2,
+              "mode": 0,
+              "sample_index": 1276,
+              "stat": 128
+            },
+            {
+              "ly": 3,
+              "mode": 2,
+              "sample_index": 1277,
+              "stat": 130
+            },
+            {
+              "ly": 3,
+              "mode": 3,
+              "sample_index": 1278,
+              "stat": 131
+            },
+            {
+              "ly": 3,
+              "mode": 3,
+              "sample_index": 1279,
+              "stat": 131
+            }
+          ],
+          "transition_count": 503,
+          "transition_kind": "lcd_stat_mode_ly_sequence",
+          "transition_samples": [
+            {
+              "from_index": 0,
+              "from_ly": 0,
+              "from_mode": 2,
+              "to_index": 1,
+              "to_ly": 0,
+              "to_mode": 3
+            },
+            {
+              "from_index": 3,
+              "from_ly": 0,
+              "from_mode": 3,
+              "to_index": 4,
+              "to_ly": 0,
+              "to_mode": 0
+            },
+            {
+              "from_index": 7,
+              "from_ly": 0,
+              "from_mode": 0,
+              "to_index": 8,
+              "to_ly": 1,
+              "to_mode": 2
+            },
+            {
+              "from_index": 8,
+              "from_ly": 1,
+              "from_mode": 2,
+              "to_index": 9,
+              "to_ly": 1,
+              "to_mode": 3
+            },
+            {
+              "from_index": 12,
+              "from_ly": 1,
+              "from_mode": 3,
+              "to_index": 13,
+              "to_ly": 1,
+              "to_mode": 0
+            },
+            {
+              "from_index": 15,
+              "from_ly": 1,
+              "from_mode": 0,
+              "to_index": 16,
+              "to_ly": 2,
+              "to_mode": 2
+            },
+            {
+              "from_index": 17,
+              "from_ly": 2,
+              "from_mode": 2,
+              "to_index": 18,
+              "to_ly": 2,
+              "to_mode": 3
+            },
+            {
+              "from_index": 20,
+              "from_ly": 2,
+              "from_mode": 3,
+              "to_index": 21,
+              "to_ly": 2,
+              "to_mode": 0
+            },
+            {
+              "from_index": 23,
+              "from_ly": 2,
+              "from_mode": 0,
+              "to_index": 24,
+              "to_ly": 3,
+              "to_mode": 2
+            },
+            {
+              "from_index": 25,
+              "from_ly": 3,
+              "from_mode": 2,
+              "to_index": 26,
+              "to_ly": 3,
+              "to_mode": 3
+            },
+            {
+              "from_index": 28,
+              "from_ly": 3,
+              "from_mode": 3,
+              "to_index": 29,
+              "to_ly": 3,
+              "to_mode": 0
+            },
+            {
+              "from_index": 31,
+              "from_ly": 3,
+              "from_mode": 0,
+              "to_index": 32,
+              "to_ly": 4,
+              "to_mode": 2
+            },
+            {
+              "from_index": 33,
+              "from_ly": 4,
+              "from_mode": 2,
+              "to_index": 34,
+              "to_ly": 4,
+              "to_mode": 3
+            },
+            {
+              "from_index": 36,
+              "from_ly": 4,
+              "from_mode": 3,
+              "to_index": 37,
+              "to_ly": 4,
+              "to_mode": 0
+            },
+            {
+              "from_index": 39,
+              "from_ly": 4,
+              "from_mode": 0,
+              "to_index": 40,
+              "to_ly": 5,
+              "to_mode": 0
+            },
+            {
+              "from_index": 40,
+              "from_ly": 5,
+              "from_mode": 0,
+              "to_index": 41,
+              "to_ly": 5,
+              "to_mode": 2
+            },
+            {
+              "from_index": 41,
+              "from_ly": 5,
+              "from_mode": 2,
+              "to_index": 42,
+              "to_ly": 5,
+              "to_mode": 3
+            },
+            {
+              "from_index": 44,
+              "from_ly": 5,
+              "from_mode": 3,
+              "to_index": 45,
+              "to_ly": 5,
+              "to_mode": 0
+            },
+            {
+              "from_index": 47,
+              "from_ly": 5,
+              "from_mode": 0,
+              "to_index": 48,
+              "to_ly": 6,
+              "to_mode": 0
+            },
+            {
+              "from_index": 48,
+              "from_ly": 6,
+              "from_mode": 0,
+              "to_index": 49,
+              "to_ly": 6,
+              "to_mode": 2
+            },
+            {
+              "from_index": 49,
+              "from_ly": 6,
+              "from_mode": 2,
+              "to_index": 50,
+              "to_ly": 6,
+              "to_mode": 3
+            },
+            {
+              "from_index": 52,
+              "from_ly": 6,
+              "from_mode": 3,
+              "to_index": 53,
+              "to_ly": 6,
+              "to_mode": 0
+            },
+            {
+              "from_index": 56,
+              "from_ly": 6,
+              "from_mode": 0,
+              "to_index": 57,
+              "to_ly": 7,
+              "to_mode": 2
+            },
+            {
+              "from_index": 57,
+              "from_ly": 7,
+              "from_mode": 2,
+              "to_index": 58,
+              "to_ly": 7,
+              "to_mode": 3
+            },
+            {
+              "from_index": 60,
+              "from_ly": 7,
+              "from_mode": 3,
+              "to_index": 61,
+              "to_ly": 7,
+              "to_mode": 0
+            },
+            {
+              "from_index": 64,
+              "from_ly": 7,
+              "from_mode": 0,
+              "to_index": 65,
+              "to_ly": 8,
+              "to_mode": 2
+            },
+            {
+              "from_index": 65,
+              "from_ly": 8,
+              "from_mode": 2,
+              "to_index": 66,
+              "to_ly": 8,
+              "to_mode": 3
+            },
+            {
+              "from_index": 69,
+              "from_ly": 8,
+              "from_mode": 3,
+              "to_index": 70,
+              "to_ly": 8,
+              "to_mode": 0
+            },
+            {
+              "from_index": 72,
+              "from_ly": 8,
+              "from_mode": 0,
+              "to_index": 73,
+              "to_ly": 9,
+              "to_mode": 2
+            },
+            {
+              "from_index": 74,
+              "from_ly": 9,
+              "from_mode": 2,
+              "to_index": 75,
+              "to_ly": 9,
+              "to_mode": 3
+            },
+            {
+              "from_index": 77,
+              "from_ly": 9,
+              "from_mode": 3,
+              "to_index": 78,
+              "to_ly": 9,
+              "to_mode": 0
+            },
+            {
+              "from_index": 80,
+              "from_ly": 9,
+              "from_mode": 0,
+              "to_index": 81,
+              "to_ly": 10,
+              "to_mode": 2
+            },
+            {
+              "from_index": 82,
+              "from_ly": 10,
+              "from_mode": 2,
+              "to_index": 83,
+              "to_ly": 10,
+              "to_mode": 3
+            },
+            {
+              "from_index": 85,
+              "from_ly": 10,
+              "from_mode": 3,
+              "to_index": 86,
+              "to_ly": 10,
+              "to_mode": 0
+            },
+            {
+              "from_index": 88,
+              "from_ly": 10,
+              "from_mode": 0,
+              "to_index": 89,
+              "to_ly": 11,
+              "to_mode": 2
+            },
+            {
+              "from_index": 90,
+              "from_ly": 11,
+              "from_mode": 2,
+              "to_index": 91,
+              "to_ly": 11,
+              "to_mode": 3
+            },
+            {
+              "from_index": 93,
+              "from_ly": 11,
+              "from_mode": 3,
+              "to_index": 94,
+              "to_ly": 11,
+              "to_mode": 0
+            },
+            {
+              "from_index": 96,
+              "from_ly": 11,
+              "from_mode": 0,
+              "to_index": 97,
+              "to_ly": 12,
+              "to_mode": 0
+            },
+            {
+              "from_index": 97,
+              "from_ly": 12,
+              "from_mode": 0,
+              "to_index": 98,
+              "to_ly": 12,
+              "to_mode": 2
+            },
+            {
+              "from_index": 98,
+              "from_ly": 12,
+              "from_mode": 2,
+              "to_index": 99,
+              "to_ly": 12,
+              "to_mode": 3
+            },
+            {
+              "from_index": 101,
+              "from_ly": 12,
+              "from_mode": 3,
+              "to_index": 102,
+              "to_ly": 12,
+              "to_mode": 0
+            },
+            {
+              "from_index": 104,
+              "from_ly": 12,
+              "from_mode": 0,
+              "to_index": 105,
+              "to_ly": 13,
+              "to_mode": 0
+            },
+            {
+              "from_index": 105,
+              "from_ly": 13,
+              "from_mode": 0,
+              "to_index": 106,
+              "to_ly": 13,
+              "to_mode": 2
+            },
+            {
+              "from_index": 106,
+              "from_ly": 13,
+              "from_mode": 2,
+              "to_index": 107,
+              "to_ly": 13,
+              "to_mode": 3
+            },
+            {
+              "from_index": 109,
+              "from_ly": 13,
+              "from_mode": 3,
+              "to_index": 110,
+              "to_ly": 13,
+              "to_mode": 0
+            },
+            {
+              "from_index": 113,
+              "from_ly": 13,
+              "from_mode": 0,
+              "to_index": 114,
+              "to_ly": 14,
+              "to_mode": 2
+            },
+            {
+              "from_index": 114,
+              "from_ly": 14,
+              "from_mode": 2,
+              "to_index": 115,
+              "to_ly": 14,
+              "to_mode": 3
+            },
+            {
+              "from_index": 117,
+              "from_ly": 14,
+              "from_mode": 3,
+              "to_index": 118,
+              "to_ly": 14,
+              "to_mode": 0
+            },
+            {
+              "from_index": 121,
+              "from_ly": 14,
+              "from_mode": 0,
+              "to_index": 122,
+              "to_ly": 15,
+              "to_mode": 2
+            },
+            {
+              "from_index": 122,
+              "from_ly": 15,
+              "from_mode": 2,
+              "to_index": 123,
+              "to_ly": 15,
+              "to_mode": 3
+            },
+            {
+              "from_index": 126,
+              "from_ly": 15,
+              "from_mode": 3,
+              "to_index": 127,
+              "to_ly": 15,
+              "to_mode": 0
+            },
+            {
+              "from_index": 129,
+              "from_ly": 15,
+              "from_mode": 0,
+              "to_index": 130,
+              "to_ly": 16,
+              "to_mode": 2
+            },
+            {
+              "from_index": 131,
+              "from_ly": 16,
+              "from_mode": 2,
+              "to_index": 132,
+              "to_ly": 16,
+              "to_mode": 3
+            },
+            {
+              "from_index": 134,
+              "from_ly": 16,
+              "from_mode": 3,
+              "to_index": 135,
+              "to_ly": 16,
+              "to_mode": 0
+            },
+            {
+              "from_index": 137,
+              "from_ly": 16,
+              "from_mode": 0,
+              "to_index": 138,
+              "to_ly": 17,
+              "to_mode": 2
+            },
+            {
+              "from_index": 139,
+              "from_ly": 17,
+              "from_mode": 2,
+              "to_index": 140,
+              "to_ly": 17,
+              "to_mode": 3
+            },
+            {
+              "from_index": 142,
+              "from_ly": 17,
+              "from_mode": 3,
+              "to_index": 143,
+              "to_ly": 17,
+              "to_mode": 0
+            },
+            {
+              "from_index": 145,
+              "from_ly": 17,
+              "from_mode": 0,
+              "to_index": 146,
+              "to_ly": 18,
+              "to_mode": 2
+            },
+            {
+              "from_index": 147,
+              "from_ly": 18,
+              "from_mode": 2,
+              "to_index": 148,
+              "to_ly": 18,
+              "to_mode": 3
+            },
+            {
+              "from_index": 150,
+              "from_ly": 18,
+              "from_mode": 3,
+              "to_index": 151,
+              "to_ly": 18,
+              "to_mode": 0
+            },
+            {
+              "from_index": 153,
+              "from_ly": 18,
+              "from_mode": 0,
+              "to_index": 154,
+              "to_ly": 19,
+              "to_mode": 0
+            },
+            {
+              "from_index": 154,
+              "from_ly": 19,
+              "from_mode": 0,
+              "to_index": 155,
+              "to_ly": 19,
+              "to_mode": 2
+            },
+            {
+              "from_index": 155,
+              "from_ly": 19,
+              "from_mode": 2,
+              "to_index": 156,
+              "to_ly": 19,
+              "to_mode": 3
+            },
+            {
+              "from_index": 158,
+              "from_ly": 19,
+              "from_mode": 3,
+              "to_index": 159,
+              "to_ly": 19,
+              "to_mode": 0
+            },
+            {
+              "from_index": 161,
+              "from_ly": 19,
+              "from_mode": 0,
+              "to_index": 162,
+              "to_ly": 20,
+              "to_mode": 0
+            },
+            {
+              "from_index": 162,
+              "from_ly": 20,
+              "from_mode": 0,
+              "to_index": 163,
+              "to_ly": 20,
+              "to_mode": 2
+            },
+            {
+              "from_index": 163,
+              "from_ly": 20,
+              "from_mode": 2,
+              "to_index": 164,
+              "to_ly": 20,
+              "to_mode": 3
+            },
+            {
+              "from_index": 166,
+              "from_ly": 20,
+              "from_mode": 3,
+              "to_index": 167,
+              "to_ly": 20,
+              "to_mode": 0
+            },
+            {
+              "from_index": 170,
+              "from_ly": 20,
+              "from_mode": 0,
+              "to_index": 171,
+              "to_ly": 21,
+              "to_mode": 2
+            },
+            {
+              "from_index": 171,
+              "from_ly": 21,
+              "from_mode": 2,
+              "to_index": 172,
+              "to_ly": 21,
+              "to_mode": 3
+            },
+            {
+              "from_index": 174,
+              "from_ly": 21,
+              "from_mode": 3,
+              "to_index": 175,
+              "to_ly": 21,
+              "to_mode": 0
+            },
+            {
+              "from_index": 178,
+              "from_ly": 21,
+              "from_mode": 0,
+              "to_index": 179,
+              "to_ly": 22,
+              "to_mode": 2
+            },
+            {
+              "from_index": 179,
+              "from_ly": 22,
+              "from_mode": 2,
+              "to_index": 180,
+              "to_ly": 22,
+              "to_mode": 3
+            },
+            {
+              "from_index": 183,
+              "from_ly": 22,
+              "from_mode": 3,
+              "to_index": 184,
+              "to_ly": 22,
+              "to_mode": 0
+            },
+            {
+              "from_index": 186,
+              "from_ly": 22,
+              "from_mode": 0,
+              "to_index": 187,
+              "to_ly": 23,
+              "to_mode": 2
+            },
+            {
+              "from_index": 188,
+              "from_ly": 23,
+              "from_mode": 2,
+              "to_index": 189,
+              "to_ly": 23,
+              "to_mode": 3
+            },
+            {
+              "from_index": 191,
+              "from_ly": 23,
+              "from_mode": 3,
+              "to_index": 192,
+              "to_ly": 23,
+              "to_mode": 0
+            },
+            {
+              "from_index": 194,
+              "from_ly": 23,
+              "from_mode": 0,
+              "to_index": 195,
+              "to_ly": 24,
+              "to_mode": 2
+            },
+            {
+              "from_index": 196,
+              "from_ly": 24,
+              "from_mode": 2,
+              "to_index": 197,
+              "to_ly": 24,
+              "to_mode": 3
+            },
+            {
+              "from_index": 199,
+              "from_ly": 24,
+              "from_mode": 3,
+              "to_index": 200,
+              "to_ly": 24,
+              "to_mode": 0
+            },
+            {
+              "from_index": 202,
+              "from_ly": 24,
+              "from_mode": 0,
+              "to_index": 203,
+              "to_ly": 25,
+              "to_mode": 2
+            },
+            {
+              "from_index": 204,
+              "from_ly": 25,
+              "from_mode": 2,
+              "to_index": 205,
+              "to_ly": 25,
+              "to_mode": 3
+            },
+            {
+              "from_index": 207,
+              "from_ly": 25,
+              "from_mode": 3,
+              "to_index": 208,
+              "to_ly": 25,
+              "to_mode": 0
+            },
+            {
+              "from_index": 210,
+              "from_ly": 25,
+              "from_mode": 0,
+              "to_index": 211,
+              "to_ly": 26,
+              "to_mode": 0
+            },
+            {
+              "from_index": 211,
+              "from_ly": 26,
+              "from_mode": 0,
+              "to_index": 212,
+              "to_ly": 26,
+              "to_mode": 2
+            },
+            {
+              "from_index": 212,
+              "from_ly": 26,
+              "from_mode": 2,
+              "to_index": 213,
+              "to_ly": 26,
+              "to_mode": 3
+            },
+            {
+              "from_index": 215,
+              "from_ly": 26,
+              "from_mode": 3,
+              "to_index": 216,
+              "to_ly": 26,
+              "to_mode": 0
+            },
+            {
+              "from_index": 218,
+              "from_ly": 26,
+              "from_mode": 0,
+              "to_index": 219,
+              "to_ly": 27,
+              "to_mode": 0
+            },
+            {
+              "from_index": 219,
+              "from_ly": 27,
+              "from_mode": 0,
+              "to_index": 220,
+              "to_ly": 27,
+              "to_mode": 2
+            },
+            {
+              "from_index": 220,
+              "from_ly": 27,
+              "from_mode": 2,
+              "to_index": 221,
+              "to_ly": 27,
+              "to_mode": 3
+            },
+            {
+              "from_index": 223,
+              "from_ly": 27,
+              "from_mode": 3,
+              "to_index": 224,
+              "to_ly": 27,
+              "to_mode": 0
+            },
+            {
+              "from_index": 227,
+              "from_ly": 27,
+              "from_mode": 0,
+              "to_index": 228,
+              "to_ly": 28,
+              "to_mode": 2
+            },
+            {
+              "from_index": 228,
+              "from_ly": 28,
+              "from_mode": 2,
+              "to_index": 229,
+              "to_ly": 28,
+              "to_mode": 3
+            },
+            {
+              "from_index": 231,
+              "from_ly": 28,
+              "from_mode": 3,
+              "to_index": 232,
+              "to_ly": 28,
+              "to_mode": 0
+            },
+            {
+              "from_index": 235,
+              "from_ly": 28,
+              "from_mode": 0,
+              "to_index": 236,
+              "to_ly": 29,
+              "to_mode": 2
+            },
+            {
+              "from_index": 236,
+              "from_ly": 29,
+              "from_mode": 2,
+              "to_index": 237,
+              "to_ly": 29,
+              "to_mode": 3
+            }
+          ],
+          "vblank_entry": {
+            "ly": 144,
+            "mode": 1,
+            "sample_index": 1171
+          },
+          "vblank_observed": true
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "mode_sequence_observed": true,
+          "observed_modes": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "sample_count": 1280,
+          "transition_count": 503,
+          "vblank_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "event_family": "lcd",
+          "surface": "timer_lcd"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_timer_lcd_runtime",
+        "source_report": "debugger_deity_timer_lcd_mode_runtime_event_stream",
+        "subjects": {
+          "registers": [
+            "FF40",
+            "FF41",
+            "FF44"
+          ]
+        },
+        "validation": {
+          "case_id": "lcd_stat_mode_poll_sequence",
+          "transition_kind": "lcd_stat_mode_ly_sequence"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "1c874f372e8c4115872620a9e6b5d5313c24aba5f1e5cf036494e9d0d43ea0e4",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "timer_lcd",
+  "valid": true
+}

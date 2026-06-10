@@ -1,0 +1,884 @@
+{
+  "backend": "pyboy_plus_static",
+  "blocking_gaps": [
+    "boss_ai_exhaustive_class_witness_roles_missing",
+    "boss_ai_universe_not_complete"
+  ],
+  "boss_ai_god_ready": false,
+  "boss_ai_universe": {
+    "available": true,
+    "blocking_gaps": [
+      "boss_ai_exhaustive_class_witness_roles_missing"
+    ],
+    "counters": {
+      "missing_branch_count": 0,
+      "missing_class_id_count": 0,
+      "missing_materialization_path_count": 0,
+      "missing_proof_artifact_count": 0,
+      "missing_public_read_count": 0,
+      "missing_reachable_label_count": 0,
+      "missing_rule_count": 0,
+      "missing_witness_role_count": 562
+    },
+    "dynamic_uncovered_rule_count": 0,
+    "exhaustive_class_witness_catalog": {
+      "available": true,
+      "blocking_gaps": [
+        "boss_ai_exhaustive_class_witness_roles_missing"
+      ],
+      "catalog_complete": true,
+      "cataloged_witness_class_count": 806,
+      "closed_evidence_ids": [
+        "boss_ai_exhaustive_witness_class_catalog.cataloged"
+      ],
+      "does_not_close": [
+        "boss_ai_exhaustive_class_witness_roles_missing",
+        "boss_ai_universe_not_complete",
+        "exhaustive_class_proofs"
+      ],
+      "duplicate_class_id_count": 0,
+      "generated_witness_class_count": 806,
+      "invalid_witness_class_count": 0,
+      "missing_rom_proof_role_count": 562,
+      "missing_witness_class_count": 0,
+      "not_applicable_role_count": 169,
+      "proof_complete": false,
+      "proof_status": "catalog_only",
+      "ready": true,
+      "required_witness_class_count": 806,
+      "required_witness_role_count": 806,
+      "role_counts": {
+        "boundary": 195,
+        "counterfactual_flip": 195,
+        "negative": 195,
+        "positive": 195,
+        "public_read_provenance": 26
+      },
+      "rom_proven_witness_role_count": 244,
+      "rule_count": 195,
+      "status_counts": {
+        "cataloged_missing_rom_proof": 562,
+        "not_applicable": 169,
+        "rom_proven": 244
+      }
+    },
+    "exhaustive_class_witness_inventory": {
+      "available": true,
+      "blocking_gaps": [
+        "boss_ai_exhaustive_class_witness_roles_missing"
+      ],
+      "first_missing_roles": [
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 17,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+          "seed_class_id": "csc_478966791EB92D0530FA",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "MaybePickAdaptiveEnemyLead",
+          "status": "missing_evidence",
+          "witness_role": "negative"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 17,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+          "seed_class_id": "csc_478966791EB92D0530FA",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "MaybePickAdaptiveEnemyLead",
+          "status": "missing_evidence",
+          "witness_role": "boundary"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 17,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+          "seed_class_id": "csc_478966791EB92D0530FA",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "MaybePickAdaptiveEnemyLead",
+          "status": "missing_evidence",
+          "witness_role": "counterfactual_flip"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 75,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+          "seed_class_id": "csc_CD0C3BC9D5BE32ED40D6",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+          "status": "missing_evidence",
+          "witness_role": "negative"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 75,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+          "seed_class_id": "csc_CD0C3BC9D5BE32ED40D6",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+          "status": "missing_evidence",
+          "witness_role": "counterfactual_flip"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 101,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+          "seed_class_id": "csc_6C73A0FA7A7D29F03173",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindFirstAliveOTMon",
+          "status": "missing_evidence",
+          "witness_role": "negative"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 101,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+          "seed_class_id": "csc_6C73A0FA7A7D29F03173",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindFirstAliveOTMon",
+          "status": "missing_evidence",
+          "witness_role": "counterfactual_flip"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 129,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+          "seed_class_id": "csc_36E3F8B39D015D237881",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindNextAliveOTMon",
+          "status": "missing_evidence",
+          "witness_role": "negative"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "family": "mastery_policy",
+          "line": 129,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon.json",
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+          "seed_class_id": "csc_36E3F8B39D015D237881",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindNextAliveOTMon",
+          "status": "missing_evidence",
+          "witness_role": "counterfactual_flip"
+        },
+        {
+          "decision_surface": "move_score",
+          "family": "mastery_policy",
+          "line": 172,
+          "materializer_command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.json",
+          "parent_label": "BossAI_ApplyMoveModel",
+          "proof_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model",
+          "seed_class_id": "csc_51E26B1256079E3CF257",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyMoveModel",
+          "status": "missing_evidence",
+          "witness_role": "negative"
+        }
+      ],
+      "first_satisfied_roles": [
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 17,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+          "seed_class_id": "csc_478966791EB92D0530FA",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "MaybePickAdaptiveEnemyLead",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 75,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+          "seed_class_id": "csc_CD0C3BC9D5BE32ED40D6",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "predicate_branch_boundary_snapshot",
+              "outcome": "enabled",
+              "predicate_id": "adaptive_lead_trainer_match",
+              "snapshot_keys": [
+                "AdaptiveLeadMap",
+                "wOtherTrainerClass",
+                "wOtherTrainerID"
+              ],
+              "status": "predicate_outcome_snapshot_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 75,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+          "seed_class_id": "csc_CD0C3BC9D5BE32ED40D6",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+          "status": "satisfied",
+          "witness_role": "boundary"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 101,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+          "seed_class_id": "csc_6C73A0FA7A7D29F03173",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindFirstAliveOTMon",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "predicate_branch_boundary_snapshot",
+              "outcome": "found",
+              "predicate_id": "adaptive_lead_first_alive_party_mon",
+              "snapshot_keys": [
+                "wOTPartyCount",
+                "wOTPartyMon1HP"
+              ],
+              "status": "predicate_outcome_snapshot_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 101,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+          "seed_class_id": "csc_6C73A0FA7A7D29F03173",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindFirstAliveOTMon",
+          "status": "satisfied",
+          "witness_role": "boundary"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 129,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+          "seed_class_id": "csc_36E3F8B39D015D237881",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindNextAliveOTMon",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "boss_ai_rule",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_public_read_rule_entry_probe.json",
+              "evidence_kind": "predicate_branch_boundary_snapshot",
+              "outcome": "found",
+              "predicate_id": "adaptive_lead_next_alive_party_mon",
+              "snapshot_keys": [
+                "wOTPartyCount",
+                "wOTPartyMon1HP"
+              ],
+              "status": "predicate_outcome_snapshot_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 129,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "proof_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+          "seed_class_id": "csc_36E3F8B39D015D237881",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindNextAliveOTMon",
+          "status": "satisfied",
+          "witness_role": "boundary"
+        },
+        {
+          "decision_surface": "move_score",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_cover_player_cant_act.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 172,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "proof_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model",
+          "seed_class_id": "csc_51E26B1256079E3CF257",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyMoveModel",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "move_score",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_cover_strong_matchup.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coverage_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "support_handoff",
+          "line": 492,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "proof_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+          "seed_class_id": "csc_0C9CE4787AD6413836CF",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".StatusMoveWouldFailPublicly",
+          "status": "satisfied",
+          "witness_role": "positive"
+        },
+        {
+          "decision_surface": "move_score",
+          "evidence": [
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_anti_setup_denial_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_apply_signed_delta_helper_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            },
+            {
+              "artifact": "audit\\boss_ai_debugger\\rom_contribution_trace_coach_plan_still_valid_probe.json",
+              "evidence_kind": "rom_rule_execution",
+              "status": "rom_execution_observed"
+            }
+          ],
+          "family": "mastery_policy",
+          "line": 512,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "proof_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+          "seed_class_id": "csc_BDE7613E122ADDEA1957",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".UtilityMoveWouldFailPublicly",
+          "status": "satisfied",
+          "witness_role": "positive"
+        }
+      ],
+      "missing_witness_role_count": 562,
+      "ready": false,
+      "role_names": [
+        "positive",
+        "negative",
+        "boundary",
+        "public_read_provenance",
+        "counterfactual_flip"
+      ],
+      "rule_count": 195,
+      "satisfied_witness_role_count": 244,
+      "status_counts": {
+        "missing_evidence": 562,
+        "not_applicable": 169,
+        "satisfied": 244
+      }
+    },
+    "first_missing_class_rows": [],
+    "first_unmapped_surfaces": [],
+    "missing_public_read_provenance_count": 0,
+    "next_command": "python -m tools.boss_ai_debugger universe --json",
+    "proof_status": "missing_evidence",
+    "reachable_label_count": 910,
+    "rule_count": 201,
+    "unmapped_label_count": 0
+  },
+  "canonical_class_coverage": {
+    "available": true,
+    "blocking_gaps": [],
+    "class_row_count": 195,
+    "closed_evidence_id": "boss_ai_rule_target_canonical_class_ids.validated",
+    "first_problem_rows": [],
+    "invalid_class_id_count": 0,
+    "missing_class_id_count": 0,
+    "ready": true,
+    "valid_class_id_count": 195
+  },
+  "changed_ai_god_suite": {
+    "available": true,
+    "blocking_gaps": [],
+    "changed_file_count": 5,
+    "closed_evidence_ids": [
+      "boss_ai_changed_ai_run_metadata.reported",
+      "boss_ai_pre_choice_replay.exact_match_corpus",
+      "boss_ai_changed_ai_score_materialization.full_candidate_corpus",
+      "boss_ai_changed_ai_contribution_comparison.generated_trace_ids_matched",
+      "boss_ai_changed_ai_contribution_refresh.full_route_corpus"
+    ],
+    "completion_ready": true,
+    "contribution_refresh_scope": {
+      "artifact_path": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_contribution_refresh_scope.json",
+      "available": true,
+      "bad_trace_artifacts": [],
+      "blocking_gaps": [],
+      "closed_evidence_id": "boss_ai_changed_ai_contribution_refresh.full_route_corpus",
+      "expected_route_count": 18,
+      "expected_route_ids": [
+        "falkner",
+        "bugsy",
+        "whitney",
+        "morty",
+        "chuck",
+        "jasmine",
+        "pryce",
+        "clair",
+        "brock",
+        "misty",
+        "lt_surge",
+        "erika",
+        "janine",
+        "sabrina",
+        "blaine",
+        "blue",
+        "koga",
+        "champion_lance"
+      ],
+      "extra_route_ids": [],
+      "missing_route_ids": [],
+      "missing_trace_artifacts": [],
+      "ready": true,
+      "refreshed_route_count": 18,
+      "refreshed_route_ids": [
+        "falkner",
+        "bugsy",
+        "whitney",
+        "morty",
+        "chuck",
+        "jasmine",
+        "pryce",
+        "clair",
+        "brock",
+        "misty",
+        "lt_surge",
+        "erika",
+        "janine",
+        "sabrina",
+        "blaine",
+        "blue",
+        "koga",
+        "champion_lance"
+      ],
+      "route_changed_event_count": 132,
+      "route_class_id_count": 18,
+      "route_event_count": 134,
+      "route_trace_count": 18
+    },
+    "contribution_trace_id_comparison": {
+      "available": true,
+      "blocking_gaps": [],
+      "class_id_mismatch_count": 0,
+      "closed_evidence_id": "boss_ai_changed_ai_contribution_comparison.generated_trace_ids_matched",
+      "differential_path": "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/differential.json",
+      "evidence_artifacts": [
+        "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/differential.json",
+        "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/rom_score_materialization.json"
+      ],
+      "generated_unmatched_rom_trace_ids": [],
+      "matched_trace_count": 3,
+      "materialized_trace_count": 3,
+      "mismatch_count": 3,
+      "missing_class_id_count": 0,
+      "missing_materialized_trace_ids": [],
+      "non_scenario_unmatched_rom_trace_ids": [
+        "route:clair"
+      ],
+      "python_trace_count": 158,
+      "ready": true,
+      "rom_score_materialization_path": "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/rom_score_materialization.json",
+      "rom_trace_count": 4,
+      "unmatched_python_trace_count": 155
+    },
+    "created_at": "2026-05-31T16:19:29.909236+00:00",
+    "evidence_artifacts": [
+      "audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/batch_report.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/differential.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/invariants.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/live_trace_refresh.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/metamorphic.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/mutation.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/previous_run_diff.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/review_queue.json",
+      "audit/boss_ai_debugger/god_level_benchmark/artifacts/pre_choice_replay.json",
+      "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_score_materialization_full_fast.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/differential.json",
+      "audit/boss_ai_debugger/runs/20260531_161830_changed_ai/rom_score_materialization.json",
+      "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_contribution_refresh_scope.json"
+    ],
+    "evidence_source": "promoted_deity_summary",
+    "known_gaps": [
+      "changed-ai suite refreshes one ROM contribution route, not the full live trace corpus.",
+      "changed-ai suite materializes a targeted generated score batch, not all touched-rule generated scenarios.",
+      "ROM/Python contribution traces are compared only when trace ids match.",
+      "pre-choice replay remains a separate audit until trace timing is stable."
+    ],
+    "metadata_path": "audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json",
+    "missing_artifact_count": 0,
+    "partial_evidence_ready": true,
+    "pre_choice_replay": {
+      "artifact_path": "audit/boss_ai_debugger/god_level_benchmark/artifacts/pre_choice_replay.json",
+      "available": true,
+      "blocking_gaps": [],
+      "capture_count": 18,
+      "closed_evidence_id": "boss_ai_pre_choice_replay.exact_match_corpus",
+      "exact_agreement_rate": 1.0,
+      "exact_count": 18,
+      "exact_match_count": 18,
+      "minimum_exact_captures": 18,
+      "ready": true
+    },
+    "present_artifact_count": 17,
+    "ready": true,
+    "resolved_known_gaps": [
+      "changed-ai suite refreshes one ROM contribution route, not the full live trace corpus.",
+      "changed-ai suite materializes a targeted generated score batch, not all touched-rule generated scenarios.",
+      "ROM/Python contribution traces are compared only when trace ids match.",
+      "pre-choice replay remains a separate audit until trace timing is stable."
+    ],
+    "run_id": "20260531_161830_changed_ai",
+    "scenario_count": 200,
+    "score_materialization_full": {
+      "artifact_path": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_score_materialization_full_fast.json",
+      "available": true,
+      "bad_skip_reason_ids": [],
+      "bad_status_ids": [],
+      "blocking_gaps": [],
+      "checked_count": 153,
+      "closed_evidence_id": "boss_ai_changed_ai_score_materialization.full_candidate_corpus",
+      "coverage_ready": true,
+      "error_count": 0,
+      "expected_checked_count": 153,
+      "expected_scenario_count": 200,
+      "expected_skipped_count": 47,
+      "extra_scenario_ids": [],
+      "materialized_scenario_count": 200,
+      "missing_class_id_ids": [],
+      "missing_scenario_ids": [],
+      "score_bytes_match_count": 3,
+      "score_bytes_mismatch_count": 150,
+      "selector_top_match_count": 77,
+      "skipped_count": 47
+    },
+    "unmapped_known_gaps": []
+  },
+  "closed_evidence_ids": [
+    "boss_ai_god_gate.schema_checked",
+    "boss_ai_generated_scenario_class_ids.validated",
+    "boss_ai_materializer_verdict_class_id_passthrough.validated",
+    "boss_ai_live_trace_class_ids.validated",
+    "boss_ai_contribution_trace_class_ids.validated",
+    "boss_ai_changed_ai_run_metadata.reported",
+    "boss_ai_pre_choice_replay.exact_match_corpus",
+    "boss_ai_changed_ai_score_materialization.full_candidate_corpus",
+    "boss_ai_changed_ai_contribution_comparison.generated_trace_ids_matched",
+    "boss_ai_changed_ai_contribution_refresh.full_route_corpus",
+    "boss_ai_universe_reachable_labels_classified.validated",
+    "boss_ai_rule_target_materialization_paths.available",
+    "boss_ai_rule_target_canonical_class_ids.validated",
+    "boss_ai_exhaustive_witness_class_catalog.cataloged"
+  ],
+  "command": "python tools\\audit\\check_boss_ai_debugger_god.py",
+  "contribution_trace_class_adoption": {
+    "available": true,
+    "blocking_gaps": [],
+    "comparison_class_id_mismatch_count": 0,
+    "comparison_missing_class_id_count": 0,
+    "python_class_id_count": 1,
+    "ready": true,
+    "rom_artifact_count": 28,
+    "rom_class_id_count": 28
+  },
+  "counters": {
+    "missing_branch_count": 0,
+    "missing_class_id_count": 0,
+    "missing_materialization_path_count": 0,
+    "missing_proof_artifact_count": 1,
+    "missing_public_read_count": 0,
+    "missing_reachable_label_count": 0,
+    "missing_rule_count": 0,
+    "missing_witness_role_count": 562
+  },
+  "dirty_diff_hash": "4D82A0C841E4E3EB96E083B84A7A804D8C53B8ACCA52B1FD93C9FBA6A02F9771",
+  "disproof_standard": [
+    "Every reachable Boss AI label, rule, branch, public read, class id, proof artifact, and materialization path is present.",
+    "No unsupported or missing row can pass green."
+  ],
+  "generated_at": "2026-06-01T03:36:52Z",
+  "generated_scenario_class_adoption": {
+    "available": true,
+    "blocking_gaps": [],
+    "class_id": "csc_C6DDE18CAFBBA021D710",
+    "materializer_verdicts_checked": [
+      "skipped_unready",
+      "skipped",
+      "skipped"
+    ],
+    "ready": true,
+    "scenario_checked": "generated_selector_edges_1_00000_all_equal"
+  },
+  "inputs": {
+    "questions": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\boss_ai_debugger\\god_level_benchmark\\questions.jsonl"
+  },
+  "kind": "boss_ai_debugger_god_gate",
+  "known_limits": [
+    "This is the God-level skeleton gate. It is red until exhaustive Boss AI proof artifacts, public-read provenance, materialization coverage, and the proof DB land."
+  ],
+  "live_trace_class_adoption": {
+    "available": true,
+    "blocking_gaps": [],
+    "class_id_count": 19,
+    "ready": true,
+    "trace_checked_count": 19
+  },
+  "missing_evidence": [
+    "boss_ai_exhaustive_class_witness_roles_missing",
+    "boss_ai_universe_not_complete"
+  ],
+  "proof_status": "missing_evidence",
+  "question_count": 5,
+  "questions": [
+    {
+      "blocking_gaps": [],
+      "disproof_standard": "A new reachable Boss AI label, rule, branch, or public read cannot appear without this gate failing until it is classified.",
+      "id": "boss_ai_universe_extractor",
+      "next_command": "python -m tools.boss_ai_debugger universe --json",
+      "proof_status": "complete",
+      "requirement": "Enumerate every reachable Boss AI entrypoint, score mutator, switch path, public predicate branch, hidden read, Haki exception, unmapped label, and dead label. Current label inventory maps reachable rule labels and parent-owned implementation labels without claiming proof coverage.",
+      "status": "PASS",
+      "surface": "boss_ai"
+    },
+    {
+      "blocking_gaps": [],
+      "disproof_standard": "Every reachable raw Boss AI decision has one canonical class id before scoring or proof.",
+      "id": "boss_ai_canonical_classes",
+      "next_command": "python -m tools.boss_ai_debugger state-schema validate --fixtures --trace-dir audit\\boss_ai_trace",
+      "proof_status": "complete",
+      "requirement": "Map live traces, generated scenarios, score materialization, switch materialization, and contribution traces to canonical Boss AI class ids. Current supported raw trace surfaces carry canonical class ids; full public-state completeness remains a known limit.",
+      "status": "PASS",
+      "surface": "boss_ai"
+    },
+    {
+      "blocking_gaps": [
+        "boss_ai_exhaustive_class_witness_roles_missing"
+      ],
+      "disproof_standard": "Each rule has complete witness classes or an explicit unreachable/unsupported/budget-blocked reason.",
+      "id": "boss_ai_exhaustive_class_generator",
+      "next_command": "python -m tools.boss_ai_debugger generate --family all --count 24 --seed 1",
+      "proof_status": "missing_evidence",
+      "requirement": "Generate positive, negative, boundary, public-read, and counterfactual flip witness classes for each Boss AI rule id. Current universe output inventories required witness roles without claiming the generator or proofs exist.",
+      "status": "FAIL",
+      "surface": "boss_ai"
+    },
+    {
+      "blocking_gaps": [],
+      "disproof_standard": "Every class has a replayable ROM-backed proof artifact or fails closed with exact missing materializer/backend/budget reason.",
+      "id": "boss_ai_rom_materialization_paths",
+      "next_command": "python -m tools.boss_ai_debugger generate --family all --count 24 --seed 1 --out .local\\tmp\\boss_ai_god_seed_scenarios.jsonl",
+      "proof_status": "complete",
+      "requirement": "Prove every reachable Boss AI class through ROM materialization paths with stale hash basis rejected. Current rule-target classes have materializer commands; missing ROM proof artifacts and stale-basis proof DB work remain blockers elsewhere.",
+      "status": "PASS",
+      "surface": "boss_ai"
+    },
+    {
+      "blocking_gaps": [],
+      "disproof_standard": "A Boss AI source edit cannot silently avoid the proof universe; affected classes refresh or the gate fails.",
+      "id": "boss_ai_changed_ai_god_suite",
+      "next_command": "python -m tools.boss_ai_debugger run-suite --profile changed-ai --rebuild-roms --refresh-live-traces --refresh-rom-contribution-trace --refresh-rom-score-materialization",
+      "proof_status": "complete",
+      "requirement": "Diff-driven affected rule/class detection refreshes exact mirrors, ROM materializations, contribution/public-read evidence, and top explanation packets. Current changed-AI metadata has complete companion evidence for every declared known gap.",
+      "status": "PASS",
+      "surface": "boss_ai"
+    }
+  ],
+  "questions_failed": 1,
+  "questions_path": "audit/boss_ai_debugger/god_level_benchmark/questions.jsonl",
+  "raw_class_adoption": {
+    "blocking_gaps": [],
+    "closed_evidence_ids": [
+      "boss_ai_generated_scenario_class_ids.validated",
+      "boss_ai_materializer_verdict_class_id_passthrough.validated",
+      "boss_ai_live_trace_class_ids.validated",
+      "boss_ai_contribution_trace_class_ids.validated"
+    ],
+    "contribution_trace_class_adoption": {
+      "available": true,
+      "blocking_gaps": [],
+      "comparison_class_id_mismatch_count": 0,
+      "comparison_missing_class_id_count": 0,
+      "python_class_id_count": 1,
+      "ready": true,
+      "rom_artifact_count": 28,
+      "rom_class_id_count": 28
+    },
+    "generated_scenario_class_adoption": {
+      "available": true,
+      "blocking_gaps": [],
+      "class_id": "csc_C6DDE18CAFBBA021D710",
+      "materializer_verdicts_checked": [
+        "skipped_unready",
+        "skipped",
+        "skipped"
+      ],
+      "ready": true,
+      "scenario_checked": "generated_selector_edges_1_00000_all_equal"
+    },
+    "live_trace_class_adoption": {
+      "available": true,
+      "blocking_gaps": [],
+      "class_id_count": 19,
+      "ready": true,
+      "trace_checked_count": 19
+    },
+    "ready": true
+  },
+  "repro_command": "python tools\\audit\\check_boss_ai_debugger_god.py --baseline --read-only",
+  "rom_sha256": "",
+  "schema_errors": [],
+  "schema_version": 1,
+  "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+  "state_basis": {},
+  "symbols_sha256": ""
+}

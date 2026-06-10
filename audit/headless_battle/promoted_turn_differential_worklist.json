@@ -1,0 +1,579 @@
+{
+  "backend": "static",
+  "blocking_gaps": [
+    "remaining_promoted_mechanic_turn_differentials"
+  ],
+  "byte_proven_ids": [
+    "damage_core_pre_variation",
+    "damage_variation_rng_branching",
+    "basic_critical_hit_rng",
+    "normal_hit_fixed_rng_differential",
+    "normal_hit_low_variation_differential",
+    "normal_hit_critical_differential",
+    "normal_hit_accuracy_miss_differential",
+    "damaging_status_component_differential",
+    "drain_component_differential",
+    "selected_drain_moves",
+    "item_restore_component_differential",
+    "basic_status_residual",
+    "basic_pp_decrement",
+    "weather_setup_component_differential",
+    "selected_substitute_move",
+    "selected_self_heal_moves",
+    "selected_rest_move",
+    "supported_after_hit_item_effects"
+  ],
+  "closed_evidence_ids": [
+    "headless_battle_promoted_turn_differential_worklist.cataloged"
+  ],
+  "command": "python -m tools.headless_battle.promoted_turn_differential_worklist --json-out audit\\headless_battle\\promoted_turn_differential_worklist.json",
+  "component_rom_differentials": {
+    "exists": true,
+    "kind": "headless_battle_component_rom_differential",
+    "pass_count": 18,
+    "path": "audit/headless_battle/rom_differential.json",
+    "proof_status": "complete",
+    "scenario_ids": [
+      "normal_hit_fixed_rng_differential",
+      "normal_hit_low_variation_differential",
+      "normal_hit_critical_differential",
+      "normal_hit_accuracy_miss_differential",
+      "damage_variation_component_differential",
+      "critical_component_differential",
+      "damaging_status_component_differential",
+      "drain_component_differential",
+      "selected_drain_move_turn_differential",
+      "item_restore_component_differential",
+      "full_restore_status_cure_component_differential",
+      "basic_pp_decrement_component_differential",
+      "weather_setup_component_differential",
+      "selected_substitute_move_turn_differential",
+      "selected_self_heal_move_turn_differential",
+      "selected_rest_move_turn_differential",
+      "supported_after_hit_item_effects_differential",
+      "basic_status_residual_component_differential"
+    ],
+    "sha256": "1F572E3B4FCBE78805D17631B5EFB13CA384E3673A7FC920AEA64EC7172576B7"
+  },
+  "dirty_diff_hash": "23F41BBCDEFC1929CF643AFAAD2C502DE0DC40A9107557FAE489B19C49F8D1BB",
+  "disproof_standard": [
+    "Every source-mirrored pending mechanic is represented exactly once.",
+    "Every row remains marked pending until a ROM-backed turn differential exists.",
+    "The artifact does not remove remaining_promoted_mechanic_turn_differentials from the literal-anything gate."
+  ],
+  "does_not_close": [
+    "remaining_promoted_mechanic_turn_differentials"
+  ],
+  "generated_at": "2026-06-10T01:43:59.137328+00:00",
+  "generator_path": "tools/headless_battle/promoted_turn_differential_worklist.py",
+  "generator_sha256": "51F540A0D91FCB86DD69209E3E98891946137E8DD752BB9BCC76461333AA8FF3",
+  "inputs": {
+    "source": "tools.headless_battle.simulator.coverage_report",
+    "source_path": "tools/headless_battle/simulator.py"
+  },
+  "kind": "headless_battle_promoted_turn_differential_worklist",
+  "known_limits": [
+    "This artifact catalogs source-mirrored promoted mechanics that still need ROM-backed turn differentials.",
+    "It closes only the worklist catalog evidence, not any promoted-mechanic turn differential."
+  ],
+  "missing_evidence": [
+    "remaining_promoted_mechanic_turn_differentials"
+  ],
+  "next_command": "python -m tools.headless_battle.promoted_turn_differential_worklist --json-out audit\\headless_battle\\promoted_turn_differential_worklist.json",
+  "pending_turn_differential_count": 24,
+  "proof_status": "worklist_only",
+  "repro_command": "python -m tools.headless_battle.promoted_turn_differential_worklist --json-out audit\\headless_battle\\promoted_turn_differential_worklist.json",
+  "rom_sha256": "",
+  "row_count": 24,
+  "rows": [
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "basic_move_accuracy_rng",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Move accuracy bytes and always-hit moves are mirrored for the basic raw-byte threshold check. EFFECT_THUNDER uses a dedicated selected path for rain bypass and sun's 50 percent + 1 threshold. Fixed/sample/exhaustive modes branch hit/miss for these supported checks. Accuracy/evasion stat stages, BrightPowder, Protect, Fly/Dig, Lock-On, X Accuracy, and passive bonuses are not in this slice.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/effect_commands.asm:BattleCommand_CheckHit",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "explicit_active_hp_restore_items",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Explicit item actions for active Potion, Super Potion, Hyper Potion, Max Potion, and Full Restore mirror source HP amounts, max-HP caps, Full Restore's supported status/toxic cure, turn consumption, and actor residual after the item. GetHealingItemAmount plus RestoreHealth is byte-proven by item_restore_component_differential for Potion, Hyper Potion, Max Potion, and Full Restore HP restoration; Full Restore's status cure remains source-mirrored. Bag inventory, bench targeting, revives, PP restore, X items, player trainer-battle Pack availability, and automatic trainer item dispatch remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/items/item_effects.asm:RestoreHPEffect + FullRestoreEffect; data/items/heal_hp.asm",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_weather_setup_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Rain Dance and Sunny Day consume PP, set wBattleWeather to rain/sun, and set wWeatherCount to 5; those setup bytes are ROM-component checked by weather_setup_component_differential. The current headless countdown/clear-after-5 behavior remains pending a full turn differential and reconciliation with engine/battle/core.asm:HandleWeather, which currently documents weather as permanent and wWeatherCount as trace tooling state. Damage and Thunder accuracy already read the active weather. Sandstorm damage, weather text timing beyond event records, weather healing moves, SolarBeam charge skipping, and automatic Boss AI weather-choice generation remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:RainDance/SunnyDay + engine/battle/move_effects/rain_dance.asm + engine/battle/move_effects/sunny_day.asm + engine/battle/core.asm:HandleWeather",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_spikes_entry_damage",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected Spikes moves consume PP, add one layer to the opposing side up to the source three-layer cap, and selected switch/replacement/auto_replace entries take source-shaped Spikes damage: one layer = max HP / 8, two layers = max HP / 6, three layers = max HP / 4, with a minimum of 1. Flying-type entrants are not damaged. If Spikes KO the entrant while a living bench Pokemon remains, the outcome exposes replacement_pending for that side. The headless audit also runs tools.damage_debugger.hazard_smoke, which ROM-checks Spikes/Rapid Spin WRAM layer state, Spikes damage fractions, and Flying immunity; full headless turn differential remains pending. Pursuit-on-switch, Ditto Imposter activation, Rapid Spin removal in headless state, groundedness overlays outside Flying typing, and other switch-in effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:Spikes + engine/battle/move_effects/spikes.asm + engine/battle/core.asm:SpikesDamage",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_turn_order_priority_speed",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Priority, unequal modified-speed ordering, the non-link equal-speed tie RNG threshold, and selected switch/item non-move ordering are mirrored for selected turns. Speed stages use data/battle/stat_multipliers.asm. Baseline paralysis speed uses the source 1/4 speed rule. Quick Claw, Choice Scarf, link-battle inversion, and type-passive speed modifiers are not in this slice.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/core.asm:DetermineMoveOrder",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "explicit_stat_stage_state",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Scenario-supplied active attack/defense/speed/sp_attack/sp_defense stages in the -6..+6 user-facing range use the ROM percentage table for damage stats and turn-order speed; switch/replacement resets stages. Critical-hit stat handling mirrors CheckDamageStatsCritical's rule: use modified stats only when the attacker's offensive stage is higher than the defender's matching defensive stage. Stage-changing move effects outside the selected single-stat BP=0 subset, accuracy/evasion stages, Baton Pass/Psych Up, badge boosts, status speed, and passive stat modifiers remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/battle/stat_multipliers.asm + engine/battle/effect_commands.asm:CalcBattleStats + engine/battle/core.asm:DetermineMoveOrder",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_stat_stage_only_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected BP=0 single-stat stage moves for attack/defense/speed/sp_attack/sp_defense consume PP, run checkhit for opponent-lowering moves, mutate stages by one or two with -6..+6 caps, and report no-effect cap/floor cases. Accuracy/evasion stage moves, damaging secondary stat effects, multi-stat chains outside the selected setup subset, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm AttackUp/DefenseUp/SpeedUp/SpecialAttackUp/SpecialDefenseUp and matching Down/Up2/Down2 scripts + engine/battle/effect_commands.asm:RaiseStat/LowerStat",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_multi_stat_setup_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Dragon Dance, Calm Mind, and Quiver Dance consume PP, mutate their chained supported stat stages, report cap/no-effect through the shared stat-stage machinery, and influence later damage and turn order. Dragon Dance mirrors bestattackup using the simulator-supported current attack/sp_attack values; burn/passive attack modifiers, Curse, Psych Up, Baton Pass, Substitute/Mist blockers, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:DragonDance/CalmMind/QuiverDance + engine/battle/effect_commands.asm:BattleCommand_BestAttackUp",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_damaging_status_secondaries",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected EFFECT_BURN_HIT, EFFECT_POISON_HIT, and EFFECT_PARALYZE_HIT damaging moves consume secondary effect-chance RNG after the successful hit path unless the target is behind a Substitute, apply burn/poison/paralysis after damage when source no-effect checks pass, and preserve later residual/speed effects. EffectChance plus the target status command is byte-proven for Ember, Sludge, Body Slam, and a Body Slam no-status control by damaging_status_component_differential; full damaging-turn parity for these moves remains pending. Safeguard blocks the secondary after a successful effect-chance check. Thunder has a separate selected path because its command order differs. Flame Wheel, Sacred Fire, poison multi-hit, freeze/confusion/stat-down secondaries, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:BattleCommand_EffectChance/BurnTarget/PoisonTarget/ParalyzeTarget",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_thunder_weather_order",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected Thunder follows its source command order for the modeled subset: critical and damage stats/calculation first, then Thunder weather accuracy, checkhit, secondary effect chance, STAB/pre-variation damage, and damage variation. Rain bypasses accuracy RNG; sun changes the hit threshold to 50 percent + 1. The paralysis secondary uses the supported damaging-secondary status path. Fly/Dig interactions, Protect, BrightPowder, accuracy/evasion stages, Lock-On, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:Thunder + engine/battle/move_effects/thunder.asm",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_sleep_status_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected EFFECT_SLEEP moves consume PP, run the basic accuracy check, branch fixed/sample/exhaustive duration RNG over stored sleep counters 3..5, deny sleeping actions while decrementing the counter, and let the waking action continue. Safeguard and Substitute blockers are modeled for caller-supplied active state. Sleep Clause state, held sleep prevent items, Snore/Sleep Talk execution, Nightmare, Dream Eater, tree-mon initial sleep, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:DoSleep + engine/battle/effect_commands.asm:BattleCommand_SleepTarget and sleep action checks",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_held_status_cures",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Selected held status cures run immediately after selected poison/paralysis/sleep status moves and selected damaging burn/poison/paralysis secondaries. PSNCUREBERRY cures poison/toxic, PRZCUREBERRY cures paralysis, ICE_BERRY cures burn, MINT_BERRY cures sleep, and MIRACLEBERRY cures those modeled statuses; the simulator clears status plus toxic/sleep counters and consumes the active held item. Held prevent items, freeze/confusion cures, Sleep Clause clearing from held sleep cures, text/animations, stat recalculation side effects, and party item writes beyond active state remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/core.asm:UseHeldStatusHealingItem + data/battle/held_heal_status.asm + data/items/attributes.asm",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_safeguard_substitute_blockers",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Caller-supplied active Safeguard blocks selected poison/paralysis/sleep status moves after hit checks and before sleep-duration RNG, and blocks selected damaging burn/poison/paralysis secondaries after successful effect-chance checks. Caller-supplied active Substitute blocks selected BP=0 poison/paralysis/sleep status moves and blocks selected damaging secondary effect-chance before secondary RNG; Safeguard wins when both are active for BP=0 status moves.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:DoSleep/DoPoison/DoParalyze/BurnHit/PoisonHit/ParalyzeHit + engine/battle/effect_commands.asm:SafeCheckSafeguard/CheckSubstituteOpp",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_substitute_hp_routing",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Caller-supplied or move-created active Substitute HP routes selected non-drain damaging hits into the one-byte Substitute HP buffer, leaves active HP unchanged, clears Substitute when damage meets or exceeds remaining Substitute HP, skips after-hit item effects because DoSubstituteDamage resets wCurDamage, and preserves source ordering where Substitute blocks selected damaging secondary effect-chance before damage. Selected drain moves into Substitute are treated as CheckHit misses before accuracy RNG. Baton Pass, multi-hit continuation details, Focus Punch/contact side effects, and text/animations remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/effect_commands.asm:DoEnemyDamage/DoPlayerDamage/DoSubstituteDamage + engine/battle/late_gen_held_items.asm:HandleLateGenAfterHitEffects_Far",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_poison_status_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "PoisonPowder, Poison Gas, and Toxic consume PP, run the basic accuracy check, apply poison/toxic to healthy non-Poison non-immune targets, initialize toxic_count at 0, and report no-effect cases for Safeguard, Substitute, Poison-type targets, type immunity, and already-statused targets. Held prevent items, damaging poison secondary effects outside the selected secondary subset, and text/animation side effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:Toxic/DoPoison + engine/battle/effect_commands.asm:BattleCommand_Poison",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_paralysis_status_moves",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Thunder Wave, Stun Spore, and Glare consume PP after the full-paralysis gate, run the basic accuracy check, apply paralysis to healthy non-immune targets, reduce future turn-order speed with ApplyPrzEffectOnSpeed's Electric/Fighting type-passive paralysis modifiers, and branch full-paralysis action denial with TypePassive_GetUserParalysisFailThreshold_Far's Fighting thresholds before PP decrement. Safeguard, Substitute, type immunity, and already-statused targets report no effect. Held prevent items, non-paralyzed Electric speed passives, and damaging paralysis secondary effects outside the selected secondary subset remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "data/moves/effects.asm:DoParalyze + engine/battle/effect_commands.asm:BattleCommand_Paralyze + type_passive_damage_mods.asm:TypePassive_GetUserParalysisFailThreshold_Far",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "multi_turn_selected_action_progression",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "A turns[] list carries HP/RNG state forward across selected-action turns, supports caller-selected switch actions, caller-supplied replacement actions after a KO, and explicit enemy auto_replace actions. Automatic action choice is still out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "tools.headless_battle.simulator.simulate_battle",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "repeat_plan_auto_replace_or",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "repeat/max_turns can reuse one action map until battle-over or the turn cap. auto_replace_or lets a side use a normal fallback action while alive and explicit auto_replace after fainting, so simple text battles no longer require hand-writing every replacement step.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "tools.headless_battle.simulator.parse_action_plan + simulate_battle",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "selected_switch_and_replacement",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Caller-selected switch actions swap the active Pokemon with a bench slot before the opponent's move, run the supported residual tick for the incoming active, and reset stat stages, Focus Energy, active Substitute, and toxic counter state. Replace actions can continue a planned battle after a KO and reset the same switch-volatile state. Selected Spikes entry damage is handled separately. Pursuit, non-Spikes switch-in effects, and forced prompts remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/core.asm:TryPlayerSwitch, PlayerSwitch, DoubleSwitch, EnemySwitch",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "auto_replacement_choice_basic_type_chart",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Enemy auto_replace actions choose from living bench Pokemon using the source-shaped trainer replacement preference: prefer candidates with a super-effective move, otherwise avoid candidates the player's public types hit super-effectively, otherwise use BattleRandom-style low-three-bit rejection. Dragon's Majesty, Air Balloon, Foresight/identified state, trainer party loading, player prompt flow, and switch-in effects remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/core.asm:FindMonInOTPartyToSwitchIntoBattle + data/types/type_matchups.asm",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "boss_ai_selector_from_post_score_bytes",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Report-only Boss AI selector actions consume already-known post-score bytes. Live score generation is out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "tools.boss_ai_debugger.rom_scenarios.select_from_score_bytes",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "boss_ai_selector_move_execution",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "Executable Boss AI selector actions branch fixed/sample/exhaustive RNG over already-known final score bytes, validate the selected slot/move id when available, and then run the chosen move through the existing selected-turn path. Score generation and switch confidence remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/ai/boss_policy_move.asm:BossAI_SelectMove + tools.boss_ai_debugger.rom_scenarios.select_from_score_bytes",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "boss_ai_switch_roll",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "boss_ai_switch_roll actions mirror the final BossAI_TrySwitch confidence-vs-threshold check and margin-based Random roll: margin >=20 uses 230/256, >=10 uses 192/256, otherwise 141/256. The action accepts either direct scenario-supplied confidence/threshold bytes or a switch_roll object copied from rom-switch-materialize, preserving its threshold/probability proof fields in the event. Fixed/sample modes consume one switch-roll byte when confidence reaches threshold; exhaustive mode branches switch and fallback stay actions. Setting report_only:true emits a single non-branching boss_ai_switch_roll_report event with possible_switch_probabilities and a switch_probability_range, consumes no RNG, and defaults the side action to the supplied fallback; this mode accepts ranged materializer output (probability_exact:false) without inventing an exact branch. Available:false materializer output is still rejected in both modes. Live switch candidate/confidence computation, item usage, Haki/perish/KO guard computation, loop/sack/wincon threshold bias computation, and ROM materialization from headless state remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/ai/boss_policy_switch.asm:BossAI_TrySwitch final confidence gate",
+      "turn_differential_status": "pending_rom_turn_differential"
+    },
+    {
+      "blocking_gaps": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "does_not_close": [
+        "remaining_promoted_mechanic_turn_differentials"
+      ],
+      "gate": "python tools/audit/check_headless_battle_simulator.py",
+      "id": "wild_random_move_choice",
+      "kind": "headless_battle_promoted_turn_differential_worklist_row",
+      "missing_evidence": [
+        "rom_backed_turn_differential"
+      ],
+      "next_command": "Add a ROM turn differential golden for this mechanic, then remove this row from the pending worklist.",
+      "notes": "wild_random_move actions mirror the four-slot wild enemy random move loop for non-empty, nonzero-PP moves. Fixed/sample modes consume raw bytes until a legal slot is selected; exhaustive mode branches one outcome per legal slot. Disabled moves, locks, and Struggle remain out of scope.",
+      "proof_status": "source_mirrored_pending_differential",
+      "source": "engine/battle/core.asm enemy wild move selection loop",
+      "turn_differential_status": "pending_rom_turn_differential"
+    }
+  ],
+  "schema_version": 1,
+  "source": "tools.headless_battle.simulator.coverage_report",
+  "source_commit": "b58efded021b3ab709eb4a477c5c0dffd7c8a8c3",
+  "source_mirrored_pending_ids": [
+    "basic_move_accuracy_rng",
+    "explicit_active_hp_restore_items",
+    "selected_weather_setup_moves",
+    "selected_spikes_entry_damage",
+    "selected_turn_order_priority_speed",
+    "explicit_stat_stage_state",
+    "selected_stat_stage_only_moves",
+    "selected_multi_stat_setup_moves",
+    "selected_damaging_status_secondaries",
+    "selected_thunder_weather_order",
+    "selected_sleep_status_moves",
+    "selected_held_status_cures",
+    "selected_safeguard_substitute_blockers",
+    "selected_substitute_hp_routing",
+    "selected_poison_status_moves",
+    "selected_paralysis_status_moves",
+    "multi_turn_selected_action_progression",
+    "repeat_plan_auto_replace_or",
+    "selected_switch_and_replacement",
+    "auto_replacement_choice_basic_type_chart",
+    "boss_ai_selector_from_post_score_bytes",
+    "boss_ai_selector_move_execution",
+    "boss_ai_switch_roll",
+    "wild_random_move_choice"
+  ],
+  "source_path": "tools/headless_battle/simulator.py",
+  "source_sha256": "01F8116E3A6A5832E8A8CEAF86238B57E754A38132B96533D9271F27157D73D3",
+  "state_basis": {},
+  "symbols_sha256": ""
+}

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "trace_rom": "pokegold_trace.gbc",
-  "trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
+  "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
   "trace_symbols": "pokegold_trace.sym",
-  "trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
+  "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
   "default_watch_frames": 600,
   "default_poll_every": 1,
   "captures": [
@@ -19,21 +19,31 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/falkner_pre_choice_frame_5241.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/falkner_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "bugsy",
       "boss": "Bugsy",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory/bugsy_chosen_frame_5108.state",
+      "save_state": ".local/tmp/boss_state_factory/bugsy_chosen_frame_5063.state",
       "snapshot_only": true,
       "out": "audit/boss_ai_trace/bugsy_live.txt",
       "notes": "early-tier gym leader pressure; Bug/Flying role bias; no adaptive lead",
       "stop_after_first_capture": true,
       "require_chosen_move": true,
-      "pre_choice_state": ".local/tmp/boss_state_factory/bugsy_pre_choice_frame_5063.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory/bugsy_pre_choice_frame_5018.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/bugsy_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "whitney",
@@ -47,7 +57,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/whitney_pre_choice_frame_4972.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/whitney_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "morty",
@@ -64,7 +79,12 @@
       "notes": "live Morty decision after public-threat cursor fixes; chosen move observed on the current trace ROM",
       "pre_choice_state": ".local/tmp/boss_state_factory/morty_pre_choice_frame_5782.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/morty_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "chuck",
@@ -78,21 +98,31 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/chuck_pre_choice_frame_5603.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/chuck_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "jasmine",
       "boss": "Jasmine",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_5181.state",
+      "save_state": ".local/tmp/boss_state_factory/jasmine_chosen_frame_5181.state",
       "snapshot_only": true,
       "stop_after_first_capture": true,
       "require_chosen_move": true,
       "out": "audit/boss_ai_trace/jasmine_live.txt",
       "notes": "real Olivine Gym first decision; Magneton opener with Electric pressure, status, and screen options",
-      "pre_choice_state": ".local/tmp/boss_state_factory_current/jasmine_pre_choice_frame_5151.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory/jasmine_pre_choice_frame_5151.state",
       "choice_button": "a",
-      "choice_wait_frames": 30
+      "choice_wait_frames": 30,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/jasmine_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "pryce",
@@ -106,7 +136,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/pryce_pre_choice_frame_5423.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/pryce_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "clair",
@@ -120,7 +155,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/clair_pre_choice_frame_5243.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/clair_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "brock",
@@ -134,7 +174,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/brock_pre_choice_frame_5286.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/brock_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "misty",
@@ -148,35 +193,50 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/misty_pre_choice_frame_5062.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/misty_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "lt_surge",
       "boss": "Lt. Surge",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory/lt_surge_chosen_frame_5377.state",
+      "save_state": ".local/tmp/boss_state_factory/lt_surge_chosen_frame_5332.state",
       "snapshot_only": true,
       "out": "audit/boss_ai_trace/lt_surge_live.txt",
       "notes": "late-tier adaptive-lead Kanto gym leader; Electric pressure and immunity-aware play",
       "stop_after_first_capture": true,
       "require_chosen_move": true,
-      "pre_choice_state": ".local/tmp/boss_state_factory/lt_surge_pre_choice_frame_5332.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory/lt_surge_pre_choice_frame_5287.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/lt_surge_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "erika",
       "boss": "Erika",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory/erika_chosen_frame_5424.state",
+      "save_state": ".local/tmp/boss_state_factory/erika_chosen_frame_5379.state",
       "snapshot_only": true,
       "out": "audit/boss_ai_trace/erika_live.txt",
       "notes": "late-tier adaptive-lead Kanto gym leader; Grass status/recovery pressure",
       "stop_after_first_capture": true,
       "require_chosen_move": true,
-      "pre_choice_state": ".local/tmp/boss_state_factory/erika_pre_choice_frame_5379.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory/erika_pre_choice_frame_5334.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/erika_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "janine",
@@ -190,7 +250,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/janine_pre_choice_frame_4974.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/janine_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "sabrina",
@@ -204,7 +269,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/sabrina_pre_choice_frame_5287.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/sabrina_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "blaine",
@@ -218,21 +288,31 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/blaine_pre_choice_frame_5375.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/blaine_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "blue",
       "boss": "Blue",
       "status": "FINISHED",
-      "save_state": ".local/tmp/boss_state_factory/blue_chosen_frame_5512.state",
+      "save_state": ".local/tmp/boss_state_factory/blue_chosen_frame_5467.state",
       "snapshot_only": true,
       "out": "audit/boss_ai_trace/blue_live.txt",
       "notes": "late-tier adaptive-lead Kanto gym leader; mixed-team switch and public threat reasoning",
       "stop_after_first_capture": true,
       "require_chosen_move": true,
-      "pre_choice_state": ".local/tmp/boss_state_factory/blue_pre_choice_frame_5467.state",
+      "pre_choice_state": ".local/tmp/boss_state_factory/blue_pre_choice_frame_5422.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/blue_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "koga",
@@ -265,7 +345,12 @@
       "require_chosen_move": true,
       "pre_choice_state": ".local/tmp/boss_state_factory/champion_lance_pre_choice_frame_5511.state",
       "choice_button": "a",
-      "choice_wait_frames": 45
+      "choice_wait_frames": 45,
+      "score_materialization_state": ".local/tmp/boss_ai_debugger/champion_lance_score_materialization_loop_frame.state",
+      "score_materialization_button": "",
+      "score_materialization_button_presses": 0,
+      "score_materialization_button_interval_frames": 0,
+      "score_materialization_watch_frames": 120
     },
     {
       "id": "shared_switch_loop",
@@ -280,9 +365,9 @@
       "stop_after_first_capture": true,
       "require_chosen_move": false,
       "switch_materialization_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
-      "switch_materialization_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "switch_materialization_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "switch_materialization_base_state": ".local/tmp/boss_state_factory_current/jasmine_chosen_frame_5181.state"
+      "switch_materialization_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+      "switch_materialization_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+      "switch_materialization_base_state": ".local/tmp/boss_state_factory/jasmine_chosen_frame_5181.state"
     }
   ]
 }

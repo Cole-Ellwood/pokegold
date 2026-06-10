@@ -1,17 +1,17 @@
 trace_rom=pokegold_trace.gbc
-trace_rom_sha256=F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3
+trace_rom_sha256=1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0
 trace_symbols=pokegold_trace.sym
-trace_symbols_sha256=ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948
+trace_symbols_sha256=966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D
 boss=Shared switch-loop
 notes=synthetic Jasmine battle context; repeated-switch state records current switch confidence and loop context
 tier=2
-move_ids=14,211,98,17
-move_scores=20,31,46,46
+move_ids=229,92,182,153
+move_scores=20,23,24,38
 pre_model_scores=0,0,0,0
 post_model_scores=0,0,0,0
 model_score_deltas=+0,+0,+0,+0
 chosen_slot=1
-cur_enemy_move_id=211
+cur_enemy_move_id=0
 top_moves=NO_MOVE:0,NO_MOVE:0,NO_MOVE:0
 chosen=NO_MOVE
 chosen_id=0
@@ -23,4 +23,4 @@ plausible_mask=11 00 a0 83
 risk_flags=00 (none)
 lookahead_bonus_top=0,0,0
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-switch_context=param=31,index=00,last_out=02,cooldown=02,cur_ot=00
+switch_context=param=31,index=02,last_out=01,cooldown=02,cur_ot=00

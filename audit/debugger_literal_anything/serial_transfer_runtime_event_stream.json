@@ -1,0 +1,1096 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime serial transfer event stream",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence for controlled internal-clock SB/SC transfers.",
+    "It does not claim a linked peer, cable timing, Mystery Gift protocol completion, or cross-backend serial parity."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 2,
+    "cases": [
+      {
+        "case_id": "serial_internal_clock_transfer_byte_42",
+        "event_family": "serial",
+        "first_interrupt_request_sample": 13,
+        "if_serial_bit": 8,
+        "interrupt_request_observed": true,
+        "outgoing_byte": 66,
+        "outgoing_char": "B",
+        "pc_after": 65444,
+        "post_start_observed": true,
+        "receive_fill_observed": true,
+        "registers": [
+          "FF01",
+          "FF02",
+          "FF0F",
+          "FFFF"
+        ],
+        "runtime_event_observed": true,
+        "sample_count": 128,
+        "sample_head": [
+          {
+            "if": 0,
+            "sample_index": 0,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 1,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 2,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 3,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 4,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 5,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 6,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 7,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 8,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 9,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 10,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 11,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 12,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 8,
+            "sample_index": 13,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 14,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 15,
+            "sb": 255,
+            "sc": 128
+          }
+        ],
+        "sample_tail": [
+          {
+            "if": 8,
+            "sample_index": 112,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 113,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 114,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 115,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 116,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 117,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 118,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 119,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 120,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 121,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 122,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 123,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 124,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 125,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 126,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 127,
+            "sb": 255,
+            "sc": 128
+          }
+        ],
+        "sb_values": [
+          255
+        ],
+        "sc_values": [
+          128,
+          129
+        ],
+        "serial_output": "B",
+        "serial_output_observed": true,
+        "start_observed": true,
+        "transition_kind": "serial_internal_clock_transfer"
+      },
+      {
+        "case_id": "serial_internal_clock_transfer_byte_5a",
+        "event_family": "serial",
+        "first_interrupt_request_sample": 13,
+        "if_serial_bit": 8,
+        "interrupt_request_observed": true,
+        "outgoing_byte": 90,
+        "outgoing_char": "Z",
+        "pc_after": 65444,
+        "post_start_observed": true,
+        "receive_fill_observed": true,
+        "registers": [
+          "FF01",
+          "FF02",
+          "FF0F",
+          "FFFF"
+        ],
+        "runtime_event_observed": true,
+        "sample_count": 128,
+        "sample_head": [
+          {
+            "if": 0,
+            "sample_index": 0,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 1,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 2,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 3,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 4,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 5,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 6,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 7,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 8,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 9,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 10,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 11,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 0,
+            "sample_index": 12,
+            "sb": 255,
+            "sc": 129
+          },
+          {
+            "if": 8,
+            "sample_index": 13,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 14,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 15,
+            "sb": 255,
+            "sc": 128
+          }
+        ],
+        "sample_tail": [
+          {
+            "if": 8,
+            "sample_index": 112,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 113,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 114,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 115,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 116,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 117,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 118,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 119,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 120,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 121,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 122,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 123,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 124,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 125,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 126,
+            "sb": 255,
+            "sc": 128
+          },
+          {
+            "if": 8,
+            "sample_index": 127,
+            "sb": 255,
+            "sc": 128
+          }
+        ],
+        "sb_values": [
+          255
+        ],
+        "sc_values": [
+          128,
+          129
+        ],
+        "serial_output": "Z",
+        "serial_output_observed": true,
+        "start_observed": true,
+        "transition_kind": "serial_internal_clock_transfer"
+      }
+    ],
+    "errors": [],
+    "frame_count": 5,
+    "kind": "debugger_deity_serial_transfer_runtime_event_stream",
+    "known_limits": [
+      "The stream observes PyBoy's internal-clock transfer path after a controlled SB/SC setup.",
+      "Disconnected-peer receive behavior is recorded as observed emulator behavior, not a real link partner claim.",
+      "Cable timing, peer negotiation, Mystery Gift protocol flow, and cross-backend serial parity remain out of scope."
+    ],
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 2,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_serial_runtime",
+          "precision": {
+            "interrupt_request_observed": true,
+            "outgoing_byte": 66,
+            "post_start_observed": true,
+            "receive_fill_observed": true,
+            "sample_count": 128,
+            "serial_output_observed": true,
+            "start_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "event_family": "serial_transfer",
+            "surface": "serial"
+          },
+          "source_kind": "pyboy_serial_runtime",
+          "source_report": "debugger_deity_serial_transfer_runtime_event_stream",
+          "subjects": {
+            "registers": [
+              "FF01",
+              "FF02",
+              "FF0F",
+              "FFFF"
+            ]
+          },
+          "validation": {
+            "case_id": "serial_internal_clock_transfer_byte_42",
+            "transition_kind": "serial_internal_clock_transfer"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "serial_internal_clock_transfer_byte_42",
+          "event_family": "serial",
+          "first_interrupt_request_sample": 13,
+          "if_serial_bit": 8,
+          "interrupt_request_observed": true,
+          "outgoing_byte": 66,
+          "outgoing_char": "B",
+          "pc_after": 65444,
+          "post_start_observed": true,
+          "receive_fill_observed": true,
+          "registers": [
+            "FF01",
+            "FF02",
+            "FF0F",
+            "FFFF"
+          ],
+          "runtime_event_observed": true,
+          "sample_count": 128,
+          "sample_head": [
+            {
+              "if": 0,
+              "sample_index": 0,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 1,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 2,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 3,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 4,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 5,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 6,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 7,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 8,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 9,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 10,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 11,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 12,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 8,
+              "sample_index": 13,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 14,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 15,
+              "sb": 255,
+              "sc": 128
+            }
+          ],
+          "sample_tail": [
+            {
+              "if": 8,
+              "sample_index": 112,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 113,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 114,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 115,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 116,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 117,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 118,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 119,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 120,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 121,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 122,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 123,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 124,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 125,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 126,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 127,
+              "sb": 255,
+              "sc": 128
+            }
+          ],
+          "sb_values": [
+            255
+          ],
+          "sc_values": [
+            128,
+            129
+          ],
+          "serial_output": "B",
+          "serial_output_observed": true,
+          "start_observed": true,
+          "transition_kind": "serial_internal_clock_transfer"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "interrupt_request_observed": true,
+          "outgoing_byte": 66,
+          "post_start_observed": true,
+          "receive_fill_observed": true,
+          "sample_count": 128,
+          "serial_output_observed": true,
+          "start_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "event_family": "serial_transfer",
+          "surface": "serial"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_serial_runtime",
+        "source_report": "debugger_deity_serial_transfer_runtime_event_stream",
+        "subjects": {
+          "registers": [
+            "FF01",
+            "FF02",
+            "FF0F",
+            "FFFF"
+          ]
+        },
+        "validation": {
+          "case_id": "serial_internal_clock_transfer_byte_42",
+          "transition_kind": "serial_internal_clock_transfer"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_serial_runtime",
+          "precision": {
+            "interrupt_request_observed": true,
+            "outgoing_byte": 90,
+            "post_start_observed": true,
+            "receive_fill_observed": true,
+            "sample_count": 128,
+            "serial_output_observed": true,
+            "start_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "event_family": "serial_transfer",
+            "surface": "serial"
+          },
+          "source_kind": "pyboy_serial_runtime",
+          "source_report": "debugger_deity_serial_transfer_runtime_event_stream",
+          "subjects": {
+            "registers": [
+              "FF01",
+              "FF02",
+              "FF0F",
+              "FFFF"
+            ]
+          },
+          "validation": {
+            "case_id": "serial_internal_clock_transfer_byte_5a",
+            "transition_kind": "serial_internal_clock_transfer"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "serial_internal_clock_transfer_byte_5a",
+          "event_family": "serial",
+          "first_interrupt_request_sample": 13,
+          "if_serial_bit": 8,
+          "interrupt_request_observed": true,
+          "outgoing_byte": 90,
+          "outgoing_char": "Z",
+          "pc_after": 65444,
+          "post_start_observed": true,
+          "receive_fill_observed": true,
+          "registers": [
+            "FF01",
+            "FF02",
+            "FF0F",
+            "FFFF"
+          ],
+          "runtime_event_observed": true,
+          "sample_count": 128,
+          "sample_head": [
+            {
+              "if": 0,
+              "sample_index": 0,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 1,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 2,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 3,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 4,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 5,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 6,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 7,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 8,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 9,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 10,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 11,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 0,
+              "sample_index": 12,
+              "sb": 255,
+              "sc": 129
+            },
+            {
+              "if": 8,
+              "sample_index": 13,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 14,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 15,
+              "sb": 255,
+              "sc": 128
+            }
+          ],
+          "sample_tail": [
+            {
+              "if": 8,
+              "sample_index": 112,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 113,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 114,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 115,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 116,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 117,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 118,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 119,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 120,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 121,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 122,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 123,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 124,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 125,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 126,
+              "sb": 255,
+              "sc": 128
+            },
+            {
+              "if": 8,
+              "sample_index": 127,
+              "sb": 255,
+              "sc": 128
+            }
+          ],
+          "sb_values": [
+            255
+          ],
+          "sc_values": [
+            128,
+            129
+          ],
+          "serial_output": "Z",
+          "serial_output_observed": true,
+          "start_observed": true,
+          "transition_kind": "serial_internal_clock_transfer"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "interrupt_request_observed": true,
+          "outgoing_byte": 90,
+          "post_start_observed": true,
+          "receive_fill_observed": true,
+          "sample_count": 128,
+          "serial_output_observed": true,
+          "start_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "event_family": "serial_transfer",
+          "surface": "serial"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_serial_runtime",
+        "source_report": "debugger_deity_serial_transfer_runtime_event_stream",
+        "subjects": {
+          "registers": [
+            "FF01",
+            "FF02",
+            "FF0F",
+            "FFFF"
+          ]
+        },
+        "validation": {
+          "case_id": "serial_internal_clock_transfer_byte_5a",
+          "transition_kind": "serial_internal_clock_transfer"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "e28fa60bc336f9d2e5f20cca8c1ea6bfb037e45292d38100808ef6e115fee80a",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "serial",
+  "valid": true
+}

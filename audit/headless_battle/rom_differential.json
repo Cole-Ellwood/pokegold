@@ -1,0 +1,2570 @@
+{
+  "fail_count": 0,
+  "kind": "headless_battle_component_rom_differential",
+  "missing_evidence": [],
+  "pass_count": 18,
+  "proof_status": "complete",
+  "results": [
+    {
+      "errors": [],
+      "headless": {
+        "damage_event": {
+          "accuracy_check": {
+            "hit": true,
+            "raw_range": null,
+            "raw_values": [],
+            "reason": "always_hit",
+            "threshold": null
+          },
+          "actor": "enemy",
+          "actual_damage": 4,
+          "critical_check": {
+            "critical": false,
+            "level": 0,
+            "raw_range": null,
+            "raw_values": [
+              255
+            ],
+            "reason": "raw_at_or_above_threshold",
+            "threshold": 17
+          },
+          "damage": 4,
+          "damage_target": "hp",
+          "damage_variation": {
+            "applied": true,
+            "multiplier": 255,
+            "raw_values": [
+              255
+            ]
+          },
+          "move": "TACKLE",
+          "pp_after": 34,
+          "pp_before": 35,
+          "pre_variation_damage": 4,
+          "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+          "target": "player",
+          "target_hp_after": 16,
+          "target_hp_before": 20,
+          "turn": 1,
+          "type": "damage"
+        },
+        "player_hp_after": 16,
+        "rng_consumed": [
+          255,
+          255
+        ]
+      },
+      "ok": true,
+      "rom": {
+        "attack_missed": false,
+        "command_returns": {
+          "BattleCommand_ApplyDamage": false,
+          "BattleCommand_CheckHit": true,
+          "BattleCommand_Critical": true,
+          "BattleCommand_DamageCalc": true,
+          "BattleCommand_DamageStats": true,
+          "BattleCommand_DamageVariation": true,
+          "BattleCommand_DoTurn": true,
+          "BattleCommand_Stab": true
+        },
+        "critical": false,
+        "damage": 4,
+        "enemy_pp_after": 34,
+        "enemy_pp_before": 35,
+        "move_accuracy": 255,
+        "player_hp_after": 16,
+        "player_hp_before": 20,
+        "rng_consumed": 2,
+        "rng_values": [
+          255,
+          255
+        ],
+        "rom_scenario_id": "normal_hit_fixed_rng_enemy_pidgey_tackle"
+      },
+      "scenario_id": "normal_hit_fixed_rng_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "damage_event": {
+          "accuracy_check": {
+            "hit": true,
+            "raw_range": null,
+            "raw_values": [],
+            "reason": "always_hit",
+            "threshold": null
+          },
+          "actor": "enemy",
+          "actual_damage": 3,
+          "critical_check": {
+            "critical": false,
+            "level": 0,
+            "raw_range": null,
+            "raw_values": [
+              255
+            ],
+            "reason": "raw_at_or_above_threshold",
+            "threshold": 17
+          },
+          "damage": 3,
+          "damage_target": "hp",
+          "damage_variation": {
+            "applied": true,
+            "multiplier": 217,
+            "raw_values": [
+              179
+            ]
+          },
+          "move": "TACKLE",
+          "pp_after": 34,
+          "pp_before": 35,
+          "pre_variation_damage": 4,
+          "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+          "target": "player",
+          "target_hp_after": 17,
+          "target_hp_before": 20,
+          "turn": 1,
+          "type": "damage"
+        },
+        "player_hp_after": 17,
+        "rng_consumed": [
+          255,
+          179
+        ]
+      },
+      "ok": true,
+      "rom": {
+        "attack_missed": false,
+        "command_returns": {
+          "BattleCommand_ApplyDamage": false,
+          "BattleCommand_CheckHit": true,
+          "BattleCommand_Critical": true,
+          "BattleCommand_DamageCalc": true,
+          "BattleCommand_DamageStats": true,
+          "BattleCommand_DamageVariation": true,
+          "BattleCommand_DoTurn": true,
+          "BattleCommand_Stab": true
+        },
+        "critical": false,
+        "damage": 3,
+        "enemy_pp_after": 34,
+        "enemy_pp_before": 35,
+        "move_accuracy": 255,
+        "player_hp_after": 17,
+        "player_hp_before": 20,
+        "rng_consumed": 2,
+        "rng_values": [
+          255,
+          179
+        ],
+        "rom_scenario_id": "normal_hit_low_variation_enemy_pidgey_tackle"
+      },
+      "scenario_id": "normal_hit_low_variation_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "damage_event": {
+          "accuracy_check": {
+            "hit": true,
+            "raw_range": null,
+            "raw_values": [],
+            "reason": "always_hit",
+            "threshold": null
+          },
+          "actor": "enemy",
+          "actual_damage": 6,
+          "critical_check": {
+            "critical": true,
+            "level": 0,
+            "raw_range": null,
+            "raw_values": [
+              0
+            ],
+            "reason": "raw_below_threshold",
+            "threshold": 17
+          },
+          "damage": 6,
+          "damage_target": "hp",
+          "damage_variation": {
+            "applied": true,
+            "multiplier": 255,
+            "raw_values": [
+              255
+            ]
+          },
+          "move": "TACKLE",
+          "pp_after": 34,
+          "pp_before": 35,
+          "pre_variation_damage": 6,
+          "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+          "target": "player",
+          "target_hp_after": 14,
+          "target_hp_before": 20,
+          "turn": 1,
+          "type": "damage"
+        },
+        "player_hp_after": 14,
+        "rng_consumed": [
+          0,
+          255
+        ]
+      },
+      "ok": true,
+      "rom": {
+        "attack_missed": false,
+        "command_returns": {
+          "BattleCommand_ApplyDamage": false,
+          "BattleCommand_CheckHit": true,
+          "BattleCommand_Critical": true,
+          "BattleCommand_DamageCalc": true,
+          "BattleCommand_DamageStats": true,
+          "BattleCommand_DamageVariation": true,
+          "BattleCommand_DoTurn": true,
+          "BattleCommand_Stab": true
+        },
+        "critical": true,
+        "damage": 6,
+        "enemy_pp_after": 34,
+        "enemy_pp_before": 35,
+        "move_accuracy": 255,
+        "player_hp_after": 14,
+        "player_hp_before": 20,
+        "rng_consumed": 2,
+        "rng_values": [
+          0,
+          255
+        ],
+        "rom_scenario_id": "normal_hit_critical_enemy_pidgey_tackle"
+      },
+      "scenario_id": "normal_hit_critical_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "damage_event": {
+          "accuracy_check": {
+            "hit": false,
+            "raw_range": null,
+            "raw_values": [
+              255
+            ],
+            "reason": "raw_at_or_above_threshold",
+            "threshold": 242
+          },
+          "actor": "enemy",
+          "critical_check": {
+            "critical": false,
+            "level": 0,
+            "raw_range": null,
+            "raw_values": [
+              255
+            ],
+            "reason": "raw_at_or_above_threshold",
+            "threshold": 17
+          },
+          "damage_variation": {
+            "applied": true,
+            "multiplier": 255,
+            "raw_values": [
+              255
+            ]
+          },
+          "move": "TACKLE",
+          "pp_after": 34,
+          "pp_before": 35,
+          "pre_variation_damage": 4,
+          "proof_status": "source_mirrored_basic_critical_variation_accuracy",
+          "target": "player",
+          "turn": 1,
+          "type": "miss"
+        },
+        "player_hp_after": 20,
+        "rng_consumed": [
+          255,
+          255,
+          255
+        ]
+      },
+      "ok": true,
+      "rom": {
+        "attack_missed": true,
+        "command_returns": {
+          "BattleCommand_ApplyDamage": false,
+          "BattleCommand_CheckHit": true,
+          "BattleCommand_Critical": true,
+          "BattleCommand_DamageCalc": true,
+          "BattleCommand_DamageStats": true,
+          "BattleCommand_DamageVariation": true,
+          "BattleCommand_DoTurn": true,
+          "BattleCommand_Stab": true
+        },
+        "critical": false,
+        "damage": 0,
+        "enemy_pp_after": 34,
+        "enemy_pp_before": 35,
+        "move_accuracy": 242,
+        "player_hp_after": 20,
+        "player_hp_before": 20,
+        "rng_consumed": 3,
+        "rng_values": [
+          255,
+          255,
+          255
+        ],
+        "rom_scenario_id": "normal_hit_accuracy_miss_enemy_pidgey_tackle"
+      },
+      "scenario_id": "normal_hit_accuracy_miss_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "damage_variation_one_damage_skips_roll": {
+          "applied": false,
+          "final_damage": 1,
+          "multiplier": null,
+          "raw_values": []
+        },
+        "damage_variation_rejects_low_byte_then_accepts_min_multiplier": {
+          "applied": true,
+          "final_damage": 85,
+          "multiplier": 217,
+          "raw_values": [
+            0,
+            179
+          ]
+        },
+        "damage_variation_two_byte_damage_max_multiplier": {
+          "applied": true,
+          "final_damage": 300,
+          "multiplier": 255,
+          "raw_values": [
+            255
+          ]
+        },
+        "damage_variation_zero_damage_skips_roll": {
+          "applied": false,
+          "final_damage": 0,
+          "multiplier": null,
+          "raw_values": []
+        }
+      },
+      "ok": true,
+      "rom": {
+        "damage_variation_one_damage_skips_roll": {
+          "cur_damage": "1->1",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 0,
+          "rng_values": []
+        },
+        "damage_variation_rejects_low_byte_then_accepts_min_multiplier": {
+          "cur_damage": "100->85",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 2,
+          "rng_values": [
+            0,
+            179
+          ]
+        },
+        "damage_variation_two_byte_damage_max_multiplier": {
+          "cur_damage": "300->300",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            255
+          ]
+        },
+        "damage_variation_zero_damage_skips_roll": {
+          "cur_damage": "0->0",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 0,
+          "rng_values": []
+        }
+      },
+      "scenario_id": "damage_variation_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "critical_base_level_crit_min_roll": {
+          "critical": true,
+          "level": 0,
+          "raw_values": [
+            0
+          ],
+          "threshold": 17
+        },
+        "critical_base_level_no_crit_at_threshold": {
+          "critical": false,
+          "level": 0,
+          "raw_values": [
+            17
+          ],
+          "threshold": 17
+        },
+        "critical_focus_energy_level1_crit": {
+          "critical": true,
+          "level": 1,
+          "raw_values": [
+            20
+          ],
+          "threshold": 32
+        },
+        "critical_high_crit_move_level2_crit": {
+          "critical": true,
+          "level": 2,
+          "raw_values": [
+            40
+          ],
+          "threshold": 64
+        },
+        "critical_lucky_punch_chansey_level2_crit": {
+          "critical": true,
+          "level": 2,
+          "raw_values": [
+            40
+          ],
+          "threshold": 64
+        },
+        "critical_power_zero_skips_roll": {
+          "critical": false,
+          "level": null,
+          "raw_values": [],
+          "threshold": null
+        },
+        "critical_scope_lens_level1_crit": {
+          "critical": true,
+          "level": 1,
+          "raw_values": [
+            20
+          ],
+          "threshold": 32
+        }
+      },
+      "ok": true,
+      "rom": {
+        "critical_base_level_crit_min_roll": {
+          "critical": true,
+          "focus_energy": false,
+          "item": null,
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            0
+          ]
+        },
+        "critical_base_level_no_crit_at_threshold": {
+          "critical": false,
+          "focus_energy": false,
+          "item": null,
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            17
+          ]
+        },
+        "critical_focus_energy_level1_crit": {
+          "critical": true,
+          "focus_energy": true,
+          "item": null,
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            20
+          ]
+        },
+        "critical_high_crit_move_level2_crit": {
+          "critical": true,
+          "focus_energy": false,
+          "item": null,
+          "move": "SLASH",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            40
+          ]
+        },
+        "critical_lucky_punch_chansey_level2_crit": {
+          "critical": true,
+          "focus_energy": false,
+          "item": "LUCKY_PUNCH",
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            40
+          ]
+        },
+        "critical_power_zero_skips_roll": {
+          "critical": false,
+          "focus_energy": false,
+          "item": null,
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 0,
+          "rng_values": []
+        },
+        "critical_scope_lens_level1_crit": {
+          "critical": true,
+          "focus_energy": false,
+          "item": "SCOPE_LENS",
+          "move": "TACKLE",
+          "post_pc": 65533,
+          "returned": true,
+          "rn_consumed": 1,
+          "rng_values": [
+            20
+          ]
+        }
+      },
+      "scenario_id": "critical_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_body_slam_paralyze_effectchance_fail": {
+          "final_enemy_status": "none",
+          "rng_consumed": [
+            255,
+            255,
+            255
+          ],
+          "status_event": {
+            "actor": "player",
+            "blocked_reason": "effect_chance_failed",
+            "effect_chance_check": {
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "success": false,
+              "threshold": 76
+            },
+            "move": "BODY_SLAM",
+            "proof_status": "source_mirrored_selected_damaging_status_secondary_no_effect",
+            "status": "paralyze",
+            "status_after": "none",
+            "status_before": "none",
+            "target": "enemy",
+            "target_hp_after_damage": 28,
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "status_no_effect"
+          }
+        },
+        "component_body_slam_paralyze_success": {
+          "final_enemy_status": "paralyze",
+          "rng_consumed": [
+            255,
+            255,
+            0,
+            255
+          ],
+          "status_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "effect_chance_check": {
+              "raw_range": null,
+              "raw_values": [
+                0
+              ],
+              "reason": "raw_below_threshold",
+              "success": true,
+              "threshold": 76
+            },
+            "move": "BODY_SLAM",
+            "proof_status": "source_mirrored_selected_damaging_status_secondary",
+            "status": "paralyze",
+            "status_after": "paralyze",
+            "status_before": "none",
+            "target": "enemy",
+            "target_hp_after_damage": 28,
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "status_apply"
+          }
+        },
+        "component_ember_burn_success": {
+          "final_enemy_status": "burn",
+          "rng_consumed": [
+            255,
+            255,
+            0
+          ],
+          "status_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "effect_chance_check": {
+              "raw_range": null,
+              "raw_values": [
+                0
+              ],
+              "reason": "raw_below_threshold",
+              "success": true,
+              "threshold": 25
+            },
+            "move": "EMBER",
+            "proof_status": "source_mirrored_selected_damaging_status_secondary",
+            "status": "burn",
+            "status_after": "burn",
+            "status_before": "none",
+            "target": "enemy",
+            "target_hp_after_damage": 25,
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "status_apply"
+          }
+        },
+        "component_sludge_poison_success": {
+          "final_enemy_status": "poison",
+          "rng_consumed": [
+            255,
+            255,
+            0
+          ],
+          "status_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "effect_chance_check": {
+              "raw_range": null,
+              "raw_values": [
+                0
+              ],
+              "reason": "raw_below_threshold",
+              "success": true,
+              "threshold": 76
+            },
+            "move": "SLUDGE",
+            "proof_status": "source_mirrored_selected_damaging_status_secondary",
+            "status": "poison",
+            "status_after": "poison",
+            "status_before": "none",
+            "target": "enemy",
+            "target_hp_after_damage": 20,
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "status_apply"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_body_slam_paralyze_effectchance_fail": {
+          "effect_chance_consumed": 1,
+          "effect_chance_returned": true,
+          "effect_chance_rng": 255,
+          "effect_failed": true,
+          "move": "BODY_SLAM",
+          "status": "paralyze",
+          "status_after": 0,
+          "status_before": 0,
+          "target_command_pc": 65533,
+          "target_command_returned": true
+        },
+        "component_body_slam_paralyze_success": {
+          "effect_chance_consumed": 1,
+          "effect_chance_returned": true,
+          "effect_chance_rng": 0,
+          "effect_failed": false,
+          "move": "BODY_SLAM",
+          "status": "paralyze",
+          "status_after": 64,
+          "status_before": 0,
+          "target_command_pc": 16863,
+          "target_command_returned": false
+        },
+        "component_ember_burn_success": {
+          "effect_chance_consumed": 1,
+          "effect_chance_returned": true,
+          "effect_chance_rng": 0,
+          "effect_failed": false,
+          "move": "EMBER",
+          "status": "burn",
+          "status_after": 16,
+          "status_before": 0,
+          "target_command_pc": 16866,
+          "target_command_returned": false
+        },
+        "component_sludge_poison_success": {
+          "effect_chance_consumed": 1,
+          "effect_chance_returned": true,
+          "effect_chance_rng": 0,
+          "effect_failed": false,
+          "move": "SLUDGE",
+          "status": "poison",
+          "status_after": 8,
+          "status_before": 0,
+          "target_command_pc": 16863,
+          "target_command_returned": false
+        }
+      },
+      "scenario_id": "damaging_status_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_absorb_min_one_heal": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 1,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 7,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "ABSORB",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 7,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 0,
+            "target_hp_before": 1,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 1,
+            "heal": 1,
+            "hp_after": 6,
+            "hp_before": 5,
+            "move": "ABSORB",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 1,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_player_hp": 6,
+          "rng_consumed": [
+            255,
+            255
+          ]
+        },
+        "component_giga_drain_half_heal": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 15,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 15,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "GIGA_DRAIN",
+            "pp_after": 24,
+            "pp_before": 25,
+            "pre_variation_damage": 15,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 25,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 15,
+            "heal": 7,
+            "hp_after": 12,
+            "hp_before": 5,
+            "move": "GIGA_DRAIN",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 7,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_player_hp": 12,
+          "rng_consumed": [
+            255,
+            255
+          ]
+        },
+        "component_giga_drain_max_hp_cap": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 15,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 15,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "GIGA_DRAIN",
+            "pp_after": 24,
+            "pp_before": 25,
+            "pre_variation_damage": 15,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 25,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 15,
+            "heal": 1,
+            "hp_after": 40,
+            "hp_before": 39,
+            "move": "GIGA_DRAIN",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 7,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_player_hp": 40,
+          "rng_consumed": [
+            255,
+            255
+          ]
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_absorb_min_one_heal": {
+          "damage": 1,
+          "hp_after": 6,
+          "hp_before": 5,
+          "max_hp": 40,
+          "move": "ABSORB",
+          "post_pc": 816,
+          "returned": false
+        },
+        "component_giga_drain_half_heal": {
+          "damage": 15,
+          "hp_after": 12,
+          "hp_before": 5,
+          "max_hp": 40,
+          "move": "GIGA_DRAIN",
+          "post_pc": 821,
+          "returned": false
+        },
+        "component_giga_drain_max_hp_cap": {
+          "damage": 15,
+          "hp_after": 40,
+          "hp_before": 39,
+          "max_hp": 40,
+          "move": "GIGA_DRAIN",
+          "post_pc": 821,
+          "returned": false
+        }
+      },
+      "scenario_id": "drain_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "selected_drain_absorb_alias": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 7,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 7,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "ABSORB",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 7,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 33,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 7,
+            "heal": 3,
+            "hp_after": 8,
+            "hp_before": 5,
+            "move": "ABSORB",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 3,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 8,
+          "final_pp": 34
+        },
+        "selected_drain_absorb_min_one_heal": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 1,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 7,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "ABSORB",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 7,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 0,
+            "target_hp_before": 1,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 1,
+            "heal": 1,
+            "hp_after": 6,
+            "hp_before": 5,
+            "move": "ABSORB",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 1,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 6,
+          "final_pp": 34
+        },
+        "selected_drain_giga_drain_half_heal": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 15,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 15,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "GIGA_DRAIN",
+            "pp_after": 24,
+            "pp_before": 25,
+            "pre_variation_damage": 15,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 25,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 15,
+            "heal": 7,
+            "hp_after": 12,
+            "hp_before": 5,
+            "move": "GIGA_DRAIN",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 7,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 12,
+          "final_pp": 24
+        },
+        "selected_drain_giga_drain_max_hp_cap": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 15,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 15,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "GIGA_DRAIN",
+            "pp_after": 24,
+            "pp_before": 25,
+            "pre_variation_damage": 15,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 25,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 15,
+            "heal": 1,
+            "hp_after": 40,
+            "hp_before": 39,
+            "move": "GIGA_DRAIN",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 7,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 40,
+          "final_pp": 24
+        },
+        "selected_drain_leech_life_alias": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 12,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 12,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "LEECH_LIFE",
+            "pp_after": 19,
+            "pp_before": 20,
+            "pre_variation_damage": 12,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 28,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 12,
+            "heal": 6,
+            "hp_after": 11,
+            "hp_before": 5,
+            "move": "LEECH_LIFE",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 6,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 11,
+          "final_pp": 19
+        },
+        "selected_drain_mega_drain_alias": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 10,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 10,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "MEGA_DRAIN",
+            "pp_after": 19,
+            "pp_before": 20,
+            "pre_variation_damage": 10,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 30,
+            "target_hp_before": 40,
+            "turn": 1,
+            "type": "damage"
+          },
+          "drain_event": {
+            "actor": "player",
+            "damage_drained": 10,
+            "heal": 5,
+            "hp_after": 10,
+            "hp_before": 5,
+            "move": "MEGA_DRAIN",
+            "proof_status": "source_mirrored_selected_drain_move",
+            "raw_heal": 5,
+            "source_target": "enemy",
+            "target": "player",
+            "turn": 1,
+            "type": "drain_heal"
+          },
+          "final_hp": 10,
+          "final_pp": 19
+        }
+      },
+      "ok": true,
+      "rom": {
+        "selected_drain_absorb_alias": {
+          "damage": 7,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "5->8",
+          "max_hp": 40,
+          "move": "ABSORB",
+          "party_pp_after": 34,
+          "post_pc": 821,
+          "pp": "35->34",
+          "turns_taken": "0->1"
+        },
+        "selected_drain_absorb_min_one_heal": {
+          "damage": 1,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "5->6",
+          "max_hp": 40,
+          "move": "ABSORB",
+          "party_pp_after": 34,
+          "post_pc": 816,
+          "pp": "35->34",
+          "turns_taken": "0->1"
+        },
+        "selected_drain_giga_drain_half_heal": {
+          "damage": 15,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "5->12",
+          "max_hp": 40,
+          "move": "GIGA_DRAIN",
+          "party_pp_after": 24,
+          "post_pc": 821,
+          "pp": "25->24",
+          "turns_taken": "0->1"
+        },
+        "selected_drain_giga_drain_max_hp_cap": {
+          "damage": 15,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "39->40",
+          "max_hp": 40,
+          "move": "GIGA_DRAIN",
+          "party_pp_after": 24,
+          "post_pc": 821,
+          "pp": "25->24",
+          "turns_taken": "0->1"
+        },
+        "selected_drain_leech_life_alias": {
+          "damage": 12,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "5->11",
+          "max_hp": 40,
+          "move": "LEECH_LIFE",
+          "party_pp_after": 19,
+          "post_pc": 821,
+          "pp": "20->19",
+          "turns_taken": "0->1"
+        },
+        "selected_drain_mega_drain_alias": {
+          "damage": 10,
+          "do_turn_returned": true,
+          "drain_returned": false,
+          "hp": "5->10",
+          "max_hp": 40,
+          "move": "MEGA_DRAIN",
+          "party_pp_after": 19,
+          "post_pc": 821,
+          "pp": "20->19",
+          "turns_taken": "0->1"
+        }
+      },
+      "scenario_id": "selected_drain_move_turn_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_full_restore_hp_heal": {
+          "final_player_hp": 30,
+          "item_event": {
+            "actor": "player",
+            "heal": 20,
+            "hp_after": 30,
+            "hp_before": 10,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "none",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_hyper_potion_cap": {
+          "final_player_hp": 220,
+          "item_event": {
+            "actor": "player",
+            "heal": 40,
+            "hp_after": 220,
+            "hp_before": 180,
+            "hp_restore_amount": 200,
+            "item": "Hyper Potion",
+            "item_id": 16,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "none",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_max_potion_full_heal": {
+          "final_player_hp": 30,
+          "item_event": {
+            "actor": "player",
+            "heal": 20,
+            "hp_after": 30,
+            "hp_before": 10,
+            "hp_restore_amount": 30,
+            "item": "Max Potion",
+            "item_id": 15,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "none",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_potion_partial_heal": {
+          "final_player_hp": 25,
+          "item_event": {
+            "actor": "player",
+            "heal": 20,
+            "hp_after": 25,
+            "hp_before": 5,
+            "hp_restore_amount": 20,
+            "item": "Potion",
+            "item_id": 18,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "none",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_full_restore_hp_heal": {
+          "hp_after": 30,
+          "hp_before": 10,
+          "hp_buffer3": 30,
+          "item": "FULL_RESTORE",
+          "max_hp": 30,
+          "table_amount": 999
+        },
+        "component_hyper_potion_cap": {
+          "hp_after": 220,
+          "hp_before": 180,
+          "hp_buffer3": 220,
+          "item": "HYPER_POTION",
+          "max_hp": 220,
+          "table_amount": 200
+        },
+        "component_max_potion_full_heal": {
+          "hp_after": 30,
+          "hp_before": 10,
+          "hp_buffer3": 30,
+          "item": "MAX_POTION",
+          "max_hp": 30,
+          "table_amount": 999
+        },
+        "component_potion_partial_heal": {
+          "hp_after": 25,
+          "hp_before": 5,
+          "hp_buffer3": 25,
+          "item": "POTION",
+          "max_hp": 32,
+          "table_amount": 20
+        }
+      },
+      "scenario_id": "item_restore_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_full_restore_clears_burn": {
+          "final_sleep_turns": 0,
+          "final_status": "none",
+          "final_toxic_count": 0,
+          "item_event": {
+            "actor": "player",
+            "heal": 10,
+            "hp_after": 30,
+            "hp_before": 20,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "burn",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_full_restore_clears_confusion_only": {
+          "final_sleep_turns": 0,
+          "final_status": "none",
+          "final_toxic_count": 0,
+          "item_event": {
+            "actor": "player",
+            "heal": 10,
+            "hp_after": 30,
+            "hp_before": 20,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "none",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_full_restore_clears_paralyze": {
+          "final_sleep_turns": 0,
+          "final_status": "none",
+          "final_toxic_count": 0,
+          "item_event": {
+            "actor": "player",
+            "heal": 10,
+            "hp_after": 30,
+            "hp_before": 20,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "paralyze",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_full_restore_clears_sleep_and_nightmare": {
+          "final_sleep_turns": 0,
+          "final_status": "none",
+          "final_toxic_count": 0,
+          "item_event": {
+            "actor": "player",
+            "heal": 10,
+            "hp_after": 30,
+            "hp_before": 20,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 3,
+            "status_after": "none",
+            "status_before": "sleep",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        },
+        "component_full_restore_clears_toxic_and_poison": {
+          "final_sleep_turns": 0,
+          "final_status": "none",
+          "final_toxic_count": 0,
+          "item_event": {
+            "actor": "player",
+            "heal": 10,
+            "hp_after": 30,
+            "hp_before": 20,
+            "hp_restore_amount": 30,
+            "item": "Full Restore",
+            "item_id": 14,
+            "proof_status": "source_mirrored_explicit_active_item_effect_no_inventory",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "none",
+            "status_before": "toxic",
+            "toxic_count_after": 0,
+            "toxic_count_before": 3,
+            "turn": 1,
+            "type": "item_restore"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_full_restore_clears_burn": {
+          "status": "0x10->0x00",
+          "sub1": "0x00->0x00",
+          "sub3": "0x00->0x00",
+          "sub5": "0x00->0x00"
+        },
+        "component_full_restore_clears_confusion_only": {
+          "status": "0x00->0x00",
+          "sub1": "0x00->0x00",
+          "sub3": "0x80->0x00",
+          "sub5": "0x00->0x00"
+        },
+        "component_full_restore_clears_paralyze": {
+          "status": "0x40->0x00",
+          "sub1": "0x00->0x00",
+          "sub3": "0x00->0x00",
+          "sub5": "0x00->0x00"
+        },
+        "component_full_restore_clears_sleep_and_nightmare": {
+          "status": "0x03->0x00",
+          "sub1": "0x01->0x00",
+          "sub3": "0x00->0x00",
+          "sub5": "0x00->0x00"
+        },
+        "component_full_restore_clears_toxic_and_poison": {
+          "status": "0x08->0x00",
+          "sub1": "0x00->0x00",
+          "sub3": "0x00->0x00",
+          "sub5": "0x01->0x00"
+        }
+      },
+      "scenario_id": "full_restore_status_cure_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_player_selected_move_pp_decrement": {
+          "final_pp": 34,
+          "pp_event": {
+            "actor": "player",
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "proof_status": "out_of_scope",
+            "reason": "bp=0 move effect is out of scope for this simulator slice",
+            "turn": 1,
+            "type": "unsupported_noop"
+          }
+        },
+        "component_trainer_enemy_selected_move_pp_decrement": {
+          "final_pp": 34,
+          "pp_event": {
+            "actor": "enemy",
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "proof_status": "out_of_scope",
+            "reason": "bp=0 move effect is out of scope for this simulator slice",
+            "turn": 1,
+            "type": "unsupported_noop"
+          }
+        },
+        "component_wild_enemy_selected_move_pp_decrement": {
+          "final_pp": 34,
+          "pp_event": {
+            "actor": "enemy",
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "proof_status": "out_of_scope",
+            "reason": "bp=0 move effect is out of scope for this simulator slice",
+            "turn": 1,
+            "type": "unsupported_noop"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_player_selected_move_pp_decrement": {
+          "active_pp_after": 34,
+          "actor": "player",
+          "party_pp_after": 34,
+          "post_pc": 65533,
+          "pp_before": 35,
+          "returned": true,
+          "turns_taken_after": 1,
+          "turns_taken_before": 0
+        },
+        "component_trainer_enemy_selected_move_pp_decrement": {
+          "active_pp_after": 34,
+          "actor": "enemy",
+          "party_pp_after": 34,
+          "post_pc": 65533,
+          "pp_before": 35,
+          "returned": true,
+          "turns_taken_after": 1,
+          "turns_taken_before": 0
+        },
+        "component_wild_enemy_selected_move_pp_decrement": {
+          "active_pp_after": 34,
+          "actor": "enemy",
+          "party_pp_after": 34,
+          "post_pc": 65533,
+          "pp_before": 35,
+          "returned": true,
+          "turns_taken_after": 1,
+          "turns_taken_before": 0
+        }
+      },
+      "scenario_id": "basic_pp_decrement_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_rain_dance_sets_weather": {
+          "weather_start_event": {
+            "actor": "player",
+            "move": "RAIN_DANCE",
+            "pp_after": 4,
+            "pp_before": 5,
+            "proof_status": "source_mirrored_selected_weather_setup_move",
+            "turn": 1,
+            "type": "weather_start",
+            "weather": "rain",
+            "weather_after": 1,
+            "weather_before": 0,
+            "weather_count_after": 5,
+            "weather_count_before": 0
+          }
+        },
+        "component_sunny_day_sets_weather": {
+          "weather_start_event": {
+            "actor": "player",
+            "move": "SUNNY_DAY",
+            "pp_after": 4,
+            "pp_before": 5,
+            "proof_status": "source_mirrored_selected_weather_setup_move",
+            "turn": 1,
+            "type": "weather_start",
+            "weather": "sun",
+            "weather_after": 2,
+            "weather_before": 0,
+            "weather_count_after": 5,
+            "weather_count_before": 0
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_rain_dance_sets_weather": {
+          "move": "RAIN_DANCE",
+          "mutation_observed": true,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2,
+          "weather_after": 1,
+          "weather_before": 0,
+          "weather_count_after": 5,
+          "weather_count_before": 0
+        },
+        "component_sunny_day_sets_weather": {
+          "move": "SUNNY_DAY",
+          "mutation_observed": true,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2,
+          "weather_after": 2,
+          "weather_before": 0,
+          "weather_count_after": 5,
+          "weather_count_before": 0
+        }
+      },
+      "scenario_id": "weather_setup_component_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "selected_substitute_move_already_active": {
+          "final_hp": 16,
+          "final_pp": 9,
+          "final_substitute": true,
+          "final_substitute_hp": 4,
+          "substitute_event": {
+            "actor": "player",
+            "blocked_reason": "already_has_substitute",
+            "hp_after": 16,
+            "hp_before": 16,
+            "move": "SUBSTITUTE",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_substitute_move_no_effect",
+            "substitute_after": true,
+            "substitute_before": true,
+            "substitute_hp": 4,
+            "target": "player",
+            "turn": 1,
+            "type": "substitute_no_effect"
+          }
+        },
+        "selected_substitute_move_create": {
+          "final_hp": 12,
+          "final_pp": 9,
+          "final_substitute": true,
+          "final_substitute_hp": 4,
+          "substitute_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "hp_after": 12,
+            "hp_before": 16,
+            "move": "SUBSTITUTE",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_substitute_move",
+            "substitute_after": true,
+            "substitute_before": false,
+            "substitute_hp": 4,
+            "target": "player",
+            "turn": 1,
+            "type": "substitute_create"
+          }
+        },
+        "selected_substitute_move_too_weak": {
+          "final_hp": 4,
+          "final_pp": 9,
+          "final_substitute": false,
+          "final_substitute_hp": 0,
+          "substitute_event": {
+            "actor": "player",
+            "blocked_reason": "too_weak",
+            "hp_after": 4,
+            "hp_before": 4,
+            "move": "SUBSTITUTE",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_substitute_move_no_effect",
+            "substitute_after": false,
+            "substitute_before": false,
+            "substitute_hp": 0,
+            "target": "player",
+            "turn": 1,
+            "type": "substitute_no_effect"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "selected_substitute_move_already_active": {
+          "case": "already_active",
+          "do_turn_returned": true,
+          "expected_text_symbol": "HasSubstituteText",
+          "hp": "16->16",
+          "max_hp": 16,
+          "observed_text_symbol": "HasSubstituteText",
+          "party_pp_after": 9,
+          "post_pc": 2302,
+          "pp": "10->9",
+          "substitute": "True->True",
+          "substitute_branch_observed": true,
+          "substitute_hp": "4->4",
+          "substitute_returned": false,
+          "ticks": 42,
+          "turns_taken": "0->1"
+        },
+        "selected_substitute_move_create": {
+          "case": "create",
+          "do_turn_returned": true,
+          "expected_text_symbol": "",
+          "hp": "16->12",
+          "max_hp": 16,
+          "observed_text_symbol": "",
+          "party_pp_after": 9,
+          "post_pc": 2300,
+          "pp": "10->9",
+          "substitute": "False->True",
+          "substitute_branch_observed": true,
+          "substitute_hp": "0->4",
+          "substitute_returned": false,
+          "ticks": 42,
+          "turns_taken": "0->1"
+        },
+        "selected_substitute_move_too_weak": {
+          "case": "too_weak",
+          "do_turn_returned": true,
+          "expected_text_symbol": "TooWeakSubText",
+          "hp": "4->4",
+          "max_hp": 16,
+          "observed_text_symbol": "TooWeakSubText",
+          "party_pp_after": 9,
+          "post_pc": 2302,
+          "pp": "10->9",
+          "substitute": "False->False",
+          "substitute_branch_observed": true,
+          "substitute_hp": "0->4",
+          "substitute_returned": false,
+          "ticks": 42,
+          "turns_taken": "0->1"
+        }
+      },
+      "scenario_id": "selected_substitute_move_turn_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "selected_self_heal_milk_drink_cap": {
+          "final_hp": 40,
+          "final_pp": 9,
+          "self_heal_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "heal": 5,
+            "hp_after": 40,
+            "hp_before": 35,
+            "move": "MILK_DRINK",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_self_heal_move",
+            "raw_heal": 20,
+            "target": "player",
+            "turn": 1,
+            "type": "self_heal"
+          }
+        },
+        "selected_self_heal_recover_half": {
+          "final_hp": 30,
+          "final_pp": 19,
+          "self_heal_event": {
+            "actor": "player",
+            "blocked_reason": null,
+            "heal": 20,
+            "hp_after": 30,
+            "hp_before": 10,
+            "move": "RECOVER",
+            "pp_after": 19,
+            "pp_before": 20,
+            "proof_status": "source_mirrored_selected_self_heal_move",
+            "raw_heal": 20,
+            "target": "player",
+            "turn": 1,
+            "type": "self_heal"
+          }
+        },
+        "selected_self_heal_softboiled_full_hp": {
+          "final_hp": 40,
+          "final_pp": 9,
+          "self_heal_event": {
+            "actor": "player",
+            "blocked_reason": "hp_full",
+            "heal": 0,
+            "hp_after": 40,
+            "hp_before": 40,
+            "move": "SOFTBOILED",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_self_heal_move",
+            "raw_heal": 20,
+            "target": "player",
+            "turn": 1,
+            "type": "self_heal_no_effect"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "selected_self_heal_milk_drink_cap": {
+          "animation_skipped_for_hp_probe": true,
+          "do_turn_returned": true,
+          "expected_text_symbol": "",
+          "heal_branch_observed": true,
+          "heal_returned": false,
+          "hp": "35->40",
+          "max_hp": 40,
+          "move": "MILK_DRINK",
+          "observed_text_symbol": "",
+          "party_pp_after": 9,
+          "post_pc": 2312,
+          "pp": "10->9",
+          "ticks": 2,
+          "turns_taken": "0->1"
+        },
+        "selected_self_heal_recover_half": {
+          "animation_skipped_for_hp_probe": true,
+          "do_turn_returned": true,
+          "expected_text_symbol": "",
+          "heal_branch_observed": true,
+          "heal_returned": false,
+          "hp": "10->30",
+          "max_hp": 40,
+          "move": "RECOVER",
+          "observed_text_symbol": "",
+          "party_pp_after": 19,
+          "post_pc": 2312,
+          "pp": "20->19",
+          "ticks": 2,
+          "turns_taken": "0->1"
+        },
+        "selected_self_heal_softboiled_full_hp": {
+          "animation_skipped_for_hp_probe": false,
+          "do_turn_returned": true,
+          "expected_text_symbol": "HPIsFullText",
+          "heal_branch_observed": true,
+          "heal_returned": false,
+          "hp": "40->40",
+          "max_hp": 40,
+          "move": "SOFTBOILED",
+          "observed_text_symbol": "HPIsFullText",
+          "party_pp_after": 9,
+          "post_pc": 2312,
+          "pp": "10->9",
+          "ticks": 2,
+          "turns_taken": "0->1"
+        }
+      },
+      "scenario_id": "selected_self_heal_move_turn_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "selected_rest_move_full_hp_no_effect_preserves_toxic": {
+          "final_hp": 34,
+          "final_pp": 9,
+          "final_sleep_turns": 0,
+          "final_status": "toxic",
+          "final_toxic_count": 3,
+          "rest_event": {
+            "actor": "player",
+            "hp_after": 40,
+            "hp_before": 40,
+            "move": "REST",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_rest_no_effect",
+            "reason": "hp_full",
+            "sleep_turns_after": 0,
+            "sleep_turns_before": 0,
+            "status_after": "toxic",
+            "status_before": "toxic",
+            "target": "player",
+            "turn": 1,
+            "type": "rest_no_effect"
+          }
+        },
+        "selected_rest_move_toxic_full_heal": {
+          "final_hp": 40,
+          "final_pp": 9,
+          "final_sleep_turns": 3,
+          "final_status": "sleep",
+          "final_toxic_count": 0,
+          "rest_event": {
+            "actor": "player",
+            "denied_actions": 2,
+            "heal": 30,
+            "hp_after": 40,
+            "hp_before": 10,
+            "move": "REST",
+            "pp_after": 9,
+            "pp_before": 10,
+            "proof_status": "source_mirrored_selected_rest_move",
+            "sleep_turns_after": 3,
+            "sleep_turns_before": 0,
+            "status_after": "sleep",
+            "status_before": "toxic",
+            "target": "player",
+            "toxic_count_after": 0,
+            "toxic_count_before": 2,
+            "turn": 1,
+            "type": "rest"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "selected_rest_move_full_hp_no_effect_preserves_toxic": {
+          "animation_neutralized_for_hp_probe": false,
+          "case": "full_hp_no_effect",
+          "do_turn_returned": true,
+          "expected_text_symbol": "HPIsFullText",
+          "heal_returned": false,
+          "hp": "40->40",
+          "max_hp": 40,
+          "observed_text_symbol": "HPIsFullText",
+          "party_pp_after": 9,
+          "post_pc": 2312,
+          "pp": "10->9",
+          "raw_toxic_count_observed": "2->2",
+          "rest_branch_observed": true,
+          "status_byte": "8->8",
+          "ticks": 2,
+          "toxic_substatus": "True->True",
+          "turns_taken": "0->1"
+        },
+        "selected_rest_move_toxic_full_heal": {
+          "animation_neutralized_for_hp_probe": true,
+          "case": "toxic_full_heal",
+          "do_turn_returned": true,
+          "expected_text_symbol": "",
+          "heal_returned": false,
+          "hp": "10->40",
+          "max_hp": 40,
+          "observed_text_symbol": "",
+          "party_pp_after": 9,
+          "post_pc": 2302,
+          "pp": "10->9",
+          "raw_toxic_count_observed": "2->2",
+          "rest_branch_observed": true,
+          "status_byte": "8->3",
+          "ticks": 156,
+          "toxic_substatus": "True->False",
+          "turns_taken": "0->1"
+        }
+      },
+      "scenario_id": "selected_rest_move_turn_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "afterhit_life_orb": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 19,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 19,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 19,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 11,
+            "target_hp_before": 30,
+            "turn": 1,
+            "type": "damage"
+          },
+          "final_player_hp": 27,
+          "item_events": [
+            {
+              "actor": "player",
+              "damage": 3,
+              "holder": "player",
+              "hp_after": 27,
+              "hp_before": 30,
+              "proof_status": "byte_smoke_supported_after_hit_item_effect",
+              "source_item": "LIFE_ORB",
+              "target": "player",
+              "turn": 1,
+              "type": "after_hit_recoil"
+            }
+          ]
+        },
+        "afterhit_rocky_helmet": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 16,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 16,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 16,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 14,
+            "target_hp_before": 30,
+            "turn": 1,
+            "type": "damage"
+          },
+          "final_player_hp": 25,
+          "item_events": [
+            {
+              "actor": "player",
+              "damage": 5,
+              "holder": "enemy",
+              "hp_after": 25,
+              "hp_before": 30,
+              "proof_status": "byte_smoke_supported_after_hit_item_effect",
+              "source_item": "ROCKY_HELMET",
+              "target": "player",
+              "turn": 1,
+              "type": "after_hit_recoil"
+            }
+          ]
+        },
+        "afterhit_rocky_helmet_before_shell_bell": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 16,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 16,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 16,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 14,
+            "target_hp_before": 30,
+            "turn": 1,
+            "type": "damage"
+          },
+          "final_player_hp": 0,
+          "item_events": [
+            {
+              "actor": "player",
+              "damage": 5,
+              "holder": "enemy",
+              "hp_after": 0,
+              "hp_before": 5,
+              "proof_status": "byte_smoke_supported_after_hit_item_effect",
+              "source_item": "ROCKY_HELMET",
+              "target": "player",
+              "turn": 1,
+              "type": "after_hit_recoil"
+            }
+          ]
+        },
+        "afterhit_shell_bell": {
+          "damage_event": {
+            "accuracy_check": {
+              "hit": true,
+              "raw_range": null,
+              "raw_values": [],
+              "reason": "always_hit",
+              "threshold": null
+            },
+            "actor": "player",
+            "actual_damage": 16,
+            "critical_check": {
+              "critical": false,
+              "level": 0,
+              "raw_range": null,
+              "raw_values": [
+                255
+              ],
+              "reason": "raw_at_or_above_threshold",
+              "threshold": 17
+            },
+            "damage": 16,
+            "damage_target": "hp",
+            "damage_variation": {
+              "applied": true,
+              "multiplier": 255,
+              "raw_values": [
+                255
+              ]
+            },
+            "move": "TACKLE",
+            "pp_after": 34,
+            "pp_before": 35,
+            "pre_variation_damage": 16,
+            "proof_status": "delegated_pre_variation_damage_plus_source_mirrored_critical_variation_accuracy",
+            "target": "enemy",
+            "target_hp_after": 14,
+            "target_hp_before": 30,
+            "turn": 1,
+            "type": "damage"
+          },
+          "final_player_hp": 12,
+          "item_events": [
+            {
+              "actor": "player",
+              "heal": 2,
+              "hp_after": 12,
+              "hp_before": 10,
+              "proof_status": "byte_smoke_supported_after_hit_item_effect",
+              "raw_heal": 2,
+              "source_item": "SHELL_BELL",
+              "target": "player",
+              "turn": 1,
+              "type": "after_hit_heal"
+            }
+          ]
+        }
+      },
+      "ok": true,
+      "rom": {
+        "afterhit_life_orb": {
+          "cur_damage": 16,
+          "enemy_hp": "30->30",
+          "enemy_max_hp": 30,
+          "mutation_observed": true,
+          "player_hp": "30->27",
+          "player_max_hp": 30,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2
+        },
+        "afterhit_rocky_helmet": {
+          "cur_damage": 16,
+          "enemy_hp": "30->30",
+          "enemy_max_hp": 30,
+          "mutation_observed": true,
+          "player_hp": "30->25",
+          "player_max_hp": 30,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2
+        },
+        "afterhit_rocky_helmet_before_shell_bell": {
+          "cur_damage": 16,
+          "enemy_hp": "30->30",
+          "enemy_max_hp": 30,
+          "mutation_observed": true,
+          "player_hp": "5->0",
+          "player_max_hp": 30,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2
+        },
+        "afterhit_shell_bell": {
+          "cur_damage": 16,
+          "enemy_hp": "30->30",
+          "enemy_max_hp": 30,
+          "mutation_observed": true,
+          "player_hp": "10->12",
+          "player_max_hp": 30,
+          "post_pc": 2300,
+          "returned": false,
+          "ticks": 2
+        }
+      },
+      "scenario_id": "supported_after_hit_item_effects_differential"
+    },
+    {
+      "errors": [],
+      "headless": {
+        "component_enemy_poison_residual": {
+          "final_hp": 56,
+          "final_toxic_count": 0,
+          "residual_event": {
+            "actor": "enemy",
+            "damage": 8,
+            "hp_after": 56,
+            "hp_before": 64,
+            "proof_status": "source_mirrored_basic_status_residual",
+            "status": "poison",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "residual_damage"
+          }
+        },
+        "component_enemy_toxic_residual_count2": {
+          "final_hp": 52,
+          "final_toxic_count": 3,
+          "residual_event": {
+            "actor": "enemy",
+            "damage": 12,
+            "hp_after": 52,
+            "hp_before": 64,
+            "proof_status": "source_mirrored_basic_status_residual",
+            "status": "toxic",
+            "toxic_count_after": 3,
+            "toxic_count_before": 2,
+            "turn": 1,
+            "type": "residual_damage"
+          }
+        },
+        "component_player_burn_residual": {
+          "final_hp": 56,
+          "final_toxic_count": 0,
+          "residual_event": {
+            "actor": "player",
+            "damage": 8,
+            "hp_after": 56,
+            "hp_before": 64,
+            "proof_status": "source_mirrored_basic_status_residual",
+            "status": "burn",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "residual_damage"
+          }
+        },
+        "component_player_poison_residual": {
+          "final_hp": 56,
+          "final_toxic_count": 0,
+          "residual_event": {
+            "actor": "player",
+            "damage": 8,
+            "hp_after": 56,
+            "hp_before": 64,
+            "proof_status": "source_mirrored_basic_status_residual",
+            "status": "poison",
+            "toxic_count_after": 0,
+            "toxic_count_before": 0,
+            "turn": 1,
+            "type": "residual_damage"
+          }
+        },
+        "component_player_toxic_residual_count2": {
+          "final_hp": 52,
+          "final_toxic_count": 3,
+          "residual_event": {
+            "actor": "player",
+            "damage": 12,
+            "hp_after": 52,
+            "hp_before": 64,
+            "proof_status": "source_mirrored_basic_status_residual",
+            "status": "toxic",
+            "toxic_count_after": 3,
+            "toxic_count_before": 2,
+            "turn": 1,
+            "type": "residual_damage"
+          }
+        }
+      },
+      "ok": true,
+      "rom": {
+        "component_enemy_poison_residual": {
+          "actor": "enemy",
+          "damage": 8,
+          "hp_after": 56,
+          "hp_before": 64,
+          "max_hp": 64,
+          "mutation_observed": true,
+          "post_pc": 2302,
+          "returned": false,
+          "status": "poison",
+          "ticks": 160,
+          "toxic_count_after": 0,
+          "toxic_count_before": 0
+        },
+        "component_enemy_toxic_residual_count2": {
+          "actor": "enemy",
+          "damage": 12,
+          "hp_after": 52,
+          "hp_before": 64,
+          "max_hp": 64,
+          "mutation_observed": true,
+          "post_pc": 2302,
+          "returned": false,
+          "status": "toxic",
+          "ticks": 160,
+          "toxic_count_after": 3,
+          "toxic_count_before": 2
+        },
+        "component_player_burn_residual": {
+          "actor": "player",
+          "damage": 8,
+          "hp_after": 56,
+          "hp_before": 64,
+          "max_hp": 64,
+          "mutation_observed": true,
+          "post_pc": 2315,
+          "returned": false,
+          "status": "burn",
+          "ticks": 136,
+          "toxic_count_after": 0,
+          "toxic_count_before": 0
+        },
+        "component_player_poison_residual": {
+          "actor": "player",
+          "damage": 8,
+          "hp_after": 56,
+          "hp_before": 64,
+          "max_hp": 64,
+          "mutation_observed": true,
+          "post_pc": 2302,
+          "returned": false,
+          "status": "poison",
+          "ticks": 154,
+          "toxic_count_after": 0,
+          "toxic_count_before": 0
+        },
+        "component_player_toxic_residual_count2": {
+          "actor": "player",
+          "damage": 12,
+          "hp_after": 52,
+          "hp_before": 64,
+          "max_hp": 64,
+          "mutation_observed": true,
+          "post_pc": 2302,
+          "returned": false,
+          "status": "toxic",
+          "ticks": 154,
+          "toxic_count_after": 3,
+          "toxic_count_before": 2
+        }
+      },
+      "scenario_id": "basic_status_residual_component_differential"
+    }
+  ],
+  "scenario_count": 18,
+  "schema_version": 1
+}

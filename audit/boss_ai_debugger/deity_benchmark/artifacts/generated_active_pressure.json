@@ -25,7 +25,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -40,7 +40,7 @@
       "move_id": null,
       "name": "Active Pressure",
       "pre_lookahead_score": 14,
-      "selector_probability": 0.95703125,
+      "selector_probability": 1.0,
       "slot": 1
     },
     {
@@ -67,7 +67,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -82,7 +82,7 @@
       "move_id": null,
       "name": "Status Script",
       "pre_lookahead_score": 19,
-      "selector_probability": 0.04296875,
+      "selector_probability": 0.0,
       "slot": 2
     },
     {
@@ -109,7 +109,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -151,7 +151,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -218,10 +218,10 @@
     "closed_evidence_ids": [
       "decision_input.generated_auto"
     ],
-    "generated_at": "2026-05-31T02:20:17Z",
+    "generated_at": "2026-06-05T00:56:51Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948"
+      "current_trace_rom_sha256": "22535DE8D6076EFCDA48D2D9DDA5FF9D92499F24A882481864B69861A4EA2A69",
+      "current_trace_symbols_sha256": "89C5794A698B5FCBC63F24140BF54D576D62A9774218FEB408C8678E171DE27E"
     },
     "kind": "boss_ai_decision_input_manifest",
     "known_limits": [
@@ -240,9 +240,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "DED2D606D70DF717DED1FFA478315A9A5D3D8A3E743212054B29EDA0A9E91954",
-      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
-      "scenario_artifact_sha256": "D4D5AA720AF15E125EFABBA00D9C3AE0952FB5CC4A248A888049EB95E201A133"
+      "dirty_diff_sha256": "3BE42D0F791BD257603397346AB77010E4BC90044DE45BC8C8663E1849D11C42",
+      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+      "scenario_artifact_sha256": "0E1A5C535C310F044DA62897F2938ED502F983BB775C056EE6B967D7F53D0CE4"
     },
     "target": {
       "case": "",
@@ -263,7 +263,7 @@
           "final_score": 13,
           "kind": "move",
           "name": "Active Pressure",
-          "selector_probability": 0.95703125
+          "selector_probability": 1.0
         },
         {
           "action_id": "move_status_script",
@@ -271,7 +271,7 @@
           "final_score": 19,
           "kind": "move",
           "name": "Status Script",
-          "selector_probability": 0.04296875
+          "selector_probability": 0.0
         },
         {
           "action_id": "move_pivot_out",
@@ -293,14 +293,34 @@
       "public_inputs": [
         "condition_tags=['active_pressure_before_status']",
         "policy_tags=['active_pressure', 'status_timing']",
-        "answer_changing_information=['whether status stops a route that damage cannot', 'whether the support piece has no future entry or job']"
+        "answer_changing_information=['whether status stops a route that damage cannot', 'whether the support piece has no future entry or job']",
+        "predicate stat_stage_scaled_power=applied inputs=['register:A', 'wEnemyMoveStructType', 'wEnemyAtkLevel', 'wEnemySAtkLevel', 'wPlayerDefLevel', 'wPlayerSDefLevel', 'StatLevelMultipliers']"
       ],
       "rule_deltas": [
         {
-          "after": 15,
+          "after": 28,
           "before": 20,
           "candidate": "FIRE_BLAST",
-          "delta": -5,
+          "delta": 8,
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "platform_boundary",
+            "coverage_mode": "rom_execution_hook",
+            "line": 200,
+            "parent_label": "BossAI_ApplyDamageDominanceBias",
+            "public_reads": [],
+            "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+            "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+            "source_label": "BossAI_ApplyDamageDominanceBias"
+          }
+        },
+        {
+          "after": 19,
+          "before": 20,
+          "candidate": "TOXIC",
+          "delta": -1,
           "rule_id": "move.apply_move_model",
           "source": "rom_contribution_trace",
           "source_anchor": {
@@ -316,60 +336,41 @@
           }
         },
         {
-          "after": 19,
-          "before": 20,
-          "candidate": "TOXIC",
-          "delta": -1,
-          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
-          "source": "rom_contribution_trace",
-          "source_anchor": {
-            "anchor_status": "mapped",
-            "classification": "public_info",
-            "coverage_mode": "rom_score_execution_hook",
-            "line": 492,
-            "parent_label": "BossAI_ApplyMoveModel",
-            "public_reads": [],
-            "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
-            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-            "source_label": ".StatusMoveWouldFailPublicly"
-          }
-        },
-        {
-          "after": 24,
-          "before": 19,
-          "candidate": "TOXIC",
-          "delta": 5,
-          "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
-          "source": "rom_contribution_trace",
-          "source_anchor": {
-            "anchor_status": "mapped",
-            "classification": "internal",
-            "coverage_mode": "rom_score_execution_hook",
-            "line": 1050,
-            "parent_label": "BossAI_ApplyMoveModel",
-            "public_reads": [],
-            "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
-            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-            "source_label": ".ApplyStatusHardAnswerDiscipline"
-          }
-        },
-        {
           "after": 26,
           "before": 20,
           "candidate": "BATON_PASS",
           "delta": 6,
-          "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+          "rule_id": "move.apply_move_model.apply_baton_pass_bias",
           "source": "rom_contribution_trace",
           "source_anchor": {
             "anchor_status": "mapped",
             "classification": "internal",
             "coverage_mode": "rom_score_execution_hook",
-            "line": 2070,
+            "line": 1255,
             "parent_label": "BossAI_ApplyMoveModel",
             "public_reads": [],
-            "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+            "rule_id": "move.apply_move_model.apply_baton_pass_bias",
             "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-            "source_label": ".EnemyHasBoostToPass"
+            "source_label": ".ApplyBatonPassBias"
+          }
+        },
+        {
+          "after": 36,
+          "before": 20,
+          "candidate": "EXPLOSION",
+          "delta": 16,
+          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+          "source": "rom_contribution_trace",
+          "source_anchor": {
+            "anchor_status": "mapped",
+            "classification": "internal",
+            "coverage_mode": "rom_score_execution_hook",
+            "line": 1169,
+            "parent_label": "BossAI_ApplyMoveModel",
+            "public_reads": [],
+            "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+            "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+            "source_label": ".ApplySelfKOTradeDiscipline"
           }
         }
       ],
@@ -384,7 +385,7 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.apply_lookahead_to_top_move_candidates",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5715"
         },
         {
           "classification": "platform_boundary",
@@ -395,8 +396,8 @@
         {
           "classification": "internal",
           "public_reads": [],
-          "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:1170"
+          "rule_id": "move.apply_move_model.apply_baton_pass_bias",
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:1255"
         }
       ]
     },
@@ -424,8 +425,8 @@
       "expected_output_paths": [],
       "purpose": "Python score waterfall and selector surface"
     },
-    "observed": "ROM score bytes make move_active_pressure best with score=1",
-    "path": "selector best=move_active_pressure score=15 second=move_status_script score=24 gap=9 threshold=245/256 prob=move_active_pressure=95.7%, move_status_script=4.3%",
+    "observed": "ROM score bytes make move_status_script best with score=23",
+    "path": "selector best=move_status_script score=23 second=None score=None gap=None threshold=single-candidate prob=move_status_script=100.0%",
     "policy_expectation": {
       "available": true,
       "confidence": "medium",
@@ -451,28 +452,27 @@
       "why": "Price the direct pressure line before status or cash-out when it already advances a named route.",
       "zero_probability_best_action_ids": []
     },
-    "python_agreement": "score_bytes_match=False selector_top_match=True contribution_mismatches=8",
+    "python_agreement": "score_bytes_match=False selector_top_match=False contribution_mismatches=7",
     "selector_choice_explanation": {
       "available": true,
-      "best_action_id": "move_active_pressure",
-      "best_roll_threshold": 245,
-      "best_score": 15,
+      "best_action_id": "move_status_script",
+      "best_roll_threshold": null,
+      "best_score": 23,
       "chosen_action_id": "",
       "chosen_has_nonzero_probability": false,
       "chosen_probability": 0.0,
       "chosen_rank": "unknown",
       "possible_action_ids": [
-        "move_active_pressure",
         "move_status_script"
       ],
       "reason": "no sampled ROM chosen action is attached; selector surface gives score bytes and probabilities only",
-      "score_gap": 9,
-      "second_action_id": "move_status_script",
-      "second_score": 24,
-      "summary": "no sampled chosen action; best=move_active_pressure; second=move_status_script; gap=9; threshold=245/256"
+      "score_gap": null,
+      "second_action_id": "",
+      "second_score": null,
+      "summary": "no sampled chosen action; best=move_status_script; threshold=single-candidate"
     },
     "status": "explained",
-    "why": "selector best=move_active_pressure score=15 second=move_status_script score=24 gap=9 threshold=245/256 prob=move_active_pressure=95.7%, move_status_script=4.3%"
+    "why": "selector best=move_status_script score=23 second=None score=None gap=None threshold=single-candidate prob=move_status_script=100.0%"
   },
   "decision_trace_summary": {
     "event_count": 15,
@@ -550,42 +550,41 @@
     "base_route": "koga",
     "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
     "decision": {
-      "best_score": 1,
+      "best_score": 23,
       "final_scores": [
-        1,
-        24,
+        28,
+        23,
         26,
-        46
+        38
       ],
       "possible_action_ids": [
-        "move_active_pressure",
         "move_status_script"
       ],
       "post_model_scores": [
-        15,
-        24,
+        28,
+        19,
         26,
-        46
+        38
       ],
-      "rom_best_action_id": "move_active_pressure",
+      "rom_best_action_id": "move_status_script",
       "selector_entry_scores": [
-        15,
-        24,
+        28,
+        23,
         26,
-        46
+        38
       ],
       "selector_path": {
         "available": true,
-        "best_action_id": "move_active_pressure",
+        "best_action_id": "move_status_script",
         "best_move_id": null,
-        "best_roll_threshold": 245,
-        "best_score": 15,
-        "best_slot_index": 0,
+        "best_roll_threshold": null,
+        "best_score": 23,
+        "best_slot_index": 1,
         "candidate_probabilities": {
-          "move_active_pressure": 0.95703125,
+          "move_active_pressure": 0.0,
           "move_pivot_out": 0.0,
           "move_self_ko": 0.0,
-          "move_status_script": 0.04296875
+          "move_status_script": 1.0
         },
         "candidates": [
           {
@@ -593,7 +592,7 @@
             "blocked": false,
             "move_id": null,
             "name": "Active Pressure",
-            "score": 15,
+            "score": 28,
             "slot": 1,
             "slot_index": 0
           },
@@ -602,7 +601,7 @@
             "blocked": false,
             "move_id": null,
             "name": "Status Script",
-            "score": 24,
+            "score": 23,
             "slot": 2,
             "slot_index": 1
           },
@@ -620,7 +619,7 @@
             "blocked": false,
             "move_id": null,
             "name": "Self-KO",
-            "score": 46,
+            "score": 38,
             "slot": 4,
             "slot_index": 3
           }
@@ -631,14 +630,13 @@
         "chosen_probability": 0.0,
         "chosen_slot_index": null,
         "possible_action_ids": [
-          "move_active_pressure",
           "move_status_script"
         ],
-        "score_gap": 9,
-        "second_action_id": "move_status_script",
+        "score_gap": null,
+        "second_action_id": null,
         "second_move_id": null,
-        "second_score": 24,
-        "second_slot_index": 1,
+        "second_score": null,
+        "second_slot_index": null,
         "source": "rom_score_materialization_final_scores"
       }
     },
@@ -651,54 +649,56 @@
         "move_active_pressure"
       ],
       "probabilities": {
-        "move_active_pressure": 0.95703125,
+        "move_active_pressure": 0.0,
         "move_pivot_out": 0.0,
         "move_self_ko": 0.0,
-        "move_status_script": 0.04296875
+        "move_status_script": 1.0
       },
-      "reason": "ROM score bytes make an expected-best action top",
+      "reason": "ROM score bytes make an acceptable action top",
       "rolled_bad_action_ids": [],
       "rolled_catastrophic_action_ids": [],
-      "rom_best_action_id": "move_active_pressure",
-      "rom_best_probability": 0.95703125,
-      "severity": 0,
-      "verdict": "pass",
-      "zero_probability_best_action_ids": []
+      "rom_best_action_id": "move_status_script",
+      "rom_best_probability": 1.0,
+      "severity": 30,
+      "verdict": "acceptable_top",
+      "zero_probability_best_action_ids": [
+        "move_active_pressure"
+      ]
     },
     "python_agreement": {
-      "contribution_mismatches": 8,
+      "contribution_mismatches": 7,
       "hook_equivalence": {
         "checked": true,
         "chosen_match": true,
         "fast_chosen": {
-          "move_id": 126,
-          "move_name": "FIRE_BLAST",
-          "slot_index": 0
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot_index": 1
         },
         "fast_scores": [
-          1,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ],
         "match": true,
         "score_bytes_match": true,
         "traced_chosen": {
-          "move_id": 126,
-          "move_name": "FIRE_BLAST",
-          "slot_index": 0
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot_index": 1
         },
         "traced_scores": [
-          1,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ]
       },
       "score_bytes_match": false,
-      "selector_top_match": true
+      "selector_top_match": false
     },
-    "reason": "ROM score bytes make an expected-best action top",
+    "reason": "ROM score bytes make an acceptable action top",
     "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
     "status": "pass"
   },
@@ -722,7 +722,7 @@
         "status": "present"
       },
       {
-        "detail": "final_scores=[1, 24, 26, 46]",
+        "detail": "final_scores=[28, 23, 26, 38]",
         "id": "score_bytes",
         "status": "present"
       },
@@ -747,7 +747,7 @@
         "status": "present"
       },
       {
-        "detail": "matched_events=8",
+        "detail": "matched_events=6",
         "id": "rom_contribution_deltas",
         "status": "present"
       },
@@ -762,7 +762,7 @@
         "status": "present"
       },
       {
-        "detail": "anchors=9",
+        "detail": "anchors=6",
         "id": "source_anchors",
         "status": "present"
       },
@@ -843,17 +843,2177 @@
       "active_pressure",
       "status_timing"
     ],
-    "predicate_branches": [],
-    "public_read_probes": [],
+    "predicate_branches": [
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyAtkLevel",
+          "wEnemySAtkLevel",
+          "wPlayerDefLevel",
+          "wPlayerSDefLevel",
+          "StatLevelMultipliers"
+        ],
+        "outcome": "applied",
+        "predicate_id": "stat_stage_scaled_power",
+        "snapshot": {
+          "StatLevelMultipliers": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyAtkLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          },
+          "wEnemySAtkLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wPlayerDefLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wPlayerSDefLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3660,
+          "parent_label": "BossAI_ScaleMovePowerByBaseStatRatio",
+          "public_reads": [],
+          "rule_id": "move.scale_move_power_by_base_stat_ratio.apply_stat_stages_to_scored",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyStatStagesToScored"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:B",
+          "wEnemyMoveStructType",
+          "wTypeMatchup",
+          "wEnemyMonItem",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "wBattleMonHP",
+          "wBattleMonMaxHP",
+          "wEnemyMetronomeCount",
+          "wBattleMonStatus",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "predicate_id": "enemy_known_pressure_modifiers",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:B": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wBattleMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wBattleMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wEnemyMetronomeCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          },
+          "wTypeMatchup": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              5
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3756,
+          "parent_label": "BossAI_ApplyEnemyKnownPressureModifiers",
+          "public_reads": [],
+          "rule_id": "move.apply_enemy_known_pressure_modifiers",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyEnemyKnownPressureModifiers"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "Moves + MOVE_EFFECT",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "predicate_id": "revealed_priority_threat",
+        "snapshot": {
+          "Moves + MOVE_EFFECT": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3221,
+          "parent_label": "BossAI_PlayerHasRevealedPriorityThreat",
+          "public_reads": [
+            "Moves + MOVE_EFFECT",
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.player_has_revealed_priority_threat",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasRevealedPriorityThreat"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wEnemyMonItem",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "Moves + MOVE_EFFECT",
+          "Moves + MOVE_POWER",
+          "Moves + MOVE_TYPE"
+        ],
+        "outcome": "entered",
+        "predicate_id": "revealed_priority_threat_uncached",
+        "snapshot": {
+          "Moves + MOVE_EFFECT": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_POWER": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_TYPE": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3238,
+          "parent_label": "BossAI_PlayerHasRevealedPriorityThreatUncached",
+          "public_reads": [
+            "Moves + MOVE_EFFECT",
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.player_has_revealed_priority_threat_uncached",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasRevealedPriorityThreatUncached"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "wBattleMonSpecies",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wBossAISeenPlayerSpeciesCount",
+          "wBossAISeenPlayerSpecies",
+          "wBossAIRevealedMovesBitmap",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wEnemyMonItem",
+          "Moves + MOVE_POWER",
+          "Moves + MOVE_TYPE"
+        ],
+        "outcome": "entered",
+        "predicate_id": "player_public_threat_vs_enemy_uncached",
+        "snapshot": {
+          "Moves + MOVE_POWER": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_TYPE": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wBattleMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              121
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBossAIRevealedMovesBitmap": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISeenPlayerSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISeenPlayerSpeciesCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3163,
+          "parent_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+          "public_reads": [],
+          "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wBattleMonSpecies",
+          "wBossAISeenPlayerSpecies",
+          "wBossAISpeciesUsedMoves",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "predicate_id": "revealed_super_effective_move",
+        "snapshot": {
+          "wBattleMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              121
+            ]
+          },
+          "wBossAISeenPlayerSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISpeciesUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 4203,
+          "parent_label": "BossAI_HasRevealedSuperEffectiveMove",
+          "public_reads": [
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.has_revealed_super_effective_move",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_HasRevealedSuperEffectiveMove"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyMonSpecies",
+          "wEnemyMonItem",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "predicate_id": "enemy_known_item_nullifies_threat_type",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              211
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 6555,
+          "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+          "public_reads": [],
+          "rule_id": "move.enemy_known_item_nullifies_threat_type",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_EnemyKnownItemNullifiesThreatType"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyMonSpecies",
+          "wEnemyMonItem",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "predicate_id": "enemy_known_item_nullifies_threat_type",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              211
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 6555,
+          "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+          "public_reads": [],
+          "rule_id": "move.enemy_known_item_nullifies_threat_type",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_EnemyKnownItemNullifiesThreatType"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyStatLevels",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "predicate_id": "setup_discipline_bias",
+        "snapshot": {
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyStatLevels": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 1036,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySetupDisciplineBias"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyScreens",
+          "wEnemySubStatus4",
+          "wPlayerDisableCount",
+          "wPlayerSubStatus1",
+          "wPlayerSubStatus4",
+          "wPlayerSubStatus5",
+          "wPlayerScreens",
+          "wBattleMonStatus",
+          "wBattleWeather",
+          "wBattleMonType1",
+          "wBattleMonType2"
+        ],
+        "outcome": "entered",
+        "predicate_id": "utility_move_would_fail_publicly",
+        "snapshot": {
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBattleWeather": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDisableCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus5": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 511,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".UtilityMoveWouldFailPublicly"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyScreens",
+          "wEnemySubStatus4",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "wPlayerDarkShieldConsumed",
+          "wPlayerDisableCount",
+          "wPlayerSubStatus1",
+          "wPlayerSubStatus4",
+          "wPlayerSubStatus5",
+          "wPlayerScreens",
+          "wBattleMonStatus",
+          "wBattleWeather",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wLastPlayerCounterMove",
+          "wLastPlayerMove",
+          "wEnemySleepClauseSlot"
+        ],
+        "outcome": "not_publicly_failed",
+        "predicate_id": "utility_move_would_fail_publicly",
+        "snapshot": {
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBattleWeather": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySleepClauseSlot": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wLastPlayerCounterMove": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wLastPlayerMove": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDarkShieldConsumed": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDisableCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus5": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 511,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".UtilityMoveWouldFailPublicly"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerStatLevels"
+        ],
+        "outcome": "entered",
+        "predicate_id": "player_major_setup_boost",
+        "snapshot": {
+          "wPlayerStatLevels": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2085,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.player_has_major_setup_boost",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerHasMajorSetupBoost"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      }
+    ],
+    "public_read_probes": [
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyAtkLevel",
+          "wEnemySAtkLevel",
+          "wPlayerDefLevel",
+          "wPlayerSDefLevel",
+          "StatLevelMultipliers"
+        ],
+        "outcome": "applied",
+        "probe_id": "stat_stage_scaled_power",
+        "snapshot": {
+          "StatLevelMultipliers": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyAtkLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          },
+          "wEnemySAtkLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wPlayerDefLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          },
+          "wPlayerSDefLevel": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3660,
+          "parent_label": "BossAI_ScaleMovePowerByBaseStatRatio",
+          "public_reads": [],
+          "rule_id": "move.scale_move_power_by_base_stat_ratio.apply_stat_stages_to_scored",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyStatStagesToScored"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:B",
+          "wEnemyMoveStructType",
+          "wTypeMatchup",
+          "wEnemyMonItem",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "wBattleMonHP",
+          "wBattleMonMaxHP",
+          "wEnemyMetronomeCount",
+          "wBattleMonStatus",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "probe_id": "enemy_known_pressure_modifiers",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:B": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wBattleMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wBattleMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wEnemyMetronomeCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          },
+          "wTypeMatchup": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              5
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3756,
+          "parent_label": "BossAI_ApplyEnemyKnownPressureModifiers",
+          "public_reads": [],
+          "rule_id": "move.apply_enemy_known_pressure_modifiers",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_ApplyEnemyKnownPressureModifiers"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "Moves + MOVE_EFFECT",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "probe_id": "revealed_priority_threat",
+        "snapshot": {
+          "Moves + MOVE_EFFECT": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3221,
+          "parent_label": "BossAI_PlayerHasRevealedPriorityThreat",
+          "public_reads": [
+            "Moves + MOVE_EFFECT",
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.player_has_revealed_priority_threat",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasRevealedPriorityThreat"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wEnemyMonItem",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "Moves + MOVE_EFFECT",
+          "Moves + MOVE_POWER",
+          "Moves + MOVE_TYPE"
+        ],
+        "outcome": "entered",
+        "probe_id": "revealed_priority_threat_uncached",
+        "snapshot": {
+          "Moves + MOVE_EFFECT": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_POWER": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_TYPE": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3238,
+          "parent_label": "BossAI_PlayerHasRevealedPriorityThreatUncached",
+          "public_reads": [
+            "Moves + MOVE_EFFECT",
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.player_has_revealed_priority_threat_uncached",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasRevealedPriorityThreatUncached"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerUsedMoves",
+          "wBattleMonSpecies",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wBossAISeenPlayerSpeciesCount",
+          "wBossAISeenPlayerSpecies",
+          "wBossAIRevealedMovesBitmap",
+          "wEnemyMonType1",
+          "wEnemyMonType2",
+          "wEnemyMonItem",
+          "Moves + MOVE_POWER",
+          "Moves + MOVE_TYPE"
+        ],
+        "outcome": "entered",
+        "probe_id": "player_public_threat_vs_enemy_uncached",
+        "snapshot": {
+          "Moves + MOVE_POWER": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "Moves + MOVE_TYPE": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "wBattleMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              121
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBossAIRevealedMovesBitmap": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISeenPlayerSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISeenPlayerSpeciesCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wPlayerUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 3163,
+          "parent_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+          "public_reads": [],
+          "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wBattleMonSpecies",
+          "wBossAISeenPlayerSpecies",
+          "wBossAISpeciesUsedMoves",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "probe_id": "revealed_super_effective_move",
+        "snapshot": {
+          "wBattleMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              121
+            ]
+          },
+          "wBossAISeenPlayerSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wBossAISpeciesUsedMoves": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 4203,
+          "parent_label": "BossAI_HasRevealedSuperEffectiveMove",
+          "public_reads": [
+            "wPlayerUsedMoves"
+          ],
+          "rule_id": "move.has_revealed_super_effective_move",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_HasRevealedSuperEffectiveMove"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyMonSpecies",
+          "wEnemyMonItem",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "probe_id": "enemy_known_item_nullifies_threat_type",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              211
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 6555,
+          "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+          "public_reads": [],
+          "rule_id": "move.enemy_known_item_nullifies_threat_type",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_EnemyKnownItemNullifiesThreatType"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "register:A",
+          "wEnemyMoveStructType",
+          "wEnemyMonSpecies",
+          "wEnemyMonItem",
+          "TypeBoostItems"
+        ],
+        "outcome": "entered",
+        "probe_id": "enemy_known_item_nullifies_threat_type",
+        "snapshot": {
+          "TypeBoostItems": {
+            "available": true,
+            "kind": "static_table_reference",
+            "values": []
+          },
+          "register:A": {
+            "available": true,
+            "kind": "cpu_register",
+            "values": []
+          },
+          "wEnemyMonItem": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonSpecies": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              211
+            ]
+          },
+          "wEnemyMoveStructType": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              20
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_execution_hook",
+          "line": 6555,
+          "parent_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+          "public_reads": [],
+          "rule_id": "move.enemy_known_item_nullifies_threat_type",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "BossAI_EnemyKnownItemNullifiesThreatType"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyStatLevels",
+          "wEnemyMonType1",
+          "wEnemyMonType2"
+        ],
+        "outcome": "entered",
+        "probe_id": "setup_discipline_bias",
+        "snapshot": {
+          "wEnemyMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              3
+            ]
+          },
+          "wEnemyMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyStatLevels": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 1036,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplySetupDisciplineBias"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyScreens",
+          "wEnemySubStatus4",
+          "wPlayerDisableCount",
+          "wPlayerSubStatus1",
+          "wPlayerSubStatus4",
+          "wPlayerSubStatus5",
+          "wPlayerScreens",
+          "wBattleMonStatus",
+          "wBattleWeather",
+          "wBattleMonType1",
+          "wBattleMonType2"
+        ],
+        "outcome": "entered",
+        "probe_id": "utility_move_would_fail_publicly",
+        "snapshot": {
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBattleWeather": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDisableCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus5": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 511,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".UtilityMoveWouldFailPublicly"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wEnemyMoveStructEffect",
+          "wEnemyScreens",
+          "wEnemySubStatus4",
+          "wEnemyMonHP",
+          "wEnemyMonMaxHP",
+          "wPlayerDarkShieldConsumed",
+          "wPlayerDisableCount",
+          "wPlayerSubStatus1",
+          "wPlayerSubStatus4",
+          "wPlayerSubStatus5",
+          "wPlayerScreens",
+          "wBattleMonStatus",
+          "wBattleWeather",
+          "wBattleMonType1",
+          "wBattleMonType2",
+          "wLastPlayerCounterMove",
+          "wLastPlayerMove",
+          "wEnemySleepClauseSlot"
+        ],
+        "outcome": "not_publicly_failed",
+        "probe_id": "utility_move_would_fail_publicly",
+        "snapshot": {
+          "wBattleMonStatus": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wBattleMonType1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              21
+            ]
+          },
+          "wBattleMonType2": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              24
+            ]
+          },
+          "wBattleWeather": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemyMonHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              80
+            ]
+          },
+          "wEnemyMonMaxHP": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0,
+              100
+            ]
+          },
+          "wEnemyMoveStructEffect": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              4
+            ]
+          },
+          "wEnemyScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySleepClauseSlot": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wEnemySubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wLastPlayerCounterMove": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wLastPlayerMove": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDarkShieldConsumed": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerDisableCount": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerScreens": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus1": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus4": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          },
+          "wPlayerSubStatus5": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              0
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "public_info",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 511,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".UtilityMoveWouldFailPublicly"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      },
+      {
+        "legal_inputs": [
+          "wPlayerStatLevels"
+        ],
+        "outcome": "entered",
+        "probe_id": "player_major_setup_boost",
+        "snapshot": {
+          "wPlayerStatLevels": {
+            "available": true,
+            "kind": "byte_range",
+            "values": [
+              7,
+              7,
+              7,
+              7,
+              7,
+              7,
+              7
+            ]
+          }
+        },
+        "source_anchor": {
+          "anchor_status": "mapped",
+          "classification": "internal",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 2085,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "public_reads": [],
+          "rule_id": "move.apply_move_model.player_has_major_setup_boost",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerHasMajorSetupBoost"
+        },
+        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
+      }
+    ],
     "rom_public_reads_by_rule": {
       "ko_band_oracle.apply_damage_dominance_bias": [],
       "ko_band_oracle.apply_damage_dominance_bias.apply_stabto_rank": [],
       "ko_band_oracle.apply_damage_dominance_bias.current_move_damage_rank": [],
       "ko_band_oracle.apply_koband_oracle_pressure": [],
-      "ko_band_oracle.canonical_type_index": [],
-      "ko_band_oracle.current_slot_offensive_coverage_vs_player": [],
-      "ko_band_oracle.current_slot_offensive_coverage_vs_type": [],
-      "ko_band_oracle.get_current_enemy_matchup_slot": [],
       "move.add_base_tmhmmoves_to_mask": [],
       "move.add_current_species_likely_move_threats": [],
       "move.add_current_species_speculative_move_threats": [],
@@ -946,6 +3106,7 @@
       "move.apply_player_defensive_passive_pressure": [],
       "move.apply_repeat_penalty": [],
       "move.apply_scout_move_bias": [],
+      "move.apply_signed_delta_to_score": [],
       "move.clamp_signed_lookahead_delta": [],
       "move.compute_player_plausible_type_mask": [],
       "move.current_enemy_move_accuracy_risky": [],
@@ -960,6 +3121,7 @@
       "move.find_party_mon_by_role": [],
       "move.get_primary_threat_type": [],
       "move.get_primary_threat_type_uncached": [],
+      "move.get_scout_roll_threshold": [],
       "move.get_type_threat_severity_vs_enemy_mon": [],
       "move.has_revealed_super_effective_move": [
         "wPlayerUsedMoves"
@@ -983,11 +3145,10 @@
       "move.player_threat_type_hits_enemy": [],
       "move.player_threat_type_super_effective_vs_enemy": [],
       "move.predict_player_switch": [],
-      "move.public_enemy_faster": [],
-      "move.public_enemy_faster_uncached": [],
       "move.scale_move_power_by_base_stat_ratio": [],
       "move.scale_move_power_by_base_stat_ratio.apply_stat_stages_to_scored": [],
       "move.scale_value_by_stat_stage": [],
+      "move.select_move": [],
       "move.select_plan_if_needed": [],
       "move.select_switch_hedge": [],
       "move.should_scout": [],
@@ -1004,52 +3165,52 @@
   "python_mirror": {
     "available": true,
     "best_action_id": "move_active_pressure",
-    "best_roll_threshold": 245,
+    "best_roll_threshold": null,
     "best_score": 13,
-    "gap": 6,
+    "gap": null,
     "policy_reason": "ROM top action is expected-best",
     "policy_verdict": "pass",
     "probabilities": {
-      "move_active_pressure": 0.95703125,
+      "move_active_pressure": 1.0,
       "move_pivot_out": 0.0,
       "move_self_ko": 0.0,
-      "move_status_script": 0.04296875
+      "move_status_script": 0.0
     },
     "rom_comparison": {
-      "contribution_mismatches": 8,
+      "contribution_mismatches": 7,
       "hook_equivalence": {
         "checked": true,
         "chosen_match": true,
         "fast_chosen": {
-          "move_id": 126,
-          "move_name": "FIRE_BLAST",
-          "slot_index": 0
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot_index": 1
         },
         "fast_scores": [
-          1,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ],
         "match": true,
         "score_bytes_match": true,
         "traced_chosen": {
-          "move_id": 126,
-          "move_name": "FIRE_BLAST",
-          "slot_index": 0
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot_index": 1
         },
         "traced_scores": [
-          1,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ]
       },
       "score_bytes_match": false,
-      "selector_top_match": true
+      "selector_top_match": false
     },
-    "second_action_id": "move_status_script",
-    "second_score": 19
+    "second_action_id": null,
+    "second_score": null
   },
   "question": {
     "confidence": "medium",
@@ -1078,10 +3239,10 @@
   },
   "rom_contributions": {
     "available": true,
-    "event_count": 8,
+    "event_count": 6,
     "events": [
       {
-        "after": 15,
+        "after": 28,
         "before": 20,
         "candidate": {
           "kind": "move",
@@ -1090,21 +3251,21 @@
           "slot": 1,
           "slot_index": 0
         },
-        "closed_by": "BossAI_ApplyMoveModel.EnemyUnderPressure",
-        "delta": -5,
-        "helper_symbol": "BossAI_ApplyMoveModel.EncourageScoreByA",
-        "operation": "encourage_tier_weight",
-        "rule_id": "move.apply_move_model",
+        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
+        "delta": 8,
+        "helper_symbol": "",
+        "operation": "direct_score_write",
+        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
         "source_anchor": {
           "anchor_status": "mapped",
           "classification": "platform_boundary",
-          "coverage_mode": "rom_score_execution_hook",
-          "line": 172,
-          "parent_label": "BossAI_ApplyMoveModel",
+          "coverage_mode": "rom_execution_hook",
+          "line": 200,
+          "parent_label": "BossAI_ApplyDamageDominanceBias",
           "public_reads": [],
-          "rule_id": "move.apply_move_model",
-          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-          "source_label": "BossAI_ApplyMoveModel"
+          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+          "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
+          "source_label": "BossAI_ApplyDamageDominanceBias"
         },
         "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
       },
@@ -1122,45 +3283,17 @@
         "delta": -1,
         "helper_symbol": "BossAI_ApplyMoveModel.EncourageScoreByA",
         "operation": "encourage_tier_weight",
-        "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+        "rule_id": "move.apply_move_model",
         "source_anchor": {
           "anchor_status": "mapped",
-          "classification": "public_info",
+          "classification": "platform_boundary",
           "coverage_mode": "rom_score_execution_hook",
-          "line": 492,
+          "line": 172,
           "parent_label": "BossAI_ApplyMoveModel",
           "public_reads": [],
-          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+          "rule_id": "move.apply_move_model",
           "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-          "source_label": ".StatusMoveWouldFailPublicly"
-        },
-        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
-      },
-      {
-        "after": 24,
-        "before": 19,
-        "candidate": {
-          "kind": "move",
-          "move_id": 92,
-          "move_name": "TOXIC",
-          "slot": 2,
-          "slot_index": 1
-        },
-        "closed_by": "BossAI_ApplyMoveModel.ApplySetupPunishBias",
-        "delta": 5,
-        "helper_symbol": "BossAI_DiscourageScoreHL",
-        "operation": "discourage_score",
-        "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
-        "source_anchor": {
-          "anchor_status": "mapped",
-          "classification": "internal",
-          "coverage_mode": "rom_score_execution_hook",
-          "line": 1050,
-          "parent_label": "BossAI_ApplyMoveModel",
-          "public_reads": [],
-          "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
-          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-          "source_label": ".ApplyStatusHardAnswerDiscipline"
+          "source_label": "BossAI_ApplyMoveModel"
         },
         "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
       },
@@ -1178,17 +3311,17 @@
         "delta": 6,
         "helper_symbol": "BossAI_DiscourageScoreHL",
         "operation": "discourage_score",
-        "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+        "rule_id": "move.apply_move_model.apply_baton_pass_bias",
         "source_anchor": {
           "anchor_status": "mapped",
           "classification": "internal",
           "coverage_mode": "rom_score_execution_hook",
-          "line": 2070,
+          "line": 1255,
           "parent_label": "BossAI_ApplyMoveModel",
           "public_reads": [],
-          "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
+          "rule_id": "move.apply_move_model.apply_baton_pass_bias",
           "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-          "source_label": ".EnemyHasBoostToPass"
+          "source_label": ".ApplyBatonPassBias"
         },
         "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
       },
@@ -1211,7 +3344,7 @@
           "anchor_status": "mapped",
           "classification": "internal",
           "coverage_mode": "rom_score_execution_hook",
-          "line": 1170,
+          "line": 1169,
           "parent_label": "BossAI_ApplyMoveModel",
           "public_reads": [],
           "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
@@ -1221,8 +3354,8 @@
         "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
       },
       {
-        "after": 46,
-        "before": 44,
+        "after": 38,
+        "before": 36,
         "candidate": {
           "kind": "move",
           "move_id": 153,
@@ -1234,60 +3367,32 @@
         "delta": 2,
         "helper_symbol": "BossAI_ApplyMoveModel.DiscourageScoreByA",
         "operation": "discourage_tier_weight",
-        "rule_id": "move.current_enemy_move_accuracy_risky",
+        "rule_id": "move.apply_move_model",
         "source_anchor": {
           "anchor_status": "mapped",
           "classification": "platform_boundary",
-          "coverage_mode": "rom_execution_hook",
-          "line": 4010,
-          "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+          "coverage_mode": "rom_score_execution_hook",
+          "line": 172,
+          "parent_label": "BossAI_ApplyMoveModel",
           "public_reads": [],
-          "rule_id": "move.current_enemy_move_accuracy_risky",
+          "rule_id": "move.apply_move_model",
           "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-          "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
+          "source_label": "BossAI_ApplyMoveModel"
         },
         "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
       },
       {
-        "after": 46,
-        "before": 38,
+        "after": 23,
+        "before": 19,
         "candidate": {
           "kind": "move",
-          "move_id": 153,
-          "move_name": "EXPLOSION",
-          "slot": 4,
-          "slot_index": 3
+          "move_id": 92,
+          "move_name": "TOXIC",
+          "slot": 2,
+          "slot_index": 1
         },
-        "closed_by": "BossAI_ApplyMoveModel.TracePostModelScore",
-        "delta": 8,
-        "helper_symbol": "",
-        "operation": "direct_score_write",
-        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
-        "source_anchor": {
-          "anchor_status": "mapped",
-          "classification": "platform_boundary",
-          "coverage_mode": "rom_execution_hook",
-          "line": 200,
-          "parent_label": "BossAI_ApplyDamageDominanceBias",
-          "public_reads": [],
-          "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
-          "source_file": "engine\\battle\\ai\\ko_band_oracle.asm",
-          "source_label": "BossAI_ApplyDamageDominanceBias"
-        },
-        "trace_id": "generated_mastery_policy_1_00000_active_pressure_before_status"
-      },
-      {
-        "after": 1,
-        "before": 15,
-        "candidate": {
-          "kind": "move",
-          "move_id": 126,
-          "move_name": "FIRE_BLAST",
-          "slot": 1,
-          "slot_index": 0
-        },
-        "closed_by": "BossAI_SelectSwitchHedge",
-        "delta": -14,
+        "closed_by": "BossAI_SelectMove.first_pass",
+        "delta": 4,
         "helper_symbol": "BossAI_ApplySignedDeltaToScore",
         "operation": "apply_signed_lookahead_delta",
         "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1295,7 +3400,7 @@
           "anchor_status": "mapped",
           "classification": "platform_boundary",
           "coverage_mode": "rom_execution_hook",
-          "line": 5719,
+          "line": 5715,
           "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
           "public_reads": [],
           "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1315,42 +3420,41 @@
       "base_route": "koga",
       "base_state": ".local\\tmp\\boss_ai_debugger\\koga_score_materialization_loop_frame.state",
       "decision": {
-        "best_score": 1,
+        "best_score": 23,
         "final_scores": [
-          1,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ],
         "possible_action_ids": [
-          "move_active_pressure",
           "move_status_script"
         ],
         "post_model_scores": [
-          15,
-          24,
+          28,
+          19,
           26,
-          46
+          38
         ],
-        "rom_best_action_id": "move_active_pressure",
+        "rom_best_action_id": "move_status_script",
         "selector_entry_scores": [
-          15,
-          24,
+          28,
+          23,
           26,
-          46
+          38
         ],
         "selector_path": {
           "available": true,
-          "best_action_id": "move_active_pressure",
+          "best_action_id": "move_status_script",
           "best_move_id": null,
-          "best_roll_threshold": 245,
-          "best_score": 15,
-          "best_slot_index": 0,
+          "best_roll_threshold": null,
+          "best_score": 23,
+          "best_slot_index": 1,
           "candidate_probabilities": {
-            "move_active_pressure": 0.95703125,
+            "move_active_pressure": 0.0,
             "move_pivot_out": 0.0,
             "move_self_ko": 0.0,
-            "move_status_script": 0.04296875
+            "move_status_script": 1.0
           },
           "candidates": [
             {
@@ -1358,7 +3462,7 @@
               "blocked": false,
               "move_id": null,
               "name": "Active Pressure",
-              "score": 15,
+              "score": 28,
               "slot": 1,
               "slot_index": 0
             },
@@ -1367,7 +3471,7 @@
               "blocked": false,
               "move_id": null,
               "name": "Status Script",
-              "score": 24,
+              "score": 23,
               "slot": 2,
               "slot_index": 1
             },
@@ -1385,7 +3489,7 @@
               "blocked": false,
               "move_id": null,
               "name": "Self-KO",
-              "score": 46,
+              "score": 38,
               "slot": 4,
               "slot_index": 3
             }
@@ -1396,14 +3500,13 @@
           "chosen_probability": 0.0,
           "chosen_slot_index": null,
           "possible_action_ids": [
-            "move_active_pressure",
             "move_status_script"
           ],
-          "score_gap": 9,
-          "second_action_id": "move_status_script",
+          "score_gap": null,
+          "second_action_id": null,
           "second_move_id": null,
-          "second_score": 24,
-          "second_slot_index": 1,
+          "second_score": null,
+          "second_slot_index": null,
           "source": "rom_score_materialization_final_scores"
         }
       },
@@ -1416,54 +3519,56 @@
           "move_active_pressure"
         ],
         "probabilities": {
-          "move_active_pressure": 0.95703125,
+          "move_active_pressure": 0.0,
           "move_pivot_out": 0.0,
           "move_self_ko": 0.0,
-          "move_status_script": 0.04296875
+          "move_status_script": 1.0
         },
-        "reason": "ROM score bytes make an expected-best action top",
+        "reason": "ROM score bytes make an acceptable action top",
         "rolled_bad_action_ids": [],
         "rolled_catastrophic_action_ids": [],
-        "rom_best_action_id": "move_active_pressure",
-        "rom_best_probability": 0.95703125,
-        "severity": 0,
-        "verdict": "pass",
-        "zero_probability_best_action_ids": []
+        "rom_best_action_id": "move_status_script",
+        "rom_best_probability": 1.0,
+        "severity": 30,
+        "verdict": "acceptable_top",
+        "zero_probability_best_action_ids": [
+          "move_active_pressure"
+        ]
       },
       "python_agreement": {
-        "contribution_mismatches": 8,
+        "contribution_mismatches": 7,
         "hook_equivalence": {
           "checked": true,
           "chosen_match": true,
           "fast_chosen": {
-            "move_id": 126,
-            "move_name": "FIRE_BLAST",
-            "slot_index": 0
+            "move_id": 92,
+            "move_name": "TOXIC",
+            "slot_index": 1
           },
           "fast_scores": [
-            1,
-            24,
+            28,
+            23,
             26,
-            46
+            38
           ],
           "match": true,
           "score_bytes_match": true,
           "traced_chosen": {
-            "move_id": 126,
-            "move_name": "FIRE_BLAST",
-            "slot_index": 0
+            "move_id": 92,
+            "move_name": "TOXIC",
+            "slot_index": 1
           },
           "traced_scores": [
-            1,
-            24,
+            28,
+            23,
             26,
-            46
+            38
           ]
         },
         "score_bytes_match": false,
-        "selector_top_match": true
+        "selector_top_match": false
       },
-      "reason": "ROM score bytes make an expected-best action top",
+      "reason": "ROM score bytes make an acceptable action top",
       "scenario_id": "generated_mastery_policy_1_00000_active_pressure_before_status",
       "status": "pass"
     }
@@ -1490,7 +3595,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_execution_hook",
-      "line": 5719,
+      "line": 5715,
       "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
       "public_reads": [],
       "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1512,7 +3617,18 @@
       "anchor_status": "mapped",
       "classification": "internal",
       "coverage_mode": "rom_score_execution_hook",
-      "line": 1170,
+      "line": 1255,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "public_reads": [],
+      "rule_id": "move.apply_move_model.apply_baton_pass_bias",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyBatonPassBias"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "internal",
+      "coverage_mode": "rom_score_execution_hook",
+      "line": 1169,
       "parent_label": "BossAI_ApplyMoveModel",
       "public_reads": [],
       "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
@@ -1521,53 +3637,9 @@
     },
     {
       "anchor_status": "mapped",
-      "classification": "internal",
-      "coverage_mode": "rom_score_execution_hook",
-      "line": 1050,
-      "parent_label": "BossAI_ApplyMoveModel",
-      "public_reads": [],
-      "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
-      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-      "source_label": ".ApplyStatusHardAnswerDiscipline"
-    },
-    {
-      "anchor_status": "mapped",
-      "classification": "internal",
-      "coverage_mode": "rom_score_execution_hook",
-      "line": 2070,
-      "parent_label": "BossAI_ApplyMoveModel",
-      "public_reads": [],
-      "rule_id": "move.apply_move_model.enemy_has_boost_to_pass",
-      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-      "source_label": ".EnemyHasBoostToPass"
-    },
-    {
-      "anchor_status": "mapped",
-      "classification": "public_info",
-      "coverage_mode": "rom_score_execution_hook",
-      "line": 492,
-      "parent_label": "BossAI_ApplyMoveModel",
-      "public_reads": [],
-      "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
-      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-      "source_label": ".StatusMoveWouldFailPublicly"
-    },
-    {
-      "anchor_status": "mapped",
-      "classification": "platform_boundary",
-      "coverage_mode": "rom_execution_hook",
-      "line": 4010,
-      "parent_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
-      "public_reads": [],
-      "rule_id": "move.current_enemy_move_accuracy_risky",
-      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
-      "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky"
-    },
-    {
-      "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_score_execution_hook",
-      "line": 2786,
+      "line": 2782,
       "parent_label": "BossAI_SelectMove",
       "public_reads": [],
       "rule_id": "move.select_move",

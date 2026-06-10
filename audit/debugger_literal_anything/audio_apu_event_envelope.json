@@ -1,0 +1,498 @@
+{
+  "at": "cry(species=TYPHLOSION)",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "replay diff",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "The cry context is materialized from an auto-reached save state by entering the ROM's PlayCry routine with the selected species index.",
+    "The diff currently checks source-declared cry channels against an emulator-observed APU register timeline and digest; it does not claim analog mixer fidelity."
+  ],
+  "navigation": {
+    "checkpoint": "new_game",
+    "errors": [],
+    "frame": 4680,
+    "manifest_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\deity_nav\\new_game__map__PLAYERS_HOUSE_2F.manifest.json",
+    "map": "PLAYERS_HOUSE_2F",
+    "map_desc": "map=PLAYERS_HOUSE_2F (24:7) x=3 y=3",
+    "nearest": "map=PLAYERS_HOUSE_2F (24:7) x=3 y=3",
+    "observed_signature": {
+      "_battle_mode": 0,
+      "_enemy_turns_taken": 0,
+      "_group": 24,
+      "_number": 7,
+      "_party_count": 0,
+      "_player_turns_taken": 0,
+      "_rng": {
+        "hRandomAdd": 5,
+        "hRandomSub": 1
+      },
+      "_script_mode": 1,
+      "_script_running": 0,
+      "_temp_wild_species": 0,
+      "facing": "DOWN",
+      "map": "PLAYERS_HOUSE_2F",
+      "script_active": true,
+      "script_mode": 1,
+      "script_running": 0,
+      "turn": 0,
+      "x": 3,
+      "y": 3
+    },
+    "predicate": "map==PLAYERS_HOUSE_2F",
+    "reached": true,
+    "state_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\deity_nav\\new_game__map__PLAYERS_HOUSE_2F.state"
+  },
+  "proof_status": "replay_diff_captured",
+  "replay_diff": {
+    "kind": "debugger_deity_audio_replay_diff",
+    "runtime_changed_register_count": 4,
+    "runtime_digest": "475b46a59caaca86dd08d83f5d1bbb80734685c973bf059598cb05e60df3e479",
+    "static_channels": [
+      5,
+      6,
+      8
+    ],
+    "status": "matched_runtime_capture",
+    "valid": true
+  },
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "changed_register_count": 4,
+    "cry_index": 156,
+    "entry_symbol": "PlayCry",
+    "errors": [],
+    "first_sample": {
+      "apu": {
+        "rNR10": 128,
+        "rNR11": 63,
+        "rNR12": 8,
+        "rNR13": 255,
+        "rNR14": 191,
+        "rNR21": 63,
+        "rNR22": 8,
+        "rNR23": 255,
+        "rNR24": 191,
+        "rNR30": 127,
+        "rNR31": 255,
+        "rNR32": 159,
+        "rNR33": 255,
+        "rNR34": 191,
+        "rNR41": 255,
+        "rNR42": 8,
+        "rNR43": 0,
+        "rNR44": 191,
+        "rNR50": 0,
+        "rNR51": 0,
+        "rNR52": 251
+      },
+      "frame": 0,
+      "pc": 15478
+    },
+    "frame_count": 120,
+    "hardware_runtime_event": true,
+    "hardware_runtime_event_source_fields": [
+      "runtime_events"
+    ],
+    "kind": "debugger_deity_cry_apu_timeline",
+    "last_sample": {
+      "apu": {
+        "rNR10": 128,
+        "rNR11": 63,
+        "rNR12": 0,
+        "rNR13": 255,
+        "rNR14": 191,
+        "rNR21": 63,
+        "rNR22": 0,
+        "rNR23": 255,
+        "rNR24": 191,
+        "rNR30": 127,
+        "rNR31": 255,
+        "rNR32": 159,
+        "rNR33": 255,
+        "rNR34": 191,
+        "rNR41": 255,
+        "rNR42": 0,
+        "rNR43": 0,
+        "rNR44": 191,
+        "rNR50": 0,
+        "rNR51": 0,
+        "rNR52": 112
+      },
+      "frame": 116,
+      "pc": 1500
+    },
+    "runtime_event_count": 2,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {
+            "pc_bank_address": "??:3C76"
+          },
+          "observation_type": "explicit_hardware_event",
+          "origin": "cry_apu_timeline",
+          "precision": {
+            "address_space": "game_boy_apu_ff10_ff26",
+            "backend": "pyboy",
+            "timing": "per_tick_apu_register_sample"
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "species": "TYPHLOSION",
+            "surface": "audio"
+          },
+          "source_kind": "cry_apu_timeline",
+          "source_report": "debugger_deity_cry_apu_timeline",
+          "subjects": {
+            "changed_registers": [
+              "rNR10",
+              "rNR11",
+              "rNR12",
+              "rNR13",
+              "rNR14",
+              "rNR21",
+              "rNR22",
+              "rNR23",
+              "rNR24",
+              "rNR30",
+              "rNR31",
+              "rNR32",
+              "rNR33",
+              "rNR34",
+              "rNR41",
+              "rNR42",
+              "rNR43",
+              "rNR44",
+              "rNR50",
+              "rNR51",
+              "rNR52"
+            ],
+            "hardware_registers": [
+              "rNR10",
+              "rNR11",
+              "rNR12",
+              "rNR13",
+              "rNR14",
+              "rNR21",
+              "rNR22",
+              "rNR23",
+              "rNR24",
+              "rNR30",
+              "rNR31",
+              "rNR32",
+              "rNR33",
+              "rNR34",
+              "rNR41",
+              "rNR42",
+              "rNR43",
+              "rNR44",
+              "rNR50",
+              "rNR51",
+              "rNR52"
+            ]
+          },
+          "validation": {
+            "changed_register_count": 21,
+            "frame_sample": 0
+          }
+        },
+        "frame": 0,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "changed_registers": [
+            "rNR10",
+            "rNR11",
+            "rNR12",
+            "rNR13",
+            "rNR14",
+            "rNR21",
+            "rNR22",
+            "rNR23",
+            "rNR24",
+            "rNR30",
+            "rNR31",
+            "rNR32",
+            "rNR33",
+            "rNR34",
+            "rNR41",
+            "rNR42",
+            "rNR43",
+            "rNR44",
+            "rNR50",
+            "rNR51",
+            "rNR52"
+          ],
+          "registers": {
+            "rNR10": 128,
+            "rNR11": 63,
+            "rNR12": 8,
+            "rNR13": 255,
+            "rNR14": 191,
+            "rNR21": 63,
+            "rNR22": 8,
+            "rNR23": 255,
+            "rNR24": 191,
+            "rNR30": 127,
+            "rNR31": 255,
+            "rNR32": 159,
+            "rNR33": 255,
+            "rNR34": 191,
+            "rNR41": 255,
+            "rNR42": 8,
+            "rNR43": 0,
+            "rNR44": 191,
+            "rNR50": 0,
+            "rNR51": 0,
+            "rNR52": 251
+          }
+        },
+        "pc_bank_address": "??:3C76",
+        "pc_label": "",
+        "precision": {
+          "address_space": "game_boy_apu_ff10_ff26",
+          "backend": "pyboy",
+          "timing": "per_tick_apu_register_sample"
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "species": "TYPHLOSION",
+          "surface": "audio"
+        },
+        "seq": 0,
+        "source_kind": "cry_apu_timeline",
+        "source_report": "debugger_deity_cry_apu_timeline",
+        "subjects": {
+          "changed_registers": [
+            "rNR10",
+            "rNR11",
+            "rNR12",
+            "rNR13",
+            "rNR14",
+            "rNR21",
+            "rNR22",
+            "rNR23",
+            "rNR24",
+            "rNR30",
+            "rNR31",
+            "rNR32",
+            "rNR33",
+            "rNR34",
+            "rNR41",
+            "rNR42",
+            "rNR43",
+            "rNR44",
+            "rNR50",
+            "rNR51",
+            "rNR52"
+          ],
+          "hardware_registers": [
+            "rNR10",
+            "rNR11",
+            "rNR12",
+            "rNR13",
+            "rNR14",
+            "rNR21",
+            "rNR22",
+            "rNR23",
+            "rNR24",
+            "rNR30",
+            "rNR31",
+            "rNR32",
+            "rNR33",
+            "rNR34",
+            "rNR41",
+            "rNR42",
+            "rNR43",
+            "rNR44",
+            "rNR50",
+            "rNR51",
+            "rNR52"
+          ]
+        },
+        "validation": {
+          "changed_register_count": 21,
+          "frame_sample": 0
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {
+            "pc_bank_address": "??:3022"
+          },
+          "observation_type": "explicit_hardware_event",
+          "origin": "cry_apu_timeline",
+          "precision": {
+            "address_space": "game_boy_apu_ff10_ff26",
+            "backend": "pyboy",
+            "timing": "per_tick_apu_register_sample"
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "species": "TYPHLOSION",
+            "surface": "audio"
+          },
+          "source_kind": "cry_apu_timeline",
+          "source_report": "debugger_deity_cry_apu_timeline",
+          "subjects": {
+            "changed_registers": [
+              "rNR12",
+              "rNR22",
+              "rNR42",
+              "rNR52"
+            ],
+            "hardware_registers": [
+              "rNR10",
+              "rNR11",
+              "rNR12",
+              "rNR13",
+              "rNR14",
+              "rNR21",
+              "rNR22",
+              "rNR23",
+              "rNR24",
+              "rNR30",
+              "rNR31",
+              "rNR32",
+              "rNR33",
+              "rNR34",
+              "rNR41",
+              "rNR42",
+              "rNR43",
+              "rNR44",
+              "rNR50",
+              "rNR51",
+              "rNR52"
+            ]
+          },
+          "validation": {
+            "changed_register_count": 4,
+            "frame_sample": 5
+          }
+        },
+        "frame": 5,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "changed_registers": [
+            "rNR12",
+            "rNR22",
+            "rNR42",
+            "rNR52"
+          ],
+          "registers": {
+            "rNR10": 128,
+            "rNR11": 63,
+            "rNR12": 0,
+            "rNR13": 255,
+            "rNR14": 191,
+            "rNR21": 63,
+            "rNR22": 0,
+            "rNR23": 255,
+            "rNR24": 191,
+            "rNR30": 127,
+            "rNR31": 255,
+            "rNR32": 159,
+            "rNR33": 255,
+            "rNR34": 191,
+            "rNR41": 255,
+            "rNR42": 0,
+            "rNR43": 0,
+            "rNR44": 191,
+            "rNR50": 0,
+            "rNR51": 0,
+            "rNR52": 112
+          }
+        },
+        "pc_bank_address": "??:3022",
+        "pc_label": "",
+        "precision": {
+          "address_space": "game_boy_apu_ff10_ff26",
+          "backend": "pyboy",
+          "timing": "per_tick_apu_register_sample"
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "species": "TYPHLOSION",
+          "surface": "audio"
+        },
+        "seq": 1,
+        "source_kind": "cry_apu_timeline",
+        "source_report": "debugger_deity_cry_apu_timeline",
+        "subjects": {
+          "changed_registers": [
+            "rNR12",
+            "rNR22",
+            "rNR42",
+            "rNR52"
+          ],
+          "hardware_registers": [
+            "rNR10",
+            "rNR11",
+            "rNR12",
+            "rNR13",
+            "rNR14",
+            "rNR21",
+            "rNR22",
+            "rNR23",
+            "rNR24",
+            "rNR30",
+            "rNR31",
+            "rNR32",
+            "rNR33",
+            "rNR34",
+            "rNR41",
+            "rNR42",
+            "rNR43",
+            "rNR44",
+            "rNR50",
+            "rNR51",
+            "rNR52"
+          ]
+        },
+        "validation": {
+          "changed_register_count": 4,
+          "frame_sample": 5
+        }
+      }
+    ],
+    "sample_count": 42,
+    "species": "TYPHLOSION",
+    "species_id": 157,
+    "timeline_digest": "475b46a59caaca86dd08d83f5d1bbb80734685c973bf059598cb05e60df3e479",
+    "valid": true
+  },
+  "schema_version": 1,
+  "static_mirror": {
+    "channel_labels": [
+      "Cry_Typhlosion_Ch5",
+      "Cry_Typhlosion_Ch6",
+      "Cry_Typhlosion_Ch8"
+    ],
+    "channels": [
+      5,
+      6,
+      8
+    ],
+    "cry_index": 156,
+    "errors": [],
+    "expected_channel_count": 3,
+    "kind": "debugger_deity_static_cry_decode",
+    "label": "Cry_Typhlosion",
+    "line": 98,
+    "source_file": "audio/cries.asm",
+    "species": "TYPHLOSION",
+    "species_id": 157,
+    "valid": true
+  },
+  "surface": "audio",
+  "valid": true
+}

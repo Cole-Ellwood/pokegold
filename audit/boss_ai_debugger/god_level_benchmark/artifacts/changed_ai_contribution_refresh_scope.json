@@ -1,0 +1,125 @@
+{
+ "expected_route_ids": [
+  "falkner",
+  "bugsy",
+  "whitney",
+  "morty",
+  "chuck",
+  "jasmine",
+  "pryce",
+  "clair",
+  "brock",
+  "misty",
+  "lt_surge",
+  "erika",
+  "janine",
+  "sabrina",
+  "blaine",
+  "blue",
+  "koga",
+  "champion_lance"
+ ],
+ "kind": "boss_ai_changed_ai_contribution_refresh_scope",
+ "refreshed_route_ids": [
+  "falkner",
+  "bugsy",
+  "whitney",
+  "morty",
+  "chuck",
+  "jasmine",
+  "pryce",
+  "clair",
+  "brock",
+  "misty",
+  "lt_surge",
+  "erika",
+  "janine",
+  "sabrina",
+  "blaine",
+  "blue",
+  "koga",
+  "champion_lance"
+ ],
+ "schema_version": 1,
+ "state_basis": {
+  "changed_ai_run_id": "20260610_005239_changed_ai",
+  "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+  "manifest_sha256": "1793961B41DE0DA4606632A367B02EC1F64327F2CECF351B28F80627647E1AFD",
+  "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+  "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
+ },
+ "trace_artifacts": [
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/falkner.json",
+   "boss_route": "falkner"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/bugsy.json",
+   "boss_route": "bugsy"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/whitney.json",
+   "boss_route": "whitney"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/morty.json",
+   "boss_route": "morty"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/chuck.json",
+   "boss_route": "chuck"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/jasmine.json",
+   "boss_route": "jasmine"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/pryce.json",
+   "boss_route": "pryce"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/clair.json",
+   "boss_route": "clair"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/brock.json",
+   "boss_route": "brock"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/misty.json",
+   "boss_route": "misty"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/lt_surge.json",
+   "boss_route": "lt_surge"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/erika.json",
+   "boss_route": "erika"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/janine.json",
+   "boss_route": "janine"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/sabrina.json",
+   "boss_route": "sabrina"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/blaine.json",
+   "boss_route": "blaine"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/blue.json",
+   "boss_route": "blue"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/koga.json",
+   "boss_route": "koga"
+  },
+  {
+   "artifact": "audit/boss_ai_debugger/god_level_benchmark/artifacts/changed_ai_rom_contribution_routes/champion_lance.json",
+   "boss_route": "champion_lance"
+  }
+ ]
+}

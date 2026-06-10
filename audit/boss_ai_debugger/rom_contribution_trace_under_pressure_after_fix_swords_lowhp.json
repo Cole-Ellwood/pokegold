@@ -1,0 +1,3920 @@
+{
+  "canonical_state_class": {
+    "backend": "pyboy",
+    "blocking_gaps": [],
+    "checkpoint": {},
+    "class_fingerprint": "801C5798814EC809B01A351E8E2AAFF6B434DB2E68CACB9E19E1AA43A83C180C",
+    "class_id": "csc_801C5798814EC809B01A",
+    "hidden_facts": {},
+    "identity": {
+      "dirty_diff_hash": "3AAA160BFE20A04A94A0830F09C08BED0E6DAC83CF39FF0866B1D0C1BCDC40B9",
+      "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
+      "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+      "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
+      "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+      "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+    },
+    "kind": "canonical_state_class",
+    "known_limits": [
+      "ROM contribution trace class ids identify PyBoy hook traces; they are not hardware proof."
+    ],
+    "known_to_engine_facts": {
+      "chosen": {
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot_index": 0
+      }
+    },
+    "legal_exception_facts": {},
+    "minimization": {},
+    "missing_evidence": [],
+    "proof_status": "emulator_evidence",
+    "public_facts": {
+      "changed_event_count": 3,
+      "executed_rule_ids": [
+        "ko_band_oracle.apply_damage_dominance_bias",
+        "move.adjust_threat_severity_for_enemy_known_defense",
+        "move.apply_coach_plan_move_bias",
+        "move.apply_lookahead_to_top_move_candidates",
+        "move.apply_move_model.apply_baton_pass_bias",
+        "move.apply_move_model.apply_charge_move_bias",
+        "move.apply_move_model.apply_choice_first_lock_regret",
+        "move.apply_move_model.apply_counter_coat_trade_bias",
+        "move.apply_move_model.apply_dark_shield_chance_bias",
+        "move.apply_move_model.apply_destiny_bond_trade_bias",
+        "move.apply_move_model.apply_life_orb_recoil_bias",
+        "move.apply_move_model.apply_phazing_plan_bias",
+        "move.apply_move_model.apply_poison_contact_risk_bias",
+        "move.apply_move_model.apply_ramp_move_bias",
+        "move.apply_move_model.apply_rapid_spin_bias",
+        "move.apply_move_model.apply_recovery_timing_discipline",
+        "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+        "move.apply_move_model.apply_revealed_effect_matrix_bias",
+        "move.apply_move_model.apply_self_kotrade_discipline",
+        "move.apply_move_model.apply_setup_discipline_bias",
+        "move.apply_move_model.apply_setup_punish_bias",
+        "move.apply_move_model.apply_spikes_layer_bias",
+        "move.apply_move_model.enemy_under_pressure",
+        "move.apply_move_model.has_koline",
+        "move.apply_move_model.is_boost_setup_move",
+        "move.apply_move_model.is_current_enemy_recovery_move",
+        "move.apply_move_model.player_has_major_setup_boost",
+        "move.apply_move_model.player_has_revealed_anti_setup",
+        "move.apply_move_model.player_has_revealed_effect_a",
+        "move.apply_move_model.utility_move_would_fail_publicly",
+        "move.apply_multi_turn_projection",
+        "move.apply_multi_turn_projection.is_under_pressure",
+        "move.apply_plan_move_bias",
+        "move.apply_repeat_penalty",
+        "move.apply_scout_move_bias",
+        "move.apply_signed_delta_to_score",
+        "move.clamp_signed_lookahead_delta",
+        "move.compute_player_plausible_type_mask",
+        "move.current_enemy_move_accuracy_risky",
+        "move.current_plan_is_coach_template",
+        "move.enemy_known_item_nullifies_threat_type",
+        "move.evaluate_action_lookahead",
+        "move.get_primary_threat_type",
+        "move.get_primary_threat_type_uncached",
+        "move.get_scout_roll_threshold",
+        "move.get_type_threat_severity_vs_enemy_mon",
+        "move.has_revealed_super_effective_move",
+        "move.is_current_enemy_setup_move",
+        "move.is_setup_effect",
+        "move.mark_scouted_if_scout_move",
+        "move.player_has_public_threat_vs_enemy",
+        "move.player_has_public_threat_vs_enemy_uncached",
+        "move.player_threat_type_hits_enemy",
+        "move.player_threat_type_super_effective_vs_enemy",
+        "move.predict_player_switch",
+        "move.select_move",
+        "move.select_plan_if_needed",
+        "move.select_switch_hedge",
+        "move.setup_boost_has_further_value",
+        "move.setup_turn_is_affordable",
+        "move.should_scout"
+      ],
+      "move_ids": [
+        14,
+        0,
+        0,
+        0
+      ],
+      "move_scores": [
+        26,
+        20,
+        20,
+        20
+      ],
+      "post_model_scores": [
+        20,
+        0,
+        0,
+        0
+      ],
+      "pre_model_scores": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "public_info_scope": "public_only",
+    "raw_state_provenance": {
+      "kind": "boss_ai_rom_contribution_trace",
+      "save_state": ".local/tmp/boss_ai_debugger/koga_score_materialization_loop_frame.state",
+      "trace_id": ".local/tmp/boss_ai_debugger/koga_score_materialization_loop_frame.state"
+    },
+    "reachable_proof": {},
+    "rng_assumptions": {},
+    "rtc_assumptions": {},
+    "schema_version": 1,
+    "source_refs": [],
+    "surface": "boss_ai",
+    "surface_facts": {
+      "boss_ai": {
+        "decision_surface": "rom_contribution_trace",
+        "event_count": 3,
+        "predicate_branch_entry_count": 0,
+        "public_read_probe_entry_count": 0,
+        "rule_entry_count": 110,
+        "source": "trace_rom_pyboy_hooks"
+      }
+    },
+    "valid": true,
+    "validation_errors": []
+  },
+  "changed_event_count": 3,
+  "chosen": {
+    "move_id": 14,
+    "move_name": "SWORDS_DANCE",
+    "slot_index": 0
+  },
+  "class_fingerprint": "801C5798814EC809B01A351E8E2AAFF6B434DB2E68CACB9E19E1AA43A83C180C",
+  "class_id": "csc_801C5798814EC809B01A",
+  "decision_surface": "rom_contribution_trace",
+  "event_count": 3,
+  "events": [
+    {
+      "amount_register_a": 2,
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "changed": true,
+      "closed_by": "BossAI_ApplyMoveModel.ApplySetupDisciplineBias",
+      "delta": 2,
+      "event_type": "score_delta",
+      "helper_symbol": "BossAI_ApplyMoveModel.DiscourageScoreByA",
+      "index": 1,
+      "operation": "discourage_tier_weight",
+      "score_after": 22,
+      "score_before": 20,
+      "score_pointer": "d0d3",
+      "source": {
+        "callsite_rule_symbol": "BossAI_ApplyMoveModel",
+        "callsite_symbol": "BossAI_ApplyMoveModel.skip_setup",
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.EnemyUnderPressure",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "return_address": "45d3",
+        "rule_id": "move.apply_move_model.enemy_under_pressure",
+        "source_label": ".EnemyUnderPressure",
+        "static_public_read_hints": []
+      }
+    },
+    {
+      "amount_register_a": 2,
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "changed": true,
+      "closed_by": "BossAI_ApplyMoveModel.ApplyChargeMoveBias",
+      "delta": -2,
+      "event_type": "score_delta",
+      "helper_symbol": "BossAI_EncourageScoreHL",
+      "index": 2,
+      "operation": "encourage_score",
+      "score_after": 20,
+      "score_before": 22,
+      "score_pointer": "d0d3",
+      "source": {
+        "callsite_rule_symbol": "BossAI_ApplyMoveModel",
+        "callsite_symbol": "BossAI_ApplyMoveModel.skip_status",
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyPlanMoveBias",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "return_address": "4620",
+        "rule_id": "move.apply_plan_move_bias",
+        "source_label": "BossAI_ApplyPlanMoveBias",
+        "static_public_read_hints": []
+      }
+    },
+    {
+      "amount_register_a": 6,
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "changed": true,
+      "closed_by": "BossAI_SelectMove.first_pass",
+      "delta": 6,
+      "event_type": "score_delta",
+      "helper_symbol": "BossAI_ApplySignedDeltaToScore",
+      "index": 3,
+      "operation": "apply_signed_lookahead_delta",
+      "score_after": 26,
+      "score_before": 20,
+      "score_pointer": "d0d3",
+      "source": {
+        "callsite_rule_symbol": "BossAI_ApplyLookaheadToTopMoveCandidates",
+        "callsite_symbol": "BossAI_ApplyLookaheadToTopMoveCandidates.eval_loop",
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyLookaheadToTopMoveCandidates",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "return_address": "6f6e",
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+        "static_public_read_hints": []
+      }
+    }
+  ],
+  "executed_rule_count": 61,
+  "executed_rule_ids": [
+    "ko_band_oracle.apply_damage_dominance_bias",
+    "move.adjust_threat_severity_for_enemy_known_defense",
+    "move.apply_coach_plan_move_bias",
+    "move.apply_lookahead_to_top_move_candidates",
+    "move.apply_move_model.apply_baton_pass_bias",
+    "move.apply_move_model.apply_charge_move_bias",
+    "move.apply_move_model.apply_choice_first_lock_regret",
+    "move.apply_move_model.apply_counter_coat_trade_bias",
+    "move.apply_move_model.apply_dark_shield_chance_bias",
+    "move.apply_move_model.apply_destiny_bond_trade_bias",
+    "move.apply_move_model.apply_life_orb_recoil_bias",
+    "move.apply_move_model.apply_phazing_plan_bias",
+    "move.apply_move_model.apply_poison_contact_risk_bias",
+    "move.apply_move_model.apply_ramp_move_bias",
+    "move.apply_move_model.apply_rapid_spin_bias",
+    "move.apply_move_model.apply_recovery_timing_discipline",
+    "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+    "move.apply_move_model.apply_revealed_effect_matrix_bias",
+    "move.apply_move_model.apply_self_kotrade_discipline",
+    "move.apply_move_model.apply_setup_discipline_bias",
+    "move.apply_move_model.apply_setup_punish_bias",
+    "move.apply_move_model.apply_spikes_layer_bias",
+    "move.apply_move_model.enemy_under_pressure",
+    "move.apply_move_model.has_koline",
+    "move.apply_move_model.is_boost_setup_move",
+    "move.apply_move_model.is_current_enemy_recovery_move",
+    "move.apply_move_model.player_has_major_setup_boost",
+    "move.apply_move_model.player_has_revealed_anti_setup",
+    "move.apply_move_model.player_has_revealed_effect_a",
+    "move.apply_move_model.utility_move_would_fail_publicly",
+    "move.apply_multi_turn_projection",
+    "move.apply_multi_turn_projection.is_under_pressure",
+    "move.apply_plan_move_bias",
+    "move.apply_repeat_penalty",
+    "move.apply_scout_move_bias",
+    "move.apply_signed_delta_to_score",
+    "move.clamp_signed_lookahead_delta",
+    "move.compute_player_plausible_type_mask",
+    "move.current_enemy_move_accuracy_risky",
+    "move.current_plan_is_coach_template",
+    "move.enemy_known_item_nullifies_threat_type",
+    "move.evaluate_action_lookahead",
+    "move.get_primary_threat_type",
+    "move.get_primary_threat_type_uncached",
+    "move.get_scout_roll_threshold",
+    "move.get_type_threat_severity_vs_enemy_mon",
+    "move.has_revealed_super_effective_move",
+    "move.is_current_enemy_setup_move",
+    "move.is_setup_effect",
+    "move.mark_scouted_if_scout_move",
+    "move.player_has_public_threat_vs_enemy",
+    "move.player_has_public_threat_vs_enemy_uncached",
+    "move.player_threat_type_hits_enemy",
+    "move.player_threat_type_super_effective_vs_enemy",
+    "move.predict_player_switch",
+    "move.select_move",
+    "move.select_plan_if_needed",
+    "move.select_switch_hedge",
+    "move.setup_boost_has_further_value",
+    "move.setup_turn_is_affordable",
+    "move.should_scout"
+  ],
+  "known_limits": [
+    "Trace events are captured by PyBoy execution hooks, not by an in-ROM WRAM ring buffer.",
+    "Score events record score helper deltas plus candidate-start/end residual direct score writes, while rule entries record dynamic rule-label execution.",
+    "Predicate branch entries record selected executable public-info branch labels and configured outcomes.",
+    "Public-read probe entries record legal-input snapshots at configured executable labels; they are not CPU memory-read watchpoints."
+  ],
+  "memory_patches": [
+    {
+      "offset": 0,
+      "symbol_name": "wBossAITier",
+      "value": 3
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wBossAITierWeightRow",
+      "value": 2
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wBossAIPlanId",
+      "value": 3
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wEnemyMonMoves",
+      "value": 14
+    },
+    {
+      "offset": 1,
+      "symbol_name": "wEnemyMonMoves",
+      "value": 0
+    },
+    {
+      "offset": 2,
+      "symbol_name": "wEnemyMonMoves",
+      "value": 0
+    },
+    {
+      "offset": 3,
+      "symbol_name": "wEnemyMonMoves",
+      "value": 0
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wEnemyAIMoveScores",
+      "value": 20
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wBossAILookaheadDepthCache",
+      "value": 1
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wBossAILookaheadRunningBest",
+      "value": 255
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wEnemyMonHP",
+      "value": 0
+    },
+    {
+      "offset": 1,
+      "symbol_name": "wEnemyMonHP",
+      "value": 16
+    },
+    {
+      "offset": 0,
+      "symbol_name": "wEnemyMonMaxHP",
+      "value": 0
+    },
+    {
+      "offset": 1,
+      "symbol_name": "wEnemyMonMaxHP",
+      "value": 100
+    }
+  ],
+  "move_ids": [
+    14,
+    0,
+    0,
+    0
+  ],
+  "move_scores": [
+    26,
+    20,
+    20,
+    20
+  ],
+  "post_model_scores": [
+    20,
+    0,
+    0,
+    0
+  ],
+  "pre_model_scores": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "predicate_branch_entries": [],
+  "predicate_branch_entry_count": 0,
+  "public_read_probe_entries": [],
+  "public_read_probe_entry_count": 0,
+  "rule_entries": [
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 1,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.EnemyUnderPressure",
+        "hook_address": "53e7",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.enemy_under_pressure",
+        "source_label": ".EnemyUnderPressure",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 2,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 3,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 4,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.EnemyUnderPressure",
+        "hook_address": "53e7",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.enemy_under_pressure",
+        "source_label": ".EnemyUnderPressure",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 5,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplySetupDisciplineBias",
+        "hook_address": "4a52",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_setup_discipline_bias",
+        "source_label": ".ApplySetupDisciplineBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 6,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 7,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 8,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 9,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SetupBoostHasFurtherValue",
+        "hook_address": "69f0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.setup_boost_has_further_value",
+        "source_label": "BossAI_SetupBoostHasFurtherValue",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 10,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SetupTurnIsAffordable",
+        "hook_address": "6aba",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.setup_turn_is_affordable",
+        "source_label": "BossAI_SetupTurnIsAffordable",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 11,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.UtilityMoveWouldFailPublicly",
+        "hook_address": "470e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.utility_move_would_fail_publicly",
+        "source_label": ".UtilityMoveWouldFailPublicly",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 12,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyRecoveryTimingDiscipline",
+        "hook_address": "4b45",
+        "hook_bank": "0e",
+        "public_reads": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.apply_recovery_timing_discipline",
+        "source_label": ".ApplyRecoveryTimingDiscipline",
+        "static_public_read_hints": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 13,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.IsCurrentEnemyRecoveryMove",
+        "hook_address": "4b57",
+        "hook_bank": "0e",
+        "public_reads": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.is_current_enemy_recovery_move",
+        "source_label": ".IsCurrentEnemyRecoveryMove",
+        "static_public_read_hints": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 14,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplySetupPunishBias",
+        "hook_address": "4a37",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_setup_punish_bias",
+        "source_label": ".ApplySetupPunishBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 15,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasMajorSetupBoost",
+        "hook_address": "508c",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.player_has_major_setup_boost",
+        "source_label": ".PlayerHasMajorSetupBoost",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 16,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasMajorSetupBoost",
+        "hook_address": "508c",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.player_has_major_setup_boost",
+        "source_label": ".PlayerHasMajorSetupBoost",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 17,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplySpikesLayerBias",
+        "hook_address": "50bf",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wBossAITurnsElapsed",
+          "wPlayerScreens"
+        ],
+        "rule_id": "move.apply_move_model.apply_spikes_layer_bias",
+        "source_label": ".ApplySpikesLayerBias",
+        "static_public_read_hints": [
+          "wBossAITurnsElapsed",
+          "wPlayerScreens"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 18,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyPhazingPlanBias",
+        "hook_address": "4b6e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_phazing_plan_bias",
+        "source_label": ".ApplyPhazingPlanBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 19,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyRapidSpinBias",
+        "hook_address": "4b8c",
+        "hook_bank": "0e",
+        "public_reads": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.apply_rapid_spin_bias",
+        "source_label": ".ApplyRapidSpinBias",
+        "static_public_read_hints": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 20,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyBatonPassBias",
+        "hook_address": "4b9e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_baton_pass_bias",
+        "source_label": ".ApplyBatonPassBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 21,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyRevealedAntiSetupAvoidance",
+        "hook_address": "4bbc",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+        "source_label": ".ApplyRevealedAntiSetupAvoidance",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 22,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.IsBoostSetupMove",
+        "hook_address": "4bd3",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.is_boost_setup_move",
+        "source_label": ".IsBoostSetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 23,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.HasKOLine",
+        "hook_address": "53fa",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.has_koline",
+        "source_label": ".HasKOLine",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 24,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedAntiSetup",
+        "hook_address": "4c01",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.player_has_revealed_anti_setup",
+        "source_label": ".PlayerHasRevealedAntiSetup",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 25,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedEffectA",
+        "hook_address": "4c0c",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+        "source_label": ".PlayerHasRevealedEffectA",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de28"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 26,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedEffectA",
+        "hook_address": "4c0c",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+        "source_label": ".PlayerHasRevealedEffectA",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 27,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyRampMoveBias",
+        "hook_address": "4c35",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_ramp_move_bias",
+        "source_label": ".ApplyRampMoveBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 28,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyPlanMoveBias",
+        "hook_address": "6e17",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_plan_move_bias",
+        "source_label": "BossAI_ApplyPlanMoveBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 29,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyCoachPlanMoveBias",
+        "hook_address": "6e81",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_coach_plan_move_bias",
+        "source_label": "BossAI_ApplyCoachPlanMoveBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 30,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_CurrentPlanIsCoachTemplate",
+        "hook_address": "6850",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.current_plan_is_coach_template",
+        "source_label": "BossAI_CurrentPlanIsCoachTemplate",
+        "static_public_read_hints": []
+      },
+      "sp": "de28"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 31,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 32,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de2a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 33,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyChargeMoveBias",
+        "hook_address": "4c66",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_charge_move_bias",
+        "source_label": ".ApplyChargeMoveBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 34,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyPoisonContactRiskBias",
+        "hook_address": "4c7e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_poison_contact_risk_bias",
+        "source_label": ".ApplyPoisonContactRiskBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 35,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyDarkShieldChanceBias",
+        "hook_address": "4caa",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
+        "source_label": ".ApplyDarkShieldChanceBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 36,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyLifeOrbRecoilBias",
+        "hook_address": "4cc5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
+        "source_label": ".ApplyLifeOrbRecoilBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 37,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyDestinyBondTradeBias",
+        "hook_address": "4cdd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
+        "source_label": ".ApplyDestinyBondTradeBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 38,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyCounterCoatTradeBias",
+        "hook_address": "4d03",
+        "hook_bank": "0e",
+        "public_reads": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.apply_counter_coat_trade_bias",
+        "source_label": ".ApplyCounterCoatTradeBias",
+        "static_public_read_hints": [
+          "Moves + MOVE_EFFECT",
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 39,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyRevealedEffectMatrixBias",
+        "hook_address": "4df9",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.apply_revealed_effect_matrix_bias",
+        "source_label": ".ApplyRevealedEffectMatrixBias",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 40,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 41,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 42,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_ApplyMoveModel.PlayerHasRevealedEffectA",
+        "hook_address": "4c0c",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+        "source_label": ".PlayerHasRevealedEffectA",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 43,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplyChoiceFirstLockRegret",
+        "hook_address": "4d7b",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_choice_first_lock_regret",
+        "source_label": ".ApplyChoiceFirstLockRegret",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 44,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.ApplySelfKOTradeDiscipline",
+        "hook_address": "4b0b",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.apply_self_kotrade_discipline",
+        "source_label": ".ApplySelfKOTradeDiscipline",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 45,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyScoutMoveBias",
+        "hook_address": "6ea3",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_scout_move_bias",
+        "source_label": "BossAI_ApplyScoutMoveBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 46,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ShouldScout",
+        "hook_address": "73a0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.should_scout",
+        "source_label": "BossAI_ShouldScout",
+        "static_public_read_hints": []
+      },
+      "sp": "de28"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 47,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetPrimaryThreatType",
+        "hook_address": "716e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_primary_threat_type",
+        "source_label": "BossAI_GetPrimaryThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 48,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetPrimaryThreatTypeUncached",
+        "hook_address": "718b",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_primary_threat_type_uncached",
+        "source_label": "BossAI_GetPrimaryThreatTypeUncached",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 49,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 50,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 51,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 52,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 53,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 54,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 55,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 56,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 57,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 58,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 59,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 60,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 61,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 62,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 63,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 64,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 65,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 66,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de20"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 67,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetScoutRollThreshold",
+        "hook_address": "735c",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_scout_roll_threshold",
+        "source_label": "BossAI_GetScoutRollThreshold",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 68,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyRepeatPenalty",
+        "hook_address": "6ec1",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_repeat_penalty",
+        "source_label": "BossAI_ApplyRepeatPenalty",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 69,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyDamageDominanceBias",
+        "hook_address": "4c0e",
+        "hook_bank": "11",
+        "public_reads": [],
+        "rule_id": "ko_band_oracle.apply_damage_dominance_bias",
+        "source_label": "BossAI_ApplyDamageDominanceBias",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 70,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMoveModel.HasKOLine",
+        "hook_address": "53fa",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_move_model.has_koline",
+        "source_label": ".HasKOLine",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 71,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_CurrentEnemyMoveAccuracyRisky",
+        "hook_address": "61d6",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.current_enemy_move_accuracy_risky",
+        "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+        "static_public_read_hints": []
+      },
+      "sp": "de2c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 72,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SelectMove",
+        "hook_address": "546a",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.select_move",
+        "source_label": "BossAI_SelectMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de36"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 73,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SelectPlanIfNeeded",
+        "hook_address": "66ae",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.select_plan_if_needed",
+        "source_label": "BossAI_SelectPlanIfNeeded",
+        "static_public_read_hints": []
+      },
+      "sp": "de34"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 74,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ComputePlayerPlausibleTypeMask",
+        "hook_address": "6b26",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.compute_player_plausible_type_mask",
+        "source_label": "BossAI_ComputePlayerPlausibleTypeMask",
+        "static_public_read_hints": []
+      },
+      "sp": "de34"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 75,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyLookaheadToTopMoveCandidates",
+        "hook_address": "6f10",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_lookahead_to_top_move_candidates",
+        "source_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
+        "static_public_read_hints": []
+      },
+      "sp": "de34"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 76,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_EvaluateActionLookahead",
+        "hook_address": "6fb0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.evaluate_action_lookahead",
+        "source_label": "BossAI_EvaluateActionLookahead",
+        "static_public_read_hints": []
+      },
+      "sp": "de2e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 77,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 78,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 79,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SetupBoostHasFurtherValue",
+        "hook_address": "69f0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.setup_boost_has_further_value",
+        "source_label": "BossAI_SetupBoostHasFurtherValue",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 80,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SetupTurnIsAffordable",
+        "hook_address": "6aba",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.setup_turn_is_affordable",
+        "source_label": "BossAI_SetupTurnIsAffordable",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 81,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ShouldScout",
+        "hook_address": "73a0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.should_scout",
+        "source_label": "BossAI_ShouldScout",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 82,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetPrimaryThreatType",
+        "hook_address": "716e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_primary_threat_type",
+        "source_label": "BossAI_GetPrimaryThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 83,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 84,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de20"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 85,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 86,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplyMultiTurnProjection",
+        "hook_address": "707d",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_multi_turn_projection",
+        "source_label": "BossAI_ApplyMultiTurnProjection",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 87,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsCurrentEnemySetupMove",
+        "hook_address": "69dd",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_current_enemy_setup_move",
+        "source_label": "BossAI_IsCurrentEnemySetupMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 88,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_IsSetupEffect",
+        "hook_address": "69b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.is_setup_effect",
+        "source_label": "BossAI_IsSetupEffect",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 89,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "internal",
+        "full_symbol": "BossAI_ApplyMultiTurnProjection.IsUnderPressure",
+        "hook_address": "7135",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_multi_turn_projection.is_under_pressure",
+        "source_label": ".IsUnderPressure",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 90,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ShouldScout",
+        "hook_address": "73a0",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.should_scout",
+        "source_label": "BossAI_ShouldScout",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 91,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetPrimaryThreatType",
+        "hook_address": "716e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_primary_threat_type",
+        "source_label": "BossAI_GetPrimaryThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 92,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "hook_address": "7281",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.get_type_threat_severity_vs_enemy_mon",
+        "source_label": "BossAI_GetTypeThreatSeverityVsEnemyMon",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 93,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "hook_address": "72ab",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.adjust_threat_severity_for_enemy_known_defense",
+        "source_label": "BossAI_AdjustThreatSeverityForEnemyKnownDefense",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 94,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de1c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 95,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_PredictPlayerSwitch",
+        "hook_address": "64b5",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.predict_player_switch",
+        "source_label": "BossAI_PredictPlayerSwitch",
+        "static_public_read_hints": []
+      },
+      "sp": "de22"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 96,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_PlayerHasPublicThreatVsEnemy",
+        "hook_address": "5c98",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_has_public_threat_vs_enemy",
+        "source_label": "BossAI_PlayerHasPublicThreatVsEnemy",
+        "static_public_read_hints": []
+      },
+      "sp": "de20"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 97,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+        "hook_address": "5cad",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_has_public_threat_vs_enemy_uncached",
+        "source_label": "BossAI_PlayerHasPublicThreatVsEnemyUncached",
+        "static_public_read_hints": []
+      },
+      "sp": "de1e"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 98,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_HasRevealedSuperEffectiveMove",
+        "hook_address": "651e",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.has_revealed_super_effective_move",
+        "source_label": "BossAI_HasRevealedSuperEffectiveMove",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de1c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 99,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+        "hook_address": "72e4",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_threat_type_super_effective_vs_enemy",
+        "source_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+        "static_public_read_hints": []
+      },
+      "sp": "de1c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 100,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_PlayerThreatTypeHitsEnemy",
+        "hook_address": "72f4",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_threat_type_hits_enemy",
+        "source_label": "BossAI_PlayerThreatTypeHitsEnemy",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 101,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 102,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+        "hook_address": "72e4",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_threat_type_super_effective_vs_enemy",
+        "source_label": "BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
+        "static_public_read_hints": []
+      },
+      "sp": "de1c"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 103,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_PlayerThreatTypeHitsEnemy",
+        "hook_address": "72f4",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.player_threat_type_hits_enemy",
+        "source_label": "BossAI_PlayerThreatTypeHitsEnemy",
+        "static_public_read_hints": []
+      },
+      "sp": "de1a"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 104,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "hook_address": "7308",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.enemy_known_item_nullifies_threat_type",
+        "source_label": "BossAI_EnemyKnownItemNullifiesThreatType",
+        "static_public_read_hints": []
+      },
+      "sp": "de18"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 105,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "public_info",
+        "full_symbol": "BossAI_HasRevealedSuperEffectiveMove",
+        "hook_address": "651e",
+        "hook_bank": "0e",
+        "public_reads": [
+          "wPlayerUsedMoves"
+        ],
+        "rule_id": "move.has_revealed_super_effective_move",
+        "source_label": "BossAI_HasRevealedSuperEffectiveMove",
+        "static_public_read_hints": [
+          "wPlayerUsedMoves"
+        ]
+      },
+      "sp": "de20"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 106,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_CurrentEnemyMoveAccuracyRisky",
+        "hook_address": "61d6",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.current_enemy_move_accuracy_risky",
+        "source_label": "BossAI_CurrentEnemyMoveAccuracyRisky",
+        "static_public_read_hints": []
+      },
+      "sp": "de24"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 107,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ClampSignedLookaheadDelta",
+        "hook_address": "7159",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.clamp_signed_lookahead_delta",
+        "source_label": "BossAI_ClampSignedLookaheadDelta",
+        "static_public_read_hints": []
+      },
+      "sp": "de26"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 108,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_ApplySignedDeltaToScore",
+        "hook_address": "6f96",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.apply_signed_delta_to_score",
+        "source_label": "BossAI_ApplySignedDeltaToScore",
+        "static_public_read_hints": []
+      },
+      "sp": "de30"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 109,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_SelectSwitchHedge",
+        "hook_address": "554e",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.select_switch_hedge",
+        "source_label": "BossAI_SelectSwitchHedge",
+        "static_public_read_hints": []
+      },
+      "sp": "de34"
+    },
+    {
+      "candidate": {
+        "kind": "move",
+        "move_id": 14,
+        "move_name": "SWORDS_DANCE",
+        "slot": 1,
+        "slot_index": 0
+      },
+      "event_type": "rule_enter",
+      "index": 110,
+      "move_struct": {
+        "accuracy": 255,
+        "animation": 14,
+        "effect": 50,
+        "effect_chance": 0,
+        "power": 0,
+        "pp": 30,
+        "type": 0
+      },
+      "source": {
+        "classification": "platform_boundary",
+        "full_symbol": "BossAI_MarkScoutedIfScoutMove",
+        "hook_address": "7418",
+        "hook_bank": "0e",
+        "public_reads": [],
+        "rule_id": "move.mark_scouted_if_scout_move",
+        "source_label": "BossAI_MarkScoutedIfScoutMove",
+        "static_public_read_hints": []
+      },
+      "sp": "de34"
+    }
+  ],
+  "rule_entry_count": 110,
+  "save_state": ".local/tmp/boss_ai_debugger/koga_score_materialization_loop_frame.state",
+  "schema_version": 1,
+  "selector_entry_scores": [
+    26,
+    20,
+    20,
+    20
+  ],
+  "source": "trace_rom_pyboy_hooks",
+  "trace_basis": {
+    "boss": "",
+    "enemy": "",
+    "notes": "under_pressure_after_fix_swords_lowhp",
+    "player": "",
+    "trace_rom": "pokegold_trace.gbc",
+    "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+    "trace_symbols": "pokegold_trace.sym",
+    "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
+    "turn": ""
+  }
+}

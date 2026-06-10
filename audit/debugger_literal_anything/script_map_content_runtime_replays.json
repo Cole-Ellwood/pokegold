@@ -1,0 +1,416 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime script/map content helper replay",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is a direct PyBoy helper harness for selected Azalea warp/object content scenarios.",
+    "It proves selected ROM helper behavior after synthesized WRAM setup, not full overworld button/input flow coverage."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 2,
+    "cases": [
+      {
+        "after_enter_map_warp": {
+          "wMapGroup": 8,
+          "wMapNumber": 1,
+          "wWarpNumber": 1
+        },
+        "after_warp_check": {
+          "wNextMapGroup": 8,
+          "wNextMapNumber": 1,
+          "wNextWarp": 1,
+          "wPrevMapGroup": 8,
+          "wPrevMapNumber": 7,
+          "wPrevWarp": 1
+        },
+        "before": {
+          "wMapGroup": 8,
+          "wMapNumber": 7,
+          "wNextMapGroup": 0,
+          "wNextMapNumber": 0,
+          "wNextWarp": 0
+        },
+        "carry_observed": true,
+        "case_id": "azalea_pokecenter_warp_runtime",
+        "destination_map": "AZALEA_POKECENTER_1F",
+        "destination_resolved_map": "AzaleaPokecenter1F",
+        "destination_warp": 1,
+        "enter_map_warp_carry": false,
+        "helper_hits": {
+          "EnterMapWarp": 1,
+          "WarpCheck": 1
+        },
+        "helper_samples": [
+          {
+            "address": "$21C9",
+            "frame": 120,
+            "label": "WarpCheck",
+            "pc": 8649,
+            "sp": 57341
+          },
+          {
+            "address": "$2267",
+            "frame": 240,
+            "label": "EnterMapWarp",
+            "pc": 8807,
+            "sp": 57341
+          }
+        ],
+        "scenario_id": "content_scenario_1_0000",
+        "source_map": "AzaleaTown_MapEvents",
+        "source_position": {
+          "player_map_x": 19,
+          "player_map_y": 13,
+          "x": 15,
+          "y": 9
+        },
+        "transition_kind": "warp_collision_dispatch",
+        "transition_observed": true,
+        "warp_check_carry": true
+      },
+      {
+        "after": {
+          "hLastTalked": 2,
+          "hMapObjectIndex": 0,
+          "hObjectStructIndex": 1,
+          "wScriptBank": 72,
+          "wScriptPos": 124,
+          "wScriptPosWord": 20860,
+          "wScriptRunning": 255
+        },
+        "before": {
+          "wObject1MapObjectIndex": 2,
+          "wObject1MapX": 35,
+          "wObject1MapY": 13,
+          "wObject1Sprite": 246,
+          "wObject1Walking": 255
+        },
+        "carry_observed": true,
+        "case_id": "azalea_rocket_object_runtime",
+        "expected_script_address": 20860,
+        "expected_script_bank": 72,
+        "helper_hits": {
+          "CallScript": 1,
+          "CheckFacingObject": 1,
+          "TryObjectEvent": 1
+        },
+        "helper_samples": [
+          {
+            "address": "$68D9",
+            "frame": 120,
+            "label": "TryObjectEvent",
+            "pc": 26841,
+            "sp": 57341
+          },
+          {
+            "address": "$70DB",
+            "frame": 120,
+            "label": "CheckFacingObject",
+            "pc": 28891,
+            "sp": 57335
+          },
+          {
+            "address": "$264D",
+            "frame": 120,
+            "label": "CallScript",
+            "pc": 9805,
+            "sp": 57339
+          }
+        ],
+        "map_object_index": 2,
+        "object_position": {
+          "object_map_x": 35,
+          "object_map_y": 13
+        },
+        "player_position": {
+          "direction": "down",
+          "player_map_x": 35,
+          "player_map_y": 12
+        },
+        "scenario_id": "content_scenario_1_0019",
+        "script_label": "AzaleaTownRocket1Script",
+        "source_map": "AzaleaTown_MapEvents",
+        "transition_kind": "object_facing_script_dispatch",
+        "transition_observed": true,
+        "try_object_event_carry": true
+      }
+    ],
+    "errors": [],
+    "frame_count": 120,
+    "kind": "debugger_deity_script_map_content_runtime_replays",
+    "known_limits": [
+      "The selected warp and object cases execute ROM helper routines from synthesized WRAM state.",
+      "This is not a full overworld button/input flow replay and does not claim all map collisions or all object events."
+    ],
+    "materializer_path": "audit/debugger_literal_anything/script_map_content_materializers.json",
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 2,
+    "runtime_events": [
+      {
+        "event_kind": "control_flow",
+        "evidence_atom": {
+          "claim_type": "runtime_event.control_flow",
+          "detail": {},
+          "observation_type": "instruction_pre_state",
+          "origin": "pyboy_script_map_content_runtime",
+          "precision": {
+            "helper_hit_count": 2,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "scenario_id": "content_scenario_1_0000",
+            "surface": "script_map_content"
+          },
+          "source_kind": "pyboy_script_map_content_runtime",
+          "source_report": "debugger_deity_script_map_content_runtime_replays",
+          "subjects": {
+            "helpers": [
+              "EnterMapWarp",
+              "WarpCheck"
+            ],
+            "source_map": "AzaleaTown_MapEvents"
+          },
+          "validation": {
+            "case_id": "azalea_pokecenter_warp_runtime",
+            "transition_kind": "warp_collision_dispatch"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "instruction_pre_state",
+        "payload": {
+          "after_enter_map_warp": {
+            "wMapGroup": 8,
+            "wMapNumber": 1,
+            "wWarpNumber": 1
+          },
+          "after_warp_check": {
+            "wNextMapGroup": 8,
+            "wNextMapNumber": 1,
+            "wNextWarp": 1,
+            "wPrevMapGroup": 8,
+            "wPrevMapNumber": 7,
+            "wPrevWarp": 1
+          },
+          "before": {
+            "wMapGroup": 8,
+            "wMapNumber": 7,
+            "wNextMapGroup": 0,
+            "wNextMapNumber": 0,
+            "wNextWarp": 0
+          },
+          "carry_observed": true,
+          "case_id": "azalea_pokecenter_warp_runtime",
+          "destination_map": "AZALEA_POKECENTER_1F",
+          "destination_resolved_map": "AzaleaPokecenter1F",
+          "destination_warp": 1,
+          "enter_map_warp_carry": false,
+          "helper_hits": {
+            "EnterMapWarp": 1,
+            "WarpCheck": 1
+          },
+          "helper_samples": [
+            {
+              "address": "$21C9",
+              "frame": 120,
+              "label": "WarpCheck",
+              "pc": 8649,
+              "sp": 57341
+            },
+            {
+              "address": "$2267",
+              "frame": 240,
+              "label": "EnterMapWarp",
+              "pc": 8807,
+              "sp": 57341
+            }
+          ],
+          "scenario_id": "content_scenario_1_0000",
+          "source_map": "AzaleaTown_MapEvents",
+          "source_position": {
+            "player_map_x": 19,
+            "player_map_y": 13,
+            "x": 15,
+            "y": 9
+          },
+          "transition_kind": "warp_collision_dispatch",
+          "transition_observed": true,
+          "warp_check_carry": true
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "helper_hit_count": 2,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "scenario_id": "content_scenario_1_0000",
+          "surface": "script_map_content"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_script_map_content_runtime",
+        "source_report": "debugger_deity_script_map_content_runtime_replays",
+        "subjects": {
+          "helpers": [
+            "EnterMapWarp",
+            "WarpCheck"
+          ],
+          "source_map": "AzaleaTown_MapEvents"
+        },
+        "validation": {
+          "case_id": "azalea_pokecenter_warp_runtime",
+          "transition_kind": "warp_collision_dispatch"
+        }
+      },
+      {
+        "event_kind": "control_flow",
+        "evidence_atom": {
+          "claim_type": "runtime_event.control_flow",
+          "detail": {},
+          "observation_type": "instruction_pre_state",
+          "origin": "pyboy_script_map_content_runtime",
+          "precision": {
+            "helper_hit_count": 3,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "scenario_id": "content_scenario_1_0019",
+            "surface": "script_map_content"
+          },
+          "source_kind": "pyboy_script_map_content_runtime",
+          "source_report": "debugger_deity_script_map_content_runtime_replays",
+          "subjects": {
+            "helpers": [
+              "CallScript",
+              "CheckFacingObject",
+              "TryObjectEvent"
+            ],
+            "source_map": "AzaleaTown_MapEvents"
+          },
+          "validation": {
+            "case_id": "azalea_rocket_object_runtime",
+            "transition_kind": "object_facing_script_dispatch"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "instruction_pre_state",
+        "payload": {
+          "after": {
+            "hLastTalked": 2,
+            "hMapObjectIndex": 0,
+            "hObjectStructIndex": 1,
+            "wScriptBank": 72,
+            "wScriptPos": 124,
+            "wScriptPosWord": 20860,
+            "wScriptRunning": 255
+          },
+          "before": {
+            "wObject1MapObjectIndex": 2,
+            "wObject1MapX": 35,
+            "wObject1MapY": 13,
+            "wObject1Sprite": 246,
+            "wObject1Walking": 255
+          },
+          "carry_observed": true,
+          "case_id": "azalea_rocket_object_runtime",
+          "expected_script_address": 20860,
+          "expected_script_bank": 72,
+          "helper_hits": {
+            "CallScript": 1,
+            "CheckFacingObject": 1,
+            "TryObjectEvent": 1
+          },
+          "helper_samples": [
+            {
+              "address": "$68D9",
+              "frame": 120,
+              "label": "TryObjectEvent",
+              "pc": 26841,
+              "sp": 57341
+            },
+            {
+              "address": "$70DB",
+              "frame": 120,
+              "label": "CheckFacingObject",
+              "pc": 28891,
+              "sp": 57335
+            },
+            {
+              "address": "$264D",
+              "frame": 120,
+              "label": "CallScript",
+              "pc": 9805,
+              "sp": 57339
+            }
+          ],
+          "map_object_index": 2,
+          "object_position": {
+            "object_map_x": 35,
+            "object_map_y": 13
+          },
+          "player_position": {
+            "direction": "down",
+            "player_map_x": 35,
+            "player_map_y": 12
+          },
+          "scenario_id": "content_scenario_1_0019",
+          "script_label": "AzaleaTownRocket1Script",
+          "source_map": "AzaleaTown_MapEvents",
+          "transition_kind": "object_facing_script_dispatch",
+          "transition_observed": true,
+          "try_object_event_carry": true
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "helper_hit_count": 3,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "scenario_id": "content_scenario_1_0019",
+          "surface": "script_map_content"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_script_map_content_runtime",
+        "source_report": "debugger_deity_script_map_content_runtime_replays",
+        "subjects": {
+          "helpers": [
+            "CallScript",
+            "CheckFacingObject",
+            "TryObjectEvent"
+          ],
+          "source_map": "AzaleaTown_MapEvents"
+        },
+        "validation": {
+          "case_id": "azalea_rocket_object_runtime",
+          "transition_kind": "object_facing_script_dispatch"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "1930f0bf67e80ed09a143f44fa34779c9d3a3cc5dc8cc3f084c7f0b3975e1bdc",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "content",
+  "valid": true
+}

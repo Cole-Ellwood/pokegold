@@ -1,0 +1,155 @@
+{
+  "kind": "unified_debugger_crossemu_preflight",
+  "schema_version": 1,
+  "valid": true,
+  "requested_backends": [
+    "pyboy",
+    "vba-m",
+    "sameboy",
+    "gambatte"
+  ],
+  "available_count": 1,
+  "cross_backend_available_count": 0,
+  "trusted_cross_backend_count": 0,
+  "ready_for_pyboy_run": true,
+  "ready_for_cross_backend_diff": false,
+  "blocking_reasons": [
+    "no cross-emulator backend is installed"
+  ],
+  "backends": [
+    {
+      "name": "pyboy",
+      "display_name": "PyBoy",
+      "role": "canonical",
+      "status": "available",
+      "available": true,
+      "availability_proof": "python_module:pyboy",
+      "missing_reason": "",
+      "discovery": [
+        {
+          "kind": "python_module",
+          "name": "pyboy",
+          "available": true,
+          "path": "C:\\Users\\lolno\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages\\pyboy\\__init__.cp314-win_amd64.pyd"
+        },
+        {
+          "kind": "command",
+          "name": "pyboy",
+          "available": false,
+          "path": ""
+        }
+      ],
+      "conformance_status": "missing",
+      "trusted_for_differential": false,
+      "install_hint": "python -m pip install pyboy",
+      "notes": "Canonical local automation backend; still not proof for VBA/VBA-M-only symptoms."
+    },
+    {
+      "name": "vba-m",
+      "display_name": "VisualBoyAdvance-M (VBA-M)",
+      "role": "cross_backend",
+      "status": "missing",
+      "available": false,
+      "availability_proof": "",
+      "missing_reason": "no Python module or executable found",
+      "discovery": [
+        {
+          "kind": "command",
+          "name": "visualboyadvance-m",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "vbam",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "vba-m",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "VisualBoyAdvance-M.exe",
+          "available": false,
+          "path": ""
+        }
+      ],
+      "conformance_status": "missing",
+      "trusted_for_differential": false,
+      "install_hint": "Install VisualBoyAdvance-M with a CLI/headless entry point on PATH.",
+      "notes": "Targets the May 2026 user-reported VBA/VBA-M divergence class."
+    },
+    {
+      "name": "sameboy",
+      "display_name": "SameBoy",
+      "role": "cross_backend",
+      "status": "missing",
+      "available": false,
+      "availability_proof": "",
+      "missing_reason": "no Python module or executable found",
+      "discovery": [
+        {
+          "kind": "command",
+          "name": "sameboy",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "sameboy-headless",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "SameBoy.exe",
+          "available": false,
+          "path": ""
+        }
+      ],
+      "conformance_status": "missing",
+      "trusted_for_differential": false,
+      "install_hint": "Install a SameBoy CLI/headless build and put the executable on PATH.",
+      "notes": "Preferred timing-sensitive cross-check once a headless binary is available."
+    },
+    {
+      "name": "gambatte",
+      "display_name": "gambatte",
+      "role": "cross_backend",
+      "status": "missing",
+      "available": false,
+      "availability_proof": "",
+      "missing_reason": "no Python module or executable found",
+      "discovery": [
+        {
+          "kind": "command",
+          "name": "gambatte-speedrun",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "gambatte",
+          "available": false,
+          "path": ""
+        },
+        {
+          "kind": "command",
+          "name": "gambatte_sdl",
+          "available": false,
+          "path": ""
+        }
+      ],
+      "conformance_status": "missing",
+      "trusted_for_differential": false,
+      "install_hint": "Install gambatte-speedrun or another scriptable gambatte build on PATH.",
+      "notes": "Useful as a second CPU/PPU implementation once conformance-gated."
+    }
+  ],
+  "errors": [],
+  "conformance_store": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\audit\\crossemu_conformance.jsonl"
+}

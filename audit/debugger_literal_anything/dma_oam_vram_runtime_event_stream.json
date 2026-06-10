@@ -1,0 +1,362 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime hardware event stream",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence for selected OAM DMA and general-mode CGB VRAM DMA copies.",
+    "HBlank DMA, LCD mode timing restrictions, cross-backend parity, and hardware-cycle proof remain open."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 2,
+    "cases": [
+      {
+        "byte_count": 160,
+        "case_id": "oam_dma_hram_trigger",
+        "destination_range": "$FE00-$FE9F",
+        "destination_sample": [
+          3,
+          10,
+          17,
+          24,
+          31,
+          38,
+          45,
+          52,
+          59,
+          66,
+          73,
+          80,
+          87,
+          94,
+          101,
+          108
+        ],
+        "dma_kind": "oam_dma",
+        "exact_match": true,
+        "match_count": 160,
+        "pc_after": 65412,
+        "source_range": "$C000-$C09F",
+        "source_sample": [
+          3,
+          10,
+          17,
+          24,
+          31,
+          38,
+          45,
+          52,
+          59,
+          66,
+          73,
+          80,
+          87,
+          94,
+          101,
+          108
+        ],
+        "trigger_register": "FF46",
+        "trigger_value": 192
+      },
+      {
+        "byte_count": 16,
+        "case_id": "cgb_vram_dma_general_16_bytes",
+        "destination_range": "$8000-$800F",
+        "destination_sample": [
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          141,
+          142,
+          143
+        ],
+        "dma_kind": "cgb_vram_dma_general",
+        "exact_match": true,
+        "match_count": 16,
+        "pc_after": 65428,
+        "post_ff55": 255,
+        "source_range": "$C100-$C10F",
+        "source_sample": [
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140,
+          141,
+          142,
+          143
+        ],
+        "trigger_register": "FF55",
+        "trigger_value": 0
+      }
+    ],
+    "errors": [],
+    "frame_count": 20,
+    "kind": "debugger_deity_dma_oam_vram_runtime_event_stream",
+    "known_limits": [
+      "OAM DMA is triggered by an executed HRAM ldh [$46],a write.",
+      "VRAM DMA covers one selected general-mode 16-byte CGB DMA block.",
+      "HBlank DMA and LCD mode timing restrictions are not claimed."
+    ],
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 2,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_dma_runtime",
+          "precision": {
+            "byte_count": 160,
+            "byte_exact_copy": true,
+            "match_count": 160
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "dma_kind": "oam_dma",
+            "surface": "dma"
+          },
+          "source_kind": "pyboy_dma_runtime",
+          "source_report": "debugger_deity_dma_oam_vram_runtime_event_stream",
+          "subjects": {
+            "destination_range": "$FE00-$FE9F",
+            "registers": [
+              "FF46"
+            ],
+            "source_range": "$C000-$C09F"
+          },
+          "validation": {
+            "case_id": "oam_dma_hram_trigger",
+            "trigger_value": 192
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "byte_count": 160,
+          "case_id": "oam_dma_hram_trigger",
+          "destination_range": "$FE00-$FE9F",
+          "destination_sample": [
+            3,
+            10,
+            17,
+            24,
+            31,
+            38,
+            45,
+            52,
+            59,
+            66,
+            73,
+            80,
+            87,
+            94,
+            101,
+            108
+          ],
+          "dma_kind": "oam_dma",
+          "exact_match": true,
+          "match_count": 160,
+          "pc_after": 65412,
+          "source_range": "$C000-$C09F",
+          "source_sample": [
+            3,
+            10,
+            17,
+            24,
+            31,
+            38,
+            45,
+            52,
+            59,
+            66,
+            73,
+            80,
+            87,
+            94,
+            101,
+            108
+          ],
+          "trigger_register": "FF46",
+          "trigger_value": 192
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "byte_count": 160,
+          "byte_exact_copy": true,
+          "match_count": 160
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "dma_kind": "oam_dma",
+          "surface": "dma"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_dma_runtime",
+        "source_report": "debugger_deity_dma_oam_vram_runtime_event_stream",
+        "subjects": {
+          "destination_range": "$FE00-$FE9F",
+          "registers": [
+            "FF46"
+          ],
+          "source_range": "$C000-$C09F"
+        },
+        "validation": {
+          "case_id": "oam_dma_hram_trigger",
+          "trigger_value": 192
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_dma_runtime",
+          "precision": {
+            "byte_count": 16,
+            "byte_exact_copy": true,
+            "match_count": 16
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "dma_kind": "cgb_vram_dma_general",
+            "surface": "dma"
+          },
+          "source_kind": "pyboy_dma_runtime",
+          "source_report": "debugger_deity_dma_oam_vram_runtime_event_stream",
+          "subjects": {
+            "destination_range": "$8000-$800F",
+            "registers": [
+              "FF55"
+            ],
+            "source_range": "$C100-$C10F"
+          },
+          "validation": {
+            "case_id": "cgb_vram_dma_general_16_bytes",
+            "trigger_value": 0
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "byte_count": 16,
+          "case_id": "cgb_vram_dma_general_16_bytes",
+          "destination_range": "$8000-$800F",
+          "destination_sample": [
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143
+          ],
+          "dma_kind": "cgb_vram_dma_general",
+          "exact_match": true,
+          "match_count": 16,
+          "pc_after": 65428,
+          "post_ff55": 255,
+          "source_range": "$C100-$C10F",
+          "source_sample": [
+            128,
+            129,
+            130,
+            131,
+            132,
+            133,
+            134,
+            135,
+            136,
+            137,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143
+          ],
+          "trigger_register": "FF55",
+          "trigger_value": 0
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "byte_count": 16,
+          "byte_exact_copy": true,
+          "match_count": 16
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "dma_kind": "cgb_vram_dma_general",
+          "surface": "dma"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_dma_runtime",
+        "source_report": "debugger_deity_dma_oam_vram_runtime_event_stream",
+        "subjects": {
+          "destination_range": "$8000-$800F",
+          "registers": [
+            "FF55"
+          ],
+          "source_range": "$C100-$C10F"
+        },
+        "validation": {
+          "case_id": "cgb_vram_dma_general_16_bytes",
+          "trigger_value": 0
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "e0537199c61dc53e06d6ef47d1f8a3f8c2aae18e147d52d087ead2ce6e499e52",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "dma",
+  "valid": true
+}

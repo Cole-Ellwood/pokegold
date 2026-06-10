@@ -1,0 +1,1161 @@
+{
+  "closed_evidence_ids": [
+    "coverage_gap.localized",
+    "next_action.command",
+    "source_anchors.present"
+  ],
+  "coverage_basis": {
+    "full_trace_rule_coverage_available": true,
+    "generated_count": 250,
+    "group_count": 0,
+    "score_trace_rule_coverage_available": true,
+    "seed": 1,
+    "target_count": 0,
+    "trace_covered_rule_count": 33,
+    "trace_executed_rule_count": 207
+  },
+  "evidence_marker": "BOSS_AI_DEITY_COVERAGE_WORKLIST",
+  "kind": "boss_ai_deity_coverage_worklist",
+  "known_limits": [
+    "Ranking is deterministic and local to current rule-map coverage metadata.",
+    "A next-action command is a proof target, not proof completion; rerun explain-decision after materialization closes evidence ids."
+  ],
+  "next_action": {
+    "closes_evidence_ids": [
+      "boss_ai_exhaustive_class_witness_roles_missing"
+    ],
+    "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+    "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+  },
+  "reachability_model": {
+    "note": "Rows come first from rule-map dynamic coverage targets that are not covered by the current ROM contribution/materialization corpus. Once dynamic coverage is closed, rows fall through to the exhaustive witness-role inventory; this worklist does not fabricate absent routes such as Red.",
+    "reachable_status": "reachable_unproven_witness",
+    "unreachable_targets": [],
+    "unsupported_targets": []
+  },
+  "schema_version": 1,
+  "source_anchors": [
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 17,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+      "seed_class_id": "csc_BDF62BB29E1FC5206391",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "MaybePickAdaptiveEnemyLead",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 75,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+      "seed_class_id": "csc_EE5FE1ADDD596E946452",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 101,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+      "seed_class_id": "csc_34E6FB59424ECEBEA83C",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindFirstAliveOTMon",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 129,
+      "parent_label": "MaybePickAdaptiveEnemyLead",
+      "recommended_trace_mode": "rom_contribution_trace",
+      "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+      "seed_class_id": "csc_2B27FBD078926630FE8D",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindNextAliveOTMon",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 492,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+      "seed_class_id": "csc_E9D3C56D6535552D5FD8",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".StatusMoveWouldFailPublicly",
+      "suggested_generator": "support_handoff",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 756,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.enemy_status_move_type_misses_player",
+      "seed_class_id": "csc_8CBAA7DDF882822904A5",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyStatusMoveTypeMissesPlayer",
+      "suggested_generator": "support_handoff",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 949,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.player_cant_act_this_turn_publicly",
+      "seed_class_id": "csc_165E9A44CBC4F1694179",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerCantActThisTurnPublicly",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1050,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+      "seed_class_id": "csc_60E75745BCF00D131FD0",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyStatusHardAnswerDiscipline",
+      "suggested_generator": "support_handoff",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1076,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.has_strong_matchup_damaging_move",
+      "seed_class_id": "csc_A70E9E51A1769AC1B197",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".HasStrongMatchupDamagingMove",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1213,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.is_current_enemy_recovery_move",
+      "seed_class_id": "csc_5FAC78285BC29162DD2C",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsCurrentEnemyRecoveryMove",
+      "suggested_generator": "setup_heal",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1246,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_rapid_spin_bias",
+      "seed_class_id": "csc_FE78C4110E65B6539833",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRapidSpinBias",
+      "suggested_generator": "spikes_spin",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1276,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+      "seed_class_id": "csc_2172A3ACE200EBB21883",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedAntiSetupAvoidance",
+      "suggested_generator": "setup_heal",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1289,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.is_boost_setup_move",
+      "seed_class_id": "csc_5DD17DBA1B596B8ABAFF",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsBoostSetupMove",
+      "suggested_generator": "setup_heal",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1318,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.player_has_revealed_anti_setup",
+      "seed_class_id": "csc_6F8C1E6AE158EE27F1EA",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedAntiSetup",
+      "suggested_generator": "setup_heal",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1325,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+      "seed_class_id": "csc_739DA6DE42F1ACFC0816",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedEffectA",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1387,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_charge_move_bias",
+      "seed_class_id": "csc_0CC6EB4404E303D8A856",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyChargeMoveBias",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1426,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
+      "seed_class_id": "csc_28252F7B0BAED0F5198E",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDarkShieldChanceBias",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1442,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
+      "seed_class_id": "csc_071ECCF534D6494AA722",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyLifeOrbRecoilBias",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1456,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
+      "seed_class_id": "csc_5C9329E1CF21CC9E9702",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDestinyBondTradeBias",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "anchor_status": "mapped",
+      "classification": "",
+      "expected_public_inputs": [],
+      "line": 1515,
+      "parent_label": "BossAI_ApplyMoveModel",
+      "recommended_trace_mode": "rom_score_materialization",
+      "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_category",
+      "seed_class_id": "csc_371608BF2FF39BC02A71",
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedCounterCoatCategory",
+      "suggested_generator": "mastery_policy",
+      "witness_role": "counterfactual_flip"
+    }
+  ],
+  "top_item": {
+    "classification": "",
+    "decision_surface": "boss_ai_rule",
+    "next_action": {
+      "closes_evidence_ids": [
+        "boss_ai_exhaustive_class_witness_roles_missing"
+      ],
+      "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+      "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+    },
+    "proof_mode": "rom_contribution_trace",
+    "rule_count": 1,
+    "rule_ids": [
+      "move.maybe_pick_adaptive_enemy_lead"
+    ],
+    "seed_class_id": "csc_BDF62BB29E1FC5206391",
+    "source_anchors": [
+      {
+        "anchor_status": "mapped",
+        "classification": "",
+        "expected_public_inputs": [],
+        "line": 17,
+        "parent_label": "MaybePickAdaptiveEnemyLead",
+        "recommended_trace_mode": "rom_contribution_trace",
+        "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+        "seed_class_id": "csc_BDF62BB29E1FC5206391",
+        "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+        "source_label": "MaybePickAdaptiveEnemyLead",
+        "suggested_generator": "mastery_policy",
+        "witness_role": "counterfactual_flip"
+      }
+    ],
+    "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+    "source_label": "MaybePickAdaptiveEnemyLead",
+    "status": "reachable_unproven_witness",
+    "suggested_generator": "mastery_policy",
+    "unreachable_reason": "",
+    "unsupported_reason": "",
+    "witness_role": "counterfactual_flip"
+  },
+  "worklist": [
+    {
+      "classification": "",
+      "decision_surface": "boss_ai_rule",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.maybe_pick_adaptive_enemy_lead"
+      ],
+      "seed_class_id": "csc_BDF62BB29E1FC5206391",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 17,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead",
+          "seed_class_id": "csc_BDF62BB29E1FC5206391",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": "MaybePickAdaptiveEnemyLead",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": "MaybePickAdaptiveEnemyLead",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "boss_ai_rule",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer"
+      ],
+      "seed_class_id": "csc_EE5FE1ADDD596E946452",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 75,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.should_use_adaptive_lead_for_trainer",
+          "seed_class_id": "csc_EE5FE1ADDD596E946452",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ShouldUseAdaptiveLeadForTrainer",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "boss_ai_rule",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon"
+      ],
+      "seed_class_id": "csc_34E6FB59424ECEBEA83C",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 101,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_first_alive_otmon",
+          "seed_class_id": "csc_34E6FB59424ECEBEA83C",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindFirstAliveOTMon",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindFirstAliveOTMon",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "boss_ai_rule",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --json-out .local\\tmp\\boss_ai_debugger\\universe_move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_contribution_trace",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon"
+      ],
+      "seed_class_id": "csc_2B27FBD078926630FE8D",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 129,
+          "parent_label": "MaybePickAdaptiveEnemyLead",
+          "recommended_trace_mode": "rom_contribution_trace",
+          "rule_id": "move.maybe_pick_adaptive_enemy_lead.find_next_alive_otmon",
+          "seed_class_id": "csc_2B27FBD078926630FE8D",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".FindNextAliveOTMon",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".FindNextAliveOTMon",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family support_handoff --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.status_move_would_fail_publicly.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.status_move_would_fail_publicly"
+      ],
+      "seed_class_id": "csc_E9D3C56D6535552D5FD8",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 492,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.status_move_would_fail_publicly",
+          "seed_class_id": "csc_E9D3C56D6535552D5FD8",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".StatusMoveWouldFailPublicly",
+          "suggested_generator": "support_handoff",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".StatusMoveWouldFailPublicly",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "support_handoff",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family support_handoff --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.enemy_status_move_type_misses_player.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.enemy_status_move_type_misses_player"
+      ],
+      "seed_class_id": "csc_8CBAA7DDF882822904A5",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 756,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.enemy_status_move_type_misses_player",
+          "seed_class_id": "csc_8CBAA7DDF882822904A5",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".EnemyStatusMoveTypeMissesPlayer",
+          "suggested_generator": "support_handoff",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".EnemyStatusMoveTypeMissesPlayer",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "support_handoff",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.player_cant_act_this_turn_publicly.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.player_cant_act_this_turn_publicly"
+      ],
+      "seed_class_id": "csc_165E9A44CBC4F1694179",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 949,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.player_cant_act_this_turn_publicly",
+          "seed_class_id": "csc_165E9A44CBC4F1694179",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerCantActThisTurnPublicly",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerCantActThisTurnPublicly",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family support_handoff --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_status_hard_answer_discipline.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_status_hard_answer_discipline"
+      ],
+      "seed_class_id": "csc_60E75745BCF00D131FD0",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1050,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_status_hard_answer_discipline",
+          "seed_class_id": "csc_60E75745BCF00D131FD0",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyStatusHardAnswerDiscipline",
+          "suggested_generator": "support_handoff",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyStatusHardAnswerDiscipline",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "support_handoff",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.has_strong_matchup_damaging_move.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.has_strong_matchup_damaging_move"
+      ],
+      "seed_class_id": "csc_A70E9E51A1769AC1B197",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1076,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.has_strong_matchup_damaging_move",
+          "seed_class_id": "csc_A70E9E51A1769AC1B197",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".HasStrongMatchupDamagingMove",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".HasStrongMatchupDamagingMove",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family setup_heal --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.is_current_enemy_recovery_move.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.is_current_enemy_recovery_move"
+      ],
+      "seed_class_id": "csc_5FAC78285BC29162DD2C",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1213,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.is_current_enemy_recovery_move",
+          "seed_class_id": "csc_5FAC78285BC29162DD2C",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".IsCurrentEnemyRecoveryMove",
+          "suggested_generator": "setup_heal",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsCurrentEnemyRecoveryMove",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "setup_heal",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family spikes_spin --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_rapid_spin_bias.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_rapid_spin_bias"
+      ],
+      "seed_class_id": "csc_FE78C4110E65B6539833",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1246,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_rapid_spin_bias",
+          "seed_class_id": "csc_FE78C4110E65B6539833",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyRapidSpinBias",
+          "suggested_generator": "spikes_spin",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRapidSpinBias",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "spikes_spin",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family setup_heal --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_revealed_anti_setup_avoidance.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_revealed_anti_setup_avoidance"
+      ],
+      "seed_class_id": "csc_2172A3ACE200EBB21883",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1276,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_revealed_anti_setup_avoidance",
+          "seed_class_id": "csc_2172A3ACE200EBB21883",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyRevealedAntiSetupAvoidance",
+          "suggested_generator": "setup_heal",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyRevealedAntiSetupAvoidance",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "setup_heal",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family setup_heal --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.is_boost_setup_move.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.is_boost_setup_move"
+      ],
+      "seed_class_id": "csc_5DD17DBA1B596B8ABAFF",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1289,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.is_boost_setup_move",
+          "seed_class_id": "csc_5DD17DBA1B596B8ABAFF",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".IsBoostSetupMove",
+          "suggested_generator": "setup_heal",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".IsBoostSetupMove",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "setup_heal",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family setup_heal --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.player_has_revealed_anti_setup.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.player_has_revealed_anti_setup"
+      ],
+      "seed_class_id": "csc_6F8C1E6AE158EE27F1EA",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1318,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.player_has_revealed_anti_setup",
+          "seed_class_id": "csc_6F8C1E6AE158EE27F1EA",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerHasRevealedAntiSetup",
+          "suggested_generator": "setup_heal",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedAntiSetup",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "setup_heal",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.player_has_revealed_effect_a.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.player_has_revealed_effect_a"
+      ],
+      "seed_class_id": "csc_739DA6DE42F1ACFC0816",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1325,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.player_has_revealed_effect_a",
+          "seed_class_id": "csc_739DA6DE42F1ACFC0816",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerHasRevealedEffectA",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedEffectA",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_charge_move_bias.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_charge_move_bias"
+      ],
+      "seed_class_id": "csc_0CC6EB4404E303D8A856",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1387,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_charge_move_bias",
+          "seed_class_id": "csc_0CC6EB4404E303D8A856",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyChargeMoveBias",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyChargeMoveBias",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_dark_shield_chance_bias.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_dark_shield_chance_bias"
+      ],
+      "seed_class_id": "csc_28252F7B0BAED0F5198E",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1426,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_dark_shield_chance_bias",
+          "seed_class_id": "csc_28252F7B0BAED0F5198E",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyDarkShieldChanceBias",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDarkShieldChanceBias",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_life_orb_recoil_bias.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_life_orb_recoil_bias"
+      ],
+      "seed_class_id": "csc_071ECCF534D6494AA722",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1442,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_life_orb_recoil_bias",
+          "seed_class_id": "csc_071ECCF534D6494AA722",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyLifeOrbRecoilBias",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyLifeOrbRecoilBias",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.apply_destiny_bond_trade_bias.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.apply_destiny_bond_trade_bias"
+      ],
+      "seed_class_id": "csc_5C9329E1CF21CC9E9702",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1456,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.apply_destiny_bond_trade_bias",
+          "seed_class_id": "csc_5C9329E1CF21CC9E9702",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".ApplyDestinyBondTradeBias",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".ApplyDestinyBondTradeBias",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    },
+    {
+      "classification": "",
+      "decision_surface": "move_score",
+      "next_action": {
+        "closes_evidence_ids": [
+          "boss_ai_exhaustive_class_witness_roles_missing"
+        ],
+        "command": "python -m tools.boss_ai_debugger explain-decision --generated-family mastery_policy --run-rom-proof auto --json-out .local\\tmp\\boss_ai_debugger\\universe_move.apply_move_model.player_has_revealed_counter_coat_category.json",
+        "purpose": "Render the next missing exhaustive Boss AI witness role as a ROM-backed proof packet"
+      },
+      "proof_mode": "rom_score_materialization",
+      "rule_count": 1,
+      "rule_ids": [
+        "move.apply_move_model.player_has_revealed_counter_coat_category"
+      ],
+      "seed_class_id": "csc_371608BF2FF39BC02A71",
+      "source_anchors": [
+        {
+          "anchor_status": "mapped",
+          "classification": "",
+          "expected_public_inputs": [],
+          "line": 1515,
+          "parent_label": "BossAI_ApplyMoveModel",
+          "recommended_trace_mode": "rom_score_materialization",
+          "rule_id": "move.apply_move_model.player_has_revealed_counter_coat_category",
+          "seed_class_id": "csc_371608BF2FF39BC02A71",
+          "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+          "source_label": ".PlayerHasRevealedCounterCoatCategory",
+          "suggested_generator": "mastery_policy",
+          "witness_role": "counterfactual_flip"
+        }
+      ],
+      "source_file": "engine\\battle\\ai\\boss_policy_move.asm",
+      "source_label": ".PlayerHasRevealedCounterCoatCategory",
+      "status": "reachable_unproven_witness",
+      "suggested_generator": "mastery_policy",
+      "unreachable_reason": "",
+      "unsupported_reason": "",
+      "witness_role": "counterfactual_flip"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "base_seed": 3671072806,
+  "fail_count": 0,
+  "generated_at": "2026-06-10T00:50:54Z",
+  "hash_basis": {
+    "errors": [],
+    "rom_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\pokegold_debug.gbc",
+    "rom_sha256": "F189A6AE26CEEDFC17535BA590034244535D7B6F6BA1E0FECD155F11BB4461A3",
+    "symbols_path": "C:\\Users\\lolno\\Downloads\\pokemon gold hack\\pokegold_debug.sym",
+    "symbols_sha256": "FB225BE201001B1C41DD6337BEBCE7437E9CEA964CB118DABD9A7DCE83A26061"
+  },
+  "kind": "damage_debugger_fuzz_no_divergence",
+  "max_examples": 100,
+  "mode": "hypothesis_damage_chain",
+  "proof_status": "complete",
+  "result_count": 2,
+  "results": [
+    {
+      "error": null,
+      "inputs": null,
+      "max_examples": 50,
+      "ok": true,
+      "oracle_damage": null,
+      "rom_damage": null,
+      "seed": 3671072806,
+      "worker_id": 0
+    },
+    {
+      "error": null,
+      "inputs": null,
+      "max_examples": 50,
+      "ok": true,
+      "oracle_damage": null,
+      "rom_damage": null,
+      "seed": 3671072807,
+      "worker_id": 1
+    }
+  ],
+  "schema_version": 1,
+  "tolerance": 1,
+  "total_examples": 100,
+  "workers": 2
+}

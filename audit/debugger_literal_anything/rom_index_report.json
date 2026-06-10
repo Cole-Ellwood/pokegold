@@ -1,0 +1,410 @@
+{
+  "byte_span_samples": [
+    {
+      "ambiguity_notes": [
+        "nearest-label span ends at next symbol or section end; exact ownership of interior bytes is not proven"
+      ],
+      "confidence": "nearest_label_span",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_byte_index_row",
+      "nearest_label": "NULL",
+      "rom_span": {
+        "address_end": 3,
+        "address_end_hex": "0003",
+        "address_start": 0,
+        "address_start_hex": "0000",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0000-0003",
+        "offset_end": 3,
+        "offset_end_hex": "0x3",
+        "offset_start": 0,
+        "offset_start_hex": "0x0",
+        "size": 4
+      },
+      "row_id": "span:00:0000-0003:NULL",
+      "schema_version": 1,
+      "section": "rst0",
+      "section_kind": "ROM0",
+      "source_refs": [
+        {
+          "kind": "definition",
+          "line": 2,
+          "path": "home.asm"
+        }
+      ]
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_byte_index_row",
+      "nearest_label": "",
+      "rom_span": {
+        "address_end": 7,
+        "address_end_hex": "0007",
+        "address_start": 4,
+        "address_start_hex": "0004",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0004-0007",
+        "offset_end": 7,
+        "offset_end_hex": "0x7",
+        "offset_start": 4,
+        "offset_start_hex": "0x4",
+        "size": 4
+      },
+      "row_id": "empty:00:0004-0007",
+      "schema_version": 1,
+      "section": "",
+      "section_kind": "ROM0",
+      "source_refs": []
+    },
+    {
+      "ambiguity_notes": [
+        "nearest-label span ends at next symbol or section end; exact ownership of interior bytes is not proven"
+      ],
+      "confidence": "nearest_label_span",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_byte_index_row",
+      "nearest_label": "FarCall",
+      "rom_span": {
+        "address_end": 10,
+        "address_end_hex": "000A",
+        "address_start": 8,
+        "address_start_hex": "0008",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0008-000A",
+        "offset_end": 10,
+        "offset_end_hex": "0xA",
+        "offset_start": 8,
+        "offset_start_hex": "0x8",
+        "size": 3
+      },
+      "row_id": "span:00:0008-000A:FarCall",
+      "schema_version": 1,
+      "section": "rst8",
+      "section_kind": "ROM0",
+      "source_refs": [
+        {
+          "kind": "definition",
+          "line": 8,
+          "path": "home/header.asm"
+        }
+      ]
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_byte_index_row",
+      "nearest_label": "",
+      "rom_span": {
+        "address_end": 15,
+        "address_end_hex": "000F",
+        "address_start": 11,
+        "address_start_hex": "000B",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:000B-000F",
+        "offset_end": 15,
+        "offset_end_hex": "0xF",
+        "offset_start": 11,
+        "offset_start_hex": "0xB",
+        "size": 5
+      },
+      "row_id": "empty:00:000B-000F",
+      "schema_version": 1,
+      "section": "",
+      "section_kind": "ROM0",
+      "source_refs": []
+    },
+    {
+      "ambiguity_notes": [
+        "nearest-label span ends at next symbol or section end; exact ownership of interior bytes is not proven"
+      ],
+      "confidence": "nearest_label_span",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_byte_index_row",
+      "nearest_label": "Bankswitch",
+      "rom_span": {
+        "address_end": 21,
+        "address_end_hex": "0015",
+        "address_start": 16,
+        "address_start_hex": "0010",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0010-0015",
+        "offset_end": 21,
+        "offset_end_hex": "0x15",
+        "offset_start": 16,
+        "offset_start_hex": "0x10",
+        "size": 6
+      },
+      "row_id": "span:00:0010-0015:Bankswitch",
+      "schema_version": 1,
+      "section": "rst10",
+      "section_kind": "ROM0",
+      "source_refs": [
+        {
+          "kind": "definition",
+          "line": 12,
+          "path": "home/header.asm"
+        }
+      ]
+    }
+  ],
+  "error_count": 0,
+  "errors": [],
+  "index_summary": {
+    "byte_span_row_count": 32631,
+    "content_mirror_exact_span_count": 2233,
+    "empty_range_count": 144,
+    "low_confidence_byte_span_count": 30262,
+    "section_count": 181,
+    "section_source_count": 178,
+    "source_label_count": 31614,
+    "surface_row_count": 31025,
+    "symbol_count": 43405,
+    "unowned_surface_row_count": 900
+  },
+  "input_hashes": {
+    "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+    "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+    "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+  },
+  "kind": "unified_debugger_rom_index",
+  "known_limits": [
+    "The surface index covers linker sections, symbols, and empty ROM ranges; map/script/asset behavioral surfaces still need specialized expansion.",
+    "Byte-index label spans are navigation ownership, not proof that every byte in the span was emitted by the nearest label.",
+    "Content-mirror exact byte spans are not normalized into this index yet."
+  ],
+  "outputs": {
+    "byte_index_out": "audit/debugger_literal_anything/rom_byte_index.jsonl",
+    "byte_index_written": true,
+    "surface_index_out": "audit/debugger_literal_anything/rom_surface_index.jsonl",
+    "surface_index_written": true
+  },
+  "query": {
+    "content_mirror_report": "audit/debugger_literal_anything/content_mirror_exact_spans.json",
+    "map": "pokegold.map",
+    "rom": "pokegold.gbc",
+    "symbols": "pokegold.sym"
+  },
+  "schema_version": 1,
+  "surface_samples": [
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_surface_index_row",
+      "nearest_label": "",
+      "owner_lane": "source_rom_provenance",
+      "proof_capability": "rom-byte",
+      "reachable": false,
+      "reachable_status": "empty_or_padding",
+      "rom_span": {
+        "address_end": 7,
+        "address_end_hex": "0007",
+        "address_start": 4,
+        "address_start_hex": "0004",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0004-0007",
+        "offset_end": 7,
+        "offset_end_hex": "0x7",
+        "offset_start": 4,
+        "offset_start_hex": "0x4",
+        "size": 4
+      },
+      "schema_version": 1,
+      "section": "",
+      "source_refs": [],
+      "surface_id": "empty:ROM0:00:0004-0007",
+      "surface_kind": "empty_range",
+      "unsupported_reason": "empty linker range"
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_surface_index_row",
+      "nearest_label": "",
+      "owner_lane": "source_rom_provenance",
+      "proof_capability": "rom-byte",
+      "reachable": false,
+      "reachable_status": "empty_or_padding",
+      "rom_span": {
+        "address_end": 15,
+        "address_end_hex": "000F",
+        "address_start": 11,
+        "address_start_hex": "000B",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:000B-000F",
+        "offset_end": 15,
+        "offset_end_hex": "0xF",
+        "offset_start": 11,
+        "offset_start_hex": "0xB",
+        "size": 5
+      },
+      "schema_version": 1,
+      "section": "",
+      "source_refs": [],
+      "surface_id": "empty:ROM0:00:000B-000F",
+      "surface_kind": "empty_range",
+      "unsupported_reason": "empty linker range"
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_surface_index_row",
+      "nearest_label": "",
+      "owner_lane": "source_rom_provenance",
+      "proof_capability": "rom-byte",
+      "reachable": false,
+      "reachable_status": "empty_or_padding",
+      "rom_span": {
+        "address_end": 23,
+        "address_end_hex": "0017",
+        "address_start": 22,
+        "address_start_hex": "0016",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0016-0017",
+        "offset_end": 23,
+        "offset_end_hex": "0x17",
+        "offset_start": 22,
+        "offset_start_hex": "0x16",
+        "size": 2
+      },
+      "schema_version": 1,
+      "section": "",
+      "source_refs": [],
+      "surface_id": "empty:ROM0:00:0016-0017",
+      "surface_kind": "empty_range",
+      "unsupported_reason": "empty linker range"
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_surface_index_row",
+      "nearest_label": "",
+      "owner_lane": "source_rom_provenance",
+      "proof_capability": "rom-byte",
+      "reachable": false,
+      "reachable_status": "empty_or_padding",
+      "rom_span": {
+        "address_end": 31,
+        "address_end_hex": "001F",
+        "address_start": 25,
+        "address_start_hex": "0019",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0019-001F",
+        "offset_end": 31,
+        "offset_end_hex": "0x1F",
+        "offset_start": 25,
+        "offset_start_hex": "0x19",
+        "size": 7
+      },
+      "schema_version": 1,
+      "section": "",
+      "source_refs": [],
+      "surface_id": "empty:ROM0:00:0019-001F",
+      "surface_kind": "empty_range",
+      "unsupported_reason": "empty linker range"
+    },
+    {
+      "ambiguity_notes": [
+        "padding/free-space range reported by linker map"
+      ],
+      "confidence": "empty_or_padding",
+      "input_hashes": {
+        "map_sha256": "5C04702FD5136F42C95D24123634D1D7EFDA2999C3ED12800D614E203B5CAE42",
+        "rom_sha256": "B451FE8703E196371187C7586E9E31C60860F46D187891C6F9FB8751A739CE0E",
+        "symbols_sha256": "BD12B6885B393090A49D883EDF15D69D58D10057296297398BF2477667FB2761"
+      },
+      "kind": "rom_surface_index_row",
+      "nearest_label": "",
+      "owner_lane": "source_rom_provenance",
+      "proof_capability": "rom-byte",
+      "reachable": false,
+      "reachable_status": "empty_or_padding",
+      "rom_span": {
+        "address_end": 39,
+        "address_end_hex": "0027",
+        "address_start": 33,
+        "address_start_hex": "0021",
+        "bank": 0,
+        "bank_hex": "00",
+        "bank_range": "00:0021-0027",
+        "offset_end": 39,
+        "offset_end_hex": "0x27",
+        "offset_start": 33,
+        "offset_start_hex": "0x21",
+        "size": 7
+      },
+      "schema_version": 1,
+      "section": "",
+      "source_refs": [],
+      "surface_id": "empty:ROM0:00:0021-0027",
+      "surface_kind": "empty_range",
+      "unsupported_reason": "empty linker range"
+    }
+  ],
+  "valid": true,
+  "warning_count": 0,
+  "warnings": []
+}

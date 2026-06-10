@@ -1,0 +1,123 @@
+{
+  "backend": "pyboy_trace_replay",
+  "baseline_field_keys": [
+    "trace_rom",
+    "trace_rom_sha256",
+    "trace_symbols",
+    "trace_symbols_sha256",
+    "boss",
+    "tier",
+    "move_ids",
+    "move_scores",
+    "pre_model_scores",
+    "post_model_scores",
+    "model_score_deltas",
+    "chosen_slot",
+    "cur_enemy_move_id",
+    "top_moves",
+    "chosen",
+    "chosen_id",
+    "switch_confidence",
+    "plan_id",
+    "plan_phase",
+    "plan_confidence",
+    "plausible_mask",
+    "risk_flags",
+    "lookahead_bonus_top",
+    "revealed_masks",
+    "switch_context"
+  ],
+  "blocking_gaps": [],
+  "capture_count": 18,
+  "capture_ids": [
+    "falkner",
+    "bugsy",
+    "whitney",
+    "morty",
+    "chuck",
+    "jasmine",
+    "pryce",
+    "clair",
+    "brock",
+    "misty",
+    "lt_surge",
+    "erika",
+    "janine",
+    "sabrina",
+    "blaine",
+    "blue",
+    "koga",
+    "champion_lance"
+  ],
+  "checked_count": 18,
+  "closed_evidence_ids": [
+    "boss_ai_pre_choice_replay.exact_match_corpus"
+  ],
+  "command": "python tools\\audit\\check_boss_ai_pre_choice_replay.py",
+  "dirty_diff_hash": "3135BDE5221C342C0CAE42967913647DE56F2422395A79642E03A43C1FD366E7",
+  "disproof_standard": [
+    "Every manifest move-choice capture replays from its pre-choice state.",
+    "Each replay matches the recorded baseline trace fields and exact score-byte evidence.",
+    "The artifact manifest hash and trace ROM/symbol hashes match the current live capture manifest."
+  ],
+  "exact_agreement_rate": 1.0,
+  "exact_count": 18,
+  "exact_match_count": 18,
+  "excluded_capture_ids": [
+    {
+      "id": "shared_switch_loop",
+      "reason": "shared switch-loop capture does not exercise the move-choice replay path"
+    }
+  ],
+  "failure_count": 0,
+  "inputs": {
+    "manifest": "audit/boss_ai_trace/live_capture_manifest.json"
+  },
+  "kind": "boss_ai_pre_choice_replay_audit",
+  "known_limits": [],
+  "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+  "manifest_sha256": "545C84CA5523642559A8833CB976AE35436883D547E7D8E6B3DD80A5EE17153F",
+  "minimum_agreement": 0.9999,
+  "minimum_exact_captures": 18,
+  "missing_evidence": [],
+  "partial_count": 0,
+  "proof_status": "complete",
+  "repro_command": "python tools\\audit\\check_boss_ai_pre_choice_replay.py --json-out audit\\boss_ai_debugger\\god_level_benchmark\\artifacts\\pre_choice_replay.json",
+  "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+  "schema_version": 1,
+  "source_commit": "b58efded021b3ab709eb4a477c5c0dffd7c8a8c3",
+  "state_basis": {
+    "capture_ids": [
+      "falkner",
+      "bugsy",
+      "whitney",
+      "morty",
+      "chuck",
+      "jasmine",
+      "pryce",
+      "clair",
+      "brock",
+      "misty",
+      "lt_surge",
+      "erika",
+      "janine",
+      "sabrina",
+      "blaine",
+      "blue",
+      "koga",
+      "champion_lance"
+    ],
+    "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+    "manifest_sha256": "545C84CA5523642559A8833CB976AE35436883D547E7D8E6B3DD80A5EE17153F",
+    "minimum_agreement": 0.9999,
+    "minimum_exact_captures": 18,
+    "trace_rom": "pokegold_trace.gbc",
+    "trace_symbols": "pokegold_trace.sym"
+  },
+  "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+  "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+  "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+  "verdict_counts": {
+    "match": 18
+  }
+}

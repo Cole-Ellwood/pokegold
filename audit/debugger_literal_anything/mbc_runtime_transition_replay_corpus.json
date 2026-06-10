@@ -1,0 +1,1187 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime MBC transition event stream",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence for selected MBC3 ROM, SRAM, and RTC select/latch transitions.",
+    "It does not claim RTC halt, carry, day-overflow, RTC register-write, or cross-backend correctness."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 4,
+    "cases": [
+      {
+        "case_id": "mbc3_rom_bank_select_window",
+        "matched_bank_count": 6,
+        "pc_after": 65414,
+        "transition_count": 7,
+        "transition_kind": "rom_bank_select",
+        "transition_observed": true,
+        "transitions": [
+          {
+            "expected_bank": 1,
+            "expected_sample": [
+              33,
+              107,
+              196,
+              6,
+              1,
+              14,
+              11,
+              250,
+              22,
+              209,
+              167,
+              40,
+              5,
+              205,
+              141,
+              14
+            ],
+            "observed_sample": [
+              33,
+              107,
+              196,
+              6,
+              1,
+              14,
+              11,
+              250,
+              22,
+              209,
+              167,
+              40,
+              5,
+              205,
+              141,
+              14
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 0
+          },
+          {
+            "expected_bank": 1,
+            "expected_sample": [
+              33,
+              107,
+              196,
+              6,
+              1,
+              14,
+              11,
+              250,
+              22,
+              209,
+              167,
+              40,
+              5,
+              205,
+              141,
+              14
+            ],
+            "observed_sample": [
+              33,
+              107,
+              196,
+              6,
+              1,
+              14,
+              11,
+              250,
+              22,
+              209,
+              167,
+              40,
+              5,
+              205,
+              141,
+              14
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 1
+          },
+          {
+            "expected_bank": 2,
+            "expected_sample": [
+              33,
+              160,
+              195,
+              17,
+              217,
+              204,
+              6,
+              18,
+              14,
+              20,
+              42,
+              229,
+              203,
+              63,
+              56,
+              20
+            ],
+            "observed_sample": [
+              33,
+              160,
+              195,
+              17,
+              217,
+              204,
+              6,
+              18,
+              14,
+              20,
+              42,
+              229,
+              203,
+              63,
+              56,
+              20
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 2
+          },
+          {
+            "expected_bank": 3,
+            "expected_sample": [
+              250,
+              87,
+              209,
+              33,
+              18,
+              64,
+              17,
+              2,
+              0,
+              205,
+              87,
+              48,
+              35,
+              78,
+              216,
+              175
+            ],
+            "observed_sample": [
+              250,
+              87,
+              209,
+              33,
+              18,
+              64,
+              17,
+              2,
+              0,
+              205,
+              87,
+              48,
+              35,
+              78,
+              216,
+              175
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 3
+          },
+          {
+            "expected_bank": 16,
+            "expected_sample": [
+              240,
+              211,
+              111,
+              240,
+              212,
+              103,
+              229,
+              240,
+              209,
+              245,
+              33,
+              153,
+              209,
+              126,
+              245,
+              203
+            ],
+            "observed_sample": [
+              240,
+              211,
+              111,
+              240,
+              212,
+              103,
+              229,
+              240,
+              209,
+              245,
+              33,
+              153,
+              209,
+              126,
+              245,
+              203
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 16
+          },
+          {
+            "expected_bank": 34,
+            "expected_sample": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "observed_sample": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 34
+          },
+          {
+            "expected_bank": 127,
+            "expected_sample": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "observed_sample": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "sample_match": true,
+            "window": "$4000-$400F",
+            "write_value": 127
+          }
+        ],
+        "write_address": "$2000",
+        "write_range": "$2000-$3FFF",
+        "zero_select_maps_to_bank_one": true
+      },
+      {
+        "blocked_marker": 90,
+        "case_id": "mbc3_sram_enable_disable",
+        "disable_value": 0,
+        "disabled_after_write": 255,
+        "disabled_read": 255,
+        "disabled_readback_open_bus": true,
+        "disabled_write_blocked": true,
+        "enable_value": 10,
+        "enabled_read": 165,
+        "enabled_readback_matches": true,
+        "marker": 165,
+        "pc_after": 65414,
+        "reenabled_preserved": true,
+        "reenabled_read": 165,
+        "transition_kind": "sram_enable_disable",
+        "transition_observed": true,
+        "write_address": "$0000",
+        "write_range": "$0000-$1FFF"
+      },
+      {
+        "case_id": "mbc3_sram_bank_select_isolation",
+        "isolated_bank_count": 4,
+        "pc_after": 65414,
+        "reads": [
+          {
+            "expected_marker": 17,
+            "match": true,
+            "observed": 17,
+            "sram_bank": 0
+          },
+          {
+            "expected_marker": 34,
+            "match": true,
+            "observed": 34,
+            "sram_bank": 1
+          },
+          {
+            "expected_marker": 51,
+            "match": true,
+            "observed": 51,
+            "sram_bank": 2
+          },
+          {
+            "expected_marker": 68,
+            "match": true,
+            "observed": 68,
+            "sram_bank": 3
+          }
+        ],
+        "sram_window": "$A000-$BFFF",
+        "transition_kind": "sram_bank_select",
+        "transition_observed": true,
+        "write_address": "$4000",
+        "write_range": "$4000-$5FFF",
+        "writes": [
+          {
+            "marker": 17,
+            "sram_bank": 0
+          },
+          {
+            "marker": 34,
+            "sram_bank": 1
+          },
+          {
+            "marker": 51,
+            "sram_bank": 2
+          },
+          {
+            "marker": 68,
+            "sram_bank": 3
+          }
+        ]
+      },
+      {
+        "bounded_register_values": true,
+        "case_id": "mbc3_rtc_register_select_latch",
+        "first_seconds": 0,
+        "known_limits": [
+          "This case observes RTC register select and latch readback only.",
+          "It does not claim RTC halt, carry, day-overflow, or RTC register-write correctness."
+        ],
+        "latch_sequence": [
+          0,
+          1
+        ],
+        "latch_sequence_observed": true,
+        "latch_write_address": "$6000",
+        "pc_after": 65414,
+        "registers": [
+          {
+            "expected_range": "0-59",
+            "name": "seconds",
+            "observed": 1,
+            "select_value": 8,
+            "within_expected_range": true
+          },
+          {
+            "expected_range": "0-59",
+            "name": "minutes",
+            "observed": 0,
+            "select_value": 9,
+            "within_expected_range": true
+          },
+          {
+            "expected_range": "0-23",
+            "name": "hours",
+            "observed": 0,
+            "select_value": 10,
+            "within_expected_range": true
+          },
+          {
+            "expected_range": "0-255",
+            "name": "day_low",
+            "observed": 0,
+            "select_value": 11,
+            "within_expected_range": true
+          },
+          {
+            "expected_range": "bitmask 0xC1",
+            "name": "day_high",
+            "observed": 0,
+            "select_value": 12,
+            "within_expected_range": true
+          }
+        ],
+        "relatched_seconds": 1,
+        "rtc_register_count": 5,
+        "select_write_address": "$4000",
+        "sram_marker": 165,
+        "sram_marker_restored": true,
+        "sram_read_after_rtc_select": 165,
+        "stale_seconds_without_relatch": 0,
+        "transition_kind": "rtc_register_select_latch",
+        "transition_observed": true,
+        "write_range": "$4000-$5FFF,$6000-$7FFF"
+      }
+    ],
+    "errors": [],
+    "frame_count": 20,
+    "kind": "debugger_deity_mbc_runtime_transition_replay_corpus",
+    "known_limits": [
+      "ROM bank, SRAM enable, SRAM bank select, and RTC register select/latch cases are selected MBC3 probes.",
+      "RTC halt, carry, day-overflow, RTC register-write semantics, and cross-backend parity remain separate open proof gaps."
+    ],
+    "rom_header": {
+      "cartridge_type": "MBC3+TIMER+RAM+BATTERY",
+      "cartridge_type_code": 16,
+      "ram_size_code": 3,
+      "rom_bank_count": 128,
+      "rom_size_bytes": 2097152,
+      "rom_size_code": 6
+    },
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 4,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_mbc_runtime",
+          "precision": {
+            "isolated_bank_count": 0,
+            "matched_bank_count": 6,
+            "rtc_register_count": 0,
+            "transition_count": 7,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "mbc_transition": "rom_bank_select",
+            "surface": "mbc"
+          },
+          "source_kind": "pyboy_mbc_runtime",
+          "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+          "subjects": {
+            "write_address": "$2000",
+            "write_range": "$2000-$3FFF"
+          },
+          "validation": {
+            "case_id": "mbc3_rom_bank_select_window",
+            "transition_kind": "rom_bank_select"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "mbc3_rom_bank_select_window",
+          "matched_bank_count": 6,
+          "pc_after": 65414,
+          "transition_count": 7,
+          "transition_kind": "rom_bank_select",
+          "transition_observed": true,
+          "transitions": [
+            {
+              "expected_bank": 1,
+              "expected_sample": [
+                33,
+                107,
+                196,
+                6,
+                1,
+                14,
+                11,
+                250,
+                22,
+                209,
+                167,
+                40,
+                5,
+                205,
+                141,
+                14
+              ],
+              "observed_sample": [
+                33,
+                107,
+                196,
+                6,
+                1,
+                14,
+                11,
+                250,
+                22,
+                209,
+                167,
+                40,
+                5,
+                205,
+                141,
+                14
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 0
+            },
+            {
+              "expected_bank": 1,
+              "expected_sample": [
+                33,
+                107,
+                196,
+                6,
+                1,
+                14,
+                11,
+                250,
+                22,
+                209,
+                167,
+                40,
+                5,
+                205,
+                141,
+                14
+              ],
+              "observed_sample": [
+                33,
+                107,
+                196,
+                6,
+                1,
+                14,
+                11,
+                250,
+                22,
+                209,
+                167,
+                40,
+                5,
+                205,
+                141,
+                14
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 1
+            },
+            {
+              "expected_bank": 2,
+              "expected_sample": [
+                33,
+                160,
+                195,
+                17,
+                217,
+                204,
+                6,
+                18,
+                14,
+                20,
+                42,
+                229,
+                203,
+                63,
+                56,
+                20
+              ],
+              "observed_sample": [
+                33,
+                160,
+                195,
+                17,
+                217,
+                204,
+                6,
+                18,
+                14,
+                20,
+                42,
+                229,
+                203,
+                63,
+                56,
+                20
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 2
+            },
+            {
+              "expected_bank": 3,
+              "expected_sample": [
+                250,
+                87,
+                209,
+                33,
+                18,
+                64,
+                17,
+                2,
+                0,
+                205,
+                87,
+                48,
+                35,
+                78,
+                216,
+                175
+              ],
+              "observed_sample": [
+                250,
+                87,
+                209,
+                33,
+                18,
+                64,
+                17,
+                2,
+                0,
+                205,
+                87,
+                48,
+                35,
+                78,
+                216,
+                175
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 3
+            },
+            {
+              "expected_bank": 16,
+              "expected_sample": [
+                240,
+                211,
+                111,
+                240,
+                212,
+                103,
+                229,
+                240,
+                209,
+                245,
+                33,
+                153,
+                209,
+                126,
+                245,
+                203
+              ],
+              "observed_sample": [
+                240,
+                211,
+                111,
+                240,
+                212,
+                103,
+                229,
+                240,
+                209,
+                245,
+                33,
+                153,
+                209,
+                126,
+                245,
+                203
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 16
+            },
+            {
+              "expected_bank": 34,
+              "expected_sample": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "observed_sample": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 34
+            },
+            {
+              "expected_bank": 127,
+              "expected_sample": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "observed_sample": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "sample_match": true,
+              "window": "$4000-$400F",
+              "write_value": 127
+            }
+          ],
+          "write_address": "$2000",
+          "write_range": "$2000-$3FFF",
+          "zero_select_maps_to_bank_one": true
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "isolated_bank_count": 0,
+          "matched_bank_count": 6,
+          "rtc_register_count": 0,
+          "transition_count": 7,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "mbc_transition": "rom_bank_select",
+          "surface": "mbc"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_mbc_runtime",
+        "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+        "subjects": {
+          "write_address": "$2000",
+          "write_range": "$2000-$3FFF"
+        },
+        "validation": {
+          "case_id": "mbc3_rom_bank_select_window",
+          "transition_kind": "rom_bank_select"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_mbc_runtime",
+          "precision": {
+            "isolated_bank_count": 0,
+            "matched_bank_count": 0,
+            "rtc_register_count": 0,
+            "transition_count": 1,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "mbc_transition": "sram_enable_disable",
+            "surface": "mbc"
+          },
+          "source_kind": "pyboy_mbc_runtime",
+          "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+          "subjects": {
+            "write_address": "$0000",
+            "write_range": "$0000-$1FFF"
+          },
+          "validation": {
+            "case_id": "mbc3_sram_enable_disable",
+            "transition_kind": "sram_enable_disable"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "blocked_marker": 90,
+          "case_id": "mbc3_sram_enable_disable",
+          "disable_value": 0,
+          "disabled_after_write": 255,
+          "disabled_read": 255,
+          "disabled_readback_open_bus": true,
+          "disabled_write_blocked": true,
+          "enable_value": 10,
+          "enabled_read": 165,
+          "enabled_readback_matches": true,
+          "marker": 165,
+          "pc_after": 65414,
+          "reenabled_preserved": true,
+          "reenabled_read": 165,
+          "transition_kind": "sram_enable_disable",
+          "transition_observed": true,
+          "write_address": "$0000",
+          "write_range": "$0000-$1FFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "isolated_bank_count": 0,
+          "matched_bank_count": 0,
+          "rtc_register_count": 0,
+          "transition_count": 1,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "mbc_transition": "sram_enable_disable",
+          "surface": "mbc"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_mbc_runtime",
+        "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+        "subjects": {
+          "write_address": "$0000",
+          "write_range": "$0000-$1FFF"
+        },
+        "validation": {
+          "case_id": "mbc3_sram_enable_disable",
+          "transition_kind": "sram_enable_disable"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_mbc_runtime",
+          "precision": {
+            "isolated_bank_count": 4,
+            "matched_bank_count": 0,
+            "rtc_register_count": 0,
+            "transition_count": 1,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "mbc_transition": "sram_bank_select",
+            "surface": "mbc"
+          },
+          "source_kind": "pyboy_mbc_runtime",
+          "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+          "subjects": {
+            "sram_window": "$A000-$BFFF",
+            "write_address": "$4000",
+            "write_range": "$4000-$5FFF"
+          },
+          "validation": {
+            "case_id": "mbc3_sram_bank_select_isolation",
+            "transition_kind": "sram_bank_select"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "mbc3_sram_bank_select_isolation",
+          "isolated_bank_count": 4,
+          "pc_after": 65414,
+          "reads": [
+            {
+              "expected_marker": 17,
+              "match": true,
+              "observed": 17,
+              "sram_bank": 0
+            },
+            {
+              "expected_marker": 34,
+              "match": true,
+              "observed": 34,
+              "sram_bank": 1
+            },
+            {
+              "expected_marker": 51,
+              "match": true,
+              "observed": 51,
+              "sram_bank": 2
+            },
+            {
+              "expected_marker": 68,
+              "match": true,
+              "observed": 68,
+              "sram_bank": 3
+            }
+          ],
+          "sram_window": "$A000-$BFFF",
+          "transition_kind": "sram_bank_select",
+          "transition_observed": true,
+          "write_address": "$4000",
+          "write_range": "$4000-$5FFF",
+          "writes": [
+            {
+              "marker": 17,
+              "sram_bank": 0
+            },
+            {
+              "marker": 34,
+              "sram_bank": 1
+            },
+            {
+              "marker": 51,
+              "sram_bank": 2
+            },
+            {
+              "marker": 68,
+              "sram_bank": 3
+            }
+          ]
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "isolated_bank_count": 4,
+          "matched_bank_count": 0,
+          "rtc_register_count": 0,
+          "transition_count": 1,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "mbc_transition": "sram_bank_select",
+          "surface": "mbc"
+        },
+        "seq": 2,
+        "source_kind": "pyboy_mbc_runtime",
+        "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+        "subjects": {
+          "sram_window": "$A000-$BFFF",
+          "write_address": "$4000",
+          "write_range": "$4000-$5FFF"
+        },
+        "validation": {
+          "case_id": "mbc3_sram_bank_select_isolation",
+          "transition_kind": "sram_bank_select"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_mbc_runtime",
+          "precision": {
+            "isolated_bank_count": 0,
+            "matched_bank_count": 0,
+            "rtc_register_count": 5,
+            "transition_count": 1,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "mbc_transition": "rtc_register_select_latch",
+            "surface": "mbc"
+          },
+          "source_kind": "pyboy_mbc_runtime",
+          "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+          "subjects": {
+            "write_address": "$4000",
+            "write_range": "$4000-$5FFF,$6000-$7FFF"
+          },
+          "validation": {
+            "case_id": "mbc3_rtc_register_select_latch",
+            "transition_kind": "rtc_register_select_latch"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "bounded_register_values": true,
+          "case_id": "mbc3_rtc_register_select_latch",
+          "first_seconds": 0,
+          "known_limits": [
+            "This case observes RTC register select and latch readback only.",
+            "It does not claim RTC halt, carry, day-overflow, or RTC register-write correctness."
+          ],
+          "latch_sequence": [
+            0,
+            1
+          ],
+          "latch_sequence_observed": true,
+          "latch_write_address": "$6000",
+          "pc_after": 65414,
+          "registers": [
+            {
+              "expected_range": "0-59",
+              "name": "seconds",
+              "observed": 1,
+              "select_value": 8,
+              "within_expected_range": true
+            },
+            {
+              "expected_range": "0-59",
+              "name": "minutes",
+              "observed": 0,
+              "select_value": 9,
+              "within_expected_range": true
+            },
+            {
+              "expected_range": "0-23",
+              "name": "hours",
+              "observed": 0,
+              "select_value": 10,
+              "within_expected_range": true
+            },
+            {
+              "expected_range": "0-255",
+              "name": "day_low",
+              "observed": 0,
+              "select_value": 11,
+              "within_expected_range": true
+            },
+            {
+              "expected_range": "bitmask 0xC1",
+              "name": "day_high",
+              "observed": 0,
+              "select_value": 12,
+              "within_expected_range": true
+            }
+          ],
+          "relatched_seconds": 1,
+          "rtc_register_count": 5,
+          "select_write_address": "$4000",
+          "sram_marker": 165,
+          "sram_marker_restored": true,
+          "sram_read_after_rtc_select": 165,
+          "stale_seconds_without_relatch": 0,
+          "transition_kind": "rtc_register_select_latch",
+          "transition_observed": true,
+          "write_range": "$4000-$5FFF,$6000-$7FFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "isolated_bank_count": 0,
+          "matched_bank_count": 0,
+          "rtc_register_count": 5,
+          "transition_count": 1,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "mbc_transition": "rtc_register_select_latch",
+          "surface": "mbc"
+        },
+        "seq": 3,
+        "source_kind": "pyboy_mbc_runtime",
+        "source_report": "debugger_deity_mbc_runtime_transition_replay_corpus",
+        "subjects": {
+          "write_address": "$4000",
+          "write_range": "$4000-$5FFF,$6000-$7FFF"
+        },
+        "validation": {
+          "case_id": "mbc3_rtc_register_select_latch",
+          "transition_kind": "rtc_register_select_latch"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "e468592c11cdb759c40404269d2f6adca66436938ba96577f5c14430e964a5bd",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "mbc",
+  "valid": true
+}

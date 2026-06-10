@@ -20,7 +20,7 @@
       "move_id": 33,
       "name": "TACKLE",
       "pre_lookahead_score": 20,
-      "selector_probability": 0.6015625,
+      "selector_probability": 1.0,
       "slot": 1,
       "slot_index": 0
     },
@@ -66,7 +66,7 @@
       "move_id": 16,
       "name": "GUST",
       "pre_lookahead_score": 20,
-      "selector_probability": 0.3984375,
+      "selector_probability": 0.0,
       "slot": 3,
       "slot_index": 2
     },
@@ -113,45 +113,6 @@
     "public_fact_counterfactuals": [
       "Attach a ROM contribution trace for this route to identify which public branch or score rule would move the score bytes."
     ],
-    "selector_roll_counterfactual": {
-      "alternate_action_id": "slot3:GUST",
-      "alternate_roll_range": {
-        "count": 102,
-        "max": 255,
-        "min": 154
-      },
-      "available": true,
-      "best_action_id": "slot1:TACKLE",
-      "best_probability": 0.6015625,
-      "best_roll_range": {
-        "count": 154,
-        "max": 153,
-        "min": 0
-      },
-      "best_roll_threshold": 154,
-      "best_score": 20,
-      "chosen_action_id": "slot1:TACKLE",
-      "chosen_rank": "best",
-      "chosen_roll_range": {
-        "count": 154,
-        "max": 153,
-        "min": 0
-      },
-      "observed_choice_due_to_random_roll": false,
-      "reason": "observed action was the selector best candidate; a roll in the second-candidate range would choose the alternate action",
-      "roll_denominator": 256,
-      "score_gap": 0,
-      "second_action_id": "slot3:GUST",
-      "second_probability": 0.3984375,
-      "second_roll_range": {
-        "count": 102,
-        "max": 255,
-        "min": 154
-      },
-      "second_score": 20,
-      "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores",
-      "summary": "chosen=slot1:TACKLE roll=0..153 (154/256); alternate=slot3:GUST if roll=154..255 (102/256); threshold=154/256"
-    },
     "smallest_score_flip": {
       "action_id": "slot3:GUST",
       "available": true,
@@ -172,14 +133,14 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified"
     ],
-    "generated_at": "2026-05-31T02:20:16Z",
+    "generated_at": "2026-06-05T00:56:51Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "current_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "manifest_trace_rom_sha256": "F7A92B92451E8B9A7FDE3344EFE379B3186DE2B154E9B7E70136AC60C618A2B3",
-      "manifest_trace_symbols_sha256": "ECD01F51B98C8A975AA1BFD451513E6430F2C69869ABB792C374CE8E1D53F948",
-      "trace_rom_matches_manifest": true,
-      "trace_symbols_matches_manifest": true
+      "current_trace_rom_sha256": "22535DE8D6076EFCDA48D2D9DDA5FF9D92499F24A882481864B69861A4EA2A69",
+      "current_trace_symbols_sha256": "89C5794A698B5FCBC63F24140BF54D576D62A9774218FEB408C8678E171DE27E",
+      "manifest_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+      "manifest_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
+      "trace_rom_matches_manifest": false,
+      "trace_symbols_matches_manifest": false
     },
     "kind": "boss_ai_decision_input_manifest",
     "known_limits": [
@@ -189,7 +150,6 @@
     "replay_verification": {
       "chosen_id": 33,
       "expected_move_ids": [
-        16,
         33
       ],
       "match": true,
@@ -211,9 +171,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "0DC099C3CA5824D70DEBFE9205B7CB35377341B56D06F62AA082A0E926248010",
-      "git_commit": "78beea75254e33daa74bdbc3b9c60748376266bd",
-      "trace_artifact_sha256": "61A3E9CB9441AA88A5E36786DC2A2C3FADABFF554922A0F009E2CAC8BAABC4EE"
+      "dirty_diff_sha256": "CAE441A1F92B40D6F810ABEF6DB3F40E28D5628C77A559121EA3111AFD582056",
+      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
+      "trace_artifact_sha256": "3890A9F9AB035713493119B8645F16FEB016B6A491DC8D6EC6C34D3EBFD8BBCC"
     },
     "target": {
       "boss_route": "falkner",
@@ -226,7 +186,7 @@
     }
   },
   "decision_summary": {
-    "decisive_counterfactual": "selector roll chose best candidate; slot3:GUST would be chosen if roll=154..255 (102/256)",
+    "decisive_counterfactual": "slot3:GUST score 20 -> 19 delta=-1",
     "evidence_highlights": {
       "candidate_scores": [
         {
@@ -235,7 +195,7 @@
           "final_score": 20,
           "kind": "move",
           "name": "TACKLE",
-          "selector_probability": 0.6015625
+          "selector_probability": 1.0
         },
         {
           "action_id": "slot2:SAND_ATTACK",
@@ -251,7 +211,7 @@
           "final_score": 20,
           "kind": "move",
           "name": "GUST",
-          "selector_probability": 0.3984375
+          "selector_probability": 0.0
         },
         {
           "action_id": "slot4:QUICK_ATTACK",
@@ -315,13 +275,13 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.apply_lookahead_to_top_move_candidates",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5715"
         },
         {
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.select_move",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2782"
         }
       ]
     },
@@ -369,30 +329,29 @@
       "purpose": "Capture ROM score-rule contribution deltas for this route"
     },
     "observed": "ROM live trace chose TACKLE slot=1 score=20",
-    "path": "selector best=slot1:TACKLE score=20 second=slot3:GUST score=20 gap=0 threshold=154/256 prob=slot1:TACKLE=60.2%, slot3:GUST=39.8%",
+    "path": "selector best=slot1:TACKLE score=20 second=None score=None gap=None threshold=single-candidate prob=slot1:TACKLE=100.0%",
     "policy_expectation": {},
     "python_agreement": "agreement=True reason=chosen slot has nonzero selector probability",
     "selector_choice_explanation": {
       "available": true,
       "best_action_id": "slot1:TACKLE",
-      "best_roll_threshold": 154,
+      "best_roll_threshold": null,
       "best_score": 20,
       "chosen_action_id": "slot1:TACKLE",
       "chosen_has_nonzero_probability": true,
-      "chosen_probability": 0.6015625,
+      "chosen_probability": 1.0,
       "chosen_rank": "best",
       "possible_action_ids": [
-        "slot1:TACKLE",
-        "slot3:GUST"
+        "slot1:TACKLE"
       ],
       "reason": "observed action was the selector best candidate",
-      "score_gap": 0,
-      "second_action_id": "slot3:GUST",
-      "second_score": 20,
-      "summary": "chosen best candidate; chosen=slot1:TACKLE; p=60.2%; best=slot1:TACKLE; second=slot3:GUST; gap=0; threshold=154/256"
+      "score_gap": null,
+      "second_action_id": "",
+      "second_score": null,
+      "summary": "chosen best candidate; chosen=slot1:TACKLE; p=100.0%; best=slot1:TACKLE; threshold=single-candidate"
     },
     "status": "needs_contribution_proof",
-    "why": "selector best=slot1:TACKLE score=20 second=slot3:GUST score=20 gap=0 threshold=154/256 prob=slot1:TACKLE=60.2%, slot3:GUST=39.8%"
+    "why": "selector best=slot1:TACKLE score=20 second=None score=None gap=None threshold=single-candidate prob=slot1:TACKLE=100.0%"
   },
   "decision_trace_summary": {
     "event_count": 0,
@@ -464,7 +423,6 @@
       "chosen_slot_1_based": 1,
       "chosen_slot_index": 0,
       "expected_move_ids": [
-        16,
         33
       ],
       "model_score_deltas": [
@@ -486,11 +444,9 @@
         20
       ],
       "possible_action_ids": [
-        "slot1:TACKLE",
-        "slot3:GUST"
+        "slot1:TACKLE"
       ],
       "possible_move_ids": [
-        16,
         33
       ],
       "post_model_scores": [
@@ -507,29 +463,28 @@
       ],
       "selector": {
         "best_move_id": 33,
-        "best_roll_threshold": 154,
+        "best_roll_threshold": null,
         "best_score": 20,
         "best_slot_index": 0,
-        "gap": 0,
+        "gap": null,
         "possible_move_ids": [
-          16,
           33
         ],
         "possible_slot_indices": [
-          0,
-          2
+          0
         ],
         "probabilities_by_slot": {
-          "0": 0.6015625,
+          "0": 1.0,
           "1": 0.0,
-          "2": 0.3984375,
+          "2": 0.0,
           "3": 0.0
         },
         "ready": true,
         "scenario_id": "Falkner#1",
-        "second_move_id": 16,
-        "second_score": 20,
-        "second_slot_index": 2,
+        "second_move_id": null,
+        "second_score": null,
+        "second_slot_index": null,
+        "selector_mode": "best_only",
         "slots": [
           {
             "blocked": false,
@@ -572,33 +527,31 @@
         "available": true,
         "best_action_id": "slot1:TACKLE",
         "best_move_id": 33,
-        "best_roll_threshold": 154,
+        "best_roll_threshold": null,
         "best_score": 20,
         "best_slot_index": 0,
         "candidate_probabilities": {
-          "slot1:TACKLE": 0.6015625,
+          "slot1:TACKLE": 1.0,
           "slot2:SAND_ATTACK": 0.0,
-          "slot3:GUST": 0.3984375,
+          "slot3:GUST": 0.0,
           "slot4:QUICK_ATTACK": 0.0
         },
         "chosen_action_id": "slot1:TACKLE",
         "chosen_has_nonzero_probability": true,
         "chosen_move_id": 33,
-        "chosen_probability": 0.6015625,
+        "chosen_probability": 1.0,
         "chosen_slot_index": 0,
         "possible_action_ids": [
-          "slot1:TACKLE",
-          "slot3:GUST"
+          "slot1:TACKLE"
         ],
         "possible_move_ids": [
-          16,
           33
         ],
-        "score_gap": 0,
-        "second_action_id": "slot3:GUST",
-        "second_move_id": 16,
-        "second_score": 20,
-        "second_slot_index": 2,
+        "score_gap": null,
+        "second_action_id": null,
+        "second_move_id": null,
+        "second_score": null,
+        "second_slot_index": null,
         "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
       },
       "switch_confidence": 0,
@@ -813,24 +766,24 @@
   "python_mirror": {
     "available": true,
     "best_action_id": "slot1:TACKLE",
-    "best_roll_threshold": 154,
+    "best_roll_threshold": null,
     "best_score": 20,
-    "gap": 0,
+    "gap": null,
     "mirror_scope": "selector_from_rom_score_bytes",
     "policy_reason": "live trace input has no generated scenario expectation",
     "policy_verdict": "not_applicable_without_scenario_expectation",
     "probabilities": {
-      "slot1:TACKLE": 0.6015625,
+      "slot1:TACKLE": 1.0,
       "slot2:SAND_ATTACK": 0.0,
-      "slot3:GUST": 0.3984375,
+      "slot3:GUST": 0.0,
       "slot4:QUICK_ATTACK": 0.0
     },
     "rom_comparison": {
       "agreement": true,
       "reason": "chosen slot has nonzero selector probability"
     },
-    "second_action_id": "slot3:GUST",
-    "second_score": 20
+    "second_action_id": null,
+    "second_score": null
   },
   "question": {
     "expected_acceptable_action_ids": [],
@@ -858,7 +811,6 @@
         "chosen_slot_1_based": 1,
         "chosen_slot_index": 0,
         "expected_move_ids": [
-          16,
           33
         ],
         "model_score_deltas": [
@@ -880,11 +832,9 @@
           20
         ],
         "possible_action_ids": [
-          "slot1:TACKLE",
-          "slot3:GUST"
+          "slot1:TACKLE"
         ],
         "possible_move_ids": [
-          16,
           33
         ],
         "post_model_scores": [
@@ -901,29 +851,28 @@
         ],
         "selector": {
           "best_move_id": 33,
-          "best_roll_threshold": 154,
+          "best_roll_threshold": null,
           "best_score": 20,
           "best_slot_index": 0,
-          "gap": 0,
+          "gap": null,
           "possible_move_ids": [
-            16,
             33
           ],
           "possible_slot_indices": [
-            0,
-            2
+            0
           ],
           "probabilities_by_slot": {
-            "0": 0.6015625,
+            "0": 1.0,
             "1": 0.0,
-            "2": 0.3984375,
+            "2": 0.0,
             "3": 0.0
           },
           "ready": true,
           "scenario_id": "Falkner#1",
-          "second_move_id": 16,
-          "second_score": 20,
-          "second_slot_index": 2,
+          "second_move_id": null,
+          "second_score": null,
+          "second_slot_index": null,
+          "selector_mode": "best_only",
           "slots": [
             {
               "blocked": false,
@@ -966,33 +915,31 @@
           "available": true,
           "best_action_id": "slot1:TACKLE",
           "best_move_id": 33,
-          "best_roll_threshold": 154,
+          "best_roll_threshold": null,
           "best_score": 20,
           "best_slot_index": 0,
           "candidate_probabilities": {
-            "slot1:TACKLE": 0.6015625,
+            "slot1:TACKLE": 1.0,
             "slot2:SAND_ATTACK": 0.0,
-            "slot3:GUST": 0.3984375,
+            "slot3:GUST": 0.0,
             "slot4:QUICK_ATTACK": 0.0
           },
           "chosen_action_id": "slot1:TACKLE",
           "chosen_has_nonzero_probability": true,
           "chosen_move_id": 33,
-          "chosen_probability": 0.6015625,
+          "chosen_probability": 1.0,
           "chosen_slot_index": 0,
           "possible_action_ids": [
-            "slot1:TACKLE",
-            "slot3:GUST"
+            "slot1:TACKLE"
           ],
           "possible_move_ids": [
-            16,
             33
           ],
-          "score_gap": 0,
-          "second_action_id": "slot3:GUST",
-          "second_move_id": 16,
-          "second_score": 20,
-          "second_slot_index": 2,
+          "score_gap": null,
+          "second_action_id": null,
+          "second_move_id": null,
+          "second_score": null,
+          "second_slot_index": null,
           "source": "BossAI_SelectMove replay from captured wEnemyAIMoveScores"
         },
         "switch_confidence": 0,
@@ -1043,7 +990,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_execution_hook",
-      "line": 5719,
+      "line": 5715,
       "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
       "public_reads": [],
       "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1054,7 +1001,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_score_execution_hook",
-      "line": 2786,
+      "line": 2782,
       "parent_label": "BossAI_SelectMove",
       "public_reads": [],
       "rule_id": "move.select_move",

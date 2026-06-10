@@ -1,0 +1,392 @@
+{
+  "schema_version": 1,
+  "kind": "boss_ai_debugger_deity_benchmark",
+  "generated_at": "2026-05-31T07:01:09Z",
+  "questions_path": "audit/boss_ai_debugger/deity_benchmark/questions.jsonl",
+  "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+  "question_count": 8,
+  "questions_passed": 8,
+  "questions_failed": 0,
+  "questions_skipped": 0,
+  "pass_rate": 1.0,
+  "boss_ai_deity_ready": true,
+  "gap_actions": 0,
+  "hash_basis": {
+    "manifest_path": "audit/boss_ai_trace/live_capture_manifest.json",
+    "manifest_found": true,
+    "ready": true,
+    "status": "ready",
+    "diagnostics": [
+      {
+        "kind": "trace_rom",
+        "path": "pokegold_trace.gbc",
+        "expected_sha256": "AF6EF2992DBC1BAB1A3DFC0118EBE6F7C25FEE50B473174220DDF95951D53762",
+        "actual_sha256": "AF6EF2992DBC1BAB1A3DFC0118EBE6F7C25FEE50B473174220DDF95951D53762",
+        "status": "match"
+      },
+      {
+        "kind": "trace_symbols",
+        "path": "pokegold_trace.sym",
+        "expected_sha256": "61428EBBE2D1510DDE38D82D36B542025A001365D31E7634081450E955BF1B39",
+        "actual_sha256": "61428EBBE2D1510DDE38D82D36B542025A001365D31E7634081450E955BF1B39",
+        "status": "match"
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "boss_ai_deity_live_falkner_first_decision",
+      "question": "Why did Falkner choose the observed first move?",
+      "decision_surface": "live_boss",
+      "phase": "1",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1 --run-rom-proof auto --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_DECISION_INPUT_RESOLVED",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "decision_input.auto_resolved",
+        "input_manifest.replay_verified",
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path",
+        "source_anchors"
+      ],
+      "closed_evidence_ids_found": [
+        "decision_input.auto_resolved",
+        "input_manifest.replay_verified",
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path",
+        "source_anchors"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.json",
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.json",
+          "exists": true,
+          "fresh": true
+        },
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": false,
+      "hash_basis_status": "not_required",
+      "duration_seconds": 0.271,
+      "stdout_tail": "ontribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; writes=.local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json\n  - Re-render this live-trace packet after contribution capture: python -m tools.boss_ai_debugger explain-decision --boss-route falkner --decision-index 1 --decision-surface live_boss --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.input_manifest.json --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; uses=.local\\tmp\\boss_ai_debugger\\Falkner_1_rom_contribution.json\n  - Verify source-rule anchors are current: python -m tools.boss_ai_debugger rule-map check\n    closes=source_anchors\n\nKnown limits:\n  - Live trace input proves selector behavior from captured ROM score bytes, not full score-model reconstruction.\n  - Counterfactual score flips are byte-level selector flips until a ROM contribution trace is attached.\n  - Attach or run rom-contribution-trace to get rule-level score deltas and public-read snapshots.\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/falkner_first_decision.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_live_switch_dispatch",
+      "question": "Why did the shared Boss AI switch-loop fixture propose or avoid switching?",
+      "decision_surface": "switch_dispatch",
+      "phase": "1",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger explain-decision --capture-id shared_switch_loop --decision-surface switch_dispatch --run-rom-proof auto --decision-input-manifest-out audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_DECISION_INPUT_RESOLVED",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "decision_input.auto_resolved",
+        "input_manifest.replay_verified",
+        "switch_path",
+        "switch_materialization",
+        "source_anchors"
+      ],
+      "closed_evidence_ids_found": [
+        "decision_input.auto_resolved",
+        "input_manifest.replay_verified",
+        "switch_path",
+        "switch_materialization",
+        "source_anchors"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.json",
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.json",
+          "exists": true,
+          "fresh": true
+        },
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.input_manifest.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": true,
+      "hash_basis_status": "ready",
+      "duration_seconds": 0.744,
+      "stdout_tail": "oop_1_switch_sack_probe.jsonl\n  - Render switch-dispatch explanation packet after materialization: python -m tools.boss_ai_debugger explain-decision --scenario .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl --rom-switch-materialization .local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json\n    closes=observed_rom_decision,switch_path,switch_materialization; uses=.local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_switch_sack_probe.jsonl,.local\\tmp\\boss_ai_debugger\\Shared_switch-loop_1_rom_switch.json\n  - Verify source-rule anchors are current: python -m tools.boss_ai_debugger rule-map check\n    closes=source_anchors\n\nKnown limits:\n  - Live trace input proves selector behavior from captured ROM score bytes, not full score-model reconstruction.\n  - Counterfactual score flips are byte-level selector flips until a ROM contribution trace is attached.\n  - Attach or run rom-contribution-trace to get rule-level score deltas and public-read snapshots.\n  - Live trace switch fields prove observed dispatch bytes; use rom-switch-materialize for scenario-level switch policy proof.\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/shared_switch_dispatch.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_generated_policy_active_pressure",
+      "question": "Why did the generated active-pressure case prefer damage before status?",
+      "decision_surface": "generated_policy",
+      "phase": "2",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger explain-decision --policy-question active_pressure_before_status --run-rom-proof auto --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/generated_active_pressure.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "decision_input.generated_auto",
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path",
+        "rom_contribution_deltas",
+        "rom_public_read_provenance",
+        "policy_expectation.reported",
+        "counterfactual.decisive"
+      ],
+      "closed_evidence_ids_found": [
+        "decision_input.generated_auto",
+        "observed_rom_decision",
+        "score_bytes",
+        "selector_path",
+        "rom_contribution_deltas",
+        "rom_public_read_provenance",
+        "policy_expectation.reported",
+        "counterfactual.decisive"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/generated_active_pressure.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/generated_active_pressure.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": false,
+      "hash_basis_status": "not_required",
+      "duration_seconds": 0.672,
+      "stdout_tail": "ebugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json\n  - Re-render this scenario packet after contribution capture: python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\active_pressure_before_status.jsonl\" --scenario-id generated_mastery_policy_1_00000_active_pressure_before_status --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; uses=.local\\tmp\\boss_ai_debugger\\generated_mastery_policy_1_00000_active_pressure_before_status_rom_contribution.json\n  - Verify source-rule anchors are current: python -m tools.boss_ai_debugger rule-map check\n    closes=source_anchors\n\nKnown limits:\n  - Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.\n  - ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids.\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/generated_active_pressure.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_score_rule_spikes_spin",
+      "question": "Which public Rapid Spin/Spikes score rule changed the chosen score byte?",
+      "decision_surface": "score_rule",
+      "phase": "3",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger explain-decision --score-rule move.spikes.public_rapid_spin_risk --run-rom-proof auto --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/score_rule_spikes_spin.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "score_rule.rom_delta_observed",
+        "public_reads.snapshotted",
+        "python_contribution.normalized",
+        "rom_python_agreement.reported"
+      ],
+      "closed_evidence_ids_found": [
+        "score_rule.rom_delta_observed",
+        "public_reads.snapshotted",
+        "python_contribution.normalized",
+        "rom_python_agreement.reported"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/score_rule_spikes_spin.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/score_rule_spikes_spin.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": false,
+      "hash_basis_status": "not_required",
+      "duration_seconds": 0.663,
+      "stdout_tail": "ikes_spin_1_00000_rom_contribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; writes=.local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json\n  - Re-render this scenario packet after contribution capture: python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\move.spikes.public_rapid_spin_risk.jsonl\" --scenario-id generated_spikes_spin_1_00000 --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; uses=.local\\tmp\\boss_ai_debugger\\generated_spikes_spin_1_00000_rom_contribution.json\n  - Verify source-rule anchors are current: python -m tools.boss_ai_debugger rule-map check\n    closes=source_anchors\n\nKnown limits:\n  - Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.\n  - ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids.\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/score_rule_spikes_spin.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_switch_sack_materialization",
+      "question": "Why did the generated switch/sack case prefer a switch candidate over staying in?",
+      "decision_surface": "generated_policy",
+      "phase": "4",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger explain-decision --generated-family switch_sack --case best_review --run-rom-proof switch --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/switch_sack_materialization.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_PROOF_COMPLETE",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "decision_input.generated_auto",
+        "switch_materialization.proven",
+        "switch_roll.reported",
+        "counterfactual.decisive"
+      ],
+      "closed_evidence_ids_found": [
+        "decision_input.generated_auto",
+        "switch_materialization.proven",
+        "switch_roll.reported",
+        "counterfactual.decisive"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/switch_sack_materialization.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/switch_sack_materialization.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": true,
+      "hash_basis_status": "ready",
+      "duration_seconds": 0.515,
+      "stdout_tail": "ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json\n  - Re-render this scenario packet after contribution capture: python -m tools.boss_ai_debugger explain-decision --scenario \"C:\\Users\\lolno\\Downloads\\pokemon gold hack\\.local\\tmp\\boss_ai_debugger\\generated_inputs\\switch_sack.jsonl\" --scenario-id generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage --run-rom-proof auto --rom-contribution-trace .local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json\n    closes=rom_contribution_deltas,rom_public_read_provenance; uses=.local\\tmp\\boss_ai_debugger\\generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage_rom_contribution.json\n  - Verify source-rule anchors are current: python -m tools.boss_ai_debugger rule-map check\n    closes=source_anchors\n\nKnown limits:\n  - Python candidate scores are a scenario mirror unless a ROM materialization artifact is attached or run.\n  - ROM contribution deltas are reported only for attached or generated trace artifacts with matching trace ids.\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/switch_sack_materialization.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_changed_ai_dry_run",
+      "question": "After a Boss AI source edit, what behavior changed and why?",
+      "decision_surface": "changed_ai",
+      "phase": "6",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger run-suite --profile deity-changed-ai --count 20 --seed 1 --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_CHANGED_AI_SUMMARY",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "changed_files.detected",
+        "hash_basis.reported",
+        "targeted_generators.run",
+        "review_queue.ranked"
+      ],
+      "closed_evidence_ids_found": [
+        "changed_files.detected",
+        "hash_basis.reported",
+        "targeted_generators.run",
+        "review_queue.ranked"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": true,
+      "hash_basis_status": "ready",
+      "duration_seconds": 0.725,
+      "stdout_tail": "BOSS_AI_DEITY_CHANGED_AI_SUMMARY\nstatus=changed_ai_summary_ready\nclosed_evidence_ids=['changed_files.detected', 'hash_basis.reported', 'targeted_generators.run', 'review_queue.ranked']\nhash_basis_status=ready\nBoss AI deity changed-AI dry run complete: run_id=20260531_070109_changed_ai scenarios=20 reviewable=7 gap_actions=6\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/changed_ai_dry_run.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_coverage_gap_worklist",
+      "question": "Which uncovered reachable Boss AI rule is the next best proof target?",
+      "decision_surface": "coverage_gap",
+      "phase": "5",
+      "driver": "auto",
+      "proof_command": "python -m tools.boss_ai_debugger coverage-report --deity-worklist --json-out audit/boss_ai_debugger/deity_benchmark/artifacts/coverage_gap_worklist.json",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_COVERAGE_WORKLIST",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "coverage_gap.localized",
+        "next_action.command",
+        "source_anchors.present"
+      ],
+      "closed_evidence_ids_found": [
+        "coverage_gap.localized",
+        "next_action.command",
+        "source_anchors.present"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [
+        "audit/boss_ai_debugger/deity_benchmark/artifacts/coverage_gap_worklist.json"
+      ],
+      "artifact_results": [
+        {
+          "path": "audit/boss_ai_debugger/deity_benchmark/artifacts/coverage_gap_worklist.json",
+          "exists": true,
+          "fresh": true
+        }
+      ],
+      "hash_basis_required": false,
+      "hash_basis_status": "not_required",
+      "duration_seconds": 0.232,
+      "stdout_tail": "Boss AI deity coverage worklist\nmarker=BOSS_AI_DEITY_COVERAGE_WORKLIST\nclosed_evidence_ids=['coverage_gap.localized', 'next_action.command', 'source_anchors.present']\ntargets=64 groups=64 covered_rules=21 executed_rules=143\ntop=BossAI_ComputeSwitchCandidateRisk rules=['switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk'] generator=switch_sack proof_mode=rom_route_contribution_trace status=reachable_uncovered\nnext=python -m tools.boss_ai_debugger rom-contribution-trace --boss-route koga --json-out .local\\tmp\\boss_ai_debugger\\coverage_switch.compute_switch_candidate_risk.apply_revealed_priority_switch_in_risk_rom_contribution.json\nsource_anchors=12\nwrote audit/boss_ai_debugger/deity_benchmark/artifacts/coverage_gap_worklist.json\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "boss_ai_deity_hash_basis_diagnostic",
+      "question": "Can the gate report the current trace ROM/symbol basis honestly?",
+      "decision_surface": "coverage_gap",
+      "phase": "0",
+      "driver": "auto",
+      "proof_command": "python tools\\audit\\check_boss_ai_debugger_deity.py --hash-diagnostic",
+      "status": "PASS",
+      "passed": true,
+      "skipped": false,
+      "reason": "self-drove to a Boss AI proof and closed declared evidence",
+      "exit_code": 0,
+      "evidence_marker": "BOSS_AI_DEITY_HASH_BASIS_DIAGNOSTIC",
+      "evidence_found": true,
+      "expected_closed_evidence_ids": [
+        "hash_basis.diagnostic"
+      ],
+      "closed_evidence_ids_found": [
+        "hash_basis.diagnostic"
+      ],
+      "missing_evidence_ids": [],
+      "required_artifacts": [],
+      "artifact_results": [],
+      "hash_basis_required": false,
+      "hash_basis_status": "not_required",
+      "duration_seconds": 0.082,
+      "stdout_tail": "BOSS_AI_DEITY_HASH_BASIS_DIAGNOSTIC\nhash_basis_status=ready\nmanifest=audit/boss_ai_trace/live_capture_manifest.json found=True\nhash_file kind=trace_rom path=pokegold_trace.gbc status=match expected=AF6EF2992DBC1BAB1A3DFC0118EBE6F7C25FEE50B473174220DDF95951D53762 actual=AF6EF2992DBC1BAB1A3DFC0118EBE6F7C25FEE50B473174220DDF95951D53762\nhash_file kind=trace_symbols path=pokegold_trace.sym status=match expected=61428EBBE2D1510DDE38D82D36B542025A001365D31E7634081450E955BF1B39 actual=61428EBBE2D1510DDE38D82D36B542025A001365D31E7634081450E955BF1B39\nclosed_evidence_ids=hash_basis.diagnostic\n",
+      "stderr_tail": ""
+    }
+  ]
+}

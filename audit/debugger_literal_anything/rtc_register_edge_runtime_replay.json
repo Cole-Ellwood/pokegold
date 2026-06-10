@@ -1,0 +1,600 @@
+{
+  "at": "",
+  "error_count": 0,
+  "errors": [],
+  "evidence_marker": "runtime RTC register edge replay",
+  "kind": "debugger_deity_surface_replay",
+  "known_limits": [
+    "This is PyBoy emulator evidence for MBC3 RTC carry-bit write/readback and seeded day-overflow readback.",
+    "Seeded day-overflow cases prove register readback from an RTC file basis, not naturally elapsed 512-day runtime.",
+    "PyBoy RTC halt-bit readback is observed, but halt semantics remain unimplemented and unproven.",
+    "It does not claim cross-backend or hardware RTC parity."
+  ],
+  "proof_status": "replay_diff_captured",
+  "root": "C:\\Users\\lolno\\Downloads\\pokemon gold hack",
+  "runtime_replay": {
+    "backend": "pyboy",
+    "case_count": 5,
+    "cases": [
+      {
+        "carry_clear_day_high": 0,
+        "carry_clear_readback": true,
+        "carry_set_day_high": 128,
+        "carry_set_readback": true,
+        "case_id": "rtc_day_high_carry_register_write_readback",
+        "clear_write_value": 0,
+        "halt_semantics_proven": false,
+        "known_limits": [
+          "This case proves RTC day-high carry bit write/readback only.",
+          "It does not prove halt semantics or naturally elapsed day overflow."
+        ],
+        "latch_write_address": "$6000",
+        "pc_after": 65414,
+        "rtc_data_window": "$A000-$BFFF",
+        "select_write_address": "$4000",
+        "set_write_value": 128,
+        "transition_kind": "rtc_register_write_carry_readback",
+        "transition_observed": true,
+        "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+      },
+      {
+        "case_id": "rtc_halt_bit_readback_nonsemantic_control",
+        "day_high_with_halt": 64,
+        "halt_bit_readback": true,
+        "halt_semantics_proven": false,
+        "halt_write_value": 64,
+        "known_limits": [
+          "This case is a negative capability control: PyBoy reads the halt bit back but the clock advances.",
+          "It must not be used as evidence that RTC halt semantics are implemented."
+        ],
+        "latch_write_address": "$6000",
+        "pc_after": 65414,
+        "rtc_data_window": "$A000-$BFFF",
+        "seconds_advanced_while_halt_bit_set": true,
+        "seconds_after": 1,
+        "seconds_before": 0,
+        "select_write_address": "$4000",
+        "transition_kind": "rtc_halt_bit_readback_nonsemantic_control",
+        "transition_observed": true,
+        "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+      },
+      {
+        "carry_matches": true,
+        "case_id": "rtc_seeded_day_511_no_carry_readback",
+        "day_high_day_bit_matches": true,
+        "day_low_matches": true,
+        "expected_carry": false,
+        "expected_day_high_day_bit": 1,
+        "expected_day_low": 255,
+        "halt_semantics_proven": false,
+        "known_limits": [
+          "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+          "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+        ],
+        "observed_carry": false,
+        "observed_day_high": 1,
+        "observed_day_high_day_bit": 1,
+        "observed_day_low": 255,
+        "observed_halt": false,
+        "pc_after": 65414,
+        "seeded_elapsed_days": 511,
+        "transition_kind": "rtc_seeded_day_counter_readback",
+        "transition_observed": true,
+        "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+      },
+      {
+        "carry_matches": true,
+        "case_id": "rtc_seeded_day_512_carry_overflow_readback",
+        "day_high_day_bit_matches": true,
+        "day_low_matches": true,
+        "expected_carry": true,
+        "expected_day_high_day_bit": 0,
+        "expected_day_low": 0,
+        "halt_semantics_proven": false,
+        "known_limits": [
+          "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+          "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+        ],
+        "observed_carry": true,
+        "observed_day_high": 128,
+        "observed_day_high_day_bit": 0,
+        "observed_day_low": 0,
+        "observed_halt": false,
+        "pc_after": 65414,
+        "seeded_elapsed_days": 512,
+        "transition_kind": "rtc_seeded_day_counter_readback",
+        "transition_observed": true,
+        "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+      },
+      {
+        "carry_matches": true,
+        "case_id": "rtc_seeded_day_513_carry_overflow_readback",
+        "day_high_day_bit_matches": true,
+        "day_low_matches": true,
+        "expected_carry": true,
+        "expected_day_high_day_bit": 0,
+        "expected_day_low": 1,
+        "halt_semantics_proven": false,
+        "known_limits": [
+          "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+          "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+        ],
+        "observed_carry": true,
+        "observed_day_high": 128,
+        "observed_day_high_day_bit": 0,
+        "observed_day_low": 1,
+        "observed_halt": false,
+        "pc_after": 65414,
+        "seeded_elapsed_days": 513,
+        "transition_kind": "rtc_seeded_day_counter_readback",
+        "transition_observed": true,
+        "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+      }
+    ],
+    "errors": [],
+    "frame_count": 5,
+    "kind": "debugger_deity_rtc_register_edge_runtime_replay",
+    "known_limits": [
+      "Carry-bit write/readback and seeded day-overflow readback are selected PyBoy MBC3 RTC probes.",
+      "Seeded day-overflow cases use a prepared .rtc timezero basis, not naturally elapsed 512-day runtime.",
+      "PyBoy records the RTC halt bit but does not stop the clock; halt semantics remain open.",
+      "Cross-backend and hardware RTC parity remain open."
+    ],
+    "rom_header": {
+      "cartridge_type": "MBC3+TIMER+RAM+BATTERY",
+      "cartridge_type_code": 16,
+      "ram_size_code": 3,
+      "rom_bank_count": 128,
+      "rom_size_bytes": 2097152,
+      "rom_size_code": 6
+    },
+    "rom_path": "pokegold.gbc",
+    "runtime_event_count": 5,
+    "runtime_events": [
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_rtc_runtime",
+          "precision": {
+            "carry_clear_readback": true,
+            "carry_set_readback": true,
+            "halt_semantics_proven": false,
+            "observed_carry": false,
+            "seeded_elapsed_days": 0,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "rtc_transition": "rtc_register_write_carry_readback",
+            "surface": "rtc"
+          },
+          "source_kind": "pyboy_rtc_runtime",
+          "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+          "subjects": {
+            "latch_write_address": "$6000",
+            "select_write_address": "$4000",
+            "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+          },
+          "validation": {
+            "case_id": "rtc_day_high_carry_register_write_readback",
+            "transition_kind": "rtc_register_write_carry_readback"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "carry_clear_day_high": 0,
+          "carry_clear_readback": true,
+          "carry_set_day_high": 128,
+          "carry_set_readback": true,
+          "case_id": "rtc_day_high_carry_register_write_readback",
+          "clear_write_value": 0,
+          "halt_semantics_proven": false,
+          "known_limits": [
+            "This case proves RTC day-high carry bit write/readback only.",
+            "It does not prove halt semantics or naturally elapsed day overflow."
+          ],
+          "latch_write_address": "$6000",
+          "pc_after": 65414,
+          "rtc_data_window": "$A000-$BFFF",
+          "select_write_address": "$4000",
+          "set_write_value": 128,
+          "transition_kind": "rtc_register_write_carry_readback",
+          "transition_observed": true,
+          "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "carry_clear_readback": true,
+          "carry_set_readback": true,
+          "halt_semantics_proven": false,
+          "observed_carry": false,
+          "seeded_elapsed_days": 0,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "rtc_transition": "rtc_register_write_carry_readback",
+          "surface": "rtc"
+        },
+        "seq": 0,
+        "source_kind": "pyboy_rtc_runtime",
+        "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+        "subjects": {
+          "latch_write_address": "$6000",
+          "select_write_address": "$4000",
+          "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+        },
+        "validation": {
+          "case_id": "rtc_day_high_carry_register_write_readback",
+          "transition_kind": "rtc_register_write_carry_readback"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_rtc_runtime",
+          "precision": {
+            "carry_clear_readback": false,
+            "carry_set_readback": false,
+            "halt_semantics_proven": false,
+            "observed_carry": false,
+            "seeded_elapsed_days": 0,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "rtc_transition": "rtc_halt_bit_readback_nonsemantic_control",
+            "surface": "rtc"
+          },
+          "source_kind": "pyboy_rtc_runtime",
+          "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+          "subjects": {
+            "latch_write_address": "$6000",
+            "select_write_address": "$4000",
+            "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+          },
+          "validation": {
+            "case_id": "rtc_halt_bit_readback_nonsemantic_control",
+            "transition_kind": "rtc_halt_bit_readback_nonsemantic_control"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "case_id": "rtc_halt_bit_readback_nonsemantic_control",
+          "day_high_with_halt": 64,
+          "halt_bit_readback": true,
+          "halt_semantics_proven": false,
+          "halt_write_value": 64,
+          "known_limits": [
+            "This case is a negative capability control: PyBoy reads the halt bit back but the clock advances.",
+            "It must not be used as evidence that RTC halt semantics are implemented."
+          ],
+          "latch_write_address": "$6000",
+          "pc_after": 65414,
+          "rtc_data_window": "$A000-$BFFF",
+          "seconds_advanced_while_halt_bit_set": true,
+          "seconds_after": 1,
+          "seconds_before": 0,
+          "select_write_address": "$4000",
+          "transition_kind": "rtc_halt_bit_readback_nonsemantic_control",
+          "transition_observed": true,
+          "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "carry_clear_readback": false,
+          "carry_set_readback": false,
+          "halt_semantics_proven": false,
+          "observed_carry": false,
+          "seeded_elapsed_days": 0,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "rtc_transition": "rtc_halt_bit_readback_nonsemantic_control",
+          "surface": "rtc"
+        },
+        "seq": 1,
+        "source_kind": "pyboy_rtc_runtime",
+        "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+        "subjects": {
+          "latch_write_address": "$6000",
+          "select_write_address": "$4000",
+          "write_range": "$4000-$5FFF,$6000-$7FFF,$A000-$BFFF"
+        },
+        "validation": {
+          "case_id": "rtc_halt_bit_readback_nonsemantic_control",
+          "transition_kind": "rtc_halt_bit_readback_nonsemantic_control"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_rtc_runtime",
+          "precision": {
+            "carry_clear_readback": false,
+            "carry_set_readback": false,
+            "halt_semantics_proven": false,
+            "observed_carry": false,
+            "seeded_elapsed_days": 511,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "rtc_transition": "rtc_seeded_day_counter_readback",
+            "surface": "rtc"
+          },
+          "source_kind": "pyboy_rtc_runtime",
+          "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+          "subjects": {
+            "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+          },
+          "validation": {
+            "case_id": "rtc_seeded_day_511_no_carry_readback",
+            "transition_kind": "rtc_seeded_day_counter_readback"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "carry_matches": true,
+          "case_id": "rtc_seeded_day_511_no_carry_readback",
+          "day_high_day_bit_matches": true,
+          "day_low_matches": true,
+          "expected_carry": false,
+          "expected_day_high_day_bit": 1,
+          "expected_day_low": 255,
+          "halt_semantics_proven": false,
+          "known_limits": [
+            "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+            "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+          ],
+          "observed_carry": false,
+          "observed_day_high": 1,
+          "observed_day_high_day_bit": 1,
+          "observed_day_low": 255,
+          "observed_halt": false,
+          "pc_after": 65414,
+          "seeded_elapsed_days": 511,
+          "transition_kind": "rtc_seeded_day_counter_readback",
+          "transition_observed": true,
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "carry_clear_readback": false,
+          "carry_set_readback": false,
+          "halt_semantics_proven": false,
+          "observed_carry": false,
+          "seeded_elapsed_days": 511,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "rtc_transition": "rtc_seeded_day_counter_readback",
+          "surface": "rtc"
+        },
+        "seq": 2,
+        "source_kind": "pyboy_rtc_runtime",
+        "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+        "subjects": {
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "validation": {
+          "case_id": "rtc_seeded_day_511_no_carry_readback",
+          "transition_kind": "rtc_seeded_day_counter_readback"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_rtc_runtime",
+          "precision": {
+            "carry_clear_readback": false,
+            "carry_set_readback": false,
+            "halt_semantics_proven": false,
+            "observed_carry": true,
+            "seeded_elapsed_days": 512,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "rtc_transition": "rtc_seeded_day_counter_readback",
+            "surface": "rtc"
+          },
+          "source_kind": "pyboy_rtc_runtime",
+          "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+          "subjects": {
+            "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+          },
+          "validation": {
+            "case_id": "rtc_seeded_day_512_carry_overflow_readback",
+            "transition_kind": "rtc_seeded_day_counter_readback"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "carry_matches": true,
+          "case_id": "rtc_seeded_day_512_carry_overflow_readback",
+          "day_high_day_bit_matches": true,
+          "day_low_matches": true,
+          "expected_carry": true,
+          "expected_day_high_day_bit": 0,
+          "expected_day_low": 0,
+          "halt_semantics_proven": false,
+          "known_limits": [
+            "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+            "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+          ],
+          "observed_carry": true,
+          "observed_day_high": 128,
+          "observed_day_high_day_bit": 0,
+          "observed_day_low": 0,
+          "observed_halt": false,
+          "pc_after": 65414,
+          "seeded_elapsed_days": 512,
+          "transition_kind": "rtc_seeded_day_counter_readback",
+          "transition_observed": true,
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "carry_clear_readback": false,
+          "carry_set_readback": false,
+          "halt_semantics_proven": false,
+          "observed_carry": true,
+          "seeded_elapsed_days": 512,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "rtc_transition": "rtc_seeded_day_counter_readback",
+          "surface": "rtc"
+        },
+        "seq": 3,
+        "source_kind": "pyboy_rtc_runtime",
+        "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+        "subjects": {
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "validation": {
+          "case_id": "rtc_seeded_day_512_carry_overflow_readback",
+          "transition_kind": "rtc_seeded_day_counter_readback"
+        }
+      },
+      {
+        "event_kind": "hardware_event",
+        "evidence_atom": {
+          "claim_type": "runtime_event.hardware_event",
+          "detail": {},
+          "observation_type": "explicit_hardware_event",
+          "origin": "pyboy_rtc_runtime",
+          "precision": {
+            "carry_clear_readback": false,
+            "carry_set_readback": false,
+            "halt_semantics_proven": false,
+            "observed_carry": true,
+            "seeded_elapsed_days": 513,
+            "transition_observed": true
+          },
+          "proof_status": "runtime_observed",
+          "schema_version": 1,
+          "scope": {
+            "backend": "pyboy",
+            "rtc_transition": "rtc_seeded_day_counter_readback",
+            "surface": "rtc"
+          },
+          "source_kind": "pyboy_rtc_runtime",
+          "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+          "subjects": {
+            "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+          },
+          "validation": {
+            "case_id": "rtc_seeded_day_513_carry_overflow_readback",
+            "transition_kind": "rtc_seeded_day_counter_readback"
+          }
+        },
+        "frame": null,
+        "kind": "runtime_event_envelope",
+        "observation_type": "explicit_hardware_event",
+        "payload": {
+          "carry_matches": true,
+          "case_id": "rtc_seeded_day_513_carry_overflow_readback",
+          "day_high_day_bit_matches": true,
+          "day_low_matches": true,
+          "expected_carry": true,
+          "expected_day_high_day_bit": 0,
+          "expected_day_low": 1,
+          "halt_semantics_proven": false,
+          "known_limits": [
+            "This case proves PyBoy readback from a prepared .rtc timezero basis.",
+            "It is not a naturally elapsed 512-day runtime replay and does not prove halt semantics."
+          ],
+          "observed_carry": true,
+          "observed_day_high": 128,
+          "observed_day_high_day_bit": 0,
+          "observed_day_low": 1,
+          "observed_halt": false,
+          "pc_after": 65414,
+          "seeded_elapsed_days": 513,
+          "transition_kind": "rtc_seeded_day_counter_readback",
+          "transition_observed": true,
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "pc_bank_address": "",
+        "pc_label": "",
+        "precision": {
+          "carry_clear_readback": false,
+          "carry_set_readback": false,
+          "halt_semantics_proven": false,
+          "observed_carry": true,
+          "seeded_elapsed_days": 513,
+          "transition_observed": true
+        },
+        "proof_status": "runtime_observed",
+        "schema_version": 1,
+        "scope": {
+          "backend": "pyboy",
+          "rtc_transition": "rtc_seeded_day_counter_readback",
+          "surface": "rtc"
+        },
+        "seq": 4,
+        "source_kind": "pyboy_rtc_runtime",
+        "source_report": "debugger_deity_rtc_register_edge_runtime_replay",
+        "subjects": {
+          "write_range": ".rtc timezero seed,$4000-$5FFF,$6000-$7FFF"
+        },
+        "validation": {
+          "case_id": "rtc_seeded_day_513_carry_overflow_readback",
+          "transition_kind": "rtc_seeded_day_counter_readback"
+        }
+      }
+    ],
+    "schema_version": 1,
+    "stream_digest": "56aa399f445a6ce12719568959bdd7463131842fd16c685e8936e93e9bd2d868",
+    "symbols_path": "pokegold.sym",
+    "valid": true
+  },
+  "schema_version": 1,
+  "surface": "rtc",
+  "valid": true
+}
