@@ -3,14 +3,14 @@
     "decision_input.auto_resolved",
     "input_manifest.replay_verified"
   ],
-  "generated_at": "2026-06-05T00:56:51Z",
+  "generated_at": "2026-06-10T03:04:19Z",
   "hash_basis": {
-    "current_trace_rom_sha256": "22535DE8D6076EFCDA48D2D9DDA5FF9D92499F24A882481864B69861A4EA2A69",
-    "current_trace_symbols_sha256": "89C5794A698B5FCBC63F24140BF54D576D62A9774218FEB408C8678E171DE27E",
-    "manifest_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-    "manifest_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
-    "trace_rom_matches_manifest": false,
-    "trace_symbols_matches_manifest": false
+    "current_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+    "current_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+    "manifest_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+    "manifest_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+    "trace_rom_matches_manifest": true,
+    "trace_symbols_matches_manifest": true
   },
   "kind": "boss_ai_decision_input_manifest",
   "known_limits": [
@@ -41,9 +41,9 @@
   },
   "schema_version": 1,
   "source_state": {
-    "dirty_diff_sha256": "CAE441A1F92B40D6F810ABEF6DB3F40E28D5628C77A559121EA3111AFD582056",
-    "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-    "trace_artifact_sha256": "3890A9F9AB035713493119B8645F16FEB016B6A491DC8D6EC6C34D3EBFD8BBCC"
+    "dirty_diff_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "git_commit": "1cbbb0337a93194996f35ac98506f52a3c93ff87",
+    "trace_artifact_sha256": "A2F6B3A02F3C64D48B49549BB6B6B4DD4C5AC483390EA03B9E9805714F5B92BD"
   },
   "target": {
     "boss_route": "falkner",

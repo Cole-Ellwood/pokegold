@@ -73,12 +73,12 @@
       "decision_input.auto_resolved",
       "input_manifest.replay_verified"
     ],
-    "generated_at": "2026-06-04T12:12:27Z",
+    "generated_at": "2026-06-10T03:04:19Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-      "current_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
-      "manifest_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-      "manifest_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D",
+      "current_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+      "current_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
+      "manifest_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+      "manifest_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D",
       "trace_rom_matches_manifest": true,
       "trace_symbols_matches_manifest": true
     },
@@ -109,9 +109,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "A9D7525211AFBE3F9573D33D3F1673AB688169FAB8C6E4ECE445954300542DB0",
-      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-      "trace_artifact_sha256": "F42D744A6A9EBE81EA057BDA76CA0EC2B004D529BD88CF677C7736FD5571FE57"
+      "dirty_diff_sha256": "5FE898C07E779373E96E055B07914066C1FC2012314DE257E7CB0F2E99F82356",
+      "git_commit": "1cbbb0337a93194996f35ac98506f52a3c93ff87",
+      "trace_artifact_sha256": "BBBA8411F12F80A414EFB191B3343E615F6EB65F2459488635DE33577C509024"
     },
     "target": {
       "boss_route": "shared_switch_loop",
@@ -139,13 +139,13 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.apply_lookahead_to_top_move_candidates",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5715"
         },
         {
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.select_move",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2782"
         },
         {
           "classification": "platform_boundary",
@@ -338,8 +338,8 @@
       ],
       "move_scores": [
         20,
-        37,
-        38,
+        23,
+        24,
         38
       ],
       "possible_action_ids": [],
@@ -458,7 +458,7 @@
         "status": "missing"
       },
       {
-        "detail": "move_scores=[20, 37, 38, 38]",
+        "detail": "move_scores=[20, 23, 24, 38]",
         "id": "score_bytes",
         "status": "present"
       },
@@ -677,8 +677,8 @@
         ],
         "move_scores": [
           20,
-          37,
-          38,
+          23,
+          24,
           38
         ],
         "possible_action_ids": [],
@@ -777,7 +777,7 @@
       "base_state": ".local/tmp/boss_state_factory/shared_switch_loop_predispatch.state",
       "base_state_field": "switch_materialization_state",
       "checked_count": 12,
-      "elapsed_seconds": 0.5885053999954835,
+      "elapsed_seconds": 0.5355362999980571,
       "error_count": 0,
       "kind": "rom_switch_materialization",
       "known_limits": [
@@ -785,7 +785,7 @@
         "This proves switch-dispatch proposal behavior and reports the final source-mirrored switch-roll frequency from observed confidence plus an explicit or source-derived threshold; it does not prove move score bytes.",
         "Only public battle facts and boss-owned party state are patched; hidden player party, hidden moves, PP, held items, and current input are not read."
       ],
-      "materializations_per_minute": 1223.438221646778,
+      "materializations_per_minute": 1344.446678969497,
       "policy_disagreement_count": 0,
       "scenario_count": 12,
       "schema_version": 1,
@@ -799,16 +799,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "E92915F3D92FDB26EC87D656C37463F8CEFB7679944C2C35926B80B1F8E3948B",
-            "class_id": "csc_E92915F3D92FDB26EC87",
+            "class_fingerprint": "8725868BD8B23F2DA814CD357F336DBBCAE9A2F2176ADF2508755B52C601CE24",
+            "class_id": "csc_8725868BD8B23F2DA814",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -881,7 +881,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
-              "state_hash": "6FA6E3884B09DD6736870130748A9A5F9B993F0CB183A516ECFAFEC907DB0B83"
+              "state_hash": "E1027493899BA3401F2128DFAA85E134B586A7971A7DFB7283ED3B869982A724"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -899,14 +899,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "6FA6E3884B09DD6736870130748A9A5F9B993F0CB183A516ECFAFEC907DB0B83"
+                "state_hash": "E1027493899BA3401F2128DFAA85E134B586A7971A7DFB7283ED3B869982A724"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "E92915F3D92FDB26EC87D656C37463F8CEFB7679944C2C35926B80B1F8E3948B",
-          "class_id": "csc_E92915F3D92FDB26EC87",
+          "class_fingerprint": "8725868BD8B23F2DA814CD357F336DBBCAE9A2F2176ADF2508755B52C601CE24",
+          "class_id": "csc_8725868BD8B23F2DA814",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -1204,9 +1204,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00000_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -1274,16 +1274,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "4679DF1A6A69F036C7B38D04E44A61C6D5FB5998AEFBDBBF92A23D6FCC91181D",
-            "class_id": "csc_4679DF1A6A69F036C7B3",
+            "class_fingerprint": "1DAAE591EEA5942B5805703A1A63CAEA10ED379F57E0FE18F98AE13EAEA1FEB9",
+            "class_id": "csc_1DAAE591EEA5942B5805",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -1356,7 +1356,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
-              "state_hash": "3982C9BC77C09A89D30071534B60D9C6C172B162325AE7BAD42437D54620BB30"
+              "state_hash": "C709AC8CCED7B644B77D0F9C08A6F33A93BDDE27227BC234A9490DDBE33F0AB6"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -1374,14 +1374,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "3982C9BC77C09A89D30071534B60D9C6C172B162325AE7BAD42437D54620BB30"
+                "state_hash": "C709AC8CCED7B644B77D0F9C08A6F33A93BDDE27227BC234A9490DDBE33F0AB6"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "4679DF1A6A69F036C7B38D04E44A61C6D5FB5998AEFBDBBF92A23D6FCC91181D",
-          "class_id": "csc_4679DF1A6A69F036C7B3",
+          "class_fingerprint": "1DAAE591EEA5942B5805703A1A63CAEA10ED379F57E0FE18F98AE13EAEA1FEB9",
+          "class_id": "csc_1DAAE591EEA5942B5805",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -1679,9 +1679,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00001_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -1706,16 +1706,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "DCE8D89BDE04230A37FA937091C9C70ABB29BF4A6EBD1E4B6D47E2EF12E695DD",
-            "class_id": "csc_DCE8D89BDE04230A37FA",
+            "class_fingerprint": "0A322A9A615213B5D58B100A0EA484AFDEAE7B5A63067D06BC167D3D639CC378",
+            "class_id": "csc_0A322A9A615213B5D58B",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -1786,7 +1786,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00002_stay_when_current_move_converts",
-              "state_hash": "748F9880FA51007ED846591E07134031658C923F44763F9909AAC9E26453D772"
+              "state_hash": "026253A65B959EF251137B7C28472545372315FF7CE0E9791658234CA0A53C87"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -1804,14 +1804,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "748F9880FA51007ED846591E07134031658C923F44763F9909AAC9E26453D772"
+                "state_hash": "026253A65B959EF251137B7C28472545372315FF7CE0E9791658234CA0A53C87"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "DCE8D89BDE04230A37FA937091C9C70ABB29BF4A6EBD1E4B6D47E2EF12E695DD",
-          "class_id": "csc_DCE8D89BDE04230A37FA",
+          "class_fingerprint": "0A322A9A615213B5D58B100A0EA484AFDEAE7B5A63067D06BC167D3D639CC378",
+          "class_id": "csc_0A322A9A615213B5D58B",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -2109,9 +2109,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00002_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -2136,16 +2136,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "873DDA3F01DC446CED88CBCC72254EDB0865AE15BE59E034073FEA6CFF83C743",
-            "class_id": "csc_873DDA3F01DC446CED88",
+            "class_fingerprint": "DD3ECFFD8EFC266854B3F4503383927546818F3429D712A4004E0F9856D6ACFE",
+            "class_id": "csc_DD3ECFFD8EFC266854B3",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -2218,7 +2218,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
-              "state_hash": "C3D2BCEEC807A83D3C26C12FC6D7898806D8CBDC6DBEC1CA12F8BF72C2CADE5D"
+              "state_hash": "1E3F26C8682B6AA9292717BB2D5177DA0B5055E7203F89BC6D9E87DF05370C5E"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -2236,14 +2236,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "C3D2BCEEC807A83D3C26C12FC6D7898806D8CBDC6DBEC1CA12F8BF72C2CADE5D"
+                "state_hash": "1E3F26C8682B6AA9292717BB2D5177DA0B5055E7203F89BC6D9E87DF05370C5E"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "873DDA3F01DC446CED88CBCC72254EDB0865AE15BE59E034073FEA6CFF83C743",
-          "class_id": "csc_873DDA3F01DC446CED88",
+          "class_fingerprint": "DD3ECFFD8EFC266854B3F4503383927546818F3429D712A4004E0F9856D6ACFE",
+          "class_id": "csc_DD3ECFFD8EFC266854B3",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -2541,9 +2541,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00003_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -2611,16 +2611,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "E633CA9544C4A12F3856DBF24FB4536A7C2A4A85B1D2C6F595F42FB484E74A28",
-            "class_id": "csc_E633CA9544C4A12F3856",
+            "class_fingerprint": "EC212E7C909EC009AB8A4725C3350A074BCBF23880DCEAB6C7B55A954C2EC0C1",
+            "class_id": "csc_EC212E7C909EC009AB8A",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -2693,7 +2693,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
-              "state_hash": "0C6FC8FB8F4E557CC1112ABE53BAB72F130C349F9E3329A75E2880C003EDEB2C"
+              "state_hash": "586F36DC2D1D5BB8E887FFC33DCD152C877F169787F61BB904602EEA3BECE7D0"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -2711,14 +2711,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "0C6FC8FB8F4E557CC1112ABE53BAB72F130C349F9E3329A75E2880C003EDEB2C"
+                "state_hash": "586F36DC2D1D5BB8E887FFC33DCD152C877F169787F61BB904602EEA3BECE7D0"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "E633CA9544C4A12F3856DBF24FB4536A7C2A4A85B1D2C6F595F42FB484E74A28",
-          "class_id": "csc_E633CA9544C4A12F3856",
+          "class_fingerprint": "EC212E7C909EC009AB8A4725C3350A074BCBF23880DCEAB6C7B55A954C2EC0C1",
+          "class_id": "csc_EC212E7C909EC009AB8A",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -3016,9 +3016,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00004_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -3043,16 +3043,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "23543E2B08AE9541D1C19185F8CBF715DE8A2F0A0158BA6BD7C4605CF0A7B227",
-            "class_id": "csc_23543E2B08AE9541D1C1",
+            "class_fingerprint": "04B26DA67AC5FFC439F87F281A390259A82207E8C8F47217AB43B93CD32796FF",
+            "class_id": "csc_04B26DA67AC5FFC439F8",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -3123,7 +3123,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00005_stay_when_current_move_converts",
-              "state_hash": "6E164D24940893264D7383063DAFB505C9B4740F316A9EBB2249D5B6BF5A3D74"
+              "state_hash": "DB7D4F840D950527000A7E870554B62D294E61596CDDFC35A318F07CA8FADFDC"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -3141,14 +3141,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "6E164D24940893264D7383063DAFB505C9B4740F316A9EBB2249D5B6BF5A3D74"
+                "state_hash": "DB7D4F840D950527000A7E870554B62D294E61596CDDFC35A318F07CA8FADFDC"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "23543E2B08AE9541D1C19185F8CBF715DE8A2F0A0158BA6BD7C4605CF0A7B227",
-          "class_id": "csc_23543E2B08AE9541D1C1",
+          "class_fingerprint": "04B26DA67AC5FFC439F87F281A390259A82207E8C8F47217AB43B93CD32796FF",
+          "class_id": "csc_04B26DA67AC5FFC439F8",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -3446,9 +3446,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00005_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -3473,16 +3473,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "82A254F3ED90800A929AFFC43CC3933B7021461A8B800BE46D91A2FB8A306527",
-            "class_id": "csc_82A254F3ED90800A929A",
+            "class_fingerprint": "E941F9F59382E383FFD98297829D97A8C1E2A61A8F7E205451C5D3844238B50B",
+            "class_id": "csc_E941F9F59382E383FFD9",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -3555,7 +3555,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
-              "state_hash": "DCF3CBD6495405BD3CCEE4603FBCB3EA61E151DB83DABE8D2525745FE2E920DF"
+              "state_hash": "F124C25777ECD767A6D55C9F1E04BEB631502D953A568CFF5B62715A13088E9E"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -3573,18 +3573,18 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "DCF3CBD6495405BD3CCEE4603FBCB3EA61E151DB83DABE8D2525745FE2E920DF"
+                "state_hash": "F124C25777ECD767A6D55C9F1E04BEB631502D953A568CFF5B62715A13088E9E"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "82A254F3ED90800A929AFFC43CC3933B7021461A8B800BE46D91A2FB8A306527",
-          "class_id": "csc_82A254F3ED90800A929A",
+          "class_fingerprint": "E941F9F59382E383FFD98297829D97A8C1E2A61A8F7E205451C5D3844238B50B",
+          "class_id": "csc_E941F9F59382E383FFD9",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
-            "actual_switch": false,
+            "actual_switch": true,
             "chosen_move": 0,
             "diagnostics": {
               "likely_type_mask_cache": [
@@ -3863,7 +3863,7 @@
                 "value": 100
               }
             ],
-            "observation_status": "switch_proposal_observed",
+            "observation_status": "actual_switch_observed",
             "observed_decision": true,
             "observed_switch_path": true,
             "proposed_switch": true,
@@ -3872,15 +3872,15 @@
             "source": "trace_rom_pyboy_switch",
             "switch_confidence": 99,
             "switch_gate_evaluated": true,
-            "switch_index": 0,
+            "switch_index": 2,
             "switch_param": 49,
             "trace_basis": {
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00006_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -3948,16 +3948,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "145AD4204C541D1384DA79EDD5C7A9B13A3EF420D0ACA88C479C16C592845AC7",
-            "class_id": "csc_145AD4204C541D1384DA",
+            "class_fingerprint": "DE7A6032966BA45711BB19869986A1936CAA3DBBE4BF3DCD6770C640B28CAC90",
+            "class_id": "csc_DE7A6032966BA45711BB",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -4030,7 +4030,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
-              "state_hash": "FC494EC59D06B0527A8F3F4330E15A97017B9044ACEE0C1C91032E3816532CC8"
+              "state_hash": "F64181067BDB8A0008E85B06C6D403CFDB3A331EA27AAD174A085713C3B70C5B"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -4048,14 +4048,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "FC494EC59D06B0527A8F3F4330E15A97017B9044ACEE0C1C91032E3816532CC8"
+                "state_hash": "F64181067BDB8A0008E85B06C6D403CFDB3A331EA27AAD174A085713C3B70C5B"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "145AD4204C541D1384DA79EDD5C7A9B13A3EF420D0ACA88C479C16C592845AC7",
-          "class_id": "csc_145AD4204C541D1384DA",
+          "class_fingerprint": "DE7A6032966BA45711BB19869986A1936CAA3DBBE4BF3DCD6770C640B28CAC90",
+          "class_id": "csc_DE7A6032966BA45711BB",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -4353,9 +4353,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00007_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -4380,16 +4380,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "C6F8C544F1AA269E1AD1796FA2B62C8E733091F889937869CE299BF1377C98A8",
-            "class_id": "csc_C6F8C544F1AA269E1AD1",
+            "class_fingerprint": "A137A8BB9BD0FE65CD6CAF74D41186C986F772ED6226BF312DF5859184A6EB8C",
+            "class_id": "csc_A137A8BB9BD0FE65CD6C",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -4460,7 +4460,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00008_stay_when_current_move_converts",
-              "state_hash": "D7C93DAAD8284297D334C4F42BB4114728826CAFC88C96AF90EAB955EBF1C49C"
+              "state_hash": "73CBBF6FDEF10B52A80D0D8BB55581F924FFD9151DEA3E74B3F64205CB4C3C64"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -4478,14 +4478,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "D7C93DAAD8284297D334C4F42BB4114728826CAFC88C96AF90EAB955EBF1C49C"
+                "state_hash": "73CBBF6FDEF10B52A80D0D8BB55581F924FFD9151DEA3E74B3F64205CB4C3C64"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "C6F8C544F1AA269E1AD1796FA2B62C8E733091F889937869CE299BF1377C98A8",
-          "class_id": "csc_C6F8C544F1AA269E1AD1",
+          "class_fingerprint": "A137A8BB9BD0FE65CD6CAF74D41186C986F772ED6226BF312DF5859184A6EB8C",
+          "class_id": "csc_A137A8BB9BD0FE65CD6C",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -4783,9 +4783,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00008_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -4810,16 +4810,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "B01C0433E37A316F60C8CF727DE0AED711DC897FEDBCB56CCFE47F636E76C1D0",
-            "class_id": "csc_B01C0433E37A316F60C8",
+            "class_fingerprint": "16C835036BBFAB80198B5ACC42A29440BFEBBDBE4490C3B2F8BAF064D708A652",
+            "class_id": "csc_16C835036BBFAB80198B",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -4892,7 +4892,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
-              "state_hash": "5D10D0A57D952EF04DEDABB25FF19B4A51087EAB115054C6750C31D8F3AC7A9A"
+              "state_hash": "102213A0381BA5645C6622963188D2A7B6E9500D7CCC610D42B72556A4850AE0"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -4910,14 +4910,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "5D10D0A57D952EF04DEDABB25FF19B4A51087EAB115054C6750C31D8F3AC7A9A"
+                "state_hash": "102213A0381BA5645C6622963188D2A7B6E9500D7CCC610D42B72556A4850AE0"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "B01C0433E37A316F60C8CF727DE0AED711DC897FEDBCB56CCFE47F636E76C1D0",
-          "class_id": "csc_B01C0433E37A316F60C8",
+          "class_fingerprint": "16C835036BBFAB80198B5ACC42A29440BFEBBDBE4490C3B2F8BAF064D708A652",
+          "class_id": "csc_16C835036BBFAB80198B",
           "expected_switch": true,
           "family": "switch_sack",
           "rom": {
@@ -5215,9 +5215,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00009_preserve_wincon_over_comfort_damage",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -5285,16 +5285,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "FB006825EF4581C90AE0FF65E9CC844BB720F846356602F63DDDA375901964D1",
-            "class_id": "csc_FB006825EF4581C90AE0",
+            "class_fingerprint": "09F5F20809B1C67835C1A520660C46DBD7A9356C4000DB145ED868EA1ABEA713",
+            "class_id": "csc_09F5F20809B1C67835C1",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -5367,7 +5367,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
-              "state_hash": "EE65E11BDE12479A45FE2AB26B7E3326DE2B593A52FFB6F87583151829FD1080"
+              "state_hash": "548B9A53C59521E356A3CB51D26A6ED8A1B797CE45E6C24D28A20444FA367785"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -5385,14 +5385,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "EE65E11BDE12479A45FE2AB26B7E3326DE2B593A52FFB6F87583151829FD1080"
+                "state_hash": "548B9A53C59521E356A3CB51D26A6ED8A1B797CE45E6C24D28A20444FA367785"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "FB006825EF4581C90AE0FF65E9CC844BB720F846356602F63DDDA375901964D1",
-          "class_id": "csc_FB006825EF4581C90AE0",
+          "class_fingerprint": "09F5F20809B1C67835C1A520660C46DBD7A9356C4000DB145ED868EA1ABEA713",
+          "class_id": "csc_09F5F20809B1C67835C1",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -5690,9 +5690,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00010_defensive_sack_for_safe_entry",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -5717,16 +5717,16 @@
               "boss_ai_generated_scenario_lacks_rom_proof_artifact"
             ],
             "checkpoint": {},
-            "class_fingerprint": "A907458814862B94F5250D5E0E572D21C49E565B43A0D9EC4588764123364B95",
-            "class_id": "csc_A907458814862B94F525",
+            "class_fingerprint": "34752F1E177E7F41CB15DBB4569FE0347239E12D4FB1FA217D10372D4A545453",
+            "class_id": "csc_34752F1E177E7F41CB15",
             "hidden_facts": {},
             "identity": {
-              "dirty_diff_hash": "25C3E2C69A6CEC716704AEA69D2E4ABC5E2DF8345398E5F4F9B4A494A6A3C8FB",
-              "map_sha256": "95A1CD8309DDBF41DE9D434085C3DAC2CC514CE06D4EA0F244E8B2C4B3AB3781",
-              "rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-              "rule_map_sha256": "CBC80AF7602DA0FE1F704F5E4DE49EAE8B1E2894B9548BC5C438FD1FB1960AC4",
-              "source_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-              "symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "dirty_diff_hash": "8B7DBE4D2755A85A92156EB4A7CF82CA0FFB58A9085D826E6D6160FEBFFD85D4",
+              "map_sha256": "69B30CA02819A6AA189E7B2E52D2B6B2A19EC15DE22ED425CECBE5E032F7447E",
+              "rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+              "rule_map_sha256": "3E823C52B25EB6598E430D5E1368D5537A41DF0E40506C81E831EAC75F939A79",
+              "source_tree_sha256": "C7F36CBA70350E61F9BA1259DABB7667ACAC8631306F4B48CDFCDA1793A21FE8",
+              "symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             },
             "kind": "canonical_state_class",
             "known_limits": [
@@ -5797,7 +5797,7 @@
             "raw_state_provenance": {
               "kind": "boss_ai_generated_scenario",
               "scenario_id": "generated_switch_sack_1_00011_stay_when_current_move_converts",
-              "state_hash": "BABD2B1747B29A35E4CD8FAC508D3FDD406B426A5430606561F3511EC6FF6DB3"
+              "state_hash": "1F5BA2937BEB38167074766854E7C61CF08B6AC8C598F41F4BB623874165A6E2"
             },
             "reachable_proof": {},
             "rng_assumptions": {},
@@ -5815,14 +5815,14 @@
                 "generator_source": "tools.boss_ai_debugger.generators",
                 "mastery_source": {},
                 "replay_source": {},
-                "state_hash": "BABD2B1747B29A35E4CD8FAC508D3FDD406B426A5430606561F3511EC6FF6DB3"
+                "state_hash": "1F5BA2937BEB38167074766854E7C61CF08B6AC8C598F41F4BB623874165A6E2"
               }
             },
             "valid": true,
             "validation_errors": []
           },
-          "class_fingerprint": "A907458814862B94F5250D5E0E572D21C49E565B43A0D9EC4588764123364B95",
-          "class_id": "csc_A907458814862B94F525",
+          "class_fingerprint": "34752F1E177E7F41CB15DBB4569FE0347239E12D4FB1FA217D10372D4A545453",
+          "class_id": "csc_34752F1E177E7F41CB15",
           "expected_switch": false,
           "family": "switch_sack",
           "rom": {
@@ -6120,9 +6120,9 @@
               "boss": "shared_switch_loop",
               "notes": "generated-switch-materialization:generated_switch_sack_1_00011_stay_when_current_move_converts",
               "trace_rom": "pokegold_trace.gbc",
-              "trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
+              "trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
               "trace_symbols": "pokegold_trace.sym",
-              "trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+              "trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
             }
           },
           "rom_policy": {
@@ -6154,7 +6154,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_execution_hook",
-      "line": 5719,
+      "line": 5715,
       "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
       "public_reads": [],
       "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -6165,7 +6165,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_score_execution_hook",
-      "line": 2786,
+      "line": 2782,
       "parent_label": "BossAI_SelectMove",
       "public_reads": [],
       "rule_id": "move.select_move",

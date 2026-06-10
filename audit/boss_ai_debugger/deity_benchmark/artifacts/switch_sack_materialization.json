@@ -25,7 +25,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -67,7 +67,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -109,7 +109,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -151,7 +151,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -248,10 +248,10 @@
     "closed_evidence_ids": [
       "decision_input.generated_auto"
     ],
-    "generated_at": "2026-06-04T12:12:32Z",
+    "generated_at": "2026-06-10T03:04:23Z",
     "hash_basis": {
-      "current_trace_rom_sha256": "1BB1C97C046EEAF0058D68EB99543F2CD744EF66FFDB053A094290B3BF754045",
-      "current_trace_symbols_sha256": "C1E0F62C4BFAA3D0B1EB410602F3DAA1A8C927847992F72AB07FC3E39A68BE2D"
+      "current_trace_rom_sha256": "1B95A5D9079E946990B71D61BFE2D03B2DF40C539CCD1DA77A9B6F71398EEBB0",
+      "current_trace_symbols_sha256": "966C75E5F976597FF0BE23FCD710CE34E261DAA43BD166970509BAD26F5BCB5D"
     },
     "kind": "boss_ai_decision_input_manifest",
     "known_limits": [
@@ -270,9 +270,9 @@
     },
     "schema_version": 1,
     "source_state": {
-      "dirty_diff_sha256": "760C536C32BEE8D9108896941DDA067F05FE0C1B14491A06A08198E18F66704F",
-      "git_commit": "ed91ecbfa4c2b04bd70141adc268d20eb7b76c42",
-      "scenario_artifact_sha256": "EEA88D055EFCFFB0E8B4AB583C4471A07A25CCB487B2582C7D770B533E92E2D6"
+      "dirty_diff_sha256": "57E4839C12979BE68D243A2D4E8DB23EB0614EE6BC3D107A70EE528994E6673D",
+      "git_commit": "1cbbb0337a93194996f35ac98506f52a3c93ff87",
+      "scenario_artifact_sha256": "46EA7E647CA8BC9042C99577A7ACF4DA9259A148526D7CB89CA1434816113960"
     },
     "target": {
       "case": "best_review",
@@ -348,7 +348,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -378,7 +378,7 @@
             "anchor_status": "mapped",
             "classification": "platform_boundary",
             "coverage_mode": "rom_execution_hook",
-            "line": 5719,
+            "line": 5715,
             "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
             "public_reads": [],
             "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -392,13 +392,13 @@
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.apply_lookahead_to_top_move_candidates",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:5719"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:5715"
         },
         {
           "classification": "platform_boundary",
           "public_reads": [],
           "rule_id": "move.select_move",
-          "source": "engine\\battle\\ai\\boss_policy_move.asm:2786"
+          "source": "engine\\battle\\ai\\boss_policy_move.asm:2782"
         },
         {
           "classification": "platform_boundary",
@@ -1044,7 +1044,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_execution_hook",
-      "line": 5719,
+      "line": 5715,
       "parent_label": "BossAI_ApplyLookaheadToTopMoveCandidates",
       "public_reads": [],
       "rule_id": "move.apply_lookahead_to_top_move_candidates",
@@ -1055,7 +1055,7 @@
       "anchor_status": "mapped",
       "classification": "platform_boundary",
       "coverage_mode": "rom_score_execution_hook",
-      "line": 2786,
+      "line": 2782,
       "parent_label": "BossAI_SelectMove",
       "public_reads": [],
       "rule_id": "move.select_move",
