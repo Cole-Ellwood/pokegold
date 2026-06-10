@@ -104,47 +104,56 @@ def audit_trace_top_moves_preserves_pointer(boss: str) -> None:
 
 
 def audit_move_model_trace_snapshots(boss: str, wram: str) -> None:
+    # The recorders live in the floating "Boss AI Trace" section
+    # (boss_trace_topmoves.asm) and are farcalled: hl is saved at each site
+    # because rst FarCall clobbers it; score rides in b, loop counter in c.
     move_model = top_block(boss, "BossAI_ApplyMoveModel")
     require_order(
         move_model,
         [
             "call BossAI_ComputePlayerPlausibleTypeMask",
-            "call .ClearMoveModelTrace",
+            "farcall BossAI_TraceClearMoveModelScores",
             "ld hl, wEnemyAIMoveScores",
             "ld de, wEnemyMonMoves",
-            "call .TracePreModelScore",
+            "ld b, [hl]",
+            "push hl",
+            "farcall BossAI_TraceRecordPreModelScore",
+            "pop hl",
             "ld a, [hl]",
             "cp 80",
             "jr nc, .scored",
             "call .ScoreMove",
             ".scored",
-            "call .TracePostModelScore",
+            "ld b, [hl]",
+            "push hl",
+            "farcall BossAI_TraceRecordPostModelScore",
+            "pop hl",
         ],
         "move-model trace snapshots bracket policy scoring",
     )
-    for label in (".TracePreModelScore", ".TracePostModelScore"):
-        helper = local_block(move_model, label, ".ScoreMove" if label == ".TracePostModelScore" else ".TracePostModelScore")
+    trace_source = BOSS_TRACE_TOPMOVES.read_text(encoding="utf-8")
+    for label in ("BossAI_TraceRecordPreModelScore", "BossAI_TraceRecordPostModelScore"):
+        helper = top_block(trace_source, label)
+        buffer = (
+            "wBossAITracePreModelScores"
+            if label == "BossAI_TraceRecordPreModelScore"
+            else "wBossAITracePostModelScores"
+        )
         require_order(
             helper,
             [
-                "push af",
                 "push bc",
-                "push de",
-                "push hl",
-                "ld d, [hl]",
                 "ld a, NUM_MOVES",
                 "sub c",
                 "ld c, a",
                 "ld b, 0",
+                f"ld hl, {buffer}",
                 "add hl, bc",
-                "ld [hl], d",
-                "pop hl",
-                "pop de",
                 "pop bc",
-                "pop af",
+                "ld [hl], b",
                 "ret",
             ],
-            f"{label} preserves score-loop registers",
+            f"{label} preserves the score-loop counter pair",
         )
     require_contains(
         wram,

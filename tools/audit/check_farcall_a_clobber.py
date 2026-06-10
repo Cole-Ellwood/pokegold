@@ -60,6 +60,27 @@ KNOWN LIMITATIONS (v1):
   the trailing `ret` doesn't read a, so callers OF the wrapper aren't flagged
   here; bugs in that shape are caught when AG-08-style fixes are applied at
   the inner target).
+
+INPUT DIRECTION (v2, added 2026-06-09):
+The macro also clobbers a on the way IN: `farcall` expands to
+`ld a, BANK(target)` before `rst FarCall`, so a target that reads `a` as an
+INPUT receives the bank number, never the caller's value. Four live bugs
+shipped this way (player Choice lock dead, player Assault Vest dead, mail
+detach corrupting PC mailbox SRAM, Ditto Imposter guard reading the wrong
+battle var).
+
+A site is flagged when BOTH hold:
+- The instruction immediately before the farcall stages a value in `a`
+  (`ld a, *` / `ldh a, *` / `pop af` / `xor a` / a-modifying arithmetic).
+- The target's first use of `a` is a READ, traced linearly with transitive
+  descent through `call`/`jp` to known labels (depth-limited; unknown
+  callees, `rst`, and nested farcalls count as a-writes, which is the
+  quiet/conservative direction for this check).
+
+Fix shape: pass the input in b/c/d/e (they survive rst FarCall) via a
+`FromE`-style entry point, or plain-`call` ROM0 targets. False positives
+(dead a-staging before a farcall whose target reads `a` value-independently)
+go in INPUT_ALLOWLIST with a justification.
 """
 from __future__ import annotations
 
@@ -162,6 +183,55 @@ UNCONDITIONAL_RET_RE = re.compile(r"^\s*ret\s*(?:;.*)?$", re.IGNORECASE)
 
 # How far past a farcall to look for caller-side consumption.
 LOOKAHEAD_INSTRUCTIONS = 6
+
+# --- Input-direction (v2) regexes ---------------------------------------
+
+# Caller-side: instruction stages a value in `a` for the next instruction.
+STAGES_A_RE = re.compile(
+    r"^\s*(?:"
+    r"ld\s+a\s*,"
+    r"|ldh\s+a\s*,"
+    r"|pop\s+af\b"
+    r"|xor\s+a\b"
+    r"|inc\s+a\b|dec\s+a\b"
+    r"|and\s+|or\s+|xor\s+"
+    r"|add\s+(?!hl\b|sp\b)|sub\s+|adc\s+(?!hl\b)|sbc\s+(?!hl\b)"
+    r"|swap\s+a\b|cpl\b|daa\b|rla\b|rra\b|rlca\b|rrca\b"
+    r")",
+    re.IGNORECASE,
+)
+# Target-side: instruction overwrites `a` before reading it (input ignored /
+# safe). farcall/callfar/homecall expand to `ld a, BANK(...)` first, and
+# unknown calls/rsts are conservatively assumed to clobber a.
+TARGET_WRITES_A_RE = re.compile(
+    r"^\s*(?:"
+    r"ld\s+a\s*,"
+    r"|ldh\s+a\s*,"
+    r"|pop\s+af\b"
+    r"|xor\s+a\b"
+    r"|farcall\b|callfar\b|homecall\b"
+    r")",
+    re.IGNORECASE,
+)
+TARGET_CALL_RE = re.compile(
+    r"^\s*call\s+(?:(?:nz|z|nc|c)\s*,\s*)?(?P<t>[A-Za-z_][A-Za-z0-9_]*)\s*(?:;.*)?$",
+    re.IGNORECASE,
+)
+TARGET_TAIL_JP_RE = re.compile(
+    r"^\s*jp\s+(?P<t>[A-Za-z_][A-Za-z0-9_]*)\s*(?:;.*)?$", re.IGNORECASE
+)
+UNCONDITIONAL_JUMP_RE = re.compile(
+    r"^\s*(?:jp|jr)\s+(?!nz|z|nc|c)", re.IGNORECASE
+)
+RST_RE = re.compile(r"^\s*rst\b", re.IGNORECASE)
+LOCAL_LABEL_RE = re.compile(r"^\s*\.[A-Za-z0-9_]+:?\s*(?:;.*)?$")
+
+# Max transitive-descent depth for target-side first-a-use tracing.
+FIRST_A_USE_MAX_DEPTH = 4
+
+# Targets whose first use of `a` is a read, but where farcall sites staging
+# `a` immediately beforehand are NOT bugs. Justify every entry.
+INPUT_ALLOWLIST: dict[str, str] = {}
 
 # Targets known to be intentionally not a-mirror-protected. Each entry needs
 # a justification so future readers can verify it stays correct.
@@ -269,6 +339,93 @@ def classify_target(func: Function) -> tuple[str, list[int]]:
     return ("SAFE", [])
 
 
+@dataclass
+class InputIssue:
+    target: str
+    target_path: Path
+    target_line: int
+    caller_path: Path
+    caller_line: int
+    staging: str
+    read_via: str
+
+
+def first_a_use(
+    func: Function,
+    functions: dict[str, Function],
+    visited: frozenset[str],
+    depth: int = 0,
+) -> tuple[str, str]:
+    """Trace the first use of `a` in func's body, linearly from the top.
+
+    Returns (kind, detail) where kind is:
+      'reads'   -- first a-touch is a read; detail = the reading line
+      'writes'  -- a is overwritten before any read (or analysis bailed
+                   conservatively at an unknown call/rst/jump)
+      'neutral' -- control returned without touching a
+    Conditional branches fall through (same approximation as v1)."""
+    if depth > FIRST_A_USE_MAX_DEPTH or func.label in visited:
+        return ("writes", "")
+    visited = visited | {func.label}
+    for raw in func.body:
+        code = code_part(raw)
+        if not code:
+            continue
+        if LOCAL_LABEL_RE.match(code):
+            continue
+        if TARGET_WRITES_A_RE.match(code):
+            return ("writes", "")
+        if CONSUMES_A_RE.match(code):
+            return ("reads", raw.strip())
+        m = TARGET_CALL_RE.match(code)
+        if m:
+            callee = functions.get(m["t"])
+            if callee is None:
+                return ("writes", "")  # unknown callee: assume clobber
+            kind, detail = first_a_use(callee, functions, visited, depth + 1)
+            if kind == "reads":
+                return ("reads", f"{detail} (via call {m['t']})")
+            if kind == "writes":
+                return ("writes", "")
+            continue  # neutral callee: keep walking
+        if RST_RE.match(code):
+            return ("writes", "")
+        m = TARGET_TAIL_JP_RE.match(code)
+        if m:
+            callee = functions.get(m["t"])
+            if callee is None:
+                return ("writes", "")
+            kind, detail = first_a_use(callee, functions, visited, depth + 1)
+            if kind == "reads":
+                return ("reads", f"{detail} (via jp {m['t']})")
+            return (kind if kind == "writes" else "neutral", "")
+        if RET_RE.match(code):
+            if UNCONDITIONAL_RET_RE.match(code):
+                return ("neutral", "")
+            continue
+        if UNCONDITIONAL_JUMP_RE.match(code):
+            # Unconditional jump to a local label: stop quietly
+            # (conservative: treat as clobber so we never false-positive).
+            return ("writes", "")
+    return ("neutral", "")
+
+
+def find_caller_staging(file_lines: list[str], farcall_idx: int) -> str | None:
+    """Return the instruction immediately preceding the farcall if it stages
+    a value in `a`; None otherwise. A label boundary means no staging."""
+    for j in range(farcall_idx - 1, -1, -1):
+        raw = file_lines[j]
+        if TOP_LABEL_RE.match(raw) or LOCAL_LABEL_RE.match(raw):
+            return None
+        code = code_part(raw)
+        if not code:
+            continue
+        if STAGES_A_RE.match(code):
+            return raw.strip()
+        return None
+    return None
+
+
 def is_carry_clear_idiom(file_lines: list[str], idiom_idx: int) -> bool:
     """True if the idiom-line at idiom_idx is followed immediately by an
     unconditional `ret` (the carry-clear-and-return shape)."""
@@ -314,6 +471,7 @@ def main() -> int:
     functions = collect_functions(files)
 
     issues: list[Issue] = []
+    input_issues: list[InputIssue] = []
     for asm_file in files:
         path = asm_file.path
         lines = asm_file.lines
@@ -322,11 +480,31 @@ def main() -> int:
             if not m:
                 continue
             target = m["target"]
-            if target in ALLOWLIST:
-                continue
             target_func = functions.get(target)
             if target_func is None:
                 continue  # target defined elsewhere (macro / external) -- skip
+
+            # Input direction (v2): caller stages a, target reads a first.
+            if target not in INPUT_ALLOWLIST:
+                staging = find_caller_staging(lines, i)
+                if staging is not None:
+                    kind, detail = first_a_use(target_func, functions, frozenset())
+                    if kind == "reads":
+                        input_issues.append(
+                            InputIssue(
+                                target=target,
+                                target_path=target_func.path,
+                                target_line=target_func.start_line,
+                                caller_path=path,
+                                caller_line=i + 1,
+                                staging=staging,
+                                read_via=detail,
+                            )
+                        )
+
+            # Return direction (v1).
+            if target in ALLOWLIST:
+                continue
             safety, unsafe_lines = classify_target(target_func)
             if safety != "UNSAFE":
                 continue
@@ -344,6 +522,35 @@ def main() -> int:
                     caller_consumption=consumption,
                 )
             )
+
+    if input_issues:
+        print("Farcall input-a-clobber audit FAILED.", file=sys.stderr)
+        print(
+            "`farcall`/`callfar` expand to `ld a, BANK(target)` before the\n"
+            "target runs, so an a-input target receives the bank number, not\n"
+            "the caller's staged value (see macros/farcall.asm).\n",
+            file=sys.stderr,
+        )
+        for issue in input_issues:
+            rel_caller = issue.caller_path.relative_to(ROOT)
+            rel_target = issue.target_path.relative_to(ROOT)
+            print(
+                f"  {rel_caller}:{issue.caller_line}  stages `a` via "
+                f"`{issue.staging}` then farcalls {issue.target} "
+                f"({rel_target}:{issue.target_line}), whose first use of `a` "
+                f"is a read: {issue.read_via}",
+                file=sys.stderr,
+            )
+        print(
+            "\nFix options:\n"
+            "  A. Pass the input in b/c/d/e (they survive rst FarCall) via a\n"
+            "     FromE-style entry point in the target's file.\n"
+            "  B. If the target is ROM0, use a plain `call` (preserves a).\n"
+            "If the staging is dead (target reads `a` value-independently),\n"
+            "add the target to INPUT_ALLOWLIST with a justification.",
+            file=sys.stderr,
+        )
+        return 1
 
     if issues:
         by_target: dict[str, list[Issue]] = {}
@@ -391,7 +598,8 @@ def main() -> int:
     print("Farcall a-clobber audit passed.")
     print(
         f"Scanned {len(files)} ASM files; analyzed {len(functions)} "
-        "top-level functions for a/c mirror safety."
+        "top-level functions for a/c mirror safety (return direction) "
+        "and staged input-a clobbers (input direction)."
     )
     return 0
 

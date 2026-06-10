@@ -177,7 +177,7 @@ BossAI_ApplyMoveModel:
 	call BossAI_SelectPlanIfNeeded
 	call BossAI_ComputePlayerPlausibleTypeMask
 IF DEF(BOSS_AI_TRACE)
-	call .ClearMoveModelTrace
+	farcall BossAI_TraceClearMoveModelScores
 ENDC
 
 	ld hl, wEnemyAIMoveScores
@@ -188,7 +188,13 @@ ENDC
 	and a
 	ret z
 IF DEF(BOSS_AI_TRACE)
-	call .TracePreModelScore
+	; Trace recorders live in the floating "Boss AI Trace" section to keep
+	; the Enemy Trainers bank under $4000 in trace builds. Score in b,
+	; loop counter in c (both survive rst FarCall); hl saved at the site.
+	ld b, [hl]
+	push hl
+	farcall BossAI_TraceRecordPreModelScore
+	pop hl
 ENDC
 	ld a, [hl]
 	cp 80
@@ -202,7 +208,10 @@ ENDC
 	pop bc
 .scored
 IF DEF(BOSS_AI_TRACE)
-	call .TracePostModelScore
+	ld b, [hl]
+	push hl
+	farcall BossAI_TraceRecordPostModelScore
+	pop hl
 ENDC
 .next
 	inc hl
@@ -210,56 +219,6 @@ ENDC
 	dec c
 	jr nz, .loop
 	ret
-
-IF DEF(BOSS_AI_TRACE)
-.ClearMoveModelTrace
-	ld hl, wBossAITracePreModelScores
-	ld c, NUM_MOVES * 2
-	ld a, $ff
-.clear_trace_loop
-	ld [hli], a
-	dec c
-	jr nz, .clear_trace_loop
-	ret
-
-.TracePreModelScore
-	push af
-	push bc
-	push de
-	push hl
-	ld d, [hl]
-	ld a, NUM_MOVES
-	sub c
-	ld c, a
-	ld b, 0
-	ld hl, wBossAITracePreModelScores
-	add hl, bc
-	ld [hl], d
-	pop hl
-	pop de
-	pop bc
-	pop af
-	ret
-
-.TracePostModelScore
-	push af
-	push bc
-	push de
-	push hl
-	ld d, [hl]
-	ld a, NUM_MOVES
-	sub c
-	ld c, a
-	ld b, 0
-	ld hl, wBossAITracePostModelScores
-	add hl, bc
-	ld [hl], d
-	pop hl
-	pop de
-	pop bc
-	pop af
-	ret
-ENDC
 
 .ScoreMove
 	ld a, h
@@ -5180,10 +5139,7 @@ BossAI_ComputePlayerPlausibleTypeMask:
 
 .done
 IF DEF(BOSS_AI_TRACE)
-	ld hl, wBossAIPlausibleTypeMaskCache
-	ld de, wBossAITracePlausibleMask
-	ld bc, 4
-	call CopyBytes
+	farcall BossAI_TraceCopyPlausibleMask
 ENDC
 	ret
 

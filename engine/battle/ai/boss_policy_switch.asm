@@ -1076,6 +1076,11 @@ BossAI_RefineSwitchCandidateForPlausibleRisk:
 	ld a, [wBossAITemp]
 	ld [wBossAITemp3], a
 
+	; wBossAITargetMonIdx is plan state (written by plan selection in
+	; boss_policy_move.asm); this scan borrows it as a loop counter, so save
+	; it and restore at .done.
+	ld a, [wBossAITargetMonIdx]
+	push af
 	xor a
 	ld [wBossAITargetMonIdx], a
 	ld [wBossAITemp5], a
@@ -1126,6 +1131,8 @@ BossAI_RefineSwitchCandidateForPlausibleRisk:
 	jr .scan_loop
 
 .done
+	pop af
+	ld [wBossAITargetMonIdx], a
 	ld a, [wBossAITemp3]
 	ld b, a
 	ld a, [wBossAITemp]
@@ -1910,10 +1917,11 @@ BossAI_FaintRepl_EvalCandidate:
 	; (5) 2x-weak + resist check.
 	;   Inputs:  wBattleMonType1/2 (player), wBossAITemp4/5 (candidate)
 	;   Outputs: branch to .matchup_weak | .matchup_resists | .matchup_neutral
-	; BossAI_CheckTypeMatchupNoItem preserves bc, so b=has_cov survives both calls.
+	; BossAI_CheckTypeMatchupVsCandidateAsPlayer preserves bc/de, so b=has_cov
+	; and d=eff-vs-type1 survive both calls.
 	ld a, [wBattleMonType1]
 	ld hl, wBossAITemp4
-	call BossAI_CheckTypeMatchupNoItem
+	call BossAI_CheckTypeMatchupVsCandidateAsPlayer
 	ld a, [wTypeMatchup]
 	ld d, a                       ; d = eff vs type1
 	ld a, [wBattleMonType1]
@@ -1924,7 +1932,7 @@ BossAI_FaintRepl_EvalCandidate:
 	; Distinct second type: run matchup again.
 	ld a, [wBattleMonType2]
 	ld hl, wBossAITemp4
-	call BossAI_CheckTypeMatchupNoItem
+	call BossAI_CheckTypeMatchupVsCandidateAsPlayer
 	ld a, [wTypeMatchup]
 	ld c, a                       ; c = eff vs type2 (clobbers idx; not needed past here)
 	; Weak if max(d, c) ≥ SUPER_EFFECTIVE.
@@ -2235,7 +2243,7 @@ BossAI_CandidateImmuneToPlayerSTAB:
 	ld [wBossAITemp5], a
 	ld a, [wBattleMonType1]
 	ld hl, wBossAITemp4
-	call BossAI_CheckTypeMatchupNoItem
+	call BossAI_CheckTypeMatchupVsCandidateAsPlayer
 	ld a, [wTypeMatchup]
 	and a
 	jr z, .immune_yes
@@ -2245,7 +2253,7 @@ BossAI_CandidateImmuneToPlayerSTAB:
 	cp c
 	jr z, .immune_no
 	ld hl, wBossAITemp4
-	call BossAI_CheckTypeMatchupNoItem
+	call BossAI_CheckTypeMatchupVsCandidateAsPlayer
 	ld a, [wTypeMatchup]
 	and a
 	jr z, .immune_yes
@@ -2260,6 +2268,28 @@ BossAI_CandidateImmuneToPlayerSTAB:
 	pop de
 	pop bc
 	scf
+	ret
+
+; ai-layer: POLICY
+BossAI_CheckTypeMatchupVsCandidateAsPlayer:
+; In:  a = attacking type (one of the active player mon's types)
+;      hl = defender type pair (candidate types, e.g. wBossAITemp4)
+; Out: wTypeMatchup. Preserves bc, de, hl.
+; Forces hBattleTurn to the player for the scan so the Dragon's Majesty and
+; Foresight rows key off the actual attacker. These checks run from
+; AI_SwitchOrTryItem under SetEnemyTurn, so an unforced scan would treat the
+; boss's active mon as the attacker.
+	push de
+	ld e, a
+	ldh a, [hBattleTurn]
+	ld d, a
+	xor a
+	ldh [hBattleTurn], a
+	ld a, e
+	call BossAI_CheckTypeMatchupNoItem
+	ld a, d
+	ldh [hBattleTurn], a
+	pop de
 	ret
 
 ; ai-layer: POLICY

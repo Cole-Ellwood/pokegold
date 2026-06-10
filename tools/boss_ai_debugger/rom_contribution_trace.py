@@ -159,7 +159,11 @@ POINTER_FROM_WRAM_SCORE_PTR = {
 CONTROL_HOOKS = {
     "MaybePickAdaptiveEnemyLead": "adaptive_lead_start",
     "BossAI_ApplyMoveModel.ScoreMove": "candidate_start",
-    "BossAI_ApplyMoveModel.TracePostModelScore": "candidate_end",
+    # The post-model trace recorder lives in the floating "Boss AI Trace"
+    # section (engine/battle/ai/boss_trace_topmoves.asm) and is farcalled once
+    # per move candidate, scored or not — same firing semantics as the old
+    # inline BossAI_ApplyMoveModel.TracePostModelScore local label.
+    "BossAI_TraceRecordPostModelScore": "candidate_end",
     "BossAI_SelectMove.first_pass": "selector_start",
 }
 

@@ -7,6 +7,53 @@
 
 IF DEF(BOSS_AI_TRACE)
 
+; Move-model trace recorders for BossAI_ApplyMoveModel, relocated here from
+; boss_policy_move.asm for the same bank-budget reason as BossAI_TraceTopMoves.
+; All are reached via farcall; inputs ride in b/c (survive rst FarCall).
+
+BossAI_TraceClearMoveModelScores::
+	ld hl, wBossAITracePreModelScores
+	ld c, NUM_MOVES * 2
+	ld a, $ff
+.loop
+	ld [hli], a
+	dec c
+	jr nz, .loop
+	ret
+
+; In: b = score byte, c = remaining-move counter (NUM_MOVES down to 1).
+; Preserves bc/de; trashes a/hl (farcall already clobbers them for the caller).
+BossAI_TraceRecordPreModelScore::
+	push bc
+	ld a, NUM_MOVES
+	sub c
+	ld c, a
+	ld b, 0
+	ld hl, wBossAITracePreModelScores
+	add hl, bc
+	pop bc
+	ld [hl], b
+	ret
+
+; In: b = score byte, c = remaining-move counter (NUM_MOVES down to 1).
+BossAI_TraceRecordPostModelScore::
+	push bc
+	ld a, NUM_MOVES
+	sub c
+	ld c, a
+	ld b, 0
+	ld hl, wBossAITracePostModelScores
+	add hl, bc
+	pop bc
+	ld [hl], b
+	ret
+
+BossAI_TraceCopyPlausibleMask::
+	ld hl, wBossAIPlausibleTypeMaskCache
+	ld de, wBossAITracePlausibleMask
+	ld bc, 4
+	jp CopyBytes
+
 BossAI_TraceTopMoves::
 	ld a, [wBossAITier]
 	and a

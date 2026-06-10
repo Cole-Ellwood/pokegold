@@ -652,8 +652,10 @@ RefreshPlayerChoiceLockState:
 	ld a, [wBattleMonItem]
 	ld b, a
 	callfar GetItemHeldEffect
-	ld a, b
-	callfar IsChoiceHeldEffect_Far
+	; Pass the held effect in e: farcall lands with a = BANK(target), so the
+	; a-input entry point would compare the bank number, never the effect.
+	ld e, b
+	callfar IsChoiceHeldEffectFromE_Far
 	jr z, .choice_item
 	xor a
 	ld [wPlayerChoiceLockedMove], a
@@ -5516,7 +5518,10 @@ MoveSelectionScreen:
 	cp HELD_ASSAULT_VEST
 	jr nz, .not_blocked
 	pop af
-	callfar IsMoveBlockedByAssaultVest_Far
+	; Pass the move id in e: farcall lands with a = BANK(target), so the
+	; a-input entry point would test the bank number as a move id.
+	ld e, a
+	callfar IsMoveBlockedByAssaultVestFromE_Far
 	ret
 
 .not_blocked
@@ -7565,6 +7570,10 @@ WithdrawMonText:
 	push de
 	push bc
 	; compute enemy health lost as a percentage
+	; hMultiplicand + 0 aliases hQuotient + 1; zero it or a stale high byte
+	; from an earlier 17-bit-quotient division inflates the percentage.
+	xor a
+	ldh [hMultiplicand + 0], a
 	ld hl, wEnemyMonHP + 1
 	ld de, wEnemyHPAtTimeOfPlayerSwitch + 1
 	ld b, [hl]

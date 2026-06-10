@@ -263,6 +263,10 @@ RestorePartyMonMail:
 	jp CloseSRAM
 
 ClearPartyMonMail:
+; e = party mon slot. Reached via farcall, which lands with a = BANK(@) —
+; taking the slot in a here would index SRAM past sPartyMail and zero-fill
+; stored PC mailboxes (see docs/asm_authoring_guide.md §3.3).
+	ld a, e
 	ld hl, sPartyMail
 	ld bc, MAIL_STRUCT_LENGTH
 	call AddNTimes

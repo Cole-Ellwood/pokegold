@@ -9,10 +9,21 @@ if DEF(BOSSAI_EMIT_OBSERVATION_LOG)
 ; The stack lives in WRAMX bank 1. Do not invoke SetWRAMBank when switching
 ; away from bank 1: that helper's ret would read its return address from the
 ; newly selected WRAMX bank.
+; The VBlank handler reads/writes bank-1 WRAMX symbols (GameTimer et al.), so
+; the whole away-from-bank-1 window must be interrupt-atomic: di on leaving
+; bank 1, ei after returning to it (see home/wram_bank.asm header).
 MACRO boss_ai_set_wram_bank
+	if (\1) == 1
 	ld a, \1
 	ldh [rSVBK], a
 	ldh [hWRAMBank], a
+	ei
+	else
+	di
+	ld a, \1
+	ldh [rSVBK], a
+	ldh [hWRAMBank], a
+	endc
 ENDM
 
 ; ai-layer: PLATFORM

@@ -1186,8 +1186,12 @@ TypePassive_MaybePoisonRetaliation_Far:
 	cp STEEL
 	ret z
 
+	; GetUserItem exits with c = item param (home/farcall.asm bc passthrough),
+	; which would stomp the proc threshold staged in c above.
+	push bc
 	farcall GetUserItem
 	ld a, b
+	pop bc
 	cp HELD_PREVENT_POISON
 	ret z
 

@@ -1139,7 +1139,7 @@ class RomContributionTraceTests(unittest.TestCase):
         tracer.handle_control(
             HookTarget(
                 kind="control",
-                full_symbol="BossAI_ApplyMoveModel.TracePostModelScore",
+                full_symbol="BossAI_TraceRecordPostModelScore",
                 operation="candidate_end",
                 bank=0x0E,
                 address=0x5100,
@@ -1194,7 +1194,7 @@ class RomContributionTraceTests(unittest.TestCase):
         tracer.handle_control(
             HookTarget(
                 kind="control",
-                full_symbol="BossAI_ApplyMoveModel.TracePostModelScore",
+                full_symbol="BossAI_TraceRecordPostModelScore",
                 operation="candidate_end",
                 bank=0x0E,
                 address=0x5100,

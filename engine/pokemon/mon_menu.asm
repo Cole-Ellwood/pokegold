@@ -530,6 +530,7 @@ MonMailAction:
 	call GetPartyItemLocation
 	ld [hl], $0
 	ld a, [wCurPartyMon]
+	ld e, a
 	farcall ClearPartyMonMail
 	call GetCurNickname
 	ld hl, .MailDetachedText
