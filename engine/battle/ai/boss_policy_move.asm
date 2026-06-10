@@ -408,8 +408,7 @@ ENDC
 
 .risk
 	ld c, 6
-	call .DiscourageByTierWeight
-	ret
+	jp .DiscourageByTierWeight
 
 .HeldItemMoveBlocked
 	call BossAI_EnemyChoiceLockedMove
@@ -1251,8 +1250,7 @@ ENDC
 	and SCREENS_SPIKES_MASK
 	ret z
 	ld c, 5
-	call .EncourageByTierWeight
-	ret
+	jp .EncourageByTierWeight
 
 .ApplyBatonPassBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
@@ -1264,10 +1262,16 @@ ENDC
 	jr nc, .baton_bad
 	call .EnemyHasBoostToPass
 	jr c, .baton_good
+	ld a, [wBattleMonStatus]
+	and a
+	jr nz, .baton_converter
 .baton_bad
 	ld a, 6
 	call BossAI_DiscourageScoreHL
 	ret
+.baton_converter
+	ld a, 18
+	jp BossAI_EncourageScoreHL
 .baton_good
 	ld c, 5
 	call .EncourageByTierWeight
@@ -1373,16 +1377,13 @@ ENDC
 	call .EnemyUnderPressure
 	jr c, .ramp_risky
 	ld c, 3
-	call .EncourageByTierWeight
-	ret
+	jp .EncourageByTierWeight
 .ramp_resisted
 	ld a, 6
-	call BossAI_DiscourageScoreHL
-	ret
+	jp BossAI_DiscourageScoreHL
 .ramp_risky
 	ld a, 5
-	call BossAI_DiscourageScoreHL
-	ret
+	jp BossAI_DiscourageScoreHL
 
 .ApplyChargeMoveBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
@@ -1395,8 +1396,7 @@ ENDC
 	bit SUBSTATUS_CHARGED, a
 	ret nz
 	ld a, 8
-	call BossAI_DiscourageScoreHL
-	ret
+	jp BossAI_DiscourageScoreHL
 
 .ApplyPoisonContactRiskBias
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
@@ -2151,13 +2151,11 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	jr nc, .spikes_l1_high
 .spikes_l1_baseline
 	ld c, 4
-	call .EncourageByTierWeight
-	ret
+	jp .EncourageByTierWeight
 
 .spikes_l1_high
 	ld c, 5
-	call .EncourageByTierWeight
-	ret
+	jp .EncourageByTierWeight
 
 .spikes_layer2
 ; Layer 2 gives limited immediate gain; only push if layer 3 looks reachable.
@@ -2184,8 +2182,7 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 
 .spikes_l2_danger
 	ld a, 6
-	call BossAI_DiscourageScoreHL
-	ret
+	jp BossAI_DiscourageScoreHL
 
 .spikes_layer3
 ; Prioritize finishing the stack unless immediate danger.
@@ -2211,8 +2208,7 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 
 .spikes_l3_danger
 	ld a, 6
-	call BossAI_DiscourageScoreHL
-	ret
+	jp BossAI_DiscourageScoreHL
 
 .ApplyRevealedRapidSpinSpikesRisk
 ; Active Rapid Spin is public. Panic only if it can currently clear Spikes.
@@ -5880,21 +5876,26 @@ if DEF(BOSSAI_EMIT_MOVE_LOOKAHEAD_BODY)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_EvaluateActionLookahead:
+; A holds the candidate move id from wEnemyMonMoves. Keep it across the tier
+; gate so AIGetEnemyMove_HL loads the candidate, not the tier value.
+	push af
 	ld a, [wBossAITier]
 	and a
-	ret z
+	jr z, .lookahead_disabled
 	cp BOSS_AI_LOOKAHEAD_ENABLE_TIER_MIN
 	jr nc, .go
+.lookahead_disabled
+	pop af
 	xor a
 	ret
 
 .go
+	pop af
 	push hl
 	push de
 	push bc
 	call AIGetEnemyMove_HL
-	ld b, 0 ; upside
-	ld c, 0 ; downside
+	ld bc, 0 ; b = upside, c = downside
 
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
