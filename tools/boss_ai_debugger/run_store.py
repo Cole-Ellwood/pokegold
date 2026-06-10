@@ -43,6 +43,20 @@ RUN_STORE_VERSION = "boss-ai-debugger-run-v1"
 SELF_REFERENTIAL_DIFF_ARTIFACTS = {"previous_run_diff"}
 CommandRunner = Callable[[list[str]], dict[str, Any]]
 WSL_REPO_PATH = "/mnt/c/Users/lolno/Downloads/pokemon gold hack"
+# The trace ROM has no Makefile rule (a bare `make pokegold_trace.gbc` silently
+# no-ops on the existing file), so the trace variant is assembled and linked
+# explicitly: main/ram with -D BOSS_AI_TRACE against the normal gold objects.
+_TRACE_GOLD_OBJECTS = (
+    "audio_gold.o home_gold.o main_gold_trace.o ram_gold_trace.o "
+    "data/text/common_gold.o data/maps/map_data_gold.o "
+    "data/pokemon/egg_moves_gold.o data/pokemon/evos_attacks_gold.o "
+    "engine/movie/credits_gold.o engine/overworld/events_gold.o "
+    "gfx/misc_gold.o gfx/sprites_gold.o gfx/tilesets_gold.o "
+    "data/pokemon/dex_entries_gold.o gfx/pics_gold.o"
+)
+_RGBASM_TRACE_FLAGS = (
+    "-Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE"
+)
 WSL_RGBDS_BUILD_COMMAND = (
     f'cd "{WSL_REPO_PATH}" && '
     "make -j4 PYTHON=python3 "
@@ -50,7 +64,16 @@ WSL_RGBDS_BUILD_COMMAND = (
     "RGBLINK=rgbds-1.0.1/rgblink.exe "
     "RGBFIX=rgbds-1.0.1/rgbfix.exe "
     "RGBGFX=rgbds-1.0.1/rgbgfx.exe "
-    "pokegold.gbc pokesilver.gbc pokegold_trace.gbc"
+    "pokegold.gbc pokesilver.gbc && "
+    f"rgbds-1.0.1/rgbasm.exe {_RGBASM_TRACE_FLAGS} -o main_gold_trace.o main.asm && "
+    f"rgbds-1.0.1/rgbasm.exe {_RGBASM_TRACE_FLAGS} -o ram_gold_trace.o ram.asm && "
+    "rgbds-1.0.1/rgblink.exe -Weverything -Wtruncation=1 -l layout.link "
+    "-n pokegold_trace.sym -m pokegold_trace.map -o pokegold_trace.gbc "
+    f"{_TRACE_GOLD_OBJECTS} && "
+    "rgbds-1.0.1/rgbfix.exe -Weverything -cjsv -k 01 -l 0x33 "
+    "-m MBC3+TIMER+RAM+BATTERY -r 3 -p 0 -t POKEMON_GLD -i AAUE pokegold_trace.gbc && "
+    "tools/stadium pokegold_trace.gbc && "
+    "rm -f main_gold_trace.o ram_gold_trace.o"
 )
 
 
