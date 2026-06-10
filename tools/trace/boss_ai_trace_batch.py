@@ -475,6 +475,19 @@ def main() -> int:
         f"summary: ran={ran} skipped={skipped} "
         f"missing_state={missing_state} invalid_state={invalid_state}"
     )
+    if args.execute and missing_state > 0:
+        if ran == 0:
+            fail(
+                "--execute ran 0 captures: every selected entry is missing its "
+                "save-state (.local/ states absent — fresh worktree or clone?). "
+                "The live-trace refresh did NOT happen; do not trust downstream "
+                "artifacts that assume refreshed captures"
+            )
+        print(
+            f"WARNING: {missing_state} capture(s) skipped for missing "
+            "save-states; this refresh is partial",
+            file=sys.stderr,
+        )
     return 0
 
 

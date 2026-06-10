@@ -9,10 +9,13 @@ from pathlib import Path
 
 from tools.boss_ai_debugger.__main__ import main as debugger_main
 from tools.boss_ai_debugger.run_store import (
+    ROOT,
+    RomRebuildSetupError,
     build_previous_run_diff,
     run_changed_ai_suite,
     run_generated_smoke_suite,
     score_materialization_scenarios,
+    wsl_path,
 )
 
 
@@ -215,7 +218,10 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(len(calls), 3)
         self.assertEqual(calls[0][:2], ["bash", "-lc"])
         self.assertIn("PYTHON=python3", calls[0][2])
-        self.assertIn("RGBASM=rgbds-1.0.1/rgbasm.exe", calls[0][2])
+        # The build must run in THIS checkout (repo or worktree), derived at
+        # runtime — never a hardcoded main-repo path.
+        self.assertIn(f'cd "{wsl_path(ROOT)}" && ', calls[0][2])
+        self.assertIn("rgbasm.exe", calls[0][2])
         self.assertIn("pokegold_trace.gbc", calls[0][2])
         self.assertTrue(rom_rebuild["requested"])
         self.assertTrue(rom_rebuild["passed"])
@@ -389,6 +395,29 @@ class RunStoreTests(unittest.TestCase):
         self.assertEqual(data["changed_ai_run"]["run_id"], "cli_deity_changed")
         self.assertEqual(data["targeted_generators"]["scenario_count"], 4)
         self.assertIn("hash_basis", data)
+
+
+class WslPathTests(unittest.TestCase):
+    def test_drive_letter_path_maps_to_mnt(self) -> None:
+        self.assertEqual(
+            wsl_path(Path("C:/Users/example/repo")),
+            "/mnt/c/Users/example/repo",
+        )
+
+    def test_path_with_spaces_is_preserved(self) -> None:
+        self.assertEqual(
+            wsl_path(Path("D:/some folder/with spaces")),
+            "/mnt/d/some folder/with spaces",
+        )
+
+    def test_repo_root_round_trips(self) -> None:
+        mapped = wsl_path(ROOT)
+        self.assertTrue(mapped.startswith("/"))
+        self.assertNotIn("\\", mapped)
+
+    def test_unc_path_raises_setup_error(self) -> None:
+        with self.assertRaises(RomRebuildSetupError):
+            wsl_path(Path("//server/share/repo"))
 
 
 if __name__ == "__main__":

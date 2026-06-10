@@ -42,7 +42,7 @@ DEFAULT_RUNS_DIR = ROOT / "audit" / "boss_ai_debugger" / "runs"
 RUN_STORE_VERSION = "boss-ai-debugger-run-v1"
 SELF_REFERENTIAL_DIFF_ARTIFACTS = {"previous_run_diff"}
 CommandRunner = Callable[[list[str]], dict[str, Any]]
-WSL_REPO_PATH = "/mnt/c/Users/lolno/Downloads/pokemon gold hack"
+RGBDS_DIR_NAME = "rgbds-1.0.1"
 # The trace ROM has no Makefile rule (a bare `make pokegold_trace.gbc` silently
 # no-ops on the existing file), so the trace variant is assembled and linked
 # explicitly: main/ram with -D BOSS_AI_TRACE against the normal gold objects.
@@ -57,24 +57,90 @@ _TRACE_GOLD_OBJECTS = (
 _RGBASM_TRACE_FLAGS = (
     "-Weverything -Wtruncation=1 -Q8 -P includes.asm -D _GOLD -D BOSS_AI_TRACE"
 )
-WSL_RGBDS_BUILD_COMMAND = (
-    f'cd "{WSL_REPO_PATH}" && '
-    "make -j4 PYTHON=python3 "
-    "RGBASM=rgbds-1.0.1/rgbasm.exe "
-    "RGBLINK=rgbds-1.0.1/rgblink.exe "
-    "RGBFIX=rgbds-1.0.1/rgbfix.exe "
-    "RGBGFX=rgbds-1.0.1/rgbgfx.exe "
-    "pokegold.gbc pokesilver.gbc && "
-    f"rgbds-1.0.1/rgbasm.exe {_RGBASM_TRACE_FLAGS} -o main_gold_trace.o main.asm && "
-    f"rgbds-1.0.1/rgbasm.exe {_RGBASM_TRACE_FLAGS} -o ram_gold_trace.o ram.asm && "
-    "rgbds-1.0.1/rgblink.exe -Weverything -Wtruncation=1 -l layout.link "
-    "-n pokegold_trace.sym -m pokegold_trace.map -o pokegold_trace.gbc "
-    f"{_TRACE_GOLD_OBJECTS} && "
-    "rgbds-1.0.1/rgbfix.exe -Weverything -cjsv -k 01 -l 0x33 "
-    "-m MBC3+TIMER+RAM+BATTERY -r 3 -p 0 -t POKEMON_GLD -i AAUE pokegold_trace.gbc && "
-    "tools/stadium pokegold_trace.gbc && "
-    "rm -f main_gold_trace.o ram_gold_trace.o"
-)
+
+
+class RomRebuildSetupError(RuntimeError):
+    """The WSL ROM rebuild cannot be configured for this checkout."""
+
+
+def wsl_path(path: Path) -> str:
+    """Map a Windows drive-letter path to its WSL /mnt/<drive>/ form.
+
+    Already-POSIX paths (running inside WSL) pass through unchanged.
+    """
+    resolved = path.resolve()
+    posix = resolved.as_posix()
+    drive = resolved.drive
+    if len(drive) == 2 and drive[1] == ":":
+        return f"/mnt/{drive[0].lower()}{posix[2:]}"
+    if not drive and posix.startswith("/"):
+        return posix
+    raise RomRebuildSetupError(
+        f"cannot map {resolved} to a WSL path (UNC shares are unsupported)"
+    )
+
+
+def locate_rgbds_dir() -> Path:
+    """Find the RGBDS toolchain for this checkout.
+
+    The toolchain directory is untracked, so a fresh worktree does not have
+    its own copy; fall back to the main repository's (found via the shared
+    git common dir).
+    """
+    candidates = [ROOT / RGBDS_DIR_NAME]
+    common_dir = git_stdout(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"]
+    )
+    if common_dir:
+        main_root = Path(common_dir).resolve().parent
+        if main_root != ROOT:
+            candidates.append(main_root / RGBDS_DIR_NAME)
+    for candidate in candidates:
+        if (candidate / "rgbasm.exe").exists():
+            return candidate
+    searched = ", ".join(str(candidate) for candidate in candidates)
+    raise RomRebuildSetupError(
+        f"RGBDS toolchain not found (searched: {searched}); {RGBDS_DIR_NAME}/ is "
+        "untracked, so a fresh worktree relies on the main repo's copy"
+    )
+
+
+def wsl_rgbds_build_command() -> str:
+    """Build the ROM rebuild command for THIS checkout (repo or worktree).
+
+    The repo path is derived from this file's location, never hardcoded, so a
+    worktree rebuilds its own ROMs. Toolchain paths are double-quoted (the
+    main repo path contains spaces); for make variables the quotes are part of
+    the value so recipe shells re-parse them.
+    """
+    repo_wsl = wsl_path(ROOT)
+    rgbds_dir = locate_rgbds_dir()
+    if rgbds_dir.parent == ROOT:
+        prefix = f"{RGBDS_DIR_NAME}/"
+    else:
+        prefix = f"{wsl_path(rgbds_dir)}/"
+    rgbasm = f'"{prefix}rgbasm.exe"'
+    rgblink = f'"{prefix}rgblink.exe"'
+    rgbfix = f'"{prefix}rgbfix.exe"'
+    rgbgfx = f'"{prefix}rgbgfx.exe"'
+    return (
+        f'cd "{repo_wsl}" && '
+        "make -j4 PYTHON=python3 "
+        f"'RGBASM={rgbasm}' "
+        f"'RGBLINK={rgblink}' "
+        f"'RGBFIX={rgbfix}' "
+        f"'RGBGFX={rgbgfx}' "
+        "pokegold.gbc pokesilver.gbc && "
+        f"{rgbasm} {_RGBASM_TRACE_FLAGS} -o main_gold_trace.o main.asm && "
+        f"{rgbasm} {_RGBASM_TRACE_FLAGS} -o ram_gold_trace.o ram.asm && "
+        f"{rgblink} -Weverything -Wtruncation=1 -l layout.link "
+        "-n pokegold_trace.sym -m pokegold_trace.map -o pokegold_trace.gbc "
+        f"{_TRACE_GOLD_OBJECTS} && "
+        f"{rgbfix} -Weverything -cjsv -k 01 -l 0x33 "
+        "-m MBC3+TIMER+RAM+BATTERY -r 3 -p 0 -t POKEMON_GLD -i AAUE pokegold_trace.gbc && "
+        "tools/stadium pokegold_trace.gbc && "
+        "rm -f main_gold_trace.o ram_gold_trace.o"
+    )
 
 
 def run_generated_smoke_suite(
@@ -557,13 +623,34 @@ def run_rom_rebuild_report(
     requested: bool,
     command_runner: CommandRunner | None,
 ) -> dict[str, Any]:
+    commands: list[list[str]] = []
+    if requested:
+        try:
+            commands = [["bash", "-lc", wsl_rgbds_build_command()]]
+        except RomRebuildSetupError as exc:
+            return {
+                "schema_version": 1,
+                "kind": "changed_ai_rom_rebuild",
+                "requested": True,
+                "passed": False,
+                "command_count": 1,
+                "failed_count": 1,
+                "skipped_reason": "",
+                "commands": [
+                    {
+                        "argv": ["<rom-rebuild-setup>"],
+                        "returncode": 1,
+                        "elapsed_seconds": 0.0,
+                        "stdout_tail": "",
+                        "stderr_tail": str(exc),
+                    }
+                ],
+            }
     return run_command_report(
         kind="changed_ai_rom_rebuild",
         requested=requested,
         skipped_reason="not requested; pass --rebuild-roms to rebuild normal and trace ROMs",
-        commands=[
-            ["bash", "-lc", WSL_RGBDS_BUILD_COMMAND],
-        ],
+        commands=commands,
         command_runner=command_runner,
     )
 
