@@ -80,3 +80,4 @@ dist/*.sav
 dist/*.rtc
 dist/*.state
 dist/*.zip
+*.gbc.ram

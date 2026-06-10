@@ -223,6 +223,12 @@ get one." See `engine/battle/ai/boss_policy_move.asm` `.check_speed`.
   Reordering or resizing fields will silently misalign old saves. There's
   a `SAVE_FORMAT_VERSION` marker but **no migration code anywhere**. Treat
   save-format changes shipping to public release as a user-approval item.
+- Save/party parsing footgun: `MON_LEVEL` is `$1f` in
+  `constants/pokemon_data_constants.asm`, not `$27`. Byte `$27` is inside
+  `MON_STATS` (`MON_ATK + 1`) and can look like a plausible level. For manual
+  battery-save patches, verify offsets from source constants, patch both
+  `sPokemonData` and `sBackupPokemonData`, and recompute `sChecksum` plus
+  `sBackupChecksum` from `engine/menus/save.asm`.
 - WRAMX is bank-switched. Boss AI state lives in WRAMX bank 1 with a fixed
   reserve budget — see `Boss AI WRAM Reserve` in `docs/generated/dev_index.md`
   before adding bytes.
