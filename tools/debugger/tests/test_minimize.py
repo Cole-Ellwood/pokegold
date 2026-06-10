@@ -232,6 +232,11 @@ class MinimizationTests(unittest.TestCase):
                                 "precondition_kind": "map_position",
                                 "source_file": "maps/UnitMap.asm",
                                 "status": "ready",
+                                "class_id": "csc_STALE",
+                                "class_fingerprint": "STALE",
+                                "canonical_state_class": {"class_id": "csc_STALE"},
+                                "canonical_state_class_valid": True,
+                                "canonical_state_class_errors": [],
                                 "patches": [
                                     {
                                         "symbol": "wMapGroup",
@@ -286,6 +291,8 @@ class MinimizationTests(unittest.TestCase):
         self.assertTrue(state_patch["written"])
         self.assertIn("maps/UnitMap.asm", state_patch["source_files"])
         self.assertEqual([patch["symbol"] for patch in patches], ["wMapGroup"])
+        self.assertNotIn("canonical_state_class", minimized["materializations"][0])
+        self.assertNotIn("class_id", minimized["materializations"][0])
         self.assertTrue(minimized["minimized_evidence_view"])
         self.assertIn("tools.debugger expect --report minimized_content_state.json", commands)
         self.assertIn("tools.debugger replay --report minimized_content_state.json --scenario-id content_scenario_1_0000", commands)

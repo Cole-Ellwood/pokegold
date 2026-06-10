@@ -33,6 +33,8 @@ from .commands import (
     cmd_replay,
     cmd_report,
     cmd_repro_recipe,
+    cmd_rom_byte,
+    cmd_rom_index,
     cmd_save_state_inspect,
     cmd_script_resume_gate,
     cmd_setup,
@@ -243,6 +245,27 @@ def build_parser() -> argparse.ArgumentParser:
     add_output_args(provenance)
     provenance.set_defaults(func=cmd_provenance)
 
+    rom_byte = subparsers.add_parser("rom-byte")
+    rom_byte.add_argument("--address", default="", help="ROM bank/address, e.g. 00:0150 or 0E:542B")
+    rom_byte.add_argument("--offset", default="", help="ROM file offset, decimal, hex, or $-prefixed hex")
+    rom_byte.add_argument("--rom", default="pokegold.gbc")
+    rom_byte.add_argument("--symbols", default="pokegold.sym")
+    rom_byte.add_argument("--map", default="pokegold.map")
+    rom_byte.add_argument("--root", default="", help="repo/source root for relative paths and source lookup")
+    add_output_args(rom_byte)
+    rom_byte.set_defaults(func=cmd_rom_byte)
+
+    rom_index = subparsers.add_parser("rom-index")
+    rom_index.add_argument("--rom", default="pokegold.gbc")
+    rom_index.add_argument("--symbols", default="pokegold.sym")
+    rom_index.add_argument("--map", default="pokegold.map")
+    rom_index.add_argument("--root", default="", help="repo/source root for relative paths and source lookup")
+    rom_index.add_argument("--surface-index-out", default="")
+    rom_index.add_argument("--byte-index-out", default="")
+    rom_index.add_argument("--content-mirror-report", default="")
+    add_output_args(rom_index)
+    rom_index.set_defaults(func=cmd_rom_index)
+
     slice_parser = subparsers.add_parser("slice")
     slice_parser.add_argument("--symbols", default="pokegold.sym")
     slice_parser.add_argument("--symbol", action="append", default=[])
@@ -394,7 +417,11 @@ def build_parser() -> argparse.ArgumentParser:
     replay = subparsers.add_parser("replay")
     replay.add_argument("--rom", default="")
     replay.add_argument("--symbols", default="")
-    replay.add_argument("--surface", choices=("audio", "graphics", "script"), default="")
+    replay.add_argument(
+        "--surface",
+        choices=("audio", "graphics", "script", "content", "dma", "interrupts", "mbc", "rtc", "timer_lcd", "serial"),
+        default="",
+    )
     replay.add_argument("--at", default="", help="target-state predicate for deity runtime replay")
     replay.add_argument("--save-state", default="")
     replay.add_argument("--trace", action="append", default=[])

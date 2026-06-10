@@ -117,6 +117,12 @@ def build_content_mirror_report(
     failed_rom_mirrors = [item for item in rom_mirrors if item.get("status") == "failed"]
     warning_rom_mirrors = [item for item in rom_mirrors if item.get("status") == "warning"]
     passed_rom_mirrors = [item for item in rom_mirrors if item.get("status") == "passed"]
+    byte_span_rows = [
+        row
+        for invariant in rom_mirrors
+        for row in invariant.get("byte_span_rows", [])
+        if isinstance(row, dict)
+    ]
     commands = unique_list(
         [
             *[
@@ -156,6 +162,12 @@ def build_content_mirror_report(
         "passed_rom_mirror_count": len(passed_rom_mirrors),
         "failed_rom_mirror_count": len(failed_rom_mirrors),
         "warning_rom_mirror_count": len(warning_rom_mirrors),
+        "byte_span_row_count": len(byte_span_rows),
+        "content_mirror_exact_span_count": sum(
+            1
+            for row in byte_span_rows
+            if row.get("confidence") == "content_mirror_exact_span"
+        ),
         "error_count": len(unique_list(errors)),
         "warning_count": len(unique_list(warnings)),
         "errors": unique_list(errors),
@@ -163,6 +175,7 @@ def build_content_mirror_report(
         "source_files": source_reports,
         "invariants": invariants,
         "rom_mirrors": rom_mirrors,
+        "byte_span_rows": byte_span_rows,
         "failed_invariants": failed,
         "commands": commands,
         "runnable_commands": [command for command in commands if command_is_runnable(command)],
@@ -277,6 +290,13 @@ def analyze_source_file(raw_path: str, *, root: Path, rom_context: dict[str, Any
         "channel_blocks": parsed["channel_blocks"][:40],
         "invariants": invariants,
         "rom_mirrors": [item for item in invariants if is_rom_mirror_invariant(item)],
+        "byte_span_rows": [
+            row
+            for invariant in invariants
+            if is_rom_mirror_invariant(invariant)
+            for row in invariant.get("byte_span_rows", [])
+            if isinstance(row, dict)
+        ],
         "rom_mirror_count": len([item for item in invariants if is_rom_mirror_invariant(item)]),
         "suggested_commands": commands,
     }

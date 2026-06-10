@@ -145,6 +145,22 @@ class ContentMirrorTests(unittest.TestCase):
         map_mirrors = [item for item in report["rom_mirrors"] if item["type"] == "map_event_rom_bytes"]
         self.assertEqual(len(map_mirrors), 1)
         self.assertEqual(map_mirrors[0]["status"], "passed")
+        self.assertEqual(report["byte_span_row_count"], 1)
+        self.assertEqual(report["content_mirror_exact_span_count"], 1)
+        span = report["byte_span_rows"][0]
+        self.assertEqual(span["confidence"], "content_mirror_exact_span")
+        self.assertEqual(span["rom_span"]["bank_range"], "00:0100-010F")
+        self.assertEqual(span["nearest_label"], "UnitMap_MapEvents")
+        self.assertEqual(
+            span["source_span"],
+            {
+                "path": "maps/UnitMap.asm",
+                "line_start": 4,
+                "line_end": 10,
+                "kind": "map_event_table",
+            },
+        )
+        self.assertEqual(map_mirrors[0]["byte_span_rows"], [span])
         self.assertIn(
             "maps/UnitMap.asm:map_event_rom_bytes",
             {item["id"] for item in report["rom_mirrors"]},

@@ -22,6 +22,7 @@ from .mirrors import build_compare_plan
 from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .reporting import build_static_report
+from .rom_index import build_rom_byte_lookup_report, build_rom_index_report
 from .runtime_watch import build_watch_report
 from .slicing import build_slice_report
 from .setup_plan import build_setup_plan
@@ -47,6 +48,8 @@ __all__ = [
     "build_minimization_plan",
     "build_compare_plan",
     "build_provenance_report",
+    "build_rom_byte_lookup_report",
+    "build_rom_index_report",
     "build_slice_report",
     "build_setup_plan",
     "build_static_report",

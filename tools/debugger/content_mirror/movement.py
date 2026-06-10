@@ -6,6 +6,7 @@ import hashlib
 from typing import Any
 
 from .helpers import (
+    content_mirror_byte_span_row,
     content_invariant,
     dict_items,
     evaluate_int_expression,
@@ -218,6 +219,8 @@ def movement_data_rom_mirror_invariants(
         short_read = len(actual) != len(expected)
         mismatch_index = first_mismatch(expected, actual) if not short_read else min(len(actual), max(0, len(expected) - 1))
         matched = not short_read and mismatch_index < 0
+        expected_hash = hashlib.sha256(expected).hexdigest()
+        actual_hash = hashlib.sha256(actual).hexdigest()
         evidence = [
             f"label={label}",
             f"command_count={len(block.get('commands', []))}",
@@ -226,8 +229,8 @@ def movement_data_rom_mirror_invariants(
             f"rom_offset=${offset:06x}",
             f"expected_len={len(expected)}",
             f"actual_len={len(actual)}",
-            f"expected_sha256={hashlib.sha256(expected).hexdigest()}",
-            f"actual_sha256={hashlib.sha256(actual).hexdigest()}",
+            f"expected_sha256={expected_hash}",
+            f"actual_sha256={actual_hash}",
         ]
         if mismatch_index >= 0:
             expected_byte = expected[mismatch_index] if mismatch_index < len(expected) else None
@@ -255,6 +258,27 @@ def movement_data_rom_mirror_invariants(
                 commands=commands,
                 related_files=related_files,
                 related_symbols=[label],
+                byte_span_rows=[
+                    content_mirror_byte_span_row(
+                        mirror_id=f"{source_file}:movement_data_rom_bytes:{label}",
+                        mirror_type="movement_data_rom_bytes",
+                        source_file=source_file,
+                        line_start=int(block.get("line", 0)),
+                        line_end=max(
+                            [
+                                int(block.get("line", 0)),
+                                *[int(command.get("line", 0)) for command in dict_items(block.get("commands"))],
+                            ]
+                        ),
+                        label=label,
+                        symbol=symbol,
+                        expected_len=len(expected),
+                        status="passed" if matched else "failed",
+                        expected_sha256=expected_hash,
+                        actual_sha256=actual_hash,
+                        content_kind="movement_data",
+                    )
+                ],
             )
         )
     return out

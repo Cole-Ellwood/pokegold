@@ -19,10 +19,17 @@ def format_inventory(report: dict[str, Any]) -> str:
 
 
 def format_audit(report: dict[str, Any]) -> str:
+    tiers = report.get("readiness_tiers", {})
     lines = [
         "Unified Pokemon Gold romhack debugger capability audit",
         f"ready={report['ready']} status_counts={report['status_counts']}",
         f"blocking_gaps={report['blocking_gap_count']} gap_actions={report.get('gap_action_count', 0)}",
+        (
+            "readiness_tiers="
+            f"subsystem:{tiers.get('subsystem_ready', {}).get('status', 'unknown')} "
+            f"deity_demo:{tiers.get('deity_demo_ready', {}).get('status', 'unknown')} "
+            f"whole_rom:{tiers.get('whole_rom_ready', {}).get('status', 'unknown')}"
+        ),
         "",
         "Capabilities:",
     ]
@@ -705,6 +712,93 @@ def format_provenance(report: dict[str, Any]) -> str:
                 address = label.get("address", {})
                 suffix = f" {address.get('bank_address', '')}" if address else ""
                 lines.append(f"      label: {label['label']}:{label['line']}{suffix}")
+    for warning in report["warnings"][:5]:
+        lines.append(f"warning: {warning}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_rom_byte_lookup(report: dict[str, Any]) -> str:
+    target = report.get("target") if isinstance(report.get("target"), dict) else {}
+    lookup = report.get("lookup") if isinstance(report.get("lookup"), dict) else {}
+    byte = report.get("rom_byte") if isinstance(report.get("rom_byte"), dict) else {}
+    lines = [
+        "Unified Pokemon Gold romhack debugger ROM byte lookup",
+        (
+            f"valid={report['valid']} confidence={lookup.get('confidence', 'unknown')} "
+            f"rank={lookup.get('confidence_rank', 0)} "
+            f"errors={report['error_count']} warnings={report['warning_count']}"
+        ),
+        (
+            f"target={target.get('bank_address', '<none>')} "
+            f"offset={target.get('offset_hex', '<none>')} "
+            f"byte={byte.get('value_hex', '<unread>')}"
+        ),
+        f"rom={report['query']['rom']} symbols={report['query']['symbols']} map={report['query']['map']}",
+    ]
+    reason = lookup.get("reason", "")
+    if reason:
+        lines.extend(["", f"Reason: {reason}"])
+    best = lookup.get("best") if isinstance(lookup.get("best"), dict) else {}
+    if best:
+        lines.append("Best source:")
+        label = best.get("label") or best.get("section") or best.get("kind", "")
+        lines.append(f"  - {best.get('confidence', lookup.get('confidence', ''))}: {label}")
+        for ref in best.get("source_refs", [])[:5]:
+            line = ref.get("line")
+            suffix = f":{line}" if line is not None else ""
+            lines.append(f"      {ref.get('kind', 'source')}: {ref.get('path', '')}{suffix}")
+    section = lookup.get("section") if isinstance(lookup.get("section"), dict) else {}
+    if section:
+        lines.append(f"Section: {section.get('name', '')} {section.get('bank_range', '')}")
+    empty = lookup.get("empty_range") if isinstance(lookup.get("empty_range"), dict) else {}
+    if empty:
+        lines.append(f"Empty: {empty.get('bank_range', '')} size={empty.get('size', 0)}")
+    for warning in report["warnings"][:5]:
+        lines.append(f"warning: {warning}")
+    for error in report["errors"][:5]:
+        lines.append(f"error: {error}")
+    return "\n".join(lines)
+
+
+def format_rom_index(report: dict[str, Any]) -> str:
+    summary = report.get("index_summary", {})
+    outputs = report.get("outputs", {})
+    lines = [
+        "Unified Pokemon Gold romhack debugger ROM index",
+        (
+            f"valid={report['valid']} surfaces={summary.get('surface_row_count', 0)} "
+            f"byte_spans={summary.get('byte_span_row_count', 0)} "
+            f"errors={report['error_count']} warnings={report['warning_count']}"
+        ),
+        (
+            f"sections={summary.get('section_count', 0)} "
+            f"symbols={summary.get('symbol_count', 0)} "
+            f"unowned_surfaces={summary.get('unowned_surface_row_count', 0)} "
+            f"low_confidence_spans={summary.get('low_confidence_byte_span_count', 0)}"
+        ),
+        f"rom={report['query']['rom']} symbols={report['query']['symbols']} map={report['query']['map']}",
+    ]
+    if outputs.get("surface_index_written"):
+        lines.append(f"surface_index={outputs.get('surface_index_out', '')}")
+    if outputs.get("byte_index_written"):
+        lines.append(f"byte_index={outputs.get('byte_index_out', '')}")
+    if report.get("surface_samples"):
+        lines.extend(["", "Surface samples:"])
+        for row in report["surface_samples"][:5]:
+            lines.append(
+                f"  - {row.get('surface_kind')} {row.get('surface_id')} "
+                f"confidence={row.get('confidence')}"
+            )
+    if report.get("byte_span_samples"):
+        lines.extend(["", "Byte span samples:"])
+        for row in report["byte_span_samples"][:5]:
+            span = row.get("rom_span", {})
+            lines.append(
+                f"  - {span.get('bank_range', '')} {row.get('section', '')} "
+                f"label={row.get('nearest_label', '')} confidence={row.get('confidence')}"
+            )
     for warning in report["warnings"][:5]:
         lines.append(f"warning: {warning}")
     for error in report["errors"][:5]:
@@ -1712,6 +1806,7 @@ def format_content_mirror(report: dict[str, Any]) -> str:
             f"valid={report['valid']} passed={report['passed']} "
             f"sources={report['source_file_count']} invariants={report['invariant_count']} "
             f"rom_mirrors={report.get('rom_mirror_count', 0)} "
+            f"exact_spans={report.get('content_mirror_exact_span_count', 0)} "
             f"failed={report['failed_invariant_count']} warnings={report['warning_count']} "
             f"errors={report['error_count']}"
         ),
@@ -2121,6 +2216,8 @@ FORMATTERS = {
     "unified_debugger_generation_plan": format_generation_plan,
     "unified_debugger_fuzz_plan": format_fuzz_plan,
     "unified_debugger_provenance_report": format_provenance,
+    "unified_debugger_rom_byte_lookup": format_rom_byte_lookup,
+    "unified_debugger_rom_index": format_rom_index,
     "unified_debugger_causal_slice": format_slice,
     "unified_debugger_taint_report": format_taint,
     "unified_debugger_dynamic_taint_report": format_dynamic_taint,

@@ -28,6 +28,7 @@ V2_PASSTHROUGH_MODULES = {
     "heatmap": "tools.debugger.heatmap",
     "hypothesis": "tools.debugger.hypothesis_tracker",
     "navigate": "tools.debugger.navigate",
+    "operator-status": "tools.debugger.operator_status",
     "pack": "tools.debugger.context_packet",
     "probe": "tools.debugger.probe",
     "save-state-lab": "tools.debugger.save_state_lab",

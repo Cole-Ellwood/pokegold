@@ -1011,6 +1011,7 @@ def content_state_report_with_patch_locations(data: dict[str, Any], locations: l
         materialization["patch_count"] = len(patches)
         if not patches and materialization.get("status") == "ready":
             materialization["status"] = "minimized"
+        strip_canonical_state_class_fields(materialization)
     execution = out.get("execution") if isinstance(out.get("execution"), dict) else None
     if execution is not None:
         applied = [
@@ -1035,6 +1036,17 @@ def content_state_report_with_patch_locations(data: dict[str, Any], locations: l
         )
         out["warning_count"] = len(out["warnings"])
     return out
+
+
+def strip_canonical_state_class_fields(materialization: dict[str, Any]) -> None:
+    for key in (
+        "canonical_state_class",
+        "class_id",
+        "class_fingerprint",
+        "canonical_state_class_valid",
+        "canonical_state_class_errors",
+    ):
+        materialization.pop(key, None)
 
 
 def generic_state_report_with_patch_locations(data: dict[str, Any], locations: list[dict[str, Any]]) -> dict[str, Any]:

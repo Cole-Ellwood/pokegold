@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from .catalog import build_capability_report, build_inventory, triage_request
+from .catalog import ROOT, build_capability_report, build_inventory, triage_request
 from .cli_helpers import emit_report, load_jsonl
 from .content_mirror import build_content_mirror_report
 from .content_scenarios import build_content_scenario_report
@@ -33,6 +33,8 @@ from .provenance import build_provenance_report
 from .ranking import rank_findings
 from .replay import build_replay_plan
 from .repro_recipes import build_repro_recipe_report
+from .rom_index import build_rom_byte_lookup_report
+from .rom_index import build_rom_index_report
 from .reporting import build_static_report, write_static_report
 from .runtime_state import build_runtime_state_report
 from .runtime_watch import build_watch_report
@@ -60,8 +62,13 @@ def cmd_inventory(args: argparse.Namespace) -> int:
 def cmd_audit(args: argparse.Namespace) -> int:
     report = build_capability_report()
     emit_report(report, args)
-    if args.strict and not report["ready"]:
-        return 1
+    if args.strict:
+        whole_rom_status = (
+            report.get("readiness_tiers", {})
+            .get("whole_rom_ready", {})
+            .get("status", "unknown")
+        )
+        return 0 if whole_rom_status == "ready" else 1
     return 0
 
 
@@ -305,6 +312,35 @@ def cmd_provenance(args: argparse.Namespace) -> int:
         source_files=tuple(args.source_file),
         include_docs=args.include_docs,
         max_hits=args.max_hits,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_rom_byte(args: argparse.Namespace) -> int:
+    root = Path(args.root) if args.root else ROOT
+    report = build_rom_byte_lookup_report(
+        address=args.address,
+        offset=args.offset,
+        rom_path=args.rom,
+        symbols_path=args.symbols,
+        map_path=args.map,
+        root=root,
+    )
+    emit_report(report, args)
+    return 0 if report["valid"] else 1
+
+
+def cmd_rom_index(args: argparse.Namespace) -> int:
+    root = Path(args.root) if args.root else ROOT
+    report = build_rom_index_report(
+        rom_path=args.rom,
+        symbols_path=args.symbols,
+        map_path=args.map,
+        root=root,
+        surface_index_out=args.surface_index_out,
+        byte_index_out=args.byte_index_out,
+        content_mirror_report_path=args.content_mirror_report,
     )
     emit_report(report, args)
     return 0 if report["valid"] else 1

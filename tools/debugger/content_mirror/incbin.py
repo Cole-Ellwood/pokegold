@@ -8,6 +8,7 @@ from typing import Any
 
 from ..provenance import resolve_path
 from .helpers import (
+    content_mirror_byte_span_row,
     content_invariant,
     evaluate_int_expression,
     first_mismatch,
@@ -122,6 +123,8 @@ def asset_rom_mirror_invariants(
         short_read = len(actual) != len(expected)
         mismatch_index = first_mismatch(expected, actual) if not short_read else min(len(actual), max(0, len(expected) - 1))
         matched = not short_read and mismatch_index < 0
+        expected_hash = hashlib.sha256(expected).hexdigest()
+        actual_hash = hashlib.sha256(actual).hexdigest()
         evidence = [
             f"asset={asset_path}",
             f"label={rom_label}",
@@ -131,8 +134,8 @@ def asset_rom_mirror_invariants(
             f"asset_offset={payload['asset_offset']}",
             f"expected_len={len(expected)}",
             f"actual_len={len(actual)}",
-            f"expected_sha256={hashlib.sha256(expected).hexdigest()}",
-            f"actual_sha256={hashlib.sha256(actual).hexdigest()}",
+            f"expected_sha256={expected_hash}",
+            f"actual_sha256={actual_hash}",
         ]
         if mismatch_index >= 0:
             expected_byte = expected[mismatch_index] if mismatch_index < len(expected) else None
@@ -160,6 +163,21 @@ def asset_rom_mirror_invariants(
                 commands=commands,
                 related_files=related_files,
                 related_symbols=[rom_label],
+                byte_span_rows=[
+                    content_mirror_byte_span_row(
+                        mirror_id=f"{source_file}:incbin_asset_rom_bytes:{asset_path}:{asset.get('line', 0)}",
+                        mirror_type="incbin_asset_rom_bytes",
+                        source_file=source_file,
+                        line_start=int(asset.get("line", 0)),
+                        label=rom_label,
+                        symbol=symbol,
+                        expected_len=len(expected),
+                        status="passed" if matched else "failed",
+                        expected_sha256=expected_hash,
+                        actual_sha256=actual_hash,
+                        content_kind="incbin_asset",
+                    )
+                ],
             )
         )
     return out

@@ -8,6 +8,7 @@ from typing import Any
 from .helpers import (
     append_count,
     code_after_label,
+    content_mirror_byte_span_row,
     content_invariant,
     evaluate_int_expression,
     first_mismatch,
@@ -261,6 +262,8 @@ def map_event_rom_mirror_invariants(
     short_read = len(actual) != len(expected)
     mismatch_index = first_mismatch(expected, actual) if not short_read else min(len(actual), len(expected) - 1)
     matched = not short_read and mismatch_index < 0
+    expected_hash = hashlib.sha256(expected).hexdigest()
+    actual_hash = hashlib.sha256(actual).hexdigest()
     evidence = [
         f"label={label}",
         f"bank=${int(symbol['bank']):02x}",
@@ -268,8 +271,8 @@ def map_event_rom_mirror_invariants(
         f"rom_offset=${offset:06x}",
         f"expected_len={len(expected)}",
         f"actual_len={len(actual)}",
-        f"expected_sha256={hashlib.sha256(expected).hexdigest()}",
-        f"actual_sha256={hashlib.sha256(actual).hexdigest()}",
+        f"expected_sha256={expected_hash}",
+        f"actual_sha256={actual_hash}",
     ]
     if mismatch_index >= 0:
         expected_byte = expected[mismatch_index] if mismatch_index < len(expected) else None
@@ -298,6 +301,22 @@ def map_event_rom_mirror_invariants(
             commands=commands,
             related_files=[source_file, str(rom_context.get("rom_path", "")), str(rom_context.get("symbols_path", ""))],
             related_symbols=[label, *encoded["related_symbols"]],
+            byte_span_rows=[
+                content_mirror_byte_span_row(
+                    mirror_id=f"{source_file}:map_event_rom_bytes",
+                    mirror_type="map_event_rom_bytes",
+                    source_file=source_file,
+                    line_start=int(table.get("line", 0)),
+                    line_end=map_event_table_line_end(table),
+                    label=label,
+                    symbol=symbol,
+                    expected_len=len(expected),
+                    status="passed" if matched else "failed",
+                    expected_sha256=expected_hash,
+                    actual_sha256=actual_hash,
+                    content_kind="map_event_table",
+                )
+            ],
         )
     ]
 
@@ -345,6 +364,15 @@ def parse_map_event_table(text: str) -> dict[str, Any] | None:
                 }
             )
     return table
+
+
+def map_event_table_line_end(table: dict[str, Any]) -> int:
+    lines = [int(table.get("line", 0))]
+    for section in MAP_SECTION_MACROS:
+        for row in table.get(section, []):
+            if isinstance(row, dict):
+                lines.append(int(row.get("line", 0)))
+    return max(lines)
 
 
 def encode_map_event_table(table: dict[str, Any], *, rom_context: dict[str, Any]) -> dict[str, Any]:

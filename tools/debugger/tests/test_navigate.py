@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from tools.debugger import state_predicate
 from tools.debugger.navigate import (
     ROOT,
+    CheckpointStaleError,
     build_observed,
     format_search_input_log,
+    load_boss_ai_checkpoint,
     parse_event_constants,
     parse_pokemon_names,
     parse_trainer_class_names,
@@ -132,6 +139,72 @@ class NavigateObservationTests(unittest.TestCase):
 
         self.assertIn("LEFT 16\nWAIT 84", text)
         self.assertIn("WAIT 12", text)
+
+
+class BossSeedCheckpointBasisTests(unittest.TestCase):
+    def _write_fixture(self, root: Path, *, recorded_rom_sha: str | None) -> Path:
+        trace_rom = root / "pokegold_trace.gbc"
+        trace_rom.write_bytes(b"live trace rom bytes")
+        trace_symbols = root / "pokegold_trace.sym"
+        trace_symbols.write_bytes(b"live trace symbols")
+        seed_state = root / "falkner_pre_choice.state"
+        seed_state.write_bytes(b"seed state payload")
+        if recorded_rom_sha is None:
+            recorded_rom_sha = hashlib.sha256(trace_rom.read_bytes()).hexdigest()
+        manifest = root / "live_capture_manifest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "trace_rom": str(trace_rom),
+                    "trace_symbols": str(trace_symbols),
+                    "trace_rom_sha256": recorded_rom_sha,
+                    "trace_symbols_sha256": hashlib.sha256(
+                        trace_symbols.read_bytes()
+                    ).hexdigest(),
+                    "captures": [
+                        {
+                            "id": "falkner",
+                            "boss": "FALKNER",
+                            "pre_choice_state": str(seed_state),
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        return manifest
+
+    def test_seed_checkpoint_loads_when_basis_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = self._write_fixture(root, recorded_rom_sha=None)
+            with mock.patch("tools.debugger.navigate.BOSS_TRACE_MANIFEST", manifest):
+                checkpoint = load_boss_ai_checkpoint("falkner")
+        self.assertEqual(checkpoint["name"], "boss_ai_falkner")
+        self.assertEqual(Path(checkpoint["preferred_rom"]).name, "pokegold_trace.gbc")
+
+    def test_seed_checkpoint_fails_closed_on_trace_rom_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = self._write_fixture(
+                root, recorded_rom_sha="1BB1C97C" + "0" * 56
+            )
+            with mock.patch("tools.debugger.navigate.BOSS_TRACE_MANIFEST", manifest):
+                with self.assertRaises(CheckpointStaleError) as ctx:
+                    load_boss_ai_checkpoint("falkner")
+        message = str(ctx.exception)
+        self.assertIn("sha256 mismatch", message)
+        self.assertIn("re-run", message)
+
+    def test_seed_checkpoint_fails_closed_on_missing_trace_rom(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = self._write_fixture(root, recorded_rom_sha=None)
+            (root / "pokegold_trace.gbc").unlink()
+            with mock.patch("tools.debugger.navigate.BOSS_TRACE_MANIFEST", manifest):
+                with self.assertRaises(CheckpointStaleError) as ctx:
+                    load_boss_ai_checkpoint("falkner")
+        self.assertIn("basis file missing", str(ctx.exception))
 
 
 if __name__ == "__main__":

@@ -216,6 +216,7 @@ def content_invariant(
     commands: list[str] | None = None,
     related_files: list[str] | None = None,
     related_symbols: list[str] | None = None,
+    byte_span_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "id": invariant_id,
@@ -229,6 +230,76 @@ def content_invariant(
         "commands": unique_list(commands or []),
         "related_files": unique_list(related_files or []),
         "related_symbols": unique_list(related_symbols or []),
+        "byte_span_rows": byte_span_rows or [],
+    }
+
+
+def content_mirror_byte_span_row(
+    *,
+    mirror_id: str,
+    mirror_type: str,
+    source_file: str,
+    line_start: int,
+    label: str,
+    symbol: dict[str, Any],
+    expected_len: int,
+    status: str,
+    expected_sha256: str,
+    actual_sha256: str,
+    line_end: int | None = None,
+    content_kind: str = "",
+) -> dict[str, Any]:
+    bank = int(symbol["bank"])
+    address = int(symbol["address"])
+    offset = int(symbol["rom_offset"])
+    size = max(0, int(expected_len))
+    address_end = address + max(0, size - 1)
+    offset_end = offset + max(0, size - 1)
+    end_line = int(line_start if line_end is None else line_end)
+    return {
+        "schema_version": 1,
+        "kind": "rom_byte_index_row",
+        "row_id": f"content-mirror:{mirror_type}:{source_file}:{label}:{line_start}",
+        "rom_span": {
+            "bank": bank,
+            "bank_hex": f"{bank:02X}",
+            "address_start": address,
+            "address_end": address_end,
+            "address_start_hex": f"{address:04X}",
+            "address_end_hex": f"{address_end:04X}",
+            "bank_range": f"{bank:02X}:{address:04X}-{address_end:04X}",
+            "offset_start": offset,
+            "offset_end": offset_end,
+            "offset_start_hex": f"0x{offset:X}",
+            "offset_end_hex": f"0x{offset_end:X}",
+            "size": size,
+        },
+        "section": "",
+        "section_kind": "",
+        "nearest_label": label,
+        "source_refs": [
+            {
+                "path": source_file,
+                "line": int(line_start),
+                "kind": "content_mirror",
+            }
+        ],
+        "source_span": {
+            "path": source_file,
+            "line_start": int(line_start),
+            "line_end": end_line,
+            "kind": content_kind or mirror_type,
+        },
+        "confidence": "content_mirror_exact_span",
+        "ambiguity_notes": [],
+        "content_mirror": {
+            "mirror_id": mirror_id,
+            "type": mirror_type,
+            "status": status,
+            "expected_sha256": expected_sha256,
+            "actual_sha256": actual_sha256,
+            "matched": status == "passed",
+        },
     }
 
 

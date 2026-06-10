@@ -908,6 +908,7 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
         if capability.status != "complete"
         for gap in capability.gaps
     ]
+    subsystem_ready = all(capability.status == "complete" for capability in capabilities)
     return {
         "schema_version": 1,
         "kind": "unified_debugger_capability_report",
@@ -915,7 +916,22 @@ def _report_from_capabilities(capabilities: list[Capability]) -> dict[str, Any]:
             "Pokemon Gold romhack debugger that can ingest, reproduce, localize, "
             "explain, generate, compare, rank, and verify bugs across the entire project ROM."
         ),
-        "ready": all(capability.status == "complete" for capability in capabilities),
+        "ready": subsystem_ready,
+        "ready_scope": "subsystem_ready",
+        "readiness_tiers": {
+            "subsystem_ready": {
+                "status": "ready" if subsystem_ready else "blocked",
+                "basis": "registered debugger subsystems import and expose their current commands",
+            },
+            "deity_demo_ready": {
+                "status": "not_evaluated",
+                "basis": "run python tools\\audit\\check_debugger_deity_mode.py for the current demo gate",
+            },
+            "whole_rom_ready": {
+                "status": "blocked",
+                "basis": "literal-anything inventory, canonical classes, and no-partial-pass proof coverage are not complete",
+            },
+        },
         "status_counts": status_counts,
         "blocking_gap_count": len(blockers),
         "blocking_gaps": blockers,

@@ -7,10 +7,18 @@ from typing import Any
 from tools.trace import runtime as trace_runtime
 
 from .catalog import ROOT
+from .canonical_state_class import build_canonical_state_class, stable_json_hash
+from .content_mirror.helpers import evaluate_int_expression, first_token, split_macro_args, strip_comment
+from .content_mirror.rom_context import load_map_event_constants
 from .ingest import sha256_file
 from .localize import normalize_path
 from .minimize import load_scenario_files, unique_list
 from .provenance import display_path, parse_symbol_table, resolve_path
+from .report_envelope import (
+    proof_dirty_diff_hash,
+    proof_source_tree_hash,
+    sha256_file as proof_sha256_file,
+)
 from .reporting import load_reports
 from .setup_plan import collect_content_setup_scenarios, setup_scenario_id_for
 from .workflow import command_is_runnable
@@ -19,6 +27,45 @@ from .workflow import command_is_runnable
 MAP_GROUP_RE = re.compile(r"^MapGroup_(?P<name>[A-Za-z0-9_]+):")
 MAP_ENTRY_RE = re.compile(r"^\s*map\s+(?P<name>[A-Za-z0-9_]+)\s*,")
 MAP_PATCH_SYMBOLS = ("wMapGroup", "wMapNumber", "wXCoord", "wYCoord")
+OBJECT_EVENT_MAP_OBJECT_BASE_INDEX = 2
+SYNTHETIC_OBJECT_STRUCT_INDEX = 1
+OBJECT_EVENT_COORD_OFFSET = 4
+OBJECT_VISIBILITY_PATCH_SYMBOLS = (
+    "wMap{index}ObjectStructID",
+    "wMap{index}ObjectSprite",
+    "wMap{index}ObjectYCoord",
+    "wMap{index}ObjectXCoord",
+    "wMap{index}ObjectMovement",
+    "wMap{index}ObjectRadius",
+    "wMap{index}ObjectHour1",
+    "wMap{index}ObjectHour2",
+    "wMap{index}ObjectType",
+    "wMap{index}ObjectSightRange",
+    "wMap{index}ObjectScript",
+    "wMap{index}ObjectScript+1",
+    "wMap{index}ObjectEventFlag",
+    "wMap{index}ObjectEventFlag+1",
+    "wObject1MapObjectIndex",
+    "wObject1Sprite",
+    "wObject1MovementType",
+    "wObject1Flags",
+    "wObject1Flags+1",
+    "wObject1Palette",
+    "wObject1Walking",
+    "wObject1Direction",
+    "wObject1StepType",
+    "wObject1Action",
+    "wObject1Facing",
+    "wObject1MapX",
+    "wObject1MapY",
+    "wObject1LastMapX",
+    "wObject1LastMapY",
+    "wObject1InitX",
+    "wObject1InitY",
+    "wObject1Radius",
+    "wObject1Range",
+    "wObjectMasks+{index}",
+)
 SCRIPT_ENTRY_PATCH_SYMBOLS = ("wScriptBank", "wScriptPos", "wScriptRunning", "wScriptMode", "wScriptStackSize")
 MOVEMENT_ENTRY_PATCH_SYMBOLS = (
     "wMovementObject",
@@ -89,8 +136,11 @@ def build_content_state_report(
         errors.append("--execute requires --out-state")
 
     symbol_table = parse_symbol_table(symbols) if symbols.exists() else {}
+    canonical_identity = content_state_identity(rom=rom, symbols=symbols, root=root)
     precondition_kinds = selected_precondition_kinds(selected_scenarios)
     map_index, map_errors = load_map_index(root=root) if "map_position" in precondition_kinds else ({}, [])
+    constants = load_map_event_constants(root=root, symbol_constants={}) if "map_position" in precondition_kinds else {}
+    sprite_movement_data = load_sprite_movement_data(root=root, constants=constants) if constants else {}
     errors.extend(map_errors)
     materializations: list[dict[str, Any]] = []
     for scenario in selected_scenarios:
@@ -100,6 +150,9 @@ def build_content_state_report(
                 map_index=map_index,
                 symbol_table=symbol_table,
                 symbols_path=symbols,
+                constants=constants,
+                sprite_movement_data=sprite_movement_data,
+                canonical_identity=canonical_identity,
                 root=root,
             )
         )
@@ -143,6 +196,7 @@ def build_content_state_report(
         "rom_sha256": sha256_file(rom) if rom.exists() else "",
         "symbols": display_path(symbols, root=root),
         "symbols_sha256": sha256_file(symbols) if symbols.exists() else "",
+        "canonical_state_class_identity": canonical_identity,
         "base_save_state": display_path(base_state, root=root) if base_state is not None else "",
         "out_state": display_path(output_state, root=root) if output_state is not None else out_state,
         "input_reports": [item["source"] for item in loaded_reports],
@@ -204,6 +258,9 @@ def materializations_for_scenario(
     map_index: dict[str, dict[str, Any]],
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
+    constants: dict[str, int],
+    sprite_movement_data: dict[int, dict[str, int]],
+    canonical_identity: dict[str, str],
     root: Path,
 ) -> list[dict[str, Any]]:
     out = []
@@ -213,48 +270,273 @@ def materializations_for_scenario(
         if kind != "map_position":
             if kind == "script_entry":
                 out.append(
-                    script_entry_materialization(
+                    attach_content_materialization_class(
+                        script_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                            symbol_table=symbol_table,
+                            symbols_path=symbols_path,
+                            root=root,
+                        ),
                         scenario=scenario,
                         precondition=precondition,
-                        scenario_id=scenario_id,
-                        symbol_table=symbol_table,
-                        symbols_path=symbols_path,
-                        root=root,
+                        identity=canonical_identity,
                     )
                 )
                 continue
             if kind == "movement_entry":
                 out.append(
-                    movement_entry_materialization(
+                    attach_content_materialization_class(
+                        movement_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                            symbol_table=symbol_table,
+                            symbols_path=symbols_path,
+                            root=root,
+                        ),
                         scenario=scenario,
                         precondition=precondition,
-                        scenario_id=scenario_id,
-                        symbol_table=symbol_table,
-                        symbols_path=symbols_path,
-                        root=root,
+                        identity=canonical_identity,
                     )
                 )
                 continue
             if kind == "audio_engine_entry":
-                out.append(audio_engine_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
+                out.append(
+                    attach_content_materialization_class(
+                        audio_engine_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                        ),
+                        scenario=scenario,
+                        precondition=precondition,
+                        identity=canonical_identity,
+                    )
+                )
                 continue
             if kind == "asset_loader_entry":
-                out.append(asset_loader_entry_materialization(scenario=scenario, precondition=precondition, scenario_id=scenario_id))
+                out.append(
+                    attach_content_materialization_class(
+                        asset_loader_entry_materialization(
+                            scenario=scenario,
+                            precondition=precondition,
+                            scenario_id=scenario_id,
+                        ),
+                        scenario=scenario,
+                        precondition=precondition,
+                        identity=canonical_identity,
+                    )
+                )
                 continue
-            out.append(non_patch_materialization(scenario, precondition, reason=f"unsupported precondition kind: {kind}"))
+            out.append(
+                attach_content_materialization_class(
+                    non_patch_materialization(scenario, precondition, reason=f"unsupported precondition kind: {kind}"),
+                    scenario=scenario,
+                    precondition=precondition,
+                    identity=canonical_identity,
+                )
+            )
             continue
         out.append(
-            map_position_materialization(
+            attach_content_materialization_class(
+                map_position_materialization(
+                    scenario=scenario,
+                    precondition=precondition,
+                    scenario_id=scenario_id,
+                    map_index=map_index,
+                    symbol_table=symbol_table,
+                    symbols_path=symbols_path,
+                    constants=constants,
+                    sprite_movement_data=sprite_movement_data,
+                    root=root,
+                ),
                 scenario=scenario,
                 precondition=precondition,
-                scenario_id=scenario_id,
-                map_index=map_index,
-                symbol_table=symbol_table,
-                symbols_path=symbols_path,
-                root=root,
+                identity=canonical_identity,
             )
         )
     return out
+
+
+def content_state_identity(*, rom: Path, symbols: Path, root: Path) -> dict[str, str]:
+    return {
+        "rom_sha256": proof_sha256_file(rom, root=root) or "missing",
+        "symbols_sha256": proof_sha256_file(symbols, root=root) or "missing",
+        "map_sha256": proof_sha256_file(rom.with_suffix(".map"), root=root) or "missing",
+        "rule_map_sha256": content_state_rule_map_hash(),
+        "source_tree_sha256": proof_source_tree_hash(root),
+        "dirty_diff_hash": proof_dirty_diff_hash(root),
+    }
+
+
+def content_state_rule_map_hash() -> str:
+    return stable_json_hash(
+        {
+            "surface": "content_state",
+            "schema_version": 1,
+            "patch_symbol_contracts": {
+                "map_position": list(MAP_PATCH_SYMBOLS),
+                "object_struct_visibility": list(OBJECT_VISIBILITY_PATCH_SYMBOLS),
+                "script_entry": list(SCRIPT_ENTRY_PATCH_SYMBOLS),
+                "movement_entry": list(MOVEMENT_ENTRY_PATCH_SYMBOLS),
+            },
+            "planned_watch_symbol_contracts": {
+                "audio_engine_entry": list(AUDIO_ENTRY_WATCH_SYMBOLS),
+                "asset_loader_entry": list(ASSET_REQUEST_WATCH_SYMBOLS),
+            },
+        }
+    )
+
+
+def attach_content_materialization_class(
+    materialization: dict[str, Any],
+    *,
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+    identity: dict[str, str],
+) -> dict[str, Any]:
+    canonical = build_canonical_state_class(
+        surface="content_state",
+        identity=identity,
+        public_facts=content_materialization_public_facts(materialization),
+        surface_facts={
+            "content": {
+                "materialization_surface": "content_state",
+                "scenario_type": materialization.get("scenario_type", ""),
+                "precondition_kind": materialization.get("precondition_kind", ""),
+                "status": materialization.get("status", ""),
+                "patch_count": materialization.get("patch_count", 0),
+            }
+        },
+        backend="static",
+        proof_status=(
+            "static_mirror_only"
+            if materialization.get("status") == "ready"
+            else "missing_evidence"
+        ),
+        raw_state_provenance={
+            "kind": "unified_debugger_content_state_materialization_row",
+            "scenario_id": materialization.get("scenario_id", ""),
+            "precondition_id": materialization.get("precondition_id", ""),
+            "precondition_kind": materialization.get("precondition_kind", ""),
+        },
+        missing_evidence=content_materialization_missing_evidence(materialization),
+        blocking_gaps=content_materialization_missing_evidence(materialization),
+        known_limits=[
+            "Content-state class ids identify static materialization rows; runtime replay remains separate evidence.",
+        ],
+        source_refs=content_materialization_source_refs(
+            materialization=materialization,
+            scenario=scenario,
+            precondition=precondition,
+        ),
+    )
+    materialization["canonical_state_class"] = canonical
+    materialization["class_id"] = str(canonical.get("class_id", ""))
+    materialization["class_fingerprint"] = str(canonical.get("class_fingerprint", ""))
+    materialization["canonical_state_class_valid"] = bool(canonical.get("valid", False))
+    materialization["canonical_state_class_errors"] = list(canonical.get("validation_errors", []))
+    if not canonical.get("valid"):
+        materialization.setdefault("errors", []).append(
+            "canonical_state_class invalid: " + "; ".join(str(error) for error in canonical.get("validation_errors", []))
+        )
+    return materialization
+
+
+def content_materialization_public_facts(materialization: dict[str, Any]) -> dict[str, Any]:
+    facts: dict[str, Any] = {
+        "scenario_id": materialization.get("scenario_id", ""),
+        "scenario_type": materialization.get("scenario_type", ""),
+        "precondition_id": materialization.get("precondition_id", ""),
+        "precondition_kind": materialization.get("precondition_kind", ""),
+        "status": materialization.get("status", ""),
+        "source_file": materialization.get("source_file", ""),
+        "values": content_materialization_public_values(materialization),
+        "patches": [
+            {
+                "symbol": patch.get("symbol", ""),
+                "bank_address": patch.get("bank_address", ""),
+                "value": patch.get("value", 0),
+            }
+            for patch in materialization.get("patches", [])
+            if isinstance(patch, dict)
+        ],
+        "watch_symbols": materialization.get("watch_symbols", []),
+        "runtime_symbols": materialization.get("runtime_symbols", []),
+    }
+    for key in ("map_name", "script_label", "movement_label", "music_label", "asset", "label"):
+        if materialization.get(key) not in (None, ""):
+            facts[key] = materialization.get(key)
+    for key in ("map_resolution", "script_resolution", "movement_resolution"):
+        if materialization.get(key):
+            facts[key] = materialization.get(key)
+    visibility = materialization.get("object_visibility_materializer")
+    if isinstance(visibility, dict):
+        facts["object_visibility_materializer"] = {
+            "status": visibility.get("status", ""),
+            "proof_status": visibility.get("proof_status", ""),
+            "map_object_index": visibility.get("map_object_index", 0),
+            "object_struct_index": visibility.get("object_struct_index", 0),
+            "source_file": visibility.get("source_file", ""),
+            "source_line": visibility.get("source_line", 0),
+            "patch_symbols": visibility.get("patch_symbols", []),
+        }
+    return facts
+
+
+def content_materialization_public_values(materialization: dict[str, Any]) -> dict[str, Any]:
+    values = materialization.get("values")
+    if not isinstance(values, dict):
+        return {}
+    allowed = {
+        "asset",
+        "channel_count",
+        "label",
+        "map_label",
+        "movement",
+        "movement_label",
+        "music_label",
+        "object_id",
+        "object_type",
+        "script_label",
+        "script",
+        "source_file",
+        "x",
+        "y",
+    }
+    return {
+        str(key): values[key]
+        for key in sorted(values, key=lambda item: str(item))
+        if str(key) in allowed
+    }
+
+
+def content_materialization_missing_evidence(materialization: dict[str, Any]) -> list[str]:
+    if materialization.get("status") == "ready":
+        return ["content_state_runtime_replay_not_attached"]
+    if materialization.get("status") == "planned":
+        return ["content_state_runtime_state_or_owning_caller_missing"]
+    return ["content_state_materialization_blocked"]
+
+
+def content_materialization_source_refs(
+    *,
+    materialization: dict[str, Any],
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+) -> list[str]:
+    refs = ["tools/debugger/content_state.py"]
+    for raw in (
+        materialization.get("source_file", ""),
+        scenario.get("source_file", ""),
+        (precondition.get("values", {}) if isinstance(precondition.get("values"), dict) else {}).get("source_file", ""),
+    ):
+        text = normalize_path(str(raw or ""))
+        if text and text not in refs:
+            refs.append(text)
+    return refs
 
 
 def selected_precondition_kinds(scenarios: list[dict[str, Any]]) -> set[str]:
@@ -266,6 +548,49 @@ def selected_precondition_kinds(scenarios: list[dict[str, Any]]) -> set[str]:
     }
 
 
+def load_sprite_movement_data(*, root: Path, constants: dict[str, int]) -> dict[int, dict[str, int]]:
+    path = root / "data" / "sprites" / "map_objects.asm"
+    if not path.exists():
+        return {}
+    entries: dict[int, dict[str, int]] = {}
+    values: list[int] = []
+    in_table = False
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        clean = strip_comment(raw).strip()
+        if not clean:
+            continue
+        if clean == "SpriteMovementData::":
+            in_table = True
+            continue
+        if not in_table:
+            continue
+        token = first_token(clean)
+        if token == "assert_table_length":
+            break
+        if token != "db":
+            continue
+        args = split_macro_args(clean[len(token):])
+        if not args:
+            continue
+        value = evaluate_int_expression(args[0], constants)
+        if value is None:
+            values = []
+            continue
+        values.append(value & 0xFF)
+        if len(values) == 6:
+            index = len(entries)
+            entries[index] = {
+                "movement_function": values[0],
+                "facing": values[1],
+                "action": values[2],
+                "flags1": values[3],
+                "flags2": values[4],
+                "palette_flags": values[5],
+            }
+            values = []
+    return entries
+
+
 def map_position_materialization(
     *,
     scenario: dict[str, Any],
@@ -274,6 +599,8 @@ def map_position_materialization(
     map_index: dict[str, dict[str, Any]],
     symbol_table: dict[str, dict[str, Any]],
     symbols_path: Path,
+    constants: dict[str, int],
+    sprite_movement_data: dict[int, dict[str, int]],
     root: Path,
 ) -> dict[str, Any]:
     values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
@@ -296,7 +623,22 @@ def map_position_materialization(
         if value is not None
     ]
     errors.extend(error for patch in patches for error in patch.get("errors", []))
-    return {
+    object_visibility = object_visibility_materializer(
+        scenario=scenario,
+        precondition=precondition,
+        scenario_id=scenario_id,
+        symbol_table=symbol_table,
+        symbols_path=symbols_path,
+        constants=constants,
+        sprite_movement_data=sprite_movement_data,
+        root=root,
+    ) if scenario.get("scenario_type") == "map_object_event" else None
+    if object_visibility is not None and object_visibility.get("status") != "ready":
+        errors.extend(
+            f"object visibility materializer: {error}"
+            for error in object_visibility.get("errors", [])
+        )
+    materialization = {
         "scenario_id": scenario_id,
         "scenario_type": str(scenario.get("scenario_type", "")),
         "precondition_id": str(precondition.get("id", "")),
@@ -314,6 +656,259 @@ def map_position_materialization(
             for symbol in MAP_PATCH_SYMBOLS
         ],
     }
+    if object_visibility is not None:
+        materialization["object_visibility_materializer"] = object_visibility
+        materialization.setdefault("known_limits", []).append(
+            "Object visibility patches synthesize the selected map object and object-struct rows; they do not prove the overworld event engine reached TryObjectEvent at runtime."
+        )
+    return materialization
+
+
+def object_visibility_materializer(
+    *,
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+    scenario_id: str,
+    symbol_table: dict[str, dict[str, Any]],
+    symbols_path: Path,
+    constants: dict[str, int],
+    sprite_movement_data: dict[int, dict[str, int]],
+    root: Path,
+) -> dict[str, Any]:
+    source, source_errors = source_object_event_for_scenario(
+        scenario=scenario,
+        precondition=precondition,
+        root=root,
+    )
+    errors = list(source_errors)
+    fields = list(source.get("fields", [])) if source else []
+    map_object_index = int(source.get("map_object_index", 0) or 0) if source else 0
+    source_file = str(source.get("source_file", "") if source else "")
+    source_line = int(source.get("line", 0) or 0) if source else 0
+
+    def field(index: int) -> str:
+        return fields[index] if index < len(fields) else ""
+
+    sprite = evaluate_required_byte(field(2), constants=constants, field_name="sprite", errors=errors)
+    movement = evaluate_required_byte(field(3), constants=constants, field_name="movement", errors=errors)
+    x = evaluate_required_byte(field(0), constants=constants, field_name="x", errors=errors)
+    y = evaluate_required_byte(field(1), constants=constants, field_name="y", errors=errors)
+    radius_x = evaluate_required_byte(field(4), constants=constants, field_name="radius_x", errors=errors)
+    radius_y = evaluate_required_byte(field(5), constants=constants, field_name="radius_y", errors=errors)
+    hour1 = evaluate_required_byte(field(6), constants=constants, field_name="hour1", errors=errors)
+    hour2 = evaluate_required_byte(field(7), constants=constants, field_name="hour2", errors=errors)
+    palette = evaluate_required_byte(field(8), constants=constants, field_name="palette", errors=errors)
+    object_type = evaluate_required_byte(field(9), constants=constants, field_name="object_type", errors=errors)
+    sight_range = evaluate_required_byte(field(10), constants=constants, field_name="sight_range", errors=errors)
+    script_pointer = resolve_required_word(
+        field(11),
+        constants=constants,
+        symbol_table=symbol_table,
+        field_name="script_pointer",
+        errors=errors,
+    )
+    event_flag = resolve_required_word(
+        field(12),
+        constants=constants,
+        symbol_table=symbol_table,
+        field_name="event_flag",
+        errors=errors,
+    )
+    movement_entry = sprite_movement_data.get(movement if movement is not None else -1)
+    if movement_entry is None:
+        if movement is not None:
+            errors.append(f"sprite movement data missing for movement id {movement}")
+        movement_entry = {}
+
+    map_x = (x + OBJECT_EVENT_COORD_OFFSET) & 0xFF if x is not None else 0
+    map_y = (y + OBJECT_EVENT_COORD_OFFSET) & 0xFF if y is not None else 0
+    map_radius = (((radius_y or 0) & 0x0F) << 4) | ((radius_x or 0) & 0x0F)
+    object_radius = ((map_radius + 0x10) & 0xF0) | ((map_radius + 1) & 0x0F)
+    palette_type = (((palette or 0) & 0x0F) << 4) | ((object_type or 0) & 0x0F)
+    facing = int(movement_entry.get("facing", 0))
+    standing = int(constants.get("STANDING", -1)) & 0xFF
+    object_struct_index = SYNTHETIC_OBJECT_STRUCT_INDEX
+    map_symbol_prefix = f"wMap{map_object_index}Object"
+
+    patch_specs: list[tuple[str, int, int, str]] = [
+        (f"{map_symbol_prefix}StructID", object_struct_index, 0, ""),
+        (f"{map_symbol_prefix}Sprite", sprite or 0, 0, ""),
+        (f"{map_symbol_prefix}YCoord", map_y, 0, ""),
+        (f"{map_symbol_prefix}XCoord", map_x, 0, ""),
+        (f"{map_symbol_prefix}Movement", movement or 0, 0, ""),
+        (f"{map_symbol_prefix}Radius", map_radius, 0, ""),
+        (f"{map_symbol_prefix}Hour1", hour1 or 0, 0, ""),
+        (f"{map_symbol_prefix}Hour2", hour2 or 0, 0, ""),
+        (f"{map_symbol_prefix}Type", palette_type, 0, ""),
+        (f"{map_symbol_prefix}SightRange", sight_range or 0, 0, ""),
+        (f"{map_symbol_prefix}Script", script_pointer or 0, 0, ""),
+        (f"{map_symbol_prefix}Script", (script_pointer or 0) >> 8, 1, f"{map_symbol_prefix}Script+1"),
+        (f"{map_symbol_prefix}EventFlag", event_flag or 0, 0, ""),
+        (f"{map_symbol_prefix}EventFlag", (event_flag or 0) >> 8, 1, f"{map_symbol_prefix}EventFlag+1"),
+        ("wObject1MapObjectIndex", map_object_index, 0, ""),
+        ("wObject1Sprite", sprite or 0, 0, ""),
+        ("wObject1MovementType", movement or 0, 0, ""),
+        ("wObject1Flags", int(movement_entry.get("flags1", 0)), 0, ""),
+        ("wObject1Flags", int(movement_entry.get("flags2", 0)), 1, "wObject1Flags+1"),
+        ("wObject1Palette", int(movement_entry.get("palette_flags", 0)), 0, ""),
+        ("wObject1Walking", standing, 0, ""),
+        ("wObject1Direction", ((facing & 0x03) << 2) & 0xFF, 0, ""),
+        ("wObject1StepType", int(constants.get("STEP_TYPE_RESET", 0)) & 0xFF, 0, ""),
+        ("wObject1Action", int(movement_entry.get("action", 0)), 0, ""),
+        ("wObject1Facing", standing, 0, ""),
+        ("wObject1MapX", map_x, 0, ""),
+        ("wObject1MapY", map_y, 0, ""),
+        ("wObject1LastMapX", map_x, 0, ""),
+        ("wObject1LastMapY", map_y, 0, ""),
+        ("wObject1InitX", map_x, 0, ""),
+        ("wObject1InitY", map_y, 0, ""),
+        ("wObject1Radius", object_radius, 0, ""),
+        ("wObject1Range", sight_range or 0, 0, ""),
+        ("wObjectMasks", 0, map_object_index, f"wObjectMasks+{map_object_index}"),
+    ]
+    patches = [
+        patch_record(
+            symbol,
+            value,
+            symbol_table=symbol_table,
+            symbols_path=symbols_path,
+            root=root,
+            address_offset=offset,
+            display_symbol=display,
+        )
+        for symbol, value, offset, display in patch_specs
+    ] if map_object_index > 0 else []
+    errors.extend(error for patch in patches for error in patch.get("errors", []))
+    return {
+        "kind": "object_struct_visibility_materializer",
+        "status": "ready" if not errors and patches else "blocked",
+        "proof_status": "static_synthetic",
+        "scenario_id": scenario_id,
+        "source_file": source_file,
+        "source_line": source_line,
+        "map_object_index": map_object_index,
+        "object_struct_index": object_struct_index,
+        "map_object_symbol": map_symbol_prefix if map_object_index > 0 else "",
+        "object_struct_symbol": "wObject1Struct",
+        "object_mask_symbol": f"wObjectMasks+{map_object_index}" if map_object_index > 0 else "",
+        "source_fields": fields,
+        "source_values": {
+            "x": x,
+            "y": y,
+            "sprite": sprite,
+            "movement": movement,
+            "object_type": object_type,
+            "script": field(11),
+            "script_pointer": script_pointer,
+            "event_flag": field(12),
+            "event_flag_value": event_flag,
+        },
+        "patch_count": len(patches),
+        "patch_symbols": [str(patch.get("symbol", "")) for patch in patches],
+        "patches": patches,
+        "runtime_symbols": ["CheckObjectVisibility", "CheckFacingObject", "TryObjectEvent"],
+        "errors": errors,
+        "commands": [
+            "python -m tools.debugger replay "
+            f"--scenario-id {scenario_id} --save-state <patched-state> "
+            "--symbol CheckFacingObject --symbol TryObjectEvent "
+            "--watch-symbol wObject1MapObjectIndex --watch-symbol wObject1MapX --watch-symbol wObject1MapY --execute-watch"
+        ],
+        "known_limits": [
+            "These patches synthesize the selected map object as visible in wObject1Struct and unmasked in wObjectMasks.",
+            "Runtime collision, facing-tile selection, and script dispatch still require replay evidence from an executed state.",
+        ],
+    }
+
+
+def source_object_event_for_scenario(
+    *,
+    scenario: dict[str, Any],
+    precondition: dict[str, Any],
+    root: Path,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    values = precondition.get("values") if isinstance(precondition.get("values"), dict) else {}
+    source_file = normalize_path(str(scenario.get("source_file") or values.get("source_file") or ""))
+    if not source_file:
+        return None, ["map object event source_file is missing"]
+    source_path = resolve_path(source_file, root=root)
+    if not source_path.exists():
+        return None, [f"map object event source file missing: {source_file}"]
+    wanted_line = parse_int(scenario.get("line"))
+    trigger = scenario.get("trigger") if isinstance(scenario.get("trigger"), dict) else {}
+    fallback: dict[str, Any] | None = None
+    object_count = 0
+    for line_no, raw in enumerate(source_path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        clean = strip_comment(raw).strip()
+        token = first_token(clean)
+        if token != "object_event":
+            continue
+        fields = split_macro_args(clean[len(token):])
+        map_object_index = OBJECT_EVENT_MAP_OBJECT_BASE_INDEX + object_count
+        object_count += 1
+        row = {
+            "source_file": source_file,
+            "line": line_no,
+            "fields": fields,
+            "map_object_index": map_object_index,
+        }
+        if wanted_line is not None and line_no == wanted_line:
+            return row, []
+        if fallback is None and object_event_matches_trigger(fields=fields, trigger=trigger, values=values):
+            fallback = row
+    if fallback is not None:
+        return fallback, []
+    return None, [f"map object event row not found in {source_file}"]
+
+
+def object_event_matches_trigger(*, fields: list[str], trigger: dict[str, Any], values: dict[str, Any]) -> bool:
+    checks = (
+        (0, values.get("x") or trigger.get("x")),
+        (1, values.get("y") or trigger.get("y")),
+        (9, values.get("object_type") or trigger.get("object_type")),
+        (11, values.get("script") or trigger.get("script")),
+        (12, values.get("event_flag") or trigger.get("event_flag")),
+    )
+    matched = False
+    for index, expected in checks:
+        if expected in (None, ""):
+            continue
+        matched = True
+        if index >= len(fields) or str(fields[index]).strip() != str(expected).strip():
+            return False
+    return matched
+
+
+def evaluate_required_byte(
+    expr: str,
+    *,
+    constants: dict[str, int],
+    field_name: str,
+    errors: list[str],
+) -> int | None:
+    value = evaluate_int_expression(expr, constants)
+    if value is None:
+        errors.append(f"could not resolve object_event {field_name}: {expr}")
+        return None
+    return value & 0xFF
+
+
+def resolve_required_word(
+    expr: str,
+    *,
+    constants: dict[str, int],
+    symbol_table: dict[str, dict[str, Any]],
+    field_name: str,
+    errors: list[str],
+) -> int | None:
+    value = evaluate_int_expression(expr, constants)
+    if value is not None:
+        return value & 0xFFFF
+    symbol = symbol_table.get(expr.strip())
+    if symbol is None:
+        errors.append(f"could not resolve object_event {field_name}: {expr}")
+        return None
+    return int(symbol.get("address", 0)) & 0xFFFF
 
 
 def script_entry_materialization(

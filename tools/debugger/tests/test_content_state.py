@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from tools.debugger.canonical_state_class import validate_canonical_state_class
 from tools.debugger.content_state import build_content_state_report
 
 
@@ -85,10 +86,276 @@ class ContentStateTests(unittest.TestCase):
         self.assertEqual(report["materializations"][0]["status"], "ready")
         self.assertEqual(report["materializations"][0]["map_resolution"]["map_group"], 1)
         self.assertEqual(report["materializations"][0]["map_resolution"]["map_number"], 2)
+        self.assertRegex(report["materializations"][0]["class_id"], r"^csc_[0-9A-F]{20}$")
+        self.assertEqual(
+            validate_canonical_state_class(report["materializations"][0]["canonical_state_class"]),
+            [],
+        )
+        self.assertEqual(
+            report["materializations"][0]["canonical_state_class"]["surface_facts"]["content"]["precondition_kind"],
+            "map_position",
+        )
         self.assertEqual(patches["wMapGroup"]["value"], 1)
         self.assertEqual(patches["wMapNumber"]["value"], 2)
         self.assertEqual(patches["wXCoord"]["value"], 6)
         self.assertEqual(patches["wYCoord"]["value"], 3)
+
+    def test_content_state_materializes_object_visibility_patches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "sprites").mkdir(parents=True)
+            (root / "maps").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "\n".join(
+                    [
+                        "MapGroup_Unit:",
+                        "\ttable_width MAP_LENGTH",
+                        "\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_NEW_BARK_TOWN, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_NONE",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "sprites" / "map_objects.asm").write_text(
+                "\n".join(
+                    [
+                        "SpriteMovementData::",
+                        "\tdb 6",
+                        "\tdb 2",
+                        "\tdb 1",
+                        "\tdb 0",
+                        "\tdb 0",
+                        "\tdb 0",
+                        "\tassert_table_length 1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_object_events",
+                        "\tobject_event 5, 7, 3, 0, 0, 0, -1, -1, 0, 0, 0, UnitScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "\n".join(
+                    [
+                        "02:5000 UnitScript",
+                        "01:DA00 wMapGroup",
+                        "01:DA01 wMapNumber",
+                        "01:DA02 wYCoord",
+                        "01:DA03 wXCoord",
+                        "01:DB00 wMap2ObjectStructID",
+                        "01:DB01 wMap2ObjectSprite",
+                        "01:DB02 wMap2ObjectYCoord",
+                        "01:DB03 wMap2ObjectXCoord",
+                        "01:DB04 wMap2ObjectMovement",
+                        "01:DB05 wMap2ObjectRadius",
+                        "01:DB06 wMap2ObjectHour1",
+                        "01:DB07 wMap2ObjectHour2",
+                        "01:DB08 wMap2ObjectType",
+                        "01:DB09 wMap2ObjectSightRange",
+                        "01:DB0A wMap2ObjectScript",
+                        "01:DB0C wMap2ObjectEventFlag",
+                        "01:DC00 wObject1MapObjectIndex",
+                        "01:DC01 wObject1Sprite",
+                        "01:DC02 wObject1MovementType",
+                        "01:DC03 wObject1Flags",
+                        "01:DC05 wObject1Palette",
+                        "01:DC06 wObject1Walking",
+                        "01:DC07 wObject1Direction",
+                        "01:DC08 wObject1StepType",
+                        "01:DC09 wObject1Action",
+                        "01:DC0A wObject1Facing",
+                        "01:DC0B wObject1MapX",
+                        "01:DC0C wObject1MapY",
+                        "01:DC0D wObject1LastMapX",
+                        "01:DC0E wObject1LastMapY",
+                        "01:DC0F wObject1InitX",
+                        "01:DC10 wObject1InitY",
+                        "01:DC11 wObject1Radius",
+                        "01:DC12 wObject1Range",
+                        "01:DD00 wObjectMasks",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "content.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_scenarios",
+                        "valid": True,
+                        "scenarios": [
+                            {
+                                "id": "content_scenario_1_0019",
+                                "kind": "unified_debugger_content_scenario",
+                                "scenario_type": "map_object_event",
+                                "source_file": "maps/UnitMap.asm",
+                                "line": 3,
+                                "trigger": {
+                                    "x": "5",
+                                    "y": "7",
+                                    "object_type": "0",
+                                    "script": "UnitScript",
+                                    "event_flag": "-1",
+                                },
+                                "state_preconditions": [
+                                    {
+                                        "id": "map_object_event_position",
+                                        "kind": "map_position",
+                                        "values": {
+                                            "map_label": "UnitMap_MapEvents",
+                                            "source_file": "maps/UnitMap.asm",
+                                            "x": 5,
+                                            "y": 7,
+                                        },
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_content_state_report(
+                reports=("content.json",),
+                scenario_ids=("content_scenario_1_0019",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        materialization = report["materializations"][0]
+        visibility = materialization["object_visibility_materializer"]
+        visibility_patches = {patch["symbol"]: patch for patch in visibility["patches"]}
+
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["patch_count"], 4)
+        self.assertEqual(materialization["status"], "ready")
+        self.assertEqual(visibility["status"], "ready")
+        self.assertEqual(visibility["proof_status"], "static_synthetic")
+        self.assertEqual(visibility["map_object_index"], 2)
+        self.assertEqual(visibility["object_struct_index"], 1)
+        self.assertEqual(visibility_patches["wMap2ObjectStructID"]["value"], 1)
+        self.assertEqual(visibility_patches["wMap2ObjectYCoord"]["value"], 11)
+        self.assertEqual(visibility_patches["wMap2ObjectXCoord"]["value"], 9)
+        self.assertEqual(visibility_patches["wMap2ObjectScript"]["value"], 0x00)
+        self.assertEqual(visibility_patches["wMap2ObjectScript+1"]["value"], 0x50)
+        self.assertEqual(visibility_patches["wObject1MapObjectIndex"]["value"], 2)
+        self.assertEqual(visibility_patches["wObject1Walking"]["value"], 0xFF)
+        self.assertEqual(visibility_patches["wObject1Direction"]["value"], 8)
+        self.assertEqual(visibility_patches["wObject1MapX"]["value"], 9)
+        self.assertEqual(visibility_patches["wObject1MapY"]["value"], 11)
+        self.assertEqual(visibility_patches["wObjectMasks+2"]["address"], 0xDD02)
+        self.assertEqual(visibility_patches["wObjectMasks+2"]["value"], 0)
+
+    def test_content_state_blocks_on_unresolvable_movement_constant(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data" / "maps").mkdir(parents=True)
+            (root / "data" / "sprites").mkdir(parents=True)
+            (root / "maps").mkdir()
+            (root / "data" / "maps" / "maps.asm").write_text(
+                "\n".join(
+                    [
+                        "MapGroup_Unit:",
+                        "\ttable_width MAP_LENGTH",
+                        "\tmap UnitMap, TILESET_JOHTO, TOWN, LANDMARK_NEW_BARK_TOWN, MUSIC_NONE, FALSE, PALETTE_AUTO, FISHGROUP_NONE",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "data" / "sprites" / "map_objects.asm").write_text(
+                "\n".join(
+                    [
+                        "SpriteMovementData::",
+                        "\tdb 6",
+                        "\tdb 2",
+                        "\tdb 1",
+                        "\tdb 0",
+                        "\tdb 0",
+                        "\tdb 0",
+                        "\tassert_table_length 1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "maps" / "UnitMap.asm").write_text(
+                "\n".join(
+                    [
+                        "UnitMap_MapEvents:",
+                        "\tdef_object_events",
+                        "\tobject_event 5, 7, 3, SPRITEMOVEDATA_NOT_A_REAL_CONSTANT, 0, 0, -1, -1, 0, 0, 0, UnitScript, -1",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "test.sym").write_text(
+                "02:5000 UnitScript\n01:DA00 wMapGroup\n",
+                encoding="utf-8",
+            )
+            (root / "content.json").write_text(
+                json.dumps(
+                    {
+                        "kind": "unified_debugger_content_scenarios",
+                        "valid": True,
+                        "scenarios": [
+                            {
+                                "id": "content_scenario_1_0019",
+                                "kind": "unified_debugger_content_scenario",
+                                "scenario_type": "map_object_event",
+                                "source_file": "maps/UnitMap.asm",
+                                "line": 3,
+                                "trigger": {
+                                    "x": "5",
+                                    "y": "7",
+                                    "object_type": "0",
+                                    "script": "UnitScript",
+                                    "event_flag": "-1",
+                                },
+                                "state_preconditions": [
+                                    {
+                                        "id": "map_object_event_position",
+                                        "kind": "map_position",
+                                        "values": {
+                                            "map_label": "UnitMap_MapEvents",
+                                            "source_file": "maps/UnitMap.asm",
+                                            "x": 5,
+                                            "y": 7,
+                                        },
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = build_content_state_report(
+                reports=("content.json",),
+                scenario_ids=("content_scenario_1_0019",),
+                symbols_path="test.sym",
+                root=root,
+            )
+
+        visibility = report["materializations"][0]["object_visibility_materializer"]
+        self.assertEqual(visibility["status"], "blocked")
+        self.assertTrue(
+            any("movement" in error for error in visibility["errors"]),
+            visibility["errors"],
+        )
 
     def test_content_state_materializes_script_entry_patches(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,6 +393,7 @@ class ContentStateTests(unittest.TestCase):
                                         "values": {
                                             "script_label": "UnitScript",
                                             "source_file": "maps/UnitMap.asm",
+                                            "selected_script_label": "ShouldNotEnterPublicFacts",
                                         },
                                         "watch_symbols": ["wScriptBank", "wScriptPos"],
                                     }
@@ -153,6 +421,16 @@ class ContentStateTests(unittest.TestCase):
         self.assertEqual(report["patch_count"], 6)
         self.assertEqual(materialization["status"], "ready")
         self.assertEqual(materialization["precondition_kind"], "script_entry")
+        self.assertRegex(materialization["class_id"], r"^csc_[0-9A-F]{20}$")
+        self.assertEqual(validate_canonical_state_class(materialization["canonical_state_class"]), [])
+        self.assertEqual(
+            materialization["canonical_state_class"]["public_facts"]["script_label"],
+            "UnitScript",
+        )
+        self.assertNotIn(
+            "selected_script_label",
+            materialization["canonical_state_class"]["public_facts"]["values"],
+        )
         self.assertEqual(materialization["script_resolution"]["bank_address"], "02:5000")
         self.assertEqual(patches["wScriptBank"]["value"], 0x02)
         self.assertEqual(patches["wScriptPos"]["value"], 0x00)
