@@ -1,6 +1,11 @@
 # Debugger Literal-Anything Roadmap
 
-**Status:** complete, current gate says `literal_anything_ready=True`.
+**Status:** phases 0-6 built and verified; the gate is fail-closed by design,
+so its verdict is a property of the *current working state*, not of this doc.
+Run the gate for live truth — any ROM rebuild, source edit, or behavior change
+voids evidence until the refresh pipeline below is re-run. Last full refresh:
+2026-06-09 (after the trace-ROM rebuild and the boss-matchup branch's AI
+changes; see "Refresh pipeline" and "Known residuals" below).
 **Gate:** `python tools\audit\check_debugger_literal_anything.py --read-only --json`
 **Baseline family:** `audit/debugger_literal_anything/`
 **Predecessors:** [`debugger_godmode_spec.md`](debugger_godmode_spec.md),
@@ -33,20 +38,57 @@ or `.local/`; it must not change `engine/`, `data/`, `ram/`, `home/`, `maps/`,
 
 ## Current State
 
-Fresh check on 2026-06-04 after the literal-anything closure work:
+The gate reached `literal_anything_ready=True` with `blocking_gaps=[]` on
+2026-06-04. That state was point-in-time: the 2026-06-04 trace-ROM rebuild,
+the 2026-06-06 `pokegold.gbc` rebuild, and the boss-matchup branch's AI
+changes voided evidence (fail-closed working as designed). The 2026-06-09
+refresh pass re-proved every surface against the current build except the
+named residuals below.
 
-- `literal_anything_ready=True`
-- `proof_status=complete`
-- `blocking_gaps=[]`
-- `unowned_reachable_surface_count=0`
-- `unsupported_without_reason=0`
-- `partial_pass_count=0`
-- `stale_artifact_count=0`
-- `backend_divergence_count=0`
-
-The literal-anything audit now consumes the live Boss AI God report instead of
+The literal-anything audit consumes the live Boss AI God report instead of
 the older baseline bridge. Boss AI proof artifacts remain hash-basis checked:
-stale or fake counterfactual witness artifacts still fail closed.
+stale counterfactual witness artifacts fail closed. Proof identity is
+content-scoped (`source_tree_sha256` + artifact-dir-excluded dirty diff), so
+committing already-validated evidence no longer voids it; any real source
+change still does.
+
+## Refresh pipeline (run after any ROM-affecting change)
+
+1. Rebuild ROMs (gold/silver/debug + the trace variant; `run-suite
+   --rebuild-roms` now builds the trace ROM explicitly).
+2. `python tools\trace\boss_ai_state_factory.py --all
+   --refresh-score-materialization-states --update-manifest`, then
+   `python tools\trace\boss_ai_shared_switch_loop_fixture.py --update-manifest`.
+   States must be regenerated BEFORE captures or the pre-choice replay audit
+   diverges.
+3. `python tools\trace\boss_ai_trace_batch.py --update-manifest-hashes --execute`.
+4. `python -m tools.boss_ai_debugger run-suite --profile changed-ai
+   --refresh-live-traces --refresh-rom-contribution-trace
+   --refresh-rom-score-materialization`, then per-route contribution traces +
+   the scope envelope and the pre-choice replay artifact (see
+   `check_boss_ai_debugger_god` next_commands).
+5. Re-run the gate's prescribed `next_command` for every stale surface
+   (rom-index, replay surface family, damage fuzz/mutation, headless
+   differentials) — the gate self-prescribes; harvest and execute.
+6. Re-derive counterfactual witnesses that the AI change invalidated:
+   `tools/boss_ai_debugger/witness_reexec.py` re-runs old witness contexts on
+   the current ROM and credits only honest flips.
+
+## Known residuals (2026-06-09)
+
+- **~20 boss-AI counterfactual_flip witness roles** (of 806; 786 satisfied)
+  remain `cataloged_missing_rom_proof`. Their old flip contexts no longer flip
+  because the boss-matchup branch genuinely changed decision behavior
+  (matchup-gated switches, lookahead cap). Clusters and unblock paths:
+  faint-replacement rules need a regenerated faint-replacement predispatch
+  fixture (no committed producer exists); haki-oracle rules need a regenerated
+  haki entry state (same); adaptive-lead rules need a pre-lead battle-start
+  context; six move-model edge rules need purpose-built scenario contexts.
+- **Pre-choice replay audit** fails deterministically on Erika: the replay
+  samples staged scoring internals (`pre_model_scores`, `plausible_mask`) at a
+  different phase than the live capture while post-model scores and the chosen
+  move agree. This is the audit's named known-gap ("until trace timing is
+  stable") — a trace-tooling stabilization task, not an AI regression.
 
 ## Current Surface Matrix
 

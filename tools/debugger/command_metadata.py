@@ -361,6 +361,7 @@ def _effects_for_boss_ai_command(name: str) -> tuple[str, ...]:
         "rom-selector-materialize",
         "rom-score-materialize",
         "rom-switch-materialize",
+        "rom-counterfactual-materialize",
         "haki-coverage",
         "role-packages",
         "coach-plan-templates",
@@ -388,6 +389,7 @@ def _effects_for_boss_ai_command(name: str) -> tuple[str, ...]:
         "rom-selector-materialize",
         "rom-score-materialize",
         "rom-switch-materialize",
+        "rom-counterfactual-materialize",
     }
     emulator = {
         "run-suite",
@@ -397,6 +399,7 @@ def _effects_for_boss_ai_command(name: str) -> tuple[str, ...]:
         "rom-selector-materialize",
         "rom-score-materialize",
         "rom-switch-materialize",
+        "rom-counterfactual-materialize",
     }
     if name == "judge":
         effects.append("writes_manifest")
