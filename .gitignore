@@ -81,3 +81,11 @@ dist/*.rtc
 dist/*.state
 dist/*.zip
 *.gbc.ram
+
+# Boss AI witness proof corpus: multi-GB machine-regenerated evidence JSON
+# (single files exceed GitHub's 100 MB push limit). Verifiable via the
+# tracked witness_corpus_digest.json; regenerate the corpus with the
+# debugger pipelines (witness_reexec, rom-*-materialize), then refresh the
+# digest: python scripts/generate_witness_corpus_digest.py
+audit/boss_ai_debugger/god_level_benchmark/artifacts/counterfactual_witness_materializations/
+audit/boss_ai_debugger/god_level_benchmark/artifacts/score_witness_materializations/
