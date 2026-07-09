@@ -1538,6 +1538,7 @@ def main() -> int:
     check_vram_request_contract()
     check_farcall_hl_clobber()
     check_farcall_a_clobber()
+    check_cross_bank_call()
     check_ld_a_zero()
     check_cp_zero()
     check_matchup_cli()
@@ -1589,6 +1590,14 @@ def check_farcall_hl_clobber() -> None:
 
 def check_farcall_a_clobber() -> None:
     _run_subaudit("check_farcall_a_clobber.py", "farcall a-clobber")
+
+
+def check_cross_bank_call() -> None:
+    # Promoted to the floor 2026-07-08 after the gating trace-ROM
+    # verification (manifest re-pin + full live-capture re-run) confirmed
+    # boss AI behavior does not depend on the pre-f2e18554 broken
+    # cross-bank calls. This is the May 2026 type-immunity softlock class.
+    _run_subaudit("check_cross_bank_call.py", "cross-bank call")
 
 
 def check_ld_a_zero() -> None:

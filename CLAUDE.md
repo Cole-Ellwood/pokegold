@@ -88,13 +88,13 @@ reporting work done. The verification floor, not optional. The most useful:
   (the May 2026 type-immunity softlock class). 39 hits in the boss-AI policy
   code were thunked through 7 hl-preserving wrappers (`AIxxx_HL`) in
   `engine/battle/ai/boss_thunks.asm` that route via `farcall` to the
-  bank-0x0b scoring helpers (commit `f2e18554`). Audit currently PASS.
-  Promotion to release-smoke floor is **gated on trace-ROM verification** —
-  the fix changes pokegold_trace.gbc bytes; manifest hashes
-  (`audit/boss_ai_trace/live_capture_manifest.json`) need refreshing and
-  captures need re-running to confirm boss AI behavior wasn't relying on
-  the broken cross-bank call's garbage execution. Run the trace pipeline +
-  update the manifest before promoting this audit.
+  scoring helpers (commit `f2e18554`). Now part of the release-smoke
+  floor — the trace-ROM verification gate was satisfied before promotion:
+  manifest hashes (`audit/boss_ai_trace/live_capture_manifest.json`) match
+  a trace ROM built from current source, and a full re-run of all 19 live
+  captures reproduced identical `chosen`/`top_moves`/`plan_id` on every
+  boss, confirming boss AI behavior never depended on the broken
+  cross-bank calls' garbage execution.
 - `check_navigation_floor.py` — docs/dev_index integrity
 - `check_boss_ai_*.py` — boss AI invariants
 

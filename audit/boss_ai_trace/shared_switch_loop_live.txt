@@ -20,7 +20,7 @@ plan_id=2
 plan_phase=0
 plan_confidence=72
 plausible_mask=11 00 a0 83
-risk_flags=00 (none)
+risk_flags=05 (plausible-risk-or-scout-trigger,scout-pivot-switch)
 lookahead_bonus_top=0,0,0
 revealed_masks=00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 switch_context=param=31,index=02,last_out=01,cooldown=02,cur_ot=00
