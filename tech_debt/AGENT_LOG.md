@@ -554,3 +554,23 @@ only.)
 - **Bank impact:** WRAM0 4049->4024 used; HRAM 127->107 used (per `f2acf5c3` message; dev_index regenerated at `141e0c34`).
 - **Issues / followups:** Next agent picking this up needs user escalation first (save-format shift for WRAM deletions upstream of SRAM mirrors + SAVE_FORMAT_VERSION bump to 4), or scope strictly to HRAM-only deletions (`hUnusedByte`, `hUnusedBackup`) which don't touch the save format but do shift HRAM addresses used by `ldh` — verify no hardcoded $FFxx consumers before attempting.
 - **Verifier check:** `git log --oneline master -- ram/wram.asm | head -3` shows `f2acf5c3`; `grep -c 'wUnusedMapBuffer' ram/wram.asm` → 0; `grep -c 'wUnusedScriptByte' ram/wram.asm` → 1.
+
+## 2026-07-12 — TD-005 — done (Pattern 2 closed via math-UNION dead-code deletion; thunk superseded)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12
+- **State:** done
+- **Branch / commit:** master @ (this commit)
+- **Files touched:** engine/battle/late_gen_held_items.asm, engine/battle/type_passive_damage_mods.asm, roms.sha1 (refresh), docs/generated/dev_index.md (regen), tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Pattern 2 ("multiply/divide setup boilerplate") closed, and with it TD-005. The proposed `MultiplyThenDivide` ROM0 thunk is superseded: the dominant per-site redundancy was the product->dividend re-staging loop, and per the HRAM math UNION (`ram/hram.asm:61-80`; asm guide §5.11) `hProduct + n` IS `hDividend + n` — every aligned copy was a literal no-op (reads and writes the same HRAM address; sole side effect an `a` clobber, and `a` is redefined before next use at every site; `Multiply`/`Divide` take no `a` input, verified in `home/math.asm`). Deleted 5 aligned product->dividend blocks (late_gen_held_items x2, type_passive_damage_mods x3) plus one quotient->multiplicand no-op pair (`hQuotient + 2/+ 3` ≡ `hMultiplicand + 1/+ 2`) in `.ApplyDamageQuotientMultiplier`, each replaced by a one-line alias-constraint comment matching the idiom boss_policy_move.asm:3599 already uses. The shifted (non-aligned) copies in core.asm:3662/4721 and move_mon.asm:1588 do real byte movement and were left alone. The remaining thunk opportunity (collapsing `call Multiply ... call Divide` into a shared ROM0 helper) now projects well under the recipe's own 100-byte stop threshold (per-site savings collapsed once the copies were gone) and would spend ROM0 — a global pressure point at 663 free — so per the FIX_PROPOSALS "mandatory measurement step" stop rule it is explicitly not done. experience.asm's 5 cited sites have no re-staging copies (operand-specific staging only; restructuring is TD-013's territory and its corrected floor rejects it).
+- **Verification run:**
+  - WSL build green (pokegold, pokesilver, pokegold_debug).
+  - **Measured recovery: 88 bytes** — `Late Gen Held Items` section $0dbd -> $0d65 in pokegold.map (5x16 + 8, exactly the projection).
+  - `python -m tools.damage_debugger.clobber_smoke` -> PASS, all 28 scenarios in range; the covered paths directly exercise every edited block (muscle band / wise glasses / expert belt / metronome / life orb hit `.ApplyDamageQuotientMultiplier` + `.ApplyFractionToBC`; assault vest / eviolite / sun / rain / badge / low-HP hit the three type_passive sites).
+  - `python tools/audit/check_typepassive_c_mirror.py` -> PASS (8/8 sites).
+  - `python tools/audit/check_release_smoke.py` -> ALL PASS.
+  - `roms.sha1` refreshed (deliberate ROM change; SHA1-match floor does not apply to TD-005 per FIX_PROPOSALS) and re-verified OK for all 3 outputs.
+  - dev_index regenerated.
+- **Bytes recovered:** 88 (Pattern 2). TD-005 total across Patterns 1+2+3: 86 + 88 = 174.
+- **Bank impact:** bank 0x11 (`Late Gen Held Items`): +88 free.
+- **Issues / followups:** Spotted in the same sweep, NOT fixed here: `engine/battle/effect_commands.asm:3158` reads `ldh a, [hProduct + 4]` — offset 4 is past the 4-byte product (it is the hDivisor/hMultiplier/hRemainder byte). Possibly intentional remainder read, possibly off-by-one; needs its own investigation.
+- **Verifier check:** `grep -c 'ldh \[hDividend' engine/battle/late_gen_held_items.asm engine/battle/type_passive_damage_mods.asm` -> 0 in both; `python -m tools.damage_debugger.clobber_smoke` -> 28/28 PASS; map section `Late Gen Held Items` = $0d65 bytes.

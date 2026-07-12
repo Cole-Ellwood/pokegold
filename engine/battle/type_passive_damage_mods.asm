@@ -293,15 +293,8 @@ TypePassive_ApplyDamageModifiers_Far:
 	ldh [hMultiplier], a
 	call Multiply
 
-	ldh a, [hProduct + 0]
-	ldh [hDividend + 0], a
-	ldh a, [hProduct + 1]
-	ldh [hDividend + 1], a
-	ldh a, [hProduct + 2]
-	ldh [hDividend + 2], a
-	ldh a, [hProduct + 3]
-	ldh [hDividend + 3], a
-
+; hProduct aliases hDividend (same HRAM union bytes) — Divide consumes the
+; product in place, no re-staging needed.
 	ld a, d
 	ldh [hDivisor], a
 	ld b, 4
@@ -737,15 +730,8 @@ TypePassive_ApplyFractionToStatAtHL_Far:
 	ldh [hMultiplier], a
 	call Multiply
 
-	ldh a, [hProduct + 0]
-	ldh [hDividend + 0], a
-	ldh a, [hProduct + 1]
-	ldh [hDividend + 1], a
-	ldh a, [hProduct + 2]
-	ldh [hDividend + 2], a
-	ldh a, [hProduct + 3]
-	ldh [hDividend + 3], a
-
+; hProduct aliases hDividend (same HRAM union bytes) — Divide consumes the
+; product in place, no re-staging needed.
 	pop de
 	ld a, d
 	ldh [hDivisor], a
@@ -934,14 +920,8 @@ TypePassive_ApplyFlyingAccuracyBonusToB_Far:
 	ldh [hMultiplier], a
 	call Multiply
 
-	ldh a, [hProduct + 0]
-	ldh [hDividend + 0], a
-	ldh a, [hProduct + 1]
-	ldh [hDividend + 1], a
-	ldh a, [hProduct + 2]
-	ldh [hDividend + 2], a
-	ldh a, [hProduct + 3]
-	ldh [hDividend + 3], a
+; hProduct aliases hDividend (same HRAM union bytes) — Divide consumes the
+; product in place, no re-staging needed.
 	ld a, 25
 	ldh [hDivisor], a
 	ld b, 4

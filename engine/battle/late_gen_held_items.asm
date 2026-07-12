@@ -160,14 +160,8 @@ ApplyLateGenDamageStatsItemMods_Far::
 	ld a, e
 	ldh [hMultiplier], a
 	call Multiply
-	ldh a, [hProduct + 0]
-	ldh [hDividend + 0], a
-	ldh a, [hProduct + 1]
-	ldh [hDividend + 1], a
-	ldh a, [hProduct + 2]
-	ldh [hDividend + 2], a
-	ldh a, [hProduct + 3]
-	ldh [hDividend + 3], a
+; hProduct aliases hDividend (same HRAM union bytes) — Divide consumes the
+; product in place, no re-staging needed.
 	pop de
 	ld a, d
 	ldh [hDivisor], a
@@ -276,21 +270,12 @@ ApplyLateGenDamageMultipliers_Far:
 	ldh [hMultiplier], a
 	xor a
 	ldh [hMultiplicand + 0], a
-	ldh a, [hQuotient + 2]
-	ldh [hMultiplicand + 1], a
-	ldh a, [hQuotient + 3]
-	ldh [hMultiplicand + 2], a
+; hQuotient + 2/+ 3 already sit at hMultiplicand + 1/+ 2 (same HRAM union
+; bytes), so the prior Divide's result is staged as the multiplicand as-is.
 	call Multiply
 
-	ldh a, [hProduct + 0]
-	ldh [hDividend + 0], a
-	ldh a, [hProduct + 1]
-	ldh [hDividend + 1], a
-	ldh a, [hProduct + 2]
-	ldh [hDividend + 2], a
-	ldh a, [hProduct + 3]
-	ldh [hDividend + 3], a
-
+; hProduct aliases hDividend (same HRAM union bytes) — Divide consumes the
+; product in place, no re-staging needed.
 	pop de
 	ld a, d
 	ldh [hDivisor], a
