@@ -1,3 +1,12 @@
+; GrowthRates entry byte packing (data/growth_rates.asm `growth_rate` macro):
+; byte 0 = dn cubic numerator, cubic denominator; byte 1 = quadratic
+; coefficient in signed magnitude; byte 2 = linear coefficient;
+; byte 3 = constant term.
+DEF GROWTH_CUBIC_NUM_MASK EQU $f0
+DEF GROWTH_CUBIC_DEN_MASK EQU $0f
+DEF GROWTH_QUAD_COEF_MASK EQU $7f
+DEF GROWTH_QUAD_SIGN_MASK EQU $80
+
 CalcLevel:
 	ld a, [wTempMonSpecies]
 	ld [wCurSpecies], a
@@ -59,13 +68,13 @@ CalcExpAtLevel:
 
 ; Multiply by a
 	ld a, [hl]
-	and $f0
+	and GROWTH_CUBIC_NUM_MASK
 	swap a
 	ldh [hMultiplier], a
 	call Multiply
 ; Divide by b
 	ld a, [hli]
-	and $f
+	and GROWTH_CUBIC_DEN_MASK
 	ldh [hDivisor], a
 	ld b, 4
 	call Divide
@@ -79,7 +88,7 @@ CalcExpAtLevel:
 ; Square the level and multiply by the lower 7 bits of c
 	call .LevelSquared
 	ld a, [hl]
-	and $7f
+	and GROWTH_QUAD_COEF_MASK
 	ldh [hMultiplier], a
 	call Multiply
 ; Push the absolute value of the quadratic term to the stack
@@ -114,7 +123,7 @@ CalcExpAtLevel:
 	ldh [hMultiplicand], a
 ; If bit 7 of c is set, c is negative; otherwise, it's positive
 	pop af
-	and $80
+	and GROWTH_QUAD_SIGN_MASK
 	jr nz, .subtract
 ; Add c*n**2 to (d*n - e)
 	pop bc

@@ -581,3 +581,16 @@ only.)
 - **Summary:** The TD-005 entry flagged `engine/battle/effect_commands.asm:3158` (`ldh a, [hProduct + 4]`) as "needs its own investigation." Investigated same session: it is the Flail/Reversal virtual 10-bit division re-reading the divisor low byte staged 5 instructions earlier — offset 4 of the math UNION is hDivisor, not a product byte. Correct behavior, misleading operand name. Shipped a byte-identical readability fix: operand renamed to `hDivisor` plus an explanatory comment.
 - **Verification run:** rebuilt pokegold.gbc after the edit; `python3 tools/verify_sha1.py roms.sha1` -> all 3 outputs OK (byte-identical, proving the rename addressed the same address).
 - **Verifier check:** `grep -c 'hProduct + 4' engine/battle/effect_commands.asm` -> 0; `grep -n 'Virtual 10-bit division' engine/battle/effect_commands.asm` -> 1 hit near line 3158.
+
+## 2026-07-12 — TD-006 — partial (b + c resolved; a needs the gameplay-taste escalation)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12
+- **State:** partial
+- **Branch / commit:** master @ (this commit)
+- **Files touched:** engine/pokemon/experience.asm (TD-006b), tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** Re-checked all three sub-fixes against current source. **TD-006c (gym cap labels): already satisfied** — `.NextJohtoGymCaps` now has one labeled `db` per gym ("before Falkner" ... "before Clair"), landed with the Johto cap-table alignment work; note the gym order is Falkner/Bugsy/Whitney/Morty/Pryce/Jasmine/Chuck/Clair (this hack's progression), intentionally differing from the vanilla order in the original proposal sketch. **TD-006b (masks): shipped this commit** — four raw literals in `CalcExpAtLevel` replaced with named constants tied to the `growth_rate` macro packing (GROWTH_CUBIC_NUM_MASK $f0, GROWTH_CUBIC_DEN_MASK $0f, GROWTH_QUAD_COEF_MASK $7f, GROWTH_QUAD_SIGN_MASK $80; names refined from the proposal's positional EXP_GROWTH_* sketch to say what each field is). **TD-006a (paralysis constants): partially superseded** — the fail thresholds the finding cited now use the self-documenting `N percent` idiom in `TypePassive_GetUserParalysisFailThreshold_Far`. What remains raw: the type-passive status-mod fraction pairs in `ApplyPrzEffectOnSpeed_Far` (Electric speed retention 41/40 and 21/20; Fighting paralysis-speed 3/8 and 1/2; default 1/4) and `ApplyBrnEffectOnAttack_Far` (Fighting burn fractions). Naming these requires the user's design vocabulary and doubles as the value sign-off the proposal already requires — escalated, not attempted.
+- **Verification run:** rebuilt pokegold + pokesilver + pokegold_debug after the TD-006b edits; `python3 tools/verify_sha1.py roms.sha1` -> all 3 OK (**SHA1 match, the finding's required floor** — EXP formula provably unchanged).
+- **Bytes recovered:** N/A (naming-only).
+- **Bank impact:** none (byte-identical).
+- **Issues / followups:** TD-006a remainder is a gameplay-taste escalation: user confirms the fraction values are design intent and blesses constant names; then the rename is mechanical and SHA1-gated.
+- **Verifier check:** `grep -c 'GROWTH_CUBIC_NUM_MASK' engine/pokemon/experience.asm` -> 2 (def + use); `grep -cE 'and \$(f0|f|7f|80)$' engine/pokemon/experience.asm` -> 0; `python3 tools/verify_sha1.py roms.sha1` -> OK.

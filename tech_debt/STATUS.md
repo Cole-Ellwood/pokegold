@@ -18,7 +18,7 @@ blocked, what's done.
 | TD-003 | CRIT | partial | 2026-05-03 | Option 1 + Option 2 shipped 2026-05-03 (`tools/audit/check_layout_orgs.py` validates 5 known pins; `docs/layout_pins.md` documents each pin's purpose). Option 3 (Stadium 2 relocation) remains release-gated — needs hardware/emulator verification |
 | TD-004 | HIGH | **done** | 2026-05-28 | boss.asm split for navigation (commit `3ca2ecf6`) into boss_platform / boss_policy_move / boss_policy_switch / boss_thunks; whole-file monolith resolved. boss_policy_move stays 6,417 lines — a fresh finding if ever a concern. Source citations to the old path superseded; see ADDENDUM TD-A16 |
 | TD-005 | HIGH | **done** | 2026-07-12 | all 3 patterns closed; 174 bytes total. Pattern 2 finished 2026-07-12: the product→dividend re-staging at 6 sites was a literal no-op (hProduct ≡ hDividend in the HRAM math UNION) — deleted for 88 bytes in bank 0x11; the ROM0 thunk idea was dropped per the recipe's own <100-byte stop rule. clobber_smoke 28/28 PASS. See `tech_debt/EVIDENCE/td_005_pattern3_sites.md` |
-| TD-006 | HIGH | open | — | escalation on values **and** names |
+| TD-006 | HIGH | partial | 2026-07-12 | b + c resolved: TD-006c (gym cap labels) already satisfied in source; TD-006b shipped 2026-07-12 (4 GrowthRates packing masks named, SHA1 match verified). TD-006a remainder is the taste escalation: fraction pairs in ApplyPrzEffectOnSpeed_Far / ApplyBrnEffectOnAttack_Far need user value sign-off + blessed names (the cited fail thresholds already use the `percent` idiom) |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
 | TD-008 | MED | partial | 2026-05-03 | research step shipped (`tech_debt/EVIDENCE/td_008_rgbds_changelog.md`); current pin v1.0.1 IS upstream's latest stable, **no upgrade available now** — re-scoped to watch-item gated on next upstream release (see FIX_PROPOSALS "Updated 2026-05-03") |
 | TD-009 | MED | partial | 2026-07-12 | flagship deletions landed on master in `f2acf5c3` (wUnusedMapBuffer 24 B, HRAM tail pad 20 B, wSafariMonAngerCount; 45 B net). Remaining ~13 unused fields verified still present 2026-07-12; WRAM deletions re-gated by the v3 save layout (offset shift = save-format change), TD-009a still needs user approval; see ADDENDUM |
@@ -62,7 +62,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-2 open + 4 partial + 6 done + 1 disputed = 13 total
+1 open + 5 partial + 6 done + 1 disputed = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
