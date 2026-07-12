@@ -53,6 +53,13 @@ CalcExpAtLevel:
 	ret
 
 .UseExpFormula
+; The three terms accumulate in b:c:e (big endian). These survive the
+; math calls: the Multiply/Divide home wrappers push/pop bc (and de for
+; Divide), and _Multiply touches neither d nor e. Term order differs
+; from the classic stack version, which is safe: 3-byte add/sub is
+; commutative mod 2^24. d (the level) is read-only throughout; caller's
+; e is restored from the stack at exit.
+	push de
 	ld a, [wBaseGrowthRate]
 	add a
 	add a
@@ -60,47 +67,34 @@ CalcExpAtLevel:
 	ld b, 0
 	ld hl, GrowthRates
 	add hl, bc
-; Cube the level
+
+; (a/b)*n**3: n*n, *n, *a, then a 4-byte divide by b. The quotient's top
+; byte is 0 for every reachable input (a*n**3 <= 6,000,000), so bytes
+; 1-3 seed the accumulator.
 	call .LevelSquared
 	ld a, d
 	ldh [hMultiplier], a
 	call Multiply
-
-; Multiply by a
 	ld a, [hl]
 	and GROWTH_CUBIC_NUM_MASK
 	swap a
 	ldh [hMultiplier], a
 	call Multiply
-; Divide by b
-	ld a, [hli]
+	ld a, [hl]
 	and GROWTH_CUBIC_DEN_MASK
 	ldh [hDivisor], a
 	ld b, 4
 	call Divide
-; Push the cubic term to the stack
 	ldh a, [hQuotient + 1]
-	push af
+	ld b, a
 	ldh a, [hQuotient + 2]
-	push af
+	ld c, a
 	ldh a, [hQuotient + 3]
-	push af
-; Square the level and multiply by the lower 7 bits of c
-	call .LevelSquared
-	ld a, [hl]
-	and GROWTH_QUAD_COEF_MASK
-	ldh [hMultiplier], a
-	call Multiply
-; Push the absolute value of the quadratic term to the stack
-	ldh a, [hProduct + 1]
-	push af
-	ldh a, [hProduct + 2]
-	push af
-	ldh a, [hProduct + 3]
-	push af
-	ld a, [hli]
-	push af
-; Multiply the level by d
+	ld e, a
+
+; + d*n
+	inc hl
+	inc hl
 	xor a
 	ldh [hMultiplicand + 0], a
 	ldh [hMultiplicand + 1], a
@@ -109,66 +103,79 @@ CalcExpAtLevel:
 	ld a, [hli]
 	ldh [hMultiplier], a
 	call Multiply
-; Subtract e
-	ld b, [hl]
 	ldh a, [hProduct + 3]
-	sub b
-	ldh [hMultiplicand + 2], a
-	ld b, 0
+	add e
+	ld e, a
 	ldh a, [hProduct + 2]
-	sbc b
-	ldh [hMultiplicand + 1], a
+	adc c
+	ld c, a
 	ldh a, [hProduct + 1]
-	sbc b
-	ldh [hMultiplicand], a
-; If bit 7 of c is set, c is negative; otherwise, it's positive
-	pop af
+	adc b
+	ld b, a
+
+; - e
+	ld a, e
+	sub [hl]
+	ld e, a
+	ld a, c
+	sbc 0
+	ld c, a
+	ld a, b
+	sbc 0
+	ld b, a
+
+; +/- c*n**2 (signed magnitude: bit 7 of the coefficient is the sign)
+	call .LevelSquared
+	dec hl
+	dec hl
+	ld a, [hl]
+	and GROWTH_QUAD_COEF_MASK
+	ldh [hMultiplier], a
+	call Multiply
+	ld a, [hl]
 	and GROWTH_QUAD_SIGN_MASK
-	jr nz, .subtract
-; Add c*n**2 to (d*n - e)
-	pop bc
+	jr nz, .subtract_quadratic
 	ldh a, [hProduct + 3]
-	add b
-	ldh [hMultiplicand + 2], a
-	pop bc
+	add e
+	ld e, a
 	ldh a, [hProduct + 2]
-	adc b
-	ldh [hMultiplicand + 1], a
-	pop bc
+	adc c
+	ld c, a
 	ldh a, [hProduct + 1]
 	adc b
-	ldh [hMultiplicand], a
-	jr .done_quadratic
+	ld b, a
+	jr .store_result
 
-.subtract
-; Subtract c*n**2 from (d*n - e)
-	pop bc
+.subtract_quadratic
+; No table reads remain, so l is free as a scratch byte.
 	ldh a, [hProduct + 3]
-	sub b
-	ldh [hMultiplicand + 2], a
-	pop bc
+	ld l, a
+	ld a, e
+	sub l
+	ld e, a
 	ldh a, [hProduct + 2]
-	sbc b
-	ldh [hMultiplicand + 1], a
-	pop bc
+	ld l, a
+	ld a, c
+	sbc l
+	ld c, a
 	ldh a, [hProduct + 1]
-	sbc b
-	ldh [hMultiplicand], a
+	ld l, a
+	ld a, b
+	sbc l
+	ld b, a
 
-.done_quadratic
-; Add (a/b)*n**3 to (d*n - e +/- c*n**2)
-	pop bc
-	ldh a, [hProduct + 3]
-	add b
-	ldh [hMultiplicand + 2], a
-	pop bc
-	ldh a, [hProduct + 2]
-	adc b
-	ldh [hMultiplicand + 1], a
-	pop bc
-	ldh a, [hProduct + 1]
-	adc b
-	ldh [hMultiplicand], a
+.store_result
+; Callers read the result from hProduct + 1..3 (hMultiplicand and
+; hQuotient alias the same union bytes); the top byte is always 0.
+	xor a
+	ldh [hProduct + 0], a
+	ld a, b
+	ldh [hProduct + 1], a
+	ld a, c
+	ldh [hProduct + 2], a
+	ld a, e
+	ldh [hProduct + 3], a
+	pop de
 	ret
 
 .LevelSquared:

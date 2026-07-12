@@ -1,6 +1,6 @@
 # Status board
 
-**Updated:** 2026-07-12 (second pass after user review: TD-006 done — values signed off + constants shipped SHA1-identical; TD-009 accepted — user-approved park with piggyback clause; TD-001 accepted per its 2026-05-03 closure plan. Earlier same day: TD-002 + TD-005 closed)
+**Updated:** 2026-07-12 (third pass: TD-013 done — CalcExpAtLevel restructured, proven by exhaustive 600-case sweep; **open count reached 0**. Same day: TD-002/TD-005/TD-006 done, TD-001/TD-009 accepted)
 
 <!-- audit:noqa-file stale-claims — by-design date-anchored index doc; freshness enforced by tools/audit/check_tech_debt_freshness.py -->
 
@@ -25,7 +25,7 @@ blocked, what's done.
 | TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
 | TD-011 | LOW | **disputed** | 2026-05-02 | script IS used by docs/manifest.md; see ADDENDUM |
 | TD-012 | LOW | **done** | 2026-05-04 | 3 Makefile shell hacks (`cp -f`, `cat $^ > $@`, `tr -d '\\000'`) replaced with cross-platform Python helpers (`tools/copy_file.py`, `tools/concat_files.py`, `tools/strip_nulls.py`); SHA1 unchanged across all 6 ROM/patch outputs. |
-| TD-013 | LOW * | open | — | * mis-ranked; see ADDENDUM. Severity is effectively MEDIUM (EXP curve risk) |
+| TD-013 | LOW * | **done** | 2026-07-12 | user chose cleanup over accept. CalcExpAtLevel restructured (7 push/pop pairs → b:c:e register accumulator); proven by the new exhaustive 600-case sweep (`tools/damage_debugger/exp_curve_prover.py` — all growth-rate × level outputs identical pre/post, d + e preserved). Supersedes the SHA1-or-abandon floor: exhaustive sweep is equally deterministic for this closed domain. * mis-ranked; see ADDENDUM |
 
 ## State definitions (mirrors AGENT_LOG.md)
 
@@ -62,8 +62,13 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-1 open + 2 partial + 7 done + 1 disputed + 2 accepted = 13 total
+0 open + 2 partial + 8 done + 1 disputed + 2 accepted = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
+
+Open count reached 0 on 2026-07-12. Remaining non-terminal rows: TD-003
+(release-gated hardware verification) and TD-008 (upstream-release watch
+item) — both wait on external triggers, not on available work. TD-011
+stays disputed pending human reconciliation.
 
 When the open count reaches **0** (or all remaining are `accepted` /
 `pending-trigger`), the folder's job is done per `README.md`.

@@ -629,3 +629,23 @@ only.)
 - **Verification run:** N/A (board-only; conditions verified against AGENT_LOG entries and the shipped audit).
 - **Issues / followups:** Monitoring continues via `check_pic_bank_pressure.py` + the Tight Banks table in dev_index.md — both already part of normal workflow.
 - **Verifier check:** `python tools/audit/check_pic_bank_pressure.py` passes on master; STATUS shows TD-001 accepted.
+
+## 2026-07-12 — TD-013 — done (CalcExpAtLevel restructured; proven by exhaustive 600-case sweep)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12 (third pass; user chose "tidy it up" over "accept" after full risk briefing)
+- **State:** done
+- **Branch / commit:** master @ (this commit)
+- **Files touched:** engine/pokemon/experience.asm (CalcExpAtLevel body), tools/damage_debugger/exp_curve_prover.py (new, permanent verifier), roms.sha1 (refresh), docs/generated/dev_index.md (regen), tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** The 2026-05-02 corrected floor said SHA1-match-or-abandon because spot checks cannot prove a balance-critical formula unchanged. Superseded: CalcExpAtLevel's input domain is only (6 growth rates) x (levels 1-100) = 600 cases, so exact equality is provable by exhaustive sweep — strictly stronger than any spot check and equivalent in force to SHA1 for this routine's behavior. Built `tools/damage_debugger/exp_curve_prover.py` (dump/compare/check-formula modes; reuses BootStateCache + call_function_safe; IE=0 during calls so instruction-count changes cannot shift interrupt timing into math HRAM; captures hProduct+0..3 plus post-call d and e). The rewrite replaces the 7 push/pop stack-juggling pairs with a b:c:e register accumulator (registers survive the Multiply/Divide home wrappers; _Multiply touches neither d nor e — verified by reading engine/math/math.asm). Term order changed to cubic-first (frees b for Divide's length input); safe because 3-byte add/sub is commutative mod 2^24 — and proven empirically. Exit HRAM state is identical to the original (result in the same union bytes, top byte 0), which the CalcExpBar caller (core.asm:7632, reads hMultiplicand+0..2 and interleaves hMathBuffer) depends on. Caller's e now explicitly preserved via push/pop de. NOTE: hMathBuffer was rejected as accumulator storage — _Multiply/_Divide use it as internal workspace, so every math call wipes it (this is also why CalcExpBar's hMathBuffer stores sit strictly between math calls).
+- **Verification run:**
+  - Baseline sweep on pre-change ROM: 600/600 match the closed-form growth formula (validates harness + formula model).
+  - Post-change sweep vs baseline: **PASS, all 600 cases identical** (exp bytes, post-call d, post-call e).
+  - Post-change sweep vs closed form: PASS.
+  - `python -m tools.damage_debugger.clobber_smoke` -> 28/28 PASS.
+  - `python tools/audit/check_release_smoke.py` -> ALL PASS.
+  - roms.sha1 refreshed (deliberate ROM change) + verified OK x3; dev_index regenerated.
+  - Size: routine shrank ~12 bytes (GetProgressionLevelCap moved 14:5506ish -> 14:54fa).
+- **Bytes recovered:** ~12 (bank 0x14), incidental to the readability goal.
+- **Bank impact:** bank 0x14 slightly freer.
+- **Issues / followups:** Future CalcExpAtLevel changes should re-run the prover: dump before, dump after, compare. If the change is *supposed* to alter the curve, the diff doubles as the review artifact.
+- **Verifier check:** `python -m tools.damage_debugger.exp_curve_prover --dump <tmp> && python -m tools.damage_debugger.exp_curve_prover --check-formula <tmp>` -> PASS; `grep -c 'push af' engine/pokemon/experience.asm` -> 0.
