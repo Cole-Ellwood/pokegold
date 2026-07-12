@@ -594,3 +594,38 @@ only.)
 - **Bank impact:** none (byte-identical).
 - **Issues / followups:** TD-006a remainder is a gameplay-taste escalation: user confirms the fraction values are design intent and blesses constant names; then the rename is mechanical and SHA1-gated.
 - **Verifier check:** `grep -c 'GROWTH_CUBIC_NUM_MASK' engine/pokemon/experience.asm` -> 2 (def + use); `grep -cE 'and \$(f0|f|7f|80)$' engine/pokemon/experience.asm` -> 0; `python3 tools/verify_sha1.py roms.sha1` -> OK.
+
+## 2026-07-12 — TD-006 — done (user signed off values; TD-006a constants shipped byte-identical)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12 (second pass, after user review)
+- **State:** done
+- **Branch / commit:** master @ (this commit)
+- **Files touched:** constants/battle_constants.asm (new type-passive status tuning block), engine/battle/type_passive_damage_mods.asm (3 branches renamed), tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** User reviewed the player-facing values on 2026-07-12 and confirmed design intent ("Values are right — name them"): paralysis Speed 25% baseline / 37.5% half-Fighting / 50% full-Fighting; burn Attack 50% / 62.5% / 75% on the same split; Electric passive Speed +2.5% half / +5% full. Shipped the TD-006a constants (ELECTRIC_SPD_*, PRZ_SPD_*, BRN_ATK_* NUM/DEN pairs) in the existing battle_constants.asm tuning-block style and replaced all raw literals in `ApplyPrzEffectOnSpeed_Far` / `ApplyBrnEffectOnAttack_Far`. With TD-006b and TD-006c closed earlier today, TD-006 is done.
+- **Verification run:** rebuilt pokegold + pokesilver + pokegold_debug; `python3 tools/verify_sha1.py roms.sha1` -> all 3 OK (**SHA1 match — naming-only, the finding's required floor**). `python tools/audit/check_release_smoke.py` -> ALL PASS (see commit).
+- **Bytes recovered:** N/A (naming-only).
+- **Bank impact:** none (byte-identical).
+- **Issues / followups:** None.
+- **Verifier check:** `grep -c 'PRZ_SPD_FIGHTING_HALF_NUM' constants/battle_constants.asm engine/battle/type_passive_damage_mods.asm` -> 1 each; `grep -cE 'ld a, (41|21|3|1|5)$' engine/battle/type_passive_damage_mods.asm` sections around ApplyPrzEffectOnSpeed_Far -> 0 raw fraction loads remain; `python3 tools/verify_sha1.py roms.sha1` -> OK.
+
+## 2026-07-12 — TD-009 — accepted (user-approved park; piggyback clause)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12 (second pass, after user review)
+- **State:** accepted
+- **Branch / commit:** master @ (this commit); board-only change
+- **Files touched:** tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** User approved parking the remainder on 2026-07-12 ("Park it"). The ~13 remaining unused fields (~15 B WRAM + 2 B HRAM) stay: deleting WRAM fields shifts save-layout offsets, and a v3->v4 SAVE_FORMAT_VERSION bump + migration map is a terrible trade for 15 bytes in a region with 74 free. **Piggyback clause:** if a future feature forces a save-format bump anyway, fold these deletions into that bump for free — check this entry when planning any v4 work. TD-009a (dead HRAM writes in vblank/intro_menu/events) is folded into the same accepted state: ~2 bytes in timing-sensitive code, not worth the risk.
+- **Verification run:** N/A (board-only; the underlying facts were verified in the 2026-07-12 partial entry above).
+- **Issues / followups:** None until a v4 save-format bump is on the table.
+- **Verifier check:** STATUS row shows accepted with the piggyback note; `grep -c 'wUnusedScriptByte' ram/wram.asm` -> 1 (remainder intentionally present).
+
+## 2026-07-12 — TD-001 — accepted (per its own closure plan; all byte-recovery levers resolved)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12 (second pass, after user review)
+- **State:** accepted
+- **Branch / commit:** master @ (this commit); board-only change
+- **Files touched:** tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** The 2026-05-03 re-evaluation defined TD-001's exit: "stays partial until the open byte-recovery levers (TD-005 P2/P3, TD-009a) close and the pic-bank guard lands; after those it can move to accepted (intentionally monitored)." All conditions now hold: pic-bank guard shipped 2026-05-03 (`check_pic_bank_pressure.py`), TD-005 closed 2026-07-12 (all patterns; 174 B), TD-009/TD-009a accepted 2026-07-12 (user-approved). Bank pressure remains a monitored reality (pic banks at 0-1 free by design, guarded by audit), not an actively fixable finding.
+- **Verification run:** N/A (board-only; conditions verified against AGENT_LOG entries and the shipped audit).
+- **Issues / followups:** Monitoring continues via `check_pic_bank_pressure.py` + the Tight Banks table in dev_index.md — both already part of normal workflow.
+- **Verifier check:** `python tools/audit/check_pic_bank_pressure.py` passes on master; STATUS shows TD-001 accepted.

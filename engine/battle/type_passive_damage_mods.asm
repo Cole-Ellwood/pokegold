@@ -812,11 +812,11 @@ ApplyPrzEffectOnSpeed_Far:
 	and a
 	jr z, .check_paralysis
 	cp 2
-	ld a, 41
-	ld d, 40
+	ld a, ELECTRIC_SPD_HALF_NUM
+	ld d, ELECTRIC_SPD_HALF_DEN
 	jr nz, .apply_electric
-	ld a, 21
-	ld d, 20
+	ld a, ELECTRIC_SPD_FULL_NUM
+	ld d, ELECTRIC_SPD_FULL_DEN
 .apply_electric
 	call TypePassive_ApplyFractionToStatAtHL_Far
 
@@ -832,16 +832,16 @@ ApplyPrzEffectOnSpeed_Far:
 	and a
 	jr z, .default_paralysis
 	cp 2
-	ld a, 3
-	ld d, 8
+	ld a, PRZ_SPD_FIGHTING_HALF_NUM
+	ld d, PRZ_SPD_FIGHTING_HALF_DEN
 	jr nz, .apply_paralysis
-	ld a, 1
-	ld d, 2
+	ld a, PRZ_SPD_FIGHTING_FULL_NUM
+	ld d, PRZ_SPD_FIGHTING_FULL_DEN
 	jr .apply_paralysis
 
 .default_paralysis
-	ld a, 1
-	ld d, 4
+	ld a, PRZ_SPD_NUM
+	ld d, PRZ_SPD_DEN
 
 .apply_paralysis
 	call TypePassive_ApplyFractionToStatAtHL_Far
@@ -875,16 +875,16 @@ ApplyBrnEffectOnAttack_Far:
 	and a
 	jr z, .default_burn
 	cp 2
-	ld a, 5
-	ld d, 8
+	ld a, BRN_ATK_FIGHTING_HALF_NUM
+	ld d, BRN_ATK_FIGHTING_HALF_DEN
 	jr nz, .apply_burn
-	ld a, 3
-	ld d, 4
+	ld a, BRN_ATK_FIGHTING_FULL_NUM
+	ld d, BRN_ATK_FIGHTING_FULL_DEN
 	jr .apply_burn
 
 .default_burn
-	ld a, 1
-	ld d, 2
+	ld a, BRN_ATK_NUM
+	ld d, BRN_ATK_DEN
 
 .apply_burn
 	call TypePassive_ApplyFractionToStatAtHL_Far

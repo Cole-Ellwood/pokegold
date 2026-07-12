@@ -52,6 +52,25 @@ DEF METRONOME_STEP_DEN       EQU 10
 DEF METRONOME_MAX_MULT_NUM   EQU 20
 DEF METRONOME_MAX_MULT_DEN   EQU 10
 
+; type-passive status modifier tuning constants
+; (engine/battle/type_passive_damage_mods.asm — balance values, user-owned)
+DEF ELECTRIC_SPD_HALF_NUM        EQU 41 ; half Electric: x1.025 passive Speed
+DEF ELECTRIC_SPD_HALF_DEN        EQU 40
+DEF ELECTRIC_SPD_FULL_NUM        EQU 21 ; full Electric: x1.05 passive Speed
+DEF ELECTRIC_SPD_FULL_DEN        EQU 20
+DEF PRZ_SPD_NUM                  EQU 1  ; paralyzed Speed = 1/4 (vanilla)
+DEF PRZ_SPD_DEN                  EQU 4
+DEF PRZ_SPD_FIGHTING_HALF_NUM    EQU 3  ; half Fighting resists: 3/8
+DEF PRZ_SPD_FIGHTING_HALF_DEN    EQU 8
+DEF PRZ_SPD_FIGHTING_FULL_NUM    EQU 1  ; full Fighting resists: 1/2
+DEF PRZ_SPD_FIGHTING_FULL_DEN    EQU 2
+DEF BRN_ATK_NUM                  EQU 1  ; burned Attack = 1/2 (vanilla)
+DEF BRN_ATK_DEN                  EQU 2
+DEF BRN_ATK_FIGHTING_HALF_NUM    EQU 5  ; half Fighting resists: 5/8
+DEF BRN_ATK_FIGHTING_HALF_DEN    EQU 8
+DEF BRN_ATK_FIGHTING_FULL_NUM    EQU 3  ; full Fighting resists: 3/4
+DEF BRN_ATK_FIGHTING_FULL_DEN    EQU 4
+
 ; wTypeModifier
 DEF EFFECTIVENESS_MASK EQU %01111111
 	const_def 7

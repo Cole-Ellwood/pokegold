@@ -1,6 +1,6 @@
 # Status board
 
-**Updated:** 2026-07-12 (TD-002 closed — v3 trigger fired and fix verified landed; TD-009 reconciled to partial after `f2acf5c3`; TD-005 closed — Pattern 2 finished via math-UNION dead-code deletion, 88 bytes)
+**Updated:** 2026-07-12 (second pass after user review: TD-006 done — values signed off + constants shipped SHA1-identical; TD-009 accepted — user-approved park with piggyback clause; TD-001 accepted per its 2026-05-03 closure plan. Earlier same day: TD-002 + TD-005 closed)
 
 <!-- audit:noqa-file stale-claims — by-design date-anchored index doc; freshness enforced by tools/audit/check_tech_debt_freshness.py -->
 
@@ -13,15 +13,15 @@ blocked, what's done.
 
 | ID | Sev | State | Last entry | Notes |
 |----|-----|-------|------------|-------|
-| TD-001 | CRIT | partial | 2026-05-03 | re-evaluated 2026-05-03; bank-pressure picture refreshed in ADDENDUM 2026-05-03 — 0x0e no longer canary (568 free), 0x0d (Effect Commands) was 6 free → **30 free after TD-005 Pattern 3** (canary relief); pic-bank guard shipped 2026-05-03 (`tools/audit/check_pic_bank_pressure.py`); remaining work: TD-009a only (TD-005 closed 2026-07-12) |
+| TD-001 | CRIT | **accepted** | 2026-07-12 | closed per its own 2026-05-03 exit plan: pic-bank guard shipped, TD-005 closed (174 B), TD-009/TD-009a accepted. Bank pressure stays monitored (`check_pic_bank_pressure.py` + dev_index Tight Banks), not actively fixable; see ADDENDUM 2026-05-03 for the pressure picture |
 | TD-002 | CRIT | **done** | 2026-07-12 | trigger fired: v2→v3 bump landed in `1c256cb4` and the save rework removed the `$FF` legacy accept path entirely (only v3 direct + v2 via offset-map migration load). Comment cleanup (recipe steps 3-4) shipped 2026-07-12; `check_save_format_version.py` PASS |
 | TD-003 | CRIT | partial | 2026-05-03 | Option 1 + Option 2 shipped 2026-05-03 (`tools/audit/check_layout_orgs.py` validates 5 known pins; `docs/layout_pins.md` documents each pin's purpose). Option 3 (Stadium 2 relocation) remains release-gated — needs hardware/emulator verification |
 | TD-004 | HIGH | **done** | 2026-05-28 | boss.asm split for navigation (commit `3ca2ecf6`) into boss_platform / boss_policy_move / boss_policy_switch / boss_thunks; whole-file monolith resolved. boss_policy_move stays 6,417 lines — a fresh finding if ever a concern. Source citations to the old path superseded; see ADDENDUM TD-A16 |
 | TD-005 | HIGH | **done** | 2026-07-12 | all 3 patterns closed; 174 bytes total. Pattern 2 finished 2026-07-12: the product→dividend re-staging at 6 sites was a literal no-op (hProduct ≡ hDividend in the HRAM math UNION) — deleted for 88 bytes in bank 0x11; the ROM0 thunk idea was dropped per the recipe's own <100-byte stop rule. clobber_smoke 28/28 PASS. See `tech_debt/EVIDENCE/td_005_pattern3_sites.md` |
-| TD-006 | HIGH | partial | 2026-07-12 | b + c resolved: TD-006c (gym cap labels) already satisfied in source; TD-006b shipped 2026-07-12 (4 GrowthRates packing masks named, SHA1 match verified). TD-006a remainder is the taste escalation: fraction pairs in ApplyPrzEffectOnSpeed_Far / ApplyBrnEffectOnAttack_Far need user value sign-off + blessed names (the cited fail thresholds already use the `percent` idiom) |
+| TD-006 | HIGH | **done** | 2026-07-12 | all 3 sub-fixes closed. TD-006c already satisfied in source; TD-006b (GrowthRates masks) + TD-006a (type-passive status constants: ELECTRIC_SPD_*, PRZ_SPD_*, BRN_ATK_*) shipped 2026-07-12, both SHA1-identical. User signed off the values 2026-07-12: prz Speed 25/37.5/50%, brn Atk 50/62.5/75%, Electric Speed +2.5/+5% |
 | TD-007 | MED | **done** | 2026-05-03 | 47 Beta\*_Blocks pruned; 5,854 bytes recovered (banks 0x2a +3500, 0x2b +2259, 0x37 +95). SHA1/dist update needs user playtest |
 | TD-008 | MED | partial | 2026-05-03 | research step shipped (`tech_debt/EVIDENCE/td_008_rgbds_changelog.md`); current pin v1.0.1 IS upstream's latest stable, **no upgrade available now** — re-scoped to watch-item gated on next upstream release (see FIX_PROPOSALS "Updated 2026-05-03") |
-| TD-009 | MED | partial | 2026-07-12 | flagship deletions landed on master in `f2acf5c3` (wUnusedMapBuffer 24 B, HRAM tail pad 20 B, wSafariMonAngerCount; 45 B net). Remaining ~13 unused fields verified still present 2026-07-12; WRAM deletions re-gated by the v3 save layout (offset shift = save-format change), TD-009a still needs user approval; see ADDENDUM |
+| TD-009 | MED | **accepted** | 2026-07-12 | user-approved park 2026-07-12. Flagship deletions landed in `f2acf5c3` (45 B); remaining ~15 B stays — a v3→v4 save bump for it is a bad trade. **Piggyback clause:** fold these deletions into any future save-format bump for free. TD-009a (dead HRAM writes) folded into the same accepted state; see ADDENDUM |
 | TD-010 | MED | **done** | 2026-05-02 | corrected recipe executed; see ADDENDUM and AGENT_LOG done entry |
 | TD-011 | LOW | **disputed** | 2026-05-02 | script IS used by docs/manifest.md; see ADDENDUM |
 | TD-012 | LOW | **done** | 2026-05-04 | 3 Makefile shell hacks (`cp -f`, `cat $^ > $@`, `tr -d '\\000'`) replaced with cross-platform Python helpers (`tools/copy_file.py`, `tools/concat_files.py`, `tools/strip_nulls.py`); SHA1 unchanged across all 6 ROM/patch outputs. |
@@ -62,7 +62,7 @@ churny. Other agents check by reading the log directly.
 
 ## Open count
 
-1 open + 5 partial + 6 done + 1 disputed = 13 total
+1 open + 2 partial + 7 done + 1 disputed + 2 accepted = 13 total
 (matches `TECH_DEBT_REPORT.md` index).
 
 When the open count reaches **0** (or all remaining are `accepted` /
