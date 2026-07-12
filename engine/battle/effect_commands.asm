@@ -3155,7 +3155,10 @@ BattleCommand_ConstantDamage:
 	and a
 	jr z, .skip_to_divide
 
-	ldh a, [hProduct + 4]
+; Virtual 10-bit division: max HP exceeds one byte, so shift divisor and
+; dividend right twice. Re-read the divisor low byte staged just above
+; (hDivisor is the math-UNION byte at hProduct + 4, not a product byte).
+	ldh a, [hDivisor]
 	srl b
 	rr a
 	srl b

@@ -574,3 +574,10 @@ only.)
 - **Bank impact:** bank 0x11 (`Late Gen Held Items`): +88 free.
 - **Issues / followups:** Spotted in the same sweep, NOT fixed here: `engine/battle/effect_commands.asm:3158` reads `ldh a, [hProduct + 4]` — offset 4 is past the 4-byte product (it is the hDivisor/hMultiplier/hRemainder byte). Possibly intentional remainder read, possibly off-by-one; needs its own investigation.
 - **Verifier check:** `grep -c 'ldh \[hDividend' engine/battle/late_gen_held_items.asm engine/battle/type_passive_damage_mods.asm` -> 0 in both; `python -m tools.damage_debugger.clobber_smoke` -> 28/28 PASS; map section `Late Gen Held Items` = $0d65 bytes.
+
+## 2026-07-12 — followup note to TD-005 entry (hProduct + 4 read investigated; not a bug; readability fix shipped)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12 (same session as the TD-005 done entry above)
+- **Summary:** The TD-005 entry flagged `engine/battle/effect_commands.asm:3158` (`ldh a, [hProduct + 4]`) as "needs its own investigation." Investigated same session: it is the Flail/Reversal virtual 10-bit division re-reading the divisor low byte staged 5 instructions earlier — offset 4 of the math UNION is hDivisor, not a product byte. Correct behavior, misleading operand name. Shipped a byte-identical readability fix: operand renamed to `hDivisor` plus an explanatory comment.
+- **Verification run:** rebuilt pokegold.gbc after the edit; `python3 tools/verify_sha1.py roms.sha1` -> all 3 outputs OK (byte-identical, proving the rename addressed the same address).
+- **Verifier check:** `grep -c 'hProduct + 4' engine/battle/effect_commands.asm` -> 0; `grep -n 'Virtual 10-bit division' engine/battle/effect_commands.asm` -> 1 hit near line 3158.
