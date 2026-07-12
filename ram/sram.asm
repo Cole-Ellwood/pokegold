@@ -94,7 +94,7 @@ sGameDataEnd::
 sChecksum:: dw
 
 sCheckValue2:: db ; loaded with SAVE_CHECK_VALUE_2, used to check save corruption
-sSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; $FF means legacy save predating the marker
+sSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; non-current versions load only via explicit migration (see engine/menus/save.asm)
 
 
 SECTION "Active Box", SRAM
@@ -166,6 +166,6 @@ sBackupCurMapData:: ds wCurMapDataEnd - wCurMapData
 	ds SAVE_V2_CUR_MAP_DATA_SIZE - (wCurMapDataEnd - wCurMapData)
 sBackupChecksum:: dw
 sBackupCheckValue2:: db ; loaded with SAVE_CHECK_VALUE_2, used to check save corruption
-sBackupSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; $FF means legacy save
+sBackupSaveFormatVersion:: db ; loaded with SAVE_FORMAT_VERSION; non-current versions load only via explicit migration
 
 ENDSECTION

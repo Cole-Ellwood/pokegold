@@ -522,3 +522,35 @@ only.)
   - `python3 tools/audit/check_tech_debt_freshness.py` → PASS (boss.asm citations recorded superseded in ADDENDUM TD-A16).
   - `python3 tools/audit/check_boss_ai_no_cheat.py`, `check_boss_ai_trace_invariants.py` → PASS (behavior unchanged by the split).
 - **Issues / followups:** Stale source citations to the old `engine/battle/ai/boss.asm` path live across several docs; the live-doc sweep is part of the same 2026-05-28 roadmap, and the immutable REPORT/FINDINGS citations are handled via ADDENDUM TD-A16 (SUPERSEDED-CITATION).
+
+---
+
+## 2026-07-12 — TD-002 — done (trigger fired via v3 bump; fix verified landed; comment cleanup shipped)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12
+- **State:** done
+- **Branch / commit:** master @ (this commit); fix itself landed earlier in `1c256cb4` ("wram: free 411 bytes of WRAMX bank 1; SAVE_FORMAT_VERSION 2 -> 3") and `14a96082` ("save: guard v2 save offset map against silent layout drift")
+- **Files touched:** ram/sram.asm (2 stale $FF-legacy comments), constants/misc_constants.asm (version-comment v1 language dropped), tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry)
+- **Summary:** TD-002 was pending-trigger, gated on a SAVE_FORMAT_VERSION bump. The trigger fired: master bumped v2 -> v3 in `1c256cb4`, and the accompanying save rework removed the legacy `$FF` accept path entirely — `engine/menus/save.asm` now accepts only SAVE_FORMAT_VERSION (3) directly and SAVE_FORMAT_VERSION_V2 (2) via the explicit offset-map migration. Recipe steps 1-2 were therefore already shipped; this session shipped the remaining steps 3-4 (comment cleanup in constants/misc_constants.asm and ram/sram.asm) and ran the audit (step 5).
+- **Verification run:**
+  - `grep -ci '\$ff' engine/menus/save.asm` → 0 (no legacy accept path).
+  - `python tools/audit/check_save_format_version.py` → PASS ("Save format fingerprint matches SAVE_FORMAT_VERSION=3").
+  - Full WSL build of pokegold.gbc after the comment edits, then `python3 tools/verify_sha1.py roms.sha1` → all OK (byte-identical; comments only).
+  - `python tools/audit/check_tech_debt_freshness.py` → PASS (see commit).
+- **Bytes recovered:** N/A (the fix's bytes were recovered in `1c256cb4`; this closure is reconciliation + comments).
+- **Bank impact:** N/A.
+- **Issues / followups:** None for TD-002 itself. Note the original recipe cited `engine\menus\save.asm:640/668` — those line anchors predate the v2-migration rewrite; the $FF logic is gone rather than moved, so the citations are satisfied-by-deletion.
+- **Verifier check:** `grep -ci '\$ff' engine/menus/save.asm` → 0. `grep -c 'legacy' ram/sram.asm` → 0. `python tools/audit/check_save_format_version.py` → PASS.
+
+## 2026-07-12 — TD-009 — partial (flagship deletions landed on master; remainder still escalation-gated)
+
+- **Agent / session:** Fable 5 / goal-tech-debt session 2026-07-12
+- **State:** partial
+- **Branch / commit:** reconciliation of `f2acf5c3` ("ram: remove HRAM tail pad, wUnusedMapBuffer, wSafariMonAngerCount", already on master)
+- **Files touched:** tech_debt/STATUS.md, tech_debt/AGENT_LOG.md (this entry) — no source changes in this entry
+- **Summary:** STATUS showed TD-009 as `open` awaiting user approval, but the escalation resolved and the largest items landed on master in `f2acf5c3`: `wUnusedMapBuffer` (24 B, the finding's flagship), the 20-byte HRAM tail pad, and `wSafariMonAngerCount` (1 B, adjacent cleanup) — WRAM0 47->72 free, HRAM 0->20 free, 45 bytes net. Remaining TD-009 scope, verified still present in ram/ on 2026-07-12: `wUnusedBCDNumber` (deliberately kept, "kept for WRAM layout"), `wUnusedMusicF9Flag`, `wUnusedScriptByte`, `wUnusedPikachuFrameset`, `wUnusedJigglypuffNoteXCoord`, `wUnusedLinkAction`, `wUnusedPokedexByte`, `wUnusedPokegearByte`, `wUnusedBillsPCData` (3 B), `wUnusedMovementBufferBank`/`Pointer`, `hUnusedByte`, `hUnusedBackup`. Since the v3 save layout landed (see TD-002 closure), deleting any WRAM field upstream of the save-mirrored regions is a save-format change again — the remainder stays escalation-gated per the 2026-05-02 ADDENDUM reframe (see ADDENDUM), and TD-009a (dead HRAM writes in vblank.asm/intro_menu.asm/events.asm) remains gated on user OK.
+- **Verification run:** `grep -n 'wUnused\|hUnused' ram/*.asm` (2026-07-12) confirms the removed fields are gone and the enumerated remainder is present. `git merge-base --is-ancestor f2acf5c3 master` → yes.
+- **Bytes recovered:** 45 (in `f2acf5c3`, recorded here for the trail; not new work by this session).
+- **Bank impact:** WRAM0 4049->4024 used; HRAM 127->107 used (per `f2acf5c3` message; dev_index regenerated at `141e0c34`).
+- **Issues / followups:** Next agent picking this up needs user escalation first (save-format shift for WRAM deletions upstream of SRAM mirrors + SAVE_FORMAT_VERSION bump to 4), or scope strictly to HRAM-only deletions (`hUnusedByte`, `hUnusedBackup`) which don't touch the save format but do shift HRAM addresses used by `ldh` — verify no hardcoded $FFxx consumers before attempting.
+- **Verifier check:** `git log --oneline master -- ram/wram.asm | head -3` shows `f2acf5c3`; `grep -c 'wUnusedMapBuffer' ram/wram.asm` → 0; `grep -c 'wUnusedScriptByte' ram/wram.asm` → 1.

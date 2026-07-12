@@ -56,7 +56,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DEV_BRANCH = "codex/cleanup-gsc-rebalance-split"
+# master is the canonical integration branch (single-branch repo since the
+# 2026-07-10 git cleanup; old branches live as archive/* tags). Commits that
+# are ancestors of HEAD but not yet of master (in-flight session-branch work
+# citing itself) are also accepted — see scan().
+DEV_BRANCH = "master"
 
 # Files/dirs to scan, relative to ROOT.
 SCAN_TARGETS: tuple[Path, ...] = (
@@ -261,7 +265,9 @@ def scan(files: list[Path], dev_tip: str, today: _dt.date) -> list[Finding]:
                         )
                     )
                     continue
-                if not _is_ancestor_of(sha, dev_tip):
+                if not _is_ancestor_of(sha, dev_tip) and not _is_ancestor_of(
+                    sha, "HEAD"
+                ):
                     findings.append(
                         Finding(
                             path=path,
@@ -271,8 +277,8 @@ def scan(files: list[Path], dev_tip: str, today: _dt.date) -> list[Finding]:
                             detail=sha,
                             explanation=(
                                 f"cited commit {sha} is NOT an ancestor of "
-                                f"{DEV_BRANCH} tip — lives on a side "
-                                f"branch only?"
+                                f"{DEV_BRANCH} tip (nor of HEAD) — lives on "
+                                f"a side branch only?"
                             ),
                         )
                     )
