@@ -36,9 +36,14 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 NORMAL, POISON, GRASS = 0, 3, 22
-SENTINEL = 0x0008
 BOOT_FRAMES = 600
-RUN_BUDGET = 400
+RUN_BUDGET = 4800
+
+# Return-detection trap: 2 free HRAM bytes below IE at $FFFF holding `jr -2`.
+# NOT $0008 -- that is the FarCall RST vector, which this routine itself hits
+# via `farcall GetMaxHP`, so a hook there fires mid-routine rather than at the
+# return. See tools/damage_debugger/safe_call.py.
+SENTINEL_ADDR = 0xFFFD
 
 # (label, type1, type2, max_hp) -- expected heal is derived, not hardcoded.
 CASES = [
@@ -56,6 +61,7 @@ CASES = [
 REQUIRED_SYMBOLS = (
     "HandleTypePassiveRegrowth_Far",
     "HandleTypePassiveRegrowth_Far.shift",
+    "SwitchTurnCore",
 )
 
 
@@ -129,26 +135,51 @@ def run_case(DebugSession, write_byte_banked, t1, t2, max_hp):
             shift_sym.bank, shift_sym.address,
             lambda _c: captured.setdefault("d", int(pb.register_file.D)), None,
         )
+        # The routine ends in StdBattleTextbox, which cannot complete in a
+        # synthetic non-battle state, so we do not wait for a return. The heal is
+        # applied by RestoreHP, which the routine brackets with two
+        # SwitchTurnCore calls -- so the LAST SwitchTurnCore hit observes the
+        # healed HP. That is a symbol-anchored point proven to execute, unlike
+        # the textbox. Only this routine calls SwitchTurnCore in a fresh session,
+        # and the enemy pass exits at the type gate before reaching it.
+        turn_sym = syms["SwitchTurnCore"]
+        sess.hook_register(
+            turn_sym.bank, turn_sym.address,
+            lambda _c: captured.__setitem__("hp", rd_be16("wBattleMonHP")), None,
+        )
 
         entry = syms["HandleTypePassiveRegrowth_Far"]
         rf = pb.register_file
+        # Mask all interrupts (IE=0, clear pending IF). We hijack PC/SP, so a
+        # VBlank arriving mid-routine hands control to the real game loop and
+        # never comes back -- execution derails to ROM0 before the routine
+        # finishes. Verified: without this, the heal still landed but the run
+        # ended at $0330 instead of reaching the textbox capture point.
+        pb.memory[0xFFFF] = 0x00
+        pb.memory[0xFF0F] = 0x00
+        pb.memory[SENTINEL_ADDR] = 0x18      # jr
+        pb.memory[SENTINEL_ADDR + 1] = 0xFE  # -2
         new_sp = (int(rf.SP) - 2) & 0xFFFF
-        pb.memory[new_sp] = SENTINEL & 0xFF
-        pb.memory[new_sp + 1] = SENTINEL >> 8
+        pb.memory[new_sp] = SENTINEL_ADDR & 0xFF
+        pb.memory[new_sp + 1] = SENTINEL_ADDR >> 8
         rf.SP = new_sp
         wr("hROMBank", entry.bank)
         pb.memory[0x2000] = entry.bank
         rf.PC = entry.address
 
-        returned = [False]
-        sess.hook_register(0x00, SENTINEL,
-                           lambda _c: returned.__setitem__(0, True), None)
+        # Run a fixed short window rather than stopping at the first hook: the
+        # heal is observed on the SECOND SwitchTurnCore hit, so we must not break
+        # on the first. 30 frames is far more than the routine needs (the trace
+        # completes the heal within one).
         ticked = 0
-        while ticked < RUN_BUDGET and not returned[0]:
-            sess.tick(2, False)
-            ticked += 2
+        while ticked < 30:
+            pb.tick(1, False, False)
+            ticked += 1
+            if int(rf.PC) in (SENTINEL_ADDR, SENTINEL_ADDR + 2):
+                break
 
-        return (rd_be16("wBattleMonHP") - cur_hp, captured.get("d"), returned[0])
+        healed = None if "hp" not in captured else captured["hp"] - cur_hp
+        return (healed, captured.get("d"), "hp" in captured)
 
 
 def main() -> int:
@@ -169,13 +200,16 @@ def main() -> int:
             return skip(f"pokegold ROM/symbols unavailable: {exc}")
         if isinstance(result, str):
             return skip(result)
-        healed, d_val, returned = result
+        healed, d_val, reached_heal = result
         want = expected_heal(max_hp, mono)
 
         status = "OK"
-        if not returned:
-            status = "FAIL(no-return)"
-            failures.append(f"{label}: routine did not return in {RUN_BUDGET} frames")
+        if not reached_heal:
+            status = "FAIL(no-heal)"
+            failures.append(
+                f"{label}: never reached the heal (RestoreHP was never bracketed "
+                "by SwitchTurnCore), so the routine bailed before healing"
+            )
         elif d_val is None:
             status = "FAIL(no-denom)"
             failures.append(f"{label}: never reached the denominator pick")
@@ -201,7 +235,8 @@ def main() -> int:
     print(f"{'case'.ljust(width)}  maxHP  want  got  status")
     print("-" * (width + 26))
     for label, max_hp, want, got, status in rows:
-        print(f"{label.ljust(width)}  {max_hp:5d}  {want:4d}  {got:3d}  {status}")
+        got_s = "--" if got is None else str(got)
+        print(f"{label.ljust(width)}  {max_hp:5d}  {want:4d}  {got_s:>3}  {status}")
     print()
 
     if failures:

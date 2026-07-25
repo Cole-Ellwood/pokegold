@@ -1542,6 +1542,7 @@ def main() -> int:
     check_ld_a_zero()
     check_cp_zero()
     check_grass_regrowth_rom()
+    check_type_passive_matrix()
     check_matchup_cli()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
@@ -1608,6 +1609,15 @@ def check_grass_regrowth_rom() -> None:
     # register clobber in HandleTypePassiveRegrowth_Far. Skips cleanly when
     # PyBoy or the built ROM is unavailable; hard-fails on wrong heal rates.
     _run_subaudit("check_grass_regrowth_rom.py", "grass regrowth ROM rate")
+
+
+def check_type_passive_matrix() -> None:
+    # Every type passive at mono and dual strength, driven on the real ROM and
+    # compared against docs/mechanics_changes_from_base.md 1.3. Guards the
+    # mono/dual branch-collapse class: both Grass regrowth and the Electric
+    # Speed / Fighting paralysis interaction shipped with the mono branch
+    # unreachable. Also requires the two strengths to differ per passive.
+    _run_subaudit("check_type_passive_matrix.py", "type passive mono/dual matrix")
 
 
 def check_ld_a_zero() -> None:

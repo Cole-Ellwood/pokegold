@@ -33,7 +33,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
 - Start here: `engine/battle/core.asm`, `engine/battle/effect_commands.asm`, `engine/battle/type_passive_damage_mods.asm`, `engine/battle/late_gen_held_items.asm`, `engine/battle/move_effects`, `constants/battle_constants.asm`
-- Anchors: `TypePassive_ApplyDamageModifiers_Far` (11:6b73, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (11:70c8, `engine/battle/type_passive_damage_mods.asm:1049`); `TypePassive_MaybePoisonRetaliation_Far` (11:7129, `engine/battle/type_passive_damage_mods.asm:1122`); `ApplyLateGenDamageMultipliers_Far` (11:6719, `engine/battle/late_gen_held_items.asm:177`); `HandleLateGenAfterHitEffects_Far` (11:67ba, `engine/battle/late_gen_held_items.asm:286`); `TryActivateDittoImposter` (01:79a4, `engine/battle/ditto_imposter.asm:1`)
+- Anchors: `TypePassive_ApplyDamageModifiers_Far` (11:6b73, `engine/battle/type_passive_damage_mods.asm:44`); `TypePassive_TryDarkStatusShield_Far` (11:70c8, `engine/battle/type_passive_damage_mods.asm:1057`); `TypePassive_MaybePoisonRetaliation_Far` (11:7129, `engine/battle/type_passive_damage_mods.asm:1130`); `ApplyLateGenDamageMultipliers_Far` (11:6719, `engine/battle/late_gen_held_items.asm:177`); `HandleLateGenAfterHitEffects_Far` (11:67ba, `engine/battle/late_gen_held_items.asm:286`); `TryActivateDittoImposter` (01:79a4, `engine/battle/ditto_imposter.asm:1`)
 
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
@@ -223,8 +223,8 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `AICompareSpeed` | 0b:7835 | `engine/battle/ai/scoring.asm:2650` |
 | `AIDamageCalc` | 0b:79ea | `engine/battle/ai/scoring.asm:2977` |
 | `TypePassive_ApplyDamageModifiers_Far` | 11:6b73 | `engine/battle/type_passive_damage_mods.asm:44` |
-| `TypePassive_TryDarkStatusShield_Far` | 11:70c8 | `engine/battle/type_passive_damage_mods.asm:1049` |
-| `TypePassive_MaybePoisonRetaliation_Far` | 11:7129 | `engine/battle/type_passive_damage_mods.asm:1122` |
+| `TypePassive_TryDarkStatusShield_Far` | 11:70c8 | `engine/battle/type_passive_damage_mods.asm:1057` |
+| `TypePassive_MaybePoisonRetaliation_Far` | 11:7129 | `engine/battle/type_passive_damage_mods.asm:1130` |
 | `ApplyLateGenDamageMultipliers_Far` | 11:6719 | `engine/battle/late_gen_held_items.asm:177` |
 | `HandleLateGenAfterHitEffects_Far` | 11:67ba | `engine/battle/late_gen_held_items.asm:286` |
 | `TryActivateDittoImposter` | 01:79a4 | `engine/battle/ditto_imposter.asm:1` |

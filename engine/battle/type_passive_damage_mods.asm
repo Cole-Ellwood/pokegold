@@ -804,11 +804,18 @@ ApplyPrzEffectOnSpeed_Far:
 .got_side
 	ld b, a
 
+; The types pointer stays on the stack across the whole Electric section
+; instead of being popped into de up front. Both passives below read the type
+; pair through de, but the Electric section overwrites d with its denominator
+; (ELECTRIC_SPD_*_DEN) on the way into TypePassive_ApplyFractionToStatAtHL_Far,
+; and that helper preserves de rather than rebuilding it. Popping early left
+; the Fighting check reading types from $14xx/$28xx in ROM0 for any Electric
+; mon, so paralyzed Raichu and Electabuzz (Electric/Fighting here) silently got
+; the vanilla 1/4 Speed penalty instead of the half-Fighting 3/8.
 	push bc
 	push de
 	ld a, ELECTRIC
 	call TypePassive_GetTypeContributionFromDE_Far
-	pop de
 	and a
 	jr z, .check_paralysis
 	cp 2
@@ -821,6 +828,7 @@ ApplyPrzEffectOnSpeed_Far:
 	call TypePassive_ApplyFractionToStatAtHL_Far
 
 .check_paralysis
+	pop de
 	pop bc
 	bit PAR, b
 	ret z

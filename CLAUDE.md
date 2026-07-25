@@ -104,6 +104,23 @@ reporting work done. The verification floor, not optional. The most useful:
   (`tools.debugger grass-regrowth`) stayed green. **A formula mirror cannot
   catch a register clobber** — when a mechanic's numbers matter, gate the
   behavior on the ROM, not on a reimplementation of the intended formula.
+- `check_type_passive_matrix.py` — the same idea for **all** type passives
+  (38 cases): every passive driven on the real ROM at mono and dual strength
+  and diffed against `docs/mechanics_changes_from_base.md` §1.3. Requires the
+  two strengths to produce *different* numbers, which is exactly what the
+  mono/dual branch-collapse class destroys. Two shipped instances: Grass
+  regrowth, and `ApplyPrzEffectOnSpeed_Far` overwriting the types pointer in
+  `d` with its denominator so the following Fighting check read types out of
+  ROM0 (paralyzed Raichu/Electabuzz got vanilla `1/4` Speed, not `3/8`).
+
+**Harness rule for ROM-driving audits** (both of the above, and
+`tools/damage_debugger/safe_call.py`): never use `$0008` as a call sentinel —
+it is the FarCall RST vector the battle engine hits constantly, so a hook
+there fires mid-routine. Push a `jr -2` trap in HRAM (`$FFFD`) instead, and
+mask interrupts (`IE=0`) before jumping, or a VBlank hands control to the real
+game loop and never comes back. Read outputs only at a symbol-anchored point
+proven to execute — `tick()` cannot stop mid-frame, so anything read after the
+loop may be post-return garbage.
 
 After **any** successful build that links, regenerate the dev index:
 ```bash
