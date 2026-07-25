@@ -97,6 +97,13 @@ reporting work done. The verification floor, not optional. The most useful:
   cross-bank calls' garbage execution.
 - `check_navigation_floor.py` — docs/dev_index integrity
 - `check_boss_ai_*.py` — boss AI invariants
+- `check_grass_regrowth_rom.py` — ROM-backed proof that Grass type-passive
+  regrowth heals at the documented mono `/32` and dual `/64` rates. Exists
+  because a register clobber in `HandleTypePassiveRegrowth_Far` healed every
+  Grass mon at the dual rate for months while the Python formula mirror
+  (`tools.debugger grass-regrowth`) stayed green. **A formula mirror cannot
+  catch a register clobber** — when a mechanic's numbers matter, gate the
+  behavior on the ROM, not on a reimplementation of the intended formula.
 
 After **any** successful build that links, regenerate the dev index:
 ```bash

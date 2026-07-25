@@ -1541,6 +1541,7 @@ def main() -> int:
     check_cross_bank_call()
     check_ld_a_zero()
     check_cp_zero()
+    check_grass_regrowth_rom()
     check_matchup_cli()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
@@ -1598,6 +1599,15 @@ def check_cross_bank_call() -> None:
     # boss AI behavior does not depend on the pre-f2e18554 broken
     # cross-bank calls. This is the May 2026 type-immunity softlock class.
     _run_subaudit("check_cross_bank_call.py", "cross-bank call")
+
+
+def check_grass_regrowth_rom() -> None:
+    # ROM-backed, not a formula mirror. The Python mirror
+    # (`tools.debugger grass-regrowth`) stayed green for months while the ROM
+    # healed every Grass mon at the dual /64 rate, because the defect was a
+    # register clobber in HandleTypePassiveRegrowth_Far. Skips cleanly when
+    # PyBoy or the built ROM is unavailable; hard-fails on wrong heal rates.
+    _run_subaudit("check_grass_regrowth_rom.py", "grass regrowth ROM rate")
 
 
 def check_ld_a_zero() -> None:

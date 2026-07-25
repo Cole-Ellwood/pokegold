@@ -1950,12 +1950,18 @@ Battle_ThreeHalvesBC:
 GetMaxHP:
 ; output: bc, wHPBuffer1
 ; push/pop de is load-bearing for the type-passive Grass-regrowth caller
-; (HandleTypePassiveRegrowth_Far .heal in type_passive_damage_mods.asm) which
-; carries d = type contribution (1=dual, 2=mono) across `farcall GetMaxHP` and
-; reads it after to pick a heal denominator. farcall preserves bc only — the
+; (HandleTypePassiveRegrowth_Far .not_at_full_hp in type_passive_damage_mods.asm)
+; which carries d = type contribution (1=dual, 2=mono) across `farcall GetMaxHP`
+; and reads it after to pick a heal denominator. farcall preserves bc only — the
 ; pre-TD-005-P3 GetMaxHP body didn't touch de, so the contract was silent.
 ; `ld de, wEnemyMonMaxHP` below would otherwise leave d=$D2, making the mono
 ; branch unreachable and halving the mono-Grass passive heal rate.
+;
+; This push/pop is necessary but was never sufficient on its own: until
+; 2026-07-25 the caller also clobbered d earlier, via its own
+; TypePassive_GetUserHPPointers_Far call, so the mono branch stayed unreachable
+; regardless of what GetMaxHP preserved. The caller now fetches the contribution
+; after that call. Keep both halves of the contract.
 
 	ld hl, wBattleMonMaxHP
 	push de

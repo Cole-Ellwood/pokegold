@@ -1242,12 +1242,14 @@ HandleTypePassiveRegrowth_Far:
 	call SetPlayerTurn
 
 .do_it
-	ld a, GRASS
-	call TypePassive_GetUserTypeContribution_Far
-	ld d, a
-	and a
-	ret z
-
+; Gate order is load-bearing. The GRASS type contribution must be fetched LAST,
+; immediately before its only consumer below, because
+; TypePassive_GetUserHPPointers_Far returns de -> max HP and therefore destroys
+; any contribution parked in d. Fetching it first (the shape this function
+; shipped with until 2026-07-25) left d = $CB/$D1 — the pointer's high byte — so
+; `cp 2` never matched and every Grass mon, mono or dual, silently healed at the
+; dual-type /64 rate. Only `farcall GetMaxHP` may sit between `ld d, a` and
+; `ld a, d`; it documents a push/pop de contract for exactly this reason.
 	call TypePassive_GetUserStatusAddr_Far
 	ld a, [hl]
 	and a
@@ -1260,13 +1262,19 @@ HandleTypePassiveRegrowth_Far:
 	ld c, a
 	ld a, [de]
 	cp b
-	jr nz, .heal
+	jr nz, .not_at_full_hp
 	inc de
 	ld a, [de]
 	cp c
 	ret z
 
-.heal
+.not_at_full_hp
+	ld a, GRASS
+	call TypePassive_GetUserTypeContribution_Far
+	ld d, a
+	and a
+	ret z
+
 	farcall GetMaxHP
 	ld a, d
 	cp 2
