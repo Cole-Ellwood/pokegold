@@ -113,6 +113,20 @@ reporting work done. The verification floor, not optional. The most useful:
   `d` with its denominator so the following Fighting check read types out of
   ROM0 (paralyzed Raichu/Electabuzz got vanilla `1/4` Speed, not `3/8`).
 
+- `check_boss_ai_decision_paths.py` — ROM-driven fixtures for boss-AI decision
+  paths: both Haki entry points and their gates, Haki trainer eligibility,
+  normal move choice, and the Destiny Bond trade window. **Add a fixture here
+  rather than writing another one-off script** — fixtures are declarative rows
+  in `tools/boss_ai_fixtures/cases.py` and the ROM-driving harness is
+  `tools/boss_ai_fixtures/harness.py`. Browse what is pinned without a ROM via
+  `python -m tools.boss_ai_fixtures --list`; `--verbose` shows observed state.
+  House rule: pin every branch at **both** polarities, since a collapsed branch
+  still passes a one-sided test. `Mon.of("GENGAR", 26, [...])` resolves typing
+  and computed stats from the real data files, so fixtures track rebalancing
+  instead of drifting. Trap found while building it: the `; NN` comments in
+  `constants/trainer_constants.asm` are **hex**, so `trainerclass BROCK ; 11`
+  is 17 — derive class ids from ordinal position, not those comments.
+
 **Harness rule for ROM-driving audits** (both of the above, and
 `tools/damage_debugger/safe_call.py`): never use `$0008` as a call sentinel —
 it is the FarCall RST vector the battle engine hits constantly, so a hook

@@ -1543,7 +1543,7 @@ def main() -> int:
     check_cp_zero()
     check_grass_regrowth_rom()
     check_type_passive_matrix()
-    check_haki_move_choice()
+    check_boss_ai_decision_paths()
     check_matchup_cli()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
@@ -1621,13 +1621,14 @@ def check_type_passive_matrix() -> None:
     _run_subaudit("check_type_passive_matrix.py", "type passive mono/dual matrix")
 
 
-def check_haki_move_choice() -> None:
-    # A Haki'd boss must never spend its once-per-battle read on a move the
-    # defender is immune to. Both Haki paths end in BossAI_ChooseBestOracleMove,
-    # which takes the first move under 80, so the choice is only safe if the
-    # score array was rebuilt for the current defender. BossAI_OracleHakiRead
-    # skipped that rebuild and picked Shadow Ball into a Ghost-immune Magnemite.
-    _run_subaudit("check_haki_move_choice.py", "haki move choice")
+def check_boss_ai_decision_paths() -> None:
+    # ROM-driven fixtures pinning boss-AI decision paths: both Haki entry points
+    # and their gates, Haki trainer eligibility, normal move choice, and the
+    # Destiny Bond trade window. Each branch is pinned at BOTH polarities,
+    # because a collapsed branch still passes a one-sided test — that is how the
+    # mono/dual type-passive bugs survived their own audits.
+    # Fixtures: tools/boss_ai_fixtures/cases.py
+    _run_subaudit("check_boss_ai_decision_paths.py", "boss AI decision paths")
 
 
 def check_ld_a_zero() -> None:
