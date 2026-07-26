@@ -16,6 +16,13 @@ hack: with the array unpopulated the choice collapsed to move slot 1.
 This audit drives the real routine with adversarial starting arrays. Every one
 must still produce a move the defender is not immune to. A regression that
 removes the rebuild fails the all-zero and ascending rows immediately.
+
+It also covers the NORMAL (non-Haki) turn path -- BossAI_ApplyMoveModel followed
+by BossAI_SelectMove -- because the invariant worth guarding is "a boss never
+spends a turn on a move the defender is immune to", not just the Haki half. The
+normal path was already sound (the model hard-blocks the immune move even from a
+deliberately poisoned array, and the selector skips anything at 80); these rows
+keep it that way.
 """
 from __future__ import annotations
 
@@ -61,11 +68,11 @@ def skip(reason: str) -> int:
     return 0
 
 
-def run_case(DebugSession, write_byte_banked, start):
+def run_case(DebugSession, write_byte_banked, start, normal_path=False):
     with DebugSession.open("pokegold") as sess:
         pb, syms = sess.pyboy, sess.symbols
         for n in ("BossAI_OracleHakiRead", "BossAI_ApplyMoveModel",
-                  "wEnemyAIMoveScores", "wCurEnemyMove"):
+                  "BossAI_SelectMove", "wEnemyAIMoveScores", "wCurEnemyMove"):
             if syms.get(n) is None:
                 return f"symbol {n} missing from pokegold.sym"
         sess.tick(BOOT_FRAMES)
@@ -157,6 +164,17 @@ def run_case(DebugSession, write_byte_banked, start):
 
         entering = [rd("wEnemyAIMoveScores", i) for i in range(4)]
 
+        if normal_path:
+            # Normal turn: AIChooseMove seeds the array, then model + selector.
+            wr("hBattleTurn", 1)
+            wr("wCurEnemyMove", 0)
+            wr("wBossAIMoveChoiceReady", 0)
+            invoke("BossAI_ApplyMoveModel")
+            ok = invoke("BossAI_SelectMove")
+            return {"returned": ok, "entering": entering,
+                    "chosen": rd("wCurEnemyMove"),
+                    "ready": rd("wBossAIMoveChoiceReady")}
+
         # boss moves first, player is locked into a move (did not switch)
         wr("wBossAIRevealedMovesBitmapSpare", HAKI_ELIGIBLE, 1)
         wr("wEnemyGoesFirst", 1)
@@ -180,10 +198,17 @@ def main() -> int:
     except Exception as exc:  # pragma: no cover - environment guard
         return skip(f"debugger harness unavailable: {exc}")
 
+    # (label, start array, normal_path?) -- Haki path rows, then normal-turn rows.
+    cases = [(f"haki: {lbl}", start, False) for lbl, start in START_ARRAYS]
+    cases += [
+        ("normal turn: flattened to 20", [20, 20, 20, 20], True),
+        ("normal turn: immune move poisoned to 0", [0, 60, 60, 60], True),
+    ]
+
     rows, failures = [], []
-    for label, start in START_ARRAYS:
+    for label, start, normal in cases:
         try:
-            r = run_case(DebugSession, write_byte_banked, start)
+            r = run_case(DebugSession, write_byte_banked, start, normal_path=normal)
         except Exception as exc:
             return skip(f"pokegold ROM/symbols unavailable: {exc}")
         if isinstance(r, str):
@@ -196,15 +221,15 @@ def main() -> int:
         elif not r["ready"]:
             status = "FAIL(no-choice)"
             failures.append(
-                f"{label}: Haki fired but committed no move choice "
+                f"{label}: fired but committed no move choice "
                 "(wBossAIMoveChoiceReady = 0)"
             )
         elif chosen == FORBIDDEN:
             status = "FAIL(immune)"
             failures.append(
-                f"{label}: Haki chose {MOVE_NAMES[FORBIDDEN]}, which the defender "
-                "is IMMUNE to — a guaranteed no-op. The score array was almost "
-                "certainly not rebuilt for the current defender before choosing."
+                f"{label}: chose {MOVE_NAMES[FORBIDDEN]}, which the defender is "
+                "IMMUNE to — a guaranteed no-op. The score array was almost "
+                "certainly not rebuilt/scored for the current defender first."
             )
         rows.append((label, r["entering"], MOVE_NAMES.get(chosen, str(chosen)), status))
 
