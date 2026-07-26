@@ -1543,6 +1543,7 @@ def main() -> int:
     check_cp_zero()
     check_grass_regrowth_rom()
     check_type_passive_matrix()
+    check_haki_move_choice()
     check_matchup_cli()
 
     print("ALL RELEASE SMOKE CHECKS PASSED")
@@ -1618,6 +1619,15 @@ def check_type_passive_matrix() -> None:
     # Speed / Fighting paralysis interaction shipped with the mono branch
     # unreachable. Also requires the two strengths to differ per passive.
     _run_subaudit("check_type_passive_matrix.py", "type passive mono/dual matrix")
+
+
+def check_haki_move_choice() -> None:
+    # A Haki'd boss must never spend its once-per-battle read on a move the
+    # defender is immune to. Both Haki paths end in BossAI_ChooseBestOracleMove,
+    # which takes the first move under 80, so the choice is only safe if the
+    # score array was rebuilt for the current defender. BossAI_OracleHakiRead
+    # skipped that rebuild and picked Shadow Ball into a Ghost-immune Magnemite.
+    _run_subaudit("check_haki_move_choice.py", "haki move choice")
 
 
 def check_ld_a_zero() -> None:

@@ -177,6 +177,18 @@ BossAI_OracleHakiRead:
 	jr z, .no
 	call BossAI_HakiFindImmunitySwitch
 	jp c, BossAI_CommitHakiOracleSwitch
+	; Rebuild before choosing. Reading wEnemyAIMoveScores as-is trusts whatever
+	; the upstream scoring pass happened to leave there for this matchup, and
+	; BossAI_ChooseBestOracleMove just takes the first entry under 80 — so an
+	; array that does not reflect the current defender resolves to move slot 1.
+	; That shipped as a Haki'd Gengar using Shadow Ball into a Magnemite it
+	; cannot touch at all (Steel is Ghost-immune here): the immunity hard-block
+	; that scores Shadow Ball 80 only exists once this model has run. Proven on
+	; ROM — with scores populated for the matchup this path already picked
+	; Psychic; with them unpopulated it picked Shadow Ball. The sister
+	; BossAI_OracleHakiAfterPlayerAction rebuilds on both its branches for the
+	; same reason; this path was the one that skipped it.
+	call BossAI_RebuildHakiMoveScores
 	call BossAI_ChooseBestOracleMove
 	jr nc, .no
 	jp BossAI_CommitHakiOracleChoice
