@@ -280,6 +280,7 @@ ApplyProgressionExpScaling::
 ;   - 0.1x EXP at or above the cap
 ; Post-Rival-1 (egg returned to Elm, persists for the rest of the game):
 ;   - 2x EXP under the cap (Falkner-grind relief)
+;   - 3x EXP under the cap once Whitney is beaten (PLAINBADGE set)
 ;   - 0.1x EXP at or above the cap
 	push de
 	push hl
@@ -319,9 +320,13 @@ ApplyProgressionExpScaling::
 	jr .apply_scale
 
 .scale_2x
-; Post-Rival-1: 2x flat under cap. No softening — the .above_cap branch
-; hard-gates progression at the cap line.
+; Post-Rival-1: 2x flat under cap, bumped to 3x once Whitney is beaten.
+; No softening — the .above_cap branch hard-gates progression at the cap line.
+	ld a, [wJohtoBadges]
+	bit PLAINBADGE, a
 	ld a, 20
+	jr z, .apply_scale
+	ld a, 30
 
 .apply_scale
 ; Multiply the low 16 bits of hProduct by (a/10), clamp to 0xffff.
