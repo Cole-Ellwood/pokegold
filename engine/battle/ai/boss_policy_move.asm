@@ -1420,7 +1420,22 @@ ENDC
 	cp AI_TIER_MID
 	ret c
 	call AICheckEnemyQuarterHP_HL
-	ret c
+	jr nc, .db_in_trade_window
+; Above the trade window, Destiny Bond buys nothing: the bond only pays out if
+; this mon faints before its next turn. Declining to encourage it is not enough,
+; because at the neutral score it TIES the best surviving attack and then wins
+; that tie on moveset order alone -- BossAI_ChooseBestOracleMove keeps the first
+; strict minimum. That is how a full-HP Gengar spent a turn on Destiny Bond
+; against a Magnemite that could not KO it: Shadow Ball was blocked (Steel is
+; Ghost-immune in this hack), Thunderbolt scored 28, and Destiny Bond and Psychic
+; both scored 24 -- with Destiny Bond in the earlier slot. Discourage so any
+; usable damaging move outranks it, by a margin wide enough not to hinge on a
+; tie, while staying far below the 80 hard block so it is still reachable when
+; every attack really is dead.
+	ld a, 8
+	jp BossAI_DiscourageScoreHL
+
+.db_in_trade_window
 	; Must scan the whole moveset, not the currently scored move. `.HasKOLine`
 	; reads the CURRENT move's KO pressure, and Destiny Bond has MOVE_POWER = 0,
 	; so it always answers "no KO" and would encourage the trade even when the
