@@ -1421,10 +1421,10 @@ ENDC
 	ret c
 	call AICheckEnemyQuarterHP_HL
 	ret c
-	; Bug: `.HasKOLine` checks the CURRENT scored move's KO pressure. Destiny
-	; Bond has MOVE_POWER = 0, so .HasKOLine ALWAYS returns "no KO" and this
-	; gate never fires — DB gets encouraged even when the boss has a normal
-	; KO move available. Use BossAI_HasAnyKOMove (scans all 4 moveset slots).
+	; Must scan the whole moveset, not the currently scored move. `.HasKOLine`
+	; reads the CURRENT move's KO pressure, and Destiny Bond has MOVE_POWER = 0,
+	; so it always answers "no KO" and would encourage the trade even when the
+	; boss holds a clean KO move. BossAI_HasAnyKOMove checks all 4 slots.
 	call BossAI_HasAnyKOMove
 	ret c
 	call BossAI_PlayerHasPublicThreatVsEnemy
