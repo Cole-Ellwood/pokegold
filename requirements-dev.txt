@@ -6,6 +6,8 @@
 #   pytest      - test runner (tools/**/tests, scripts)
 #   hypothesis  - property-based fuzzing (damage debugger, boss-AI oracle)
 #   pyboy       - emulator backend for ROM-backed trace/damage tooling
+#                Dense instruction hooks need the verified frame-boundary fix;
+#                see tools/trace/patches/README.md before trusting that backend.
 #   pyyaml      - config/data parsing in tooling
 #   reportlab   - trainer-dossier PDF generation (scripts/)
 #   Pillow      - image handling for sprite/asset tooling and PDFs

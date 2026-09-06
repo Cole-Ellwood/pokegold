@@ -1,0 +1,14 @@
+--- a/pyboy/pyboy.py
++++ b/pyboy/pyboy.py
+@@ -546,6 +546,11 @@
+                                 self._plugin_manager.handle_breakpoint()
+                         # Keep singlestepping on, if that's what we're doing
+                         self.mb.breakpoint_singlestep = self.mb.breakpoint_singlestep_latch
++
++                # A frame can finish during a breakpoint single step.
++                # Resume its pending instruction on the next frame.
++                if self.mb.lcd.frame_done:
++                    break
+
+             self.frame_count += 1
+         self._post_handle_events()

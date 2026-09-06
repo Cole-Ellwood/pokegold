@@ -13,6 +13,7 @@
 *.gbc
 *.gb
 *.patch
+!tools/trace/patches/*.patch
 
 # RGBDS linker outputs. .map/.sym are read-only address truth.
 *.map
