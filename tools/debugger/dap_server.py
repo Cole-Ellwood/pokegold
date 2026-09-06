@@ -611,7 +611,12 @@ def serve_stream(
         if message is None:
             return
         for response in server.handle_message(message):
-            out_stream.write(encode_frame(response))
+            frame = memoryview(encode_frame(response))
+            while frame:
+                written = out_stream.write(frame)
+                if written is None or written <= 0:
+                    raise OSError("DAP stream write made no progress")
+                frame = frame[written:]
             out_stream.flush()
 
 
@@ -646,7 +651,7 @@ def serve_tcp(
                 return
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.dap_server",
         description=(
@@ -679,7 +684,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=[],
         help="effect-trace report path available to evaluate(tdb); repeatable",
     )
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
 
     server = DapServer(default_reports=tuple(args.report))
     if args.stdio:
@@ -687,6 +696,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     serve_tcp(server, host=args.host, port=args.port, once=args.once)
     return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

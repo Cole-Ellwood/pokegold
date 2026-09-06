@@ -187,7 +187,7 @@ def _format_text(answer_report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.when_wrote",
         description=(
@@ -235,8 +235,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--watch-size", type=int, default=1)
     parser.add_argument("--max-history", type=int, default=12)
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
-    args = parser.parse_args(argv)
+    parser.set_defaults(func=run)
+    return parser
 
+
+def run(args: argparse.Namespace) -> int:
     if not (args.address or args.symbol):
         print("error: pass --address or --symbol at least once", file=sys.stderr)
         return 2
@@ -257,6 +260,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(_format_text(answer_report))
     return 0 if answer_report.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

@@ -45,6 +45,7 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 from .catalog import ROOT
+from .instruction_writes import clobbers_for_instruction, parse_instruction_line
 
 
 SCHEMA_VERSION = 1
@@ -63,97 +64,7 @@ SOURCE_ROOTS: tuple[str, ...] = (
 )
 
 
-# Per-register direct write patterns. Each regex matches the START of a
-# normalized (whitespace-trimmed, comment-stripped) instruction line.
-# A match means: this instruction definitely writes the named register
-# during normal SM83 execution. push/pop/call/ret are handled separately.
-#
-# Patterns intentionally OVER-MATCH writes (false positive on "wrote")
-# rather than under-matching, because the analyzer's bug-prevention
-# value depends on flagging anything that COULD clobber. Refinement of
-# specific shapes (e.g. distinguishing `ld R, [...]` cycle counts) is a
-# future refinement; v1 just needs the write set.
-
 _R_8BIT = ("a", "b", "c", "d", "e", "h", "l")
-
-# Generic 8-bit-register write shapes. {r} is substituted per register.
-# - `ld r, *`     -- explicit load INTO r
-# - `inc r`       -- increment r
-# - `dec r`       -- decrement r
-# - `swap r`      -- nibble swap (CB)
-# - `set n, r`    -- bit set (CB)
-# - `res n, r`    -- bit reset (CB)
-# - `rl r` / `rr r` / `rlc r` / `rrc r` / `sla r` / `sra r` / `srl r` -- rotates/shifts (CB)
-_WRITE_8BIT_TEMPLATE = (
-    r"^(?:"
-    r"ld\s+{r}\s*,"
-    r"|inc\s+{r}\b"
-    r"|dec\s+{r}\b"
-    r"|swap\s+{r}\b"
-    r"|set\s+\w+\s*,\s*{r}\b"
-    r"|res\s+\w+\s*,\s*{r}\b"
-    r"|rl\s+{r}\b|rr\s+{r}\b|rlc\s+{r}\b|rrc\s+{r}\b"
-    r"|sla\s+{r}\b|sra\s+{r}\b|srl\s+{r}\b"
-    r")"
-)
-WRITES_R_RE: dict[str, re.Pattern[str]] = {
-    r: re.compile(_WRITE_8BIT_TEMPLATE.format(r=r), re.IGNORECASE) for r in _R_8BIT
-}
-
-# Accumulator (a) is also written by ALU ops, accumulator rotates, daa,
-# cpl, and special HRAM/memory loads. These are accumulator-only and do
-# NOT appear in the generic template.
-WRITES_A_EXTRA_RE = re.compile(
-    r"^(?:"
-    r"add\s+(?!hl\b|sp\b)"          # add a, X (excluding add hl/sp)
-    r"|adc\s+"                       # adc a, X
-    r"|sub\s+"                       # sub X  (= sub a, X)
-    r"|sbc\s+(?!hl\b)"               # sbc a, X (excluding sbc hl, which doesn't exist on SM83 but exclude defensively)
-    r"|and\s+(?!a\s*$)"              # and X, excluding the idiomatic flag-only `and a` test
-    r"|or\s+"                        # or X
-    r"|xor\s+"                       # xor X (xor a writes a=0)
-    r"|rla\b|rra\b|rlca\b|rrca\b"    # accumulator rotates
-    r"|cpl\b|daa\b"                  # bit-complement, decimal-adjust
-    r"|ldh\s+a\s*,"                  # ldh a, [n] -- HRAM read into a
-    r"|ld\s+a\s*,\s*\["              # ld a, [..] -- memory read into a
-    r")",
-    re.IGNORECASE,
-)
-# `and a` is a flag-only test (a is unchanged). Treat it as NOT writing
-# a even though the ALU formally produces a. This matches the codebase
-# idiom where `and a` precedes a conditional ret/jr to check zero.
-AND_A_FLAG_TEST_RE = re.compile(r"^and\s+a\s*(?:;.*)?$", re.IGNORECASE)
-
-# 16-bit register-pair operations that write both halves of the pair.
-# `pop RR` writes both halves of RR. First-slice reports do not model
-# flags, so `pop af` reports only the accumulator write.
-# `inc RR` / `dec RR` write both halves (no flag effect).
-# `add hl, RR` writes h and l (and flags).
-# `ld RR, n16` writes both halves.
-# `ld hl, sp+n` writes h and l.
-# `ld A, [HLI/HLD]` / `ld [HLI/HLD], A` writes h and l (post inc/dec).
-WRITES_PAIR_RE: dict[str, re.Pattern[str]] = {
-    "bc": re.compile(
-        r"^(?:pop\s+bc\b|inc\s+bc\b|dec\s+bc\b|ld\s+bc\s*,)",
-        re.IGNORECASE,
-    ),
-    "de": re.compile(
-        r"^(?:pop\s+de\b|inc\s+de\b|dec\s+de\b|ld\s+de\s*,)",
-        re.IGNORECASE,
-    ),
-    "hl": re.compile(
-        r"^(?:"
-        r"pop\s+hl\b"
-        r"|inc\s+hl\b|dec\s+hl\b"
-        r"|ld\s+hl\s*,"
-        r"|add\s+hl\s*,"
-        r"|ld\s+a\s*,\s*\[\s*hl[id]\s*\]"     # ld a, [hli] / [hld]
-        r"|ld\s+\[\s*hl[id]\s*\]\s*,\s*a"     # ld [hli], a / ld [hld], a
-        r")",
-        re.IGNORECASE,
-    ),
-    "af": re.compile(r"^pop\s+af\b", re.IGNORECASE),
-}
 
 # Call / jump / return sites. Recorded as control-flow events so the
 # analyzer can note where execution might leave the function (and
@@ -281,22 +192,25 @@ def writes_for_instruction(code: str) -> tuple[str, ...]:
     `xor a` writes a; `and a` does NOT write a (it's a flag-only test
     -- the codebase idiom). Flags are not modeled in this first slice.
     """
-    if not code:
+    # Keep this report's narrower syntax and local-write interpretation.
+    code = re.sub(r"^(?:lb|ln)\s+", "ld ", code, flags=re.IGNORECASE)
+    parsed = parse_instruction_line(code)
+    if parsed is None:
         return ()
-    if AND_A_FLAG_TEST_RE.match(code):
+    mnemonic, operands = parsed
+    operands = [operand.lower() for operand in operands]
+    if mnemonic in {"farcall", "callfar", "callba", "callab", "homecall", "ldi", "ldd"}:
         return ()
-    writes: set[str] = set()
-    for register, pattern in WRITES_R_RE.items():
-        if pattern.match(code):
-            writes.add(register)
-    if WRITES_A_EXTRA_RE.match(code):
-        writes.add("a")
-    for pair, pattern in WRITES_PAIR_RE.items():
-        if pattern.match(code):
-            for letter in pair:
-                if letter in _R_8BIT:
-                    writes.add(letter)
-    return tuple(sorted(writes))
+    if mnemonic == "and" and operands == ["a"]:
+        return ()
+    if mnemonic in {"set", "res"} and operands and not re.fullmatch(r"\w+", operands[0]):
+        return ()
+    if mnemonic == "ld":
+        # The local report recognizes hli/hld; hl+/- aliases remain outside its scope.
+        operands = [operand.replace("[hl+]", "[hl]").replace("[hl-]", "[hl]") for operand in operands]
+        operands = [re.sub(r"\[\s*(hli|hld)\s*\]", r"[\1]", operand) for operand in operands]
+    writes = clobbers_for_instruction(mnemonic, operands)
+    return tuple(sorted(writes.intersection(_R_8BIT)))
 
 
 def classify_control(code: str) -> dict[str, Any] | None:
@@ -522,7 +436,7 @@ def render_text(report: dict[str, Any]) -> str:
     return "\n".join(out) + "\n"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.register_flow",
         description=(
@@ -542,13 +456,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Emit machine-readable JSON instead of human-readable text",
     )
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     report = analyze_function(args.symbol)
     if args.json:
         sys.stdout.write(json.dumps(report, sort_keys=True) + "\n")
     else:
         sys.stdout.write(render_text(report))
     return 0 if report.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

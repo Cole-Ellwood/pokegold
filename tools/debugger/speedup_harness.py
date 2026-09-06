@@ -536,11 +536,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--timeout-seconds", type=float, default=TIMEOUT_SECONDS, help="Per-command timeout for replay.")
     parser.add_argument("--out", type=Path, help="Write emitted report text to this path.")
     parser.add_argument("--write-scenarios", type=Path, help="Write measured scenario JSONL to this path.")
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+def run(args: argparse.Namespace) -> int:
     if args.self_test:
         return run_self_test(args.scenarios)
 
@@ -560,6 +560,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(output, end="" if output.endswith("\n") else "\n")
     return 0 if report["ready"] else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":  # pragma: no cover - exercised by CLI tests.

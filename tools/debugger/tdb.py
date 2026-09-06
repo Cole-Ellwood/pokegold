@@ -317,6 +317,13 @@ def _match_predicate(pred: PredicateNode, frame: dict[str, Any], effect: dict[st
             value_source = str(effect.get("value_source") or "").upper()
             if value_source and value_source == wanted_reg:
                 return True, "", ""
+            if any(
+                operand.get("kind") == "register"
+                and str(operand.get("name", "")).upper() == wanted_reg
+                for operand in effect.get("source_operands", ())
+                if isinstance(operand, dict)
+            ):
+                return True, "", ""
             return False, "", ""
         if effect.get("access") != "read":
             return False, "", ""
@@ -531,7 +538,7 @@ def _format_text(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.tdb",
         description="Trace query language (P3). Run a predicate query against effect-trace reports.",
@@ -544,7 +551,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Effect-trace report JSON file. Repeatable.",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
-    args = parser.parse_args(argv)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
 
     report = run_tdb(query=args.query, reports=tuple(args.report))
     if args.json:
@@ -552,6 +563,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(_format_text(report))
     return 0 if report.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

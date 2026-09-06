@@ -63,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     inventory = subparsers.add_parser("inventory")
     add_output_args(inventory)
-    inventory.set_defaults(func=cmd_inventory)
+    inventory.set_defaults(func=cmd_inventory, side_effects=("read_only",))
 
     audit = subparsers.add_parser("audit")
     add_output_args(audit)
@@ -72,19 +72,19 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="exit nonzero when the whole-ROM debugger goal still has gaps",
     )
-    audit.set_defaults(func=cmd_audit)
+    audit.set_defaults(func=cmd_audit, side_effects=("read_only",))
 
     triage = subparsers.add_parser("triage")
     triage.add_argument("--changed-file", action="append", default=[])
     triage.add_argument("--symptom", default="")
     add_output_args(triage)
-    triage.set_defaults(func=cmd_triage)
+    triage.set_defaults(func=cmd_triage, side_effects=("read_only",))
 
     next_step = subparsers.add_parser("next")
     next_step.add_argument("--changed-file", action="append", default=[])
     next_step.add_argument("--symptom", default="")
     add_output_args(next_step)
-    next_step.set_defaults(func=cmd_next)
+    next_step.set_defaults(func=cmd_next, side_effects=("read_only",))
 
     prove = subparsers.add_parser("prove")
     prove.add_argument("--changed-file", action="append", default=[])
@@ -96,7 +96,7 @@ def build_parser() -> argparse.ArgumentParser:
     prove.add_argument("--all-routes", action="store_true")
     prove.add_argument("--max-commands", type=int, default=50)
     add_output_args(prove)
-    prove.set_defaults(func=cmd_prove)
+    prove.set_defaults(func=cmd_prove, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator"))
 
     ingest = subparsers.add_parser("ingest")
     ingest.add_argument("--rom", action="append", default=[])
@@ -106,7 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--scenario", action="append", default=[])
     ingest.add_argument("--changed-file", action="append", default=[])
     add_output_args(ingest)
-    ingest.set_defaults(func=cmd_ingest)
+    ingest.set_defaults(func=cmd_ingest, side_effects=("writes_report",))
 
     gate = subparsers.add_parser("gate")
     gate.add_argument("--changed-file", action="append", default=[])
@@ -119,7 +119,7 @@ def build_parser() -> argparse.ArgumentParser:
     gate.add_argument("--max-commands", type=int)
     gate.add_argument("--timeout-seconds", type=int, default=600)
     add_output_args(gate)
-    gate.set_defaults(func=cmd_gate)
+    gate.set_defaults(func=cmd_gate, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator"))
 
     investigate = subparsers.add_parser("investigate")
     investigate.add_argument("--rom", default="")
@@ -147,7 +147,7 @@ def build_parser() -> argparse.ArgumentParser:
     investigate.add_argument("--max-cases", type=int, default=64)
     investigate.add_argument("--seed", type=int, default=1)
     add_output_args(investigate)
-    investigate.set_defaults(func=cmd_investigate)
+    investigate.set_defaults(func=cmd_investigate, side_effects=("writes_report", "writes_generated_artifact"))
 
     localize = subparsers.add_parser("localize")
     localize.add_argument("--changed-file", action="append", default=[])
@@ -157,7 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
     localize.add_argument("--symbols", default="pokegold.sym")
     localize.add_argument("--max-candidates", type=int, default=20)
     add_output_args(localize)
-    localize.set_defaults(func=cmd_localize)
+    localize.set_defaults(func=cmd_localize, side_effects=("writes_report",))
 
     coverage = subparsers.add_parser("coverage")
     coverage.add_argument("--trace", action="append", default=[])
@@ -168,7 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
     coverage.add_argument("--symbols", default="pokegold.sym")
     coverage.add_argument("--max-targets", type=int, default=80)
     add_output_args(coverage)
-    coverage.set_defaults(func=cmd_coverage)
+    coverage.set_defaults(func=cmd_coverage, side_effects=("writes_report",))
 
     trace_index = subparsers.add_parser("trace-index")
     trace_index.add_argument("--trace", action="append", default=[])
@@ -183,7 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
     trace_index.add_argument("--max-events", type=int, default=120)
     trace_index.add_argument("--max-links", type=int, default=160)
     add_output_args(trace_index)
-    trace_index.set_defaults(func=cmd_trace_index)
+    trace_index.set_defaults(func=cmd_trace_index, side_effects=("writes_report",))
 
     minimize = subparsers.add_parser("minimize")
     minimize.add_argument("--report", action="append", default=[])
@@ -208,7 +208,7 @@ def build_parser() -> argparse.ArgumentParser:
     minimize.add_argument("--max-scenarios", type=int, default=20)
     minimize.add_argument("--max-trace-records", type=int, default=200)
     add_output_args(minimize)
-    minimize.set_defaults(func=cmd_minimize)
+    minimize.set_defaults(func=cmd_minimize, side_effects=("writes_report", "writes_generated_artifact"))
 
     generate = subparsers.add_parser("generate")
     generate.add_argument("--report", action="append", default=[])
@@ -221,7 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
     generate.add_argument("--max-cases", type=int, default=64)
     generate.add_argument("--seed", type=int, default=1)
     add_output_args(generate)
-    generate.set_defaults(func=cmd_generate)
+    generate.set_defaults(func=cmd_generate, side_effects=("writes_report", "writes_generated_artifact"))
 
     fuzz = subparsers.add_parser("fuzz")
     fuzz.add_argument("--report", action="append", default=[])
@@ -234,7 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
     fuzz.add_argument("--max-cases", type=int, default=64)
     fuzz.add_argument("--seed", type=int, default=1)
     add_output_args(fuzz)
-    fuzz.set_defaults(func=cmd_fuzz)
+    fuzz.set_defaults(func=cmd_fuzz, side_effects=("writes_report", "writes_generated_artifact"))
 
     provenance = subparsers.add_parser("provenance")
     provenance.add_argument("--symbols", default="pokegold.sym")
@@ -243,7 +243,7 @@ def build_parser() -> argparse.ArgumentParser:
     provenance.add_argument("--include-docs", action="store_true")
     provenance.add_argument("--max-hits", type=int, default=40)
     add_output_args(provenance)
-    provenance.set_defaults(func=cmd_provenance)
+    provenance.set_defaults(func=cmd_provenance, side_effects=("writes_report",))
 
     rom_byte = subparsers.add_parser("rom-byte")
     rom_byte.add_argument("--address", default="", help="ROM bank/address, e.g. 00:0150 or 0E:542B")
@@ -253,7 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
     rom_byte.add_argument("--map", default="pokegold.map")
     rom_byte.add_argument("--root", default="", help="repo/source root for relative paths and source lookup")
     add_output_args(rom_byte)
-    rom_byte.set_defaults(func=cmd_rom_byte)
+    rom_byte.set_defaults(func=cmd_rom_byte, side_effects=("writes_report",))
 
     rom_index = subparsers.add_parser("rom-index")
     rom_index.add_argument("--rom", default="pokegold.gbc")
@@ -264,7 +264,7 @@ def build_parser() -> argparse.ArgumentParser:
     rom_index.add_argument("--byte-index-out", default="")
     rom_index.add_argument("--content-mirror-report", default="")
     add_output_args(rom_index)
-    rom_index.set_defaults(func=cmd_rom_index)
+    rom_index.set_defaults(func=cmd_rom_index, side_effects=("writes_report", "writes_generated_artifact"))
 
     slice_parser = subparsers.add_parser("slice")
     slice_parser.add_argument("--symbols", default="pokegold.sym")
@@ -273,7 +273,7 @@ def build_parser() -> argparse.ArgumentParser:
     slice_parser.add_argument("--depth", type=int, default=2)
     slice_parser.add_argument("--max-edges", type=int, default=80)
     add_output_args(slice_parser)
-    slice_parser.set_defaults(func=cmd_slice)
+    slice_parser.set_defaults(func=cmd_slice, side_effects=("writes_report",))
 
     taint = subparsers.add_parser("taint")
     taint.add_argument("--rom", default="pokegold.gbc")
@@ -285,7 +285,7 @@ def build_parser() -> argparse.ArgumentParser:
     taint.add_argument("--max-depth", type=int, default=80)
     taint.add_argument("--max-paths", type=int, default=40)
     add_output_args(taint)
-    taint.set_defaults(func=cmd_taint)
+    taint.set_defaults(func=cmd_taint, side_effects=("writes_report",))
 
     dynamic_taint = subparsers.add_parser("dynamic-taint")
     dynamic_taint.add_argument("--trace", action="append", default=[])
@@ -299,7 +299,7 @@ def build_parser() -> argparse.ArgumentParser:
     dynamic_taint.add_argument("--sink-size", type=int, default=1)
     dynamic_taint.add_argument("--max-paths", type=int, default=40)
     add_output_args(dynamic_taint)
-    dynamic_taint.set_defaults(func=cmd_dynamic_taint)
+    dynamic_taint.set_defaults(func=cmd_dynamic_taint, side_effects=("writes_report",))
 
     trace_instructions = subparsers.add_parser("trace-instructions")
     trace_instructions.add_argument("--rom", default="pokegold.gbc")
@@ -320,7 +320,7 @@ def build_parser() -> argparse.ArgumentParser:
     trace_instructions.add_argument("--require-hit", action="store_true")
     trace_instructions.add_argument("--out-trace", default="")
     add_output_args(trace_instructions)
-    trace_instructions.set_defaults(func=cmd_trace_instructions)
+    trace_instructions.set_defaults(func=cmd_trace_instructions, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator"))
 
     watch = subparsers.add_parser("watch")
     watch.add_argument("--rom", default="pokegold.gbc")
@@ -342,34 +342,34 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--reset-sentinel", action="store_true")
     watch.add_argument("--sentinel-symbol", action="append", default=[])
     add_output_args(watch)
-    watch.set_defaults(func=cmd_watch)
+    watch.set_defaults(func=cmd_watch, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator", "writes_save_state"))
 
     state_inspect = subparsers.add_parser("state-inspect")
     state_inspect.add_argument("--rom", default="pokegold.gbc")
     state_inspect.add_argument("--symbols", default="pokegold.sym")
     state_inspect.add_argument("--save-state", required=True)
     add_output_args(state_inspect)
-    state_inspect.set_defaults(func=cmd_state_inspect)
+    state_inspect.set_defaults(func=cmd_state_inspect, side_effects=("writes_report", "executes_emulator"))
 
     inspect_state = subparsers.add_parser("inspect-state")
     inspect_state.add_argument("--rom", default="pokegold.gbc")
     inspect_state.add_argument("--symbols", default="pokegold.sym")
     inspect_state.add_argument("--save-state", required=True)
     add_output_args(inspect_state)
-    inspect_state.set_defaults(func=cmd_save_state_inspect)
+    inspect_state.set_defaults(func=cmd_save_state_inspect, side_effects=("writes_report", "executes_emulator"))
 
     save_state_inspect = subparsers.add_parser("save-state-inspect")
     save_state_inspect.add_argument("--rom", default="pokegold.gbc")
     save_state_inspect.add_argument("--symbols", default="pokegold.sym")
     save_state_inspect.add_argument("--save-state", required=True)
     add_output_args(save_state_inspect)
-    save_state_inspect.set_defaults(func=cmd_save_state_inspect)
+    save_state_inspect.set_defaults(func=cmd_save_state_inspect, side_effects=("writes_report", "executes_emulator"))
 
     learnset_inspect = subparsers.add_parser("learnset-inspect")
     learnset_inspect.add_argument("--species", required=True)
     learnset_inspect.add_argument("--level", type=int, required=True)
     add_output_args(learnset_inspect)
-    learnset_inspect.set_defaults(func=cmd_learnset_inspect)
+    learnset_inspect.set_defaults(func=cmd_learnset_inspect, side_effects=("writes_report",))
 
     party_inspect = subparsers.add_parser("party-inspect")
     party_inspect.add_argument("--save", required=True)
@@ -377,28 +377,28 @@ def build_parser() -> argparse.ArgumentParser:
     party_inspect.add_argument("--rom", default="pokegold.gbc")
     party_inspect.add_argument("--symbols", default="pokegold.sym")
     add_output_args(party_inspect)
-    party_inspect.set_defaults(func=cmd_party_inspect)
+    party_inspect.set_defaults(func=cmd_party_inspect, side_effects=("writes_report",))
 
     grass_regrowth = subparsers.add_parser("grass-regrowth")
     grass_regrowth.add_argument("--max-total-hp", type=int, default=300)
     add_output_args(grass_regrowth)
-    grass_regrowth.set_defaults(func=cmd_grass_regrowth)
+    grass_regrowth.set_defaults(func=cmd_grass_regrowth, side_effects=("writes_report",))
 
     wram_bank_hazards = subparsers.add_parser("wram-bank-hazards")
     wram_bank_hazards.add_argument("--source-file", action="append", default=[])
     add_output_args(wram_bank_hazards)
-    wram_bank_hazards.set_defaults(func=cmd_wram_bank_hazards)
+    wram_bank_hazards.set_defaults(func=cmd_wram_bank_hazards, side_effects=("writes_report",))
 
     script_resume_gate = subparsers.add_parser("script-resume-gate")
     script_resume_gate.add_argument("--report", action="append", default=[])
     add_output_args(script_resume_gate)
-    script_resume_gate.set_defaults(func=cmd_script_resume_gate)
+    script_resume_gate.set_defaults(func=cmd_script_resume_gate, side_effects=("writes_report",))
 
     wram_ownership = subparsers.add_parser("wram-ownership")
     wram_ownership.add_argument("--symbol", action="append", default=[])
     wram_ownership.add_argument("--source-file", default="ram/wram.asm")
     add_output_args(wram_ownership)
-    wram_ownership.set_defaults(func=cmd_wram_ownership)
+    wram_ownership.set_defaults(func=cmd_wram_ownership, side_effects=("writes_report",))
 
     wram_lifetime = subparsers.add_parser("wram-lifetime")
     wram_lifetime.add_argument("--symbol", action="append", default=[])
@@ -406,13 +406,13 @@ def build_parser() -> argparse.ArgumentParser:
     wram_lifetime.add_argument("--source-file", default="engine/overworld/scripting.asm")
     wram_lifetime.add_argument("--symbols", default="pokegold.sym")
     add_output_args(wram_lifetime)
-    wram_lifetime.set_defaults(func=cmd_wram_lifetime)
+    wram_lifetime.set_defaults(func=cmd_wram_lifetime, side_effects=("writes_report",))
 
     repro_recipe = subparsers.add_parser("repro-recipe")
     repro_recipe.add_argument("--id", action="append", default=[])
     repro_recipe.add_argument("--symptom", default="")
     add_output_args(repro_recipe)
-    repro_recipe.set_defaults(func=cmd_repro_recipe)
+    repro_recipe.set_defaults(func=cmd_repro_recipe, side_effects=("writes_report",))
 
     replay = subparsers.add_parser("replay")
     replay.add_argument("--rom", default="")
@@ -437,7 +437,7 @@ def build_parser() -> argparse.ArgumentParser:
     replay.add_argument("--execute-watch", action="store_true")
     replay.add_argument("--max-targets", type=int, default=12)
     add_output_args(replay)
-    replay.set_defaults(func=cmd_replay)
+    replay.set_defaults(func=cmd_replay, side_effects=("writes_report", "executes_emulator"))
 
     setup = subparsers.add_parser("setup")
     setup.add_argument("--rom", default="")
@@ -453,7 +453,7 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument("--frames", type=int, default=300)
     setup.add_argument("--out-scenarios", default="")
     add_output_args(setup)
-    setup.set_defaults(func=cmd_setup)
+    setup.set_defaults(func=cmd_setup, side_effects=("writes_report",))
 
     explain = subparsers.add_parser("explain")
     explain.add_argument("--report", action="append", default=[])
@@ -466,7 +466,7 @@ def build_parser() -> argparse.ArgumentParser:
     explain.add_argument("--depth", type=int, default=2)
     explain.add_argument("--max-paths", type=int, default=20)
     add_output_args(explain)
-    explain.set_defaults(func=cmd_explain)
+    explain.set_defaults(func=cmd_explain, side_effects=("writes_report",))
 
     tests = subparsers.add_parser("suggest-tests")
     tests.add_argument("--report", action="append", default=[])
@@ -474,7 +474,7 @@ def build_parser() -> argparse.ArgumentParser:
     tests.add_argument("--symbol", action="append", default=[])
     tests.add_argument("--symptom", default="")
     add_output_args(tests)
-    tests.set_defaults(func=cmd_suggest_tests)
+    tests.set_defaults(func=cmd_suggest_tests, side_effects=("writes_report",))
 
     compare = subparsers.add_parser("compare")
     compare.add_argument("--report", action="append", default=[])
@@ -482,7 +482,7 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--symbol", action="append", default=[])
     compare.add_argument("--symptom", default="")
     add_output_args(compare)
-    compare.set_defaults(func=cmd_compare)
+    compare.set_defaults(func=cmd_compare, side_effects=("writes_report",))
 
     content_mirror = subparsers.add_parser("content-mirror")
     content_mirror.add_argument("--source-file", action="append", default=[])
@@ -491,7 +491,7 @@ def build_parser() -> argparse.ArgumentParser:
     content_mirror.add_argument("--rom", default="pokegold.gbc")
     content_mirror.add_argument("--symbols", default="pokegold.sym")
     add_output_args(content_mirror)
-    content_mirror.set_defaults(func=cmd_content_mirror)
+    content_mirror.set_defaults(func=cmd_content_mirror, side_effects=("writes_report",))
 
     content_scenarios = subparsers.add_parser("content-scenarios")
     content_scenarios.add_argument("--source-file", action="append", default=[])
@@ -500,7 +500,7 @@ def build_parser() -> argparse.ArgumentParser:
     content_scenarios.add_argument("--max-cases", type=int, default=64)
     content_scenarios.add_argument("--seed", type=int, default=1)
     add_output_args(content_scenarios)
-    content_scenarios.set_defaults(func=cmd_content_scenarios)
+    content_scenarios.set_defaults(func=cmd_content_scenarios, side_effects=("writes_report", "writes_generated_artifact"))
 
     content_state = subparsers.add_parser("content-state")
     content_state.add_argument("--report", action="append", default=[])
@@ -513,7 +513,7 @@ def build_parser() -> argparse.ArgumentParser:
     content_state.add_argument("--execute", action="store_true")
     content_state.add_argument("--max-scenarios", type=int, default=8)
     add_output_args(content_state)
-    content_state.set_defaults(func=cmd_content_state)
+    content_state.set_defaults(func=cmd_content_state, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator", "writes_save_state"))
 
     state_space = subparsers.add_parser("state-space")
     state_space.add_argument("--patch", action="append", default=[])
@@ -527,7 +527,7 @@ def build_parser() -> argparse.ArgumentParser:
     state_space.add_argument("--out-state", default="")
     state_space.add_argument("--execute", action="store_true")
     add_output_args(state_space)
-    state_space.set_defaults(func=cmd_state_space)
+    state_space.set_defaults(func=cmd_state_space, side_effects=("writes_report", "writes_generated_artifact", "executes_emulator", "writes_save_state"))
 
     expect = subparsers.add_parser("expect")
     expect.add_argument("--report", action="append", default=[])
@@ -543,12 +543,12 @@ def build_parser() -> argparse.ArgumentParser:
     expect.add_argument("--symbols", default="pokegold.sym")
     expect.add_argument("--max-events", type=int, default=1000)
     add_output_args(expect)
-    expect.set_defaults(func=cmd_expect)
+    expect.set_defaults(func=cmd_expect, side_effects=("writes_report",))
 
     rank = subparsers.add_parser("rank")
     rank.add_argument("--report", action="append", default=[], required=True)
     add_output_args(rank)
-    rank.set_defaults(func=cmd_rank)
+    rank.set_defaults(func=cmd_rank, side_effects=("writes_report",))
 
     impact = subparsers.add_parser("impact")
     impact.add_argument("--report", action="append", default=[])
@@ -557,7 +557,7 @@ def build_parser() -> argparse.ArgumentParser:
     impact.add_argument("--symptom", default="")
     impact.add_argument("--max-items", type=int, default=40)
     add_output_args(impact)
-    impact.set_defaults(func=cmd_impact)
+    impact.set_defaults(func=cmd_impact, side_effects=("writes_report",))
 
     report = subparsers.add_parser("report")
     report.add_argument("--report", action="append", default=[], required=True)
@@ -568,7 +568,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="Unified Pokemon Gold Romhack Debugger Report",
     )
     add_output_args(report)
-    report.set_defaults(func=cmd_report)
+    report.set_defaults(func=cmd_report, side_effects=("writes_report", "writes_generated_artifact"))
 
     visualize = subparsers.add_parser("visualize")
     visualize.add_argument("--report", action="append", default=[])
@@ -581,6 +581,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     visualize.add_argument("--max-items", type=int, default=80)
     add_output_args(visualize)
-    visualize.set_defaults(func=cmd_visualize)
+    visualize.set_defaults(func=cmd_visualize, side_effects=("writes_report", "writes_generated_artifact"))
+
+    # Each module owns its arguments and handler; the front door owns registration.
+    from . import (
+        auto_watch,
+        bisect,
+        register_flow,
+        consequence,
+        crossemu,
+        dap_server,
+        heatmap,
+        hypothesis_tracker,
+        navigate,
+        operator_status,
+        context_packet,
+        probe,
+        save_state_lab,
+        selftest,
+        session_start,
+        speedup_harness,
+        stat_at,
+        tdb,
+        type_matchup,
+        vram_diff,
+        vram_snapshot,
+        when_wrote,
+    )
+
+    for name, module, side_effects in (
+        ("auto-watch", auto_watch, ("writes_report", "writes_generated_artifact")),
+        ("bisect", bisect, ("writes_report", "writes_generated_artifact")),
+        ("clobbers", register_flow, ("read_only",)),
+        ("consequence", consequence, ("writes_report",)),
+        ("crossemu", crossemu, ("writes_report", "executes_emulator")),
+        ("dap", dap_server, ("read_only",)),
+        ("heatmap", heatmap, ("writes_report",)),
+        ("hypothesis", hypothesis_tracker, ("writes_report", "writes_manifest", "writes_generated_artifact")),
+        ("navigate", navigate, ("writes_report", "writes_save_state", "executes_emulator")),
+        ("operator-status", operator_status, ("read_only",)),
+        ("pack", context_packet, ("writes_report",)),
+        ("probe", probe, ("writes_report", "writes_manifest", "writes_generated_artifact")),
+        ("save-state-lab", save_state_lab, ("writes_report", "writes_save_state", "executes_emulator", "writes_generated_artifact")),
+        ("selftest", selftest, ("read_only",)),
+        ("session-start", session_start, ("read_only",)),
+        ("speedup-report", speedup_harness, ("writes_report",)),
+        ("stat-at", stat_at, ("read_only",)),
+        ("tdb", tdb, ("writes_report",)),
+        ("type-matchup", type_matchup, ("read_only",)),
+        ("vram-diff", vram_diff, ("writes_report",)),
+        ("vram-snapshot", vram_snapshot, ("writes_report", "executes_emulator")),
+        ("when-wrote", when_wrote, ("writes_report", "executes_emulator")),
+    ):
+        parent = module.build_parser()
+        command = subparsers.add_parser(
+            name, parents=[parent], add_help=False,
+            prog=parent.prog, description=parent.description,
+        )
+        # These ids and notes are persisted in existing taxonomy reports.
+        command.set_defaults(
+            command_id=f"debugger-v2:{name}", command_module=module.__name__,
+            side_effects=side_effects,
+        )
+
+    for name, command in subparsers.choices.items():
+        if command.get_default("command_id") is None:
+            command.set_defaults(command_id=f"debugger:{name}")
 
     return parser
+
+
+def command_parsers(parser: argparse.ArgumentParser) -> dict[str, argparse.ArgumentParser]:
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            return action.choices
+    return {}

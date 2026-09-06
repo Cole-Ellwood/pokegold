@@ -345,9 +345,16 @@ class CommandTests(unittest.TestCase):
         self.assertIn("required=6", result.stderr)
 
     def test_unified_front_door_dispatches_speedup_report(self) -> None:
-        from tools.debugger.__main__ import V2_PASSTHROUGH_MODULES
+        from contextlib import redirect_stdout
+        from tools.debugger.__main__ import main
+        import io
 
-        self.assertEqual(V2_PASSTHROUGH_MODULES["speedup-report"], "tools.debugger.speedup_harness")
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as caught:
+            main(["speedup-report", "--help"])
+        self.assertEqual(caught.exception.code, 0)
+        self.assertIn("--scenarios", output.getvalue())
+        self.assertIn("--no-refresh", output.getvalue())
 
     def test_committed_markdown_report_exists(self) -> None:
         text = REPORT_PATH.read_text(encoding="utf-8")

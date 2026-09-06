@@ -426,7 +426,7 @@ def print_report(report: Mapping[str, Any], *, json_output: bool) -> None:
     print(json.dumps(report, indent=2, sort_keys=True) if json_output else format_probe_report(report))
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.probe",
         description="Declare named PC probes and count probe hits in trace files (P8).",
@@ -455,7 +455,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     reset.add_argument("--store", default=DEFAULT_STORE)
     reset.add_argument("--json", action="store_true")
 
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     if args.command == "declare":
         report = declare_probe(
             name=args.name,
@@ -483,6 +487,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print_report(report, json_output=args.json)
         return 0
     return 2
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

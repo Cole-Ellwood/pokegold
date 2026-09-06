@@ -28,6 +28,11 @@ master, ROM-byte-neutral. Single-owner (Claude) work — no pairing scaffolding.
 
 ## Architecture decision — master is the skeleton
 
+The dispatch described below records the original integration. Commands now
+register through `tools/debugger/parsers.py`, using module-owned parsers and
+handlers. The separate `v2_passthrough.py` dispatch was removed; historical
+command IDs and taxonomy fields remain compatible with saved reports.
+
 The God verbs are **self-contained CLIs**: each module owns its `argparse` and
 exposes `main(argv) -> int`; the God branch's monolithic `__main__` delegates to them via a
 `V2_PASSTHROUGH_MODULES` dict. That pattern transplants cleanly onto master **without

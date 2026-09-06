@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import argparse
+import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -190,23 +193,24 @@ def _fmt_mult(value: float) -> str:
     return f"{rounded:g}"
 
 
-def main(argv=None) -> int:
-    """CLI: defensive type matchup for a species (this hack re-types some mons).
-
-    Wired into the front door as ``python -m tools.debugger type-matchup`` (v2
-    passthrough). Reads the in-repo type chart, not vanilla Gen 2 assumptions.
-    """
-    import argparse
-    import json
-    import sys
-
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.debugger type-matchup")
     parser.add_argument("--species", required=True)
     parser.add_argument("--json", action="store_true", help="machine-readable JSON")
-    args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     report = build_type_matchup_report(species=args.species)
     print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else format_text(report))
     return 0 if report.get("valid") else 1
+
+
+def main(argv=None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

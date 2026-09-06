@@ -3991,7 +3991,7 @@ def graphics_backend_label_status(*, root: Path = ROOT) -> dict[str, Any]:
         return status
     dependency_paths = [
         root / "tools" / "debugger" / "crossemu.py",
-        root / "tools" / "debugger" / "v2_passthrough.py",
+        root / "tools" / "debugger" / "parsers.py",
         root / "audit" / "crossemu_conformance.jsonl",
     ]
     stale: list[str] = []

@@ -666,7 +666,7 @@ def format_synth_report(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Inspect, diff, and synthesize supported save-state files.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -709,7 +709,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     synth_parser.add_argument("--json", action="store_true")
 
-    args = parser.parse_args(argv)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     if args.command == "inspect":
         report = build_save_state_inspect_report(
             state_path=args.state,
@@ -745,6 +749,12 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         return 0 if report["valid"] else 1
     return 2
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

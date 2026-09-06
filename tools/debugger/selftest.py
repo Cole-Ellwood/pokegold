@@ -16,8 +16,7 @@ Per ``docs/omni_debugger_v2.md`` Selftest Infrastructure scope:
 - Existing ``python -m tools.debugger audit`` remains the v1 readiness
   gate (this selftest is additive, not a replacement).
 
-Wired into the front door as ``python -m tools.debugger selftest`` (v2
-passthrough); also callable directly as ``python -m tools.debugger.selftest``.
+Wired into the front door as ``python -m tools.debugger selftest``; also callable directly as ``python -m tools.debugger.selftest``.
 """
 
 from __future__ import annotations
@@ -1666,12 +1665,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="restrict to one or more components by name (repeatable)",
     )
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
+def run(args: argparse.Namespace) -> int:
     selected: Sequence[Check] | None = None
     if args.component:
         wanted = set(args.component)
@@ -1690,6 +1688,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(_format_text(report))
     return 0 if report.ok else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

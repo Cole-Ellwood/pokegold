@@ -89,6 +89,25 @@ class WritesForInstructionTests(unittest.TestCase):
         self.assertEqual(writes_for_instruction("set 3, e"), ("e",))
         self.assertEqual(writes_for_instruction("res 0, l"), ("l",))
 
+    def test_local_report_preserves_call_and_macro_semantics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine").mkdir()
+            (root / "engine" / "sample.asm").write_text(
+                "Example:\n\tand a\n\tfarcall Target\n\tlb bc, 1, 2\n\tret\n",
+                encoding="utf-8",
+            )
+            report = analyze_function("Example", root=root)
+            self.assertTrue(report["valid"])
+            self.assertEqual(report["clobber_set"], ["b", "c"])
+
+    def test_local_syntax_scope_is_preserved(self) -> None:
+        for code, expected in (("ldi a, [hl]", ()), ("ld a, [hl+]", ("a",)),
+                               ("ld a, [ hli ]", ("a", "h", "l")),
+                               ("set $1, b", ()), ("set BIT_NAME, b", ("b",))):
+            with self.subTest(code=code):
+                self.assertEqual(writes_for_instruction(code), expected)
+
     def test_empty_input_returns_empty_tuple(self) -> None:
         self.assertEqual(writes_for_instruction(""), ())
 

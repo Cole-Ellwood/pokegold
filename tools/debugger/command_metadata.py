@@ -31,8 +31,8 @@ READ_ONLY_FORBIDDEN_EFFECTS = {
 
 # Output-destination flags. A command whose declared side effects are clean is
 # still refused under --read-only when the invocation explicitly requests a
-# file write through one of these. Matched on the raw argv (both "--flag path"
-# and "--flag=path" forms) so the same check guards self-contained v2 verbs
+# file write through one of these. Matched on raw argv including argparse
+# abbreviations and "--flag=path" forms so the check guards v2 verbs
 # that own their argparse; a positional value that happens to equal a flag
 # string is refused too, which errs in the safe direction.
 READ_ONLY_OUTPUT_FLAGS = (
@@ -82,7 +82,6 @@ TRACE_COMMANDS = (
 def all_command_metadata() -> list[CommandMetadata]:
     rows: list[CommandMetadata] = []
     rows.extend(debugger_command_metadata())
-    rows.extend(debugger_v2_command_metadata())
     rows.extend(boss_ai_command_metadata())
     rows.extend(trace_command_metadata())
     return sorted(rows, key=lambda item: item.command_id)
@@ -123,12 +122,23 @@ def read_only_refusal_for(command_id: str, argv: Iterable[str] = ()) -> str | No
             f"read-only mode refuses {command_id}: "
             f"declared side effects include {', '.join(forbidden)}"
         )
+    exact_options: set[str] = set()
+    if command_id.startswith(("debugger:", "debugger-v2:", "boss-ai:")):
+        if command_id.startswith("boss-ai:"):
+            from tools.boss_ai_debugger.parsers import build_parser
+        else:
+            from .parsers import build_parser
+        from .parsers import command_parsers
+        command = command_parsers(build_parser()).get(command_id.split(":", 1)[1])
+        if command is not None:
+            exact_options = {option for action in command._actions for option in action.option_strings}
+    options = {arg.split("=", 1)[0] for arg in argv if arg.startswith("--") and arg != "--"}
     requested_outputs = sorted(
         {
             flag
+            for option in options
             for flag in READ_ONLY_OUTPUT_FLAGS
-            for arg in argv
-            if arg == flag or arg.startswith(flag + "=")
+            if option == flag or (option not in exact_options and flag.startswith(option))
         }
     )
     if requested_outputs:
@@ -140,31 +150,19 @@ def read_only_refusal_for(command_id: str, argv: Iterable[str] = ()) -> str | No
 
 
 def debugger_command_metadata() -> list[CommandMetadata]:
-    return [
-        CommandMetadata(
-            command_id=f"debugger:{name}",
+    from .parsers import build_parser, command_parsers
+
+    rows = []
+    for name, parser in command_parsers(build_parser()).items():
+        module = parser.get_default("command_module")
+        rows.append(CommandMetadata(
+            command_id=parser.get_default("command_id"),
             command=f"python -m tools.debugger {name}",
-            owner="unified_debugger",
-            side_effects=_effects_for_debugger_command(name),
-            notes="shared parser command",
-        )
-        for name in _debugger_command_names()
-    ]
-
-
-def debugger_v2_command_metadata() -> list[CommandMetadata]:
-    from .v2_passthrough import V2_PASSTHROUGH_MODULES
-
-    return [
-        CommandMetadata(
-            command_id=f"debugger-v2:{name}",
-            command=f"python -m tools.debugger {name}",
-            owner="unified_debugger_v2",
-            side_effects=_effects_for_debugger_v2_command(name),
-            notes=f"passthrough module {module}",
-        )
-        for name, module in V2_PASSTHROUGH_MODULES.items()
-    ]
+            owner="unified_debugger_v2" if module else "unified_debugger",
+            side_effects=parser.get_default("side_effects"),
+            notes=f"passthrough module {module}" if module else "shared parser command",
+        ))
+    return rows
 
 
 def boss_ai_command_metadata() -> list[CommandMetadata]:
@@ -193,12 +191,6 @@ def trace_command_metadata() -> list[CommandMetadata]:
     ]
 
 
-def _debugger_command_names() -> tuple[str, ...]:
-    from .parsers import build_parser
-
-    return _subparser_names(build_parser())
-
-
 def _boss_ai_command_names() -> tuple[str, ...]:
     from tools.boss_ai_debugger.parsers import build_parser
 
@@ -210,124 +202,6 @@ def _subparser_names(parser: argparse.ArgumentParser) -> tuple[str, ...]:
         if isinstance(action, argparse._SubParsersAction):
             return tuple(sorted(action.choices))
     return ()
-
-
-def _effects_for_debugger_command(name: str) -> tuple[str, ...]:
-    write_report = {
-        "gate",
-        "ingest",
-        "investigate",
-        "localize",
-        "coverage",
-        "trace-index",
-        "minimize",
-        "generate",
-        "fuzz",
-        "provenance",
-        "rom-byte",
-        "rom-index",
-        "slice",
-        "taint",
-        "dynamic-taint",
-        "trace-instructions",
-        "watch",
-        "state-inspect",
-        "inspect-state",
-        "save-state-inspect",
-        "learnset-inspect",
-        "party-inspect",
-        "grass-regrowth",
-        "wram-bank-hazards",
-        "script-resume-gate",
-        "wram-ownership",
-        "wram-lifetime",
-        "repro-recipe",
-        "replay",
-        "setup",
-        "explain",
-        "suggest-tests",
-        "compare",
-        "content-mirror",
-        "content-scenarios",
-        "content-state",
-        "state-space",
-        "expect",
-        "rank",
-        "impact",
-        "report",
-        "visualize",
-        "prove",
-    }
-    generated_artifacts = {
-        "gate",
-        "investigate",
-        "minimize",
-        "generate",
-        "fuzz",
-        "trace-instructions",
-        "watch",
-        "report",
-        "visualize",
-        "prove",
-        "rom-index",
-        "content-scenarios",
-        "content-state",
-        "state-space",
-    }
-    emulator = {
-        "gate",
-        "prove",
-        "trace-instructions",
-        "watch",
-        "state-inspect",
-        "inspect-state",
-        "save-state-inspect",
-        "replay",
-        "content-state",
-        "state-space",
-    }
-    save_state = {"watch", "content-state", "state-space"}
-    effects = ["read_only"]
-    if name in write_report:
-        effects.append("writes_report")
-    if name in generated_artifacts:
-        effects.append("writes_generated_artifact")
-    if name in emulator:
-        effects.append("executes_emulator")
-    if name in save_state:
-        effects.append("writes_save_state")
-    return _dedupe(effects)
-
-
-def _effects_for_debugger_v2_command(name: str) -> tuple[str, ...]:
-    effects = ["read_only"]
-    if name in {
-        "auto-watch",
-        "bisect",
-        "consequence",
-        "crossemu",
-        "heatmap",
-        "hypothesis",
-        "navigate",
-        "pack",
-        "probe",
-        "save-state-lab",
-        "speedup-report",
-        "tdb",
-        "vram-diff",
-        "vram-snapshot",
-        "when-wrote",
-    }:
-        effects.append("writes_report")
-    if name in {"hypothesis", "probe"}:
-        effects.append("writes_manifest")
-    if name in {"navigate", "save-state-lab"}:
-        effects.append("writes_save_state")
-    if name in {"crossemu", "navigate", "save-state-lab", "vram-snapshot", "when-wrote"}:
-        effects.append("executes_emulator")
-    if name in {"auto-watch", "bisect", "hypothesis", "probe", "save-state-lab"}:
-        effects.append("writes_generated_artifact")
-    return _dedupe(effects)
 
 
 def _effects_for_boss_ai_command(name: str) -> tuple[str, ...]:

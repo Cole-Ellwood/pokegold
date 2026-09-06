@@ -43,7 +43,7 @@ out of range) are flagged at list/show time without mutating the stored
 row (append-only invariant).
 
 This module is import-friendly and is wired into the front door as
-``python -m tools.debugger hypothesis`` (v2 passthrough); also callable
+``python -m tools.debugger hypothesis``; also callable
 directly as ``python -m tools.debugger.hypothesis_tracker``.
 """
 

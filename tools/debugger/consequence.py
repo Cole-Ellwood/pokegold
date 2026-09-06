@@ -338,12 +338,11 @@ def _count(value: Any) -> int:
 def _summarize_clobber_chain(chain: dict[str, Any]) -> dict[str, Any]:
     return {
         "function": chain.get("function"),
-        "clobbered_registers": chain.get("clobbered_registers")
-        or chain.get("clobber_set")
-        or chain.get("registers"),
-        "max_depth_reached": chain.get("max_depth_reached") or chain.get("depth"),
-        "callees_analyzed": chain.get("callees_analyzed") or chain.get("call_count"),
-        "warnings": chain.get("warnings", []),
+        "clobbered_registers": chain.get("transitive_clobbers", []),
+        # The producer does not expose traversal depth; keep it unavailable.
+        "max_depth_reached": None,
+        "callees_analyzed": len(chain.get("call_targets", [])),
+        "warnings": chain.get("indirect_call_warnings", []) + chain.get("unknown_mnemonics", []),
     }
 
 
@@ -441,6 +440,9 @@ def render_text(report: dict[str, Any]) -> str:
     chain = report.get("transitive_clobber")
     if chain and chain.get("clobbered_registers"):
         out.append(f"  transitive callee clobber: {chain['clobbered_registers']}")
+    if chain:
+        for warning in chain.get("warnings", []):
+            out.append(f"  clobber-chain warning: {warning}")
 
     closure = report["reference_closure"]
     out.append("  static reference closure:")
@@ -476,7 +478,7 @@ def render_text(report: dict[str, Any]) -> str:
     return "\n".join(out) + "\n"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger consequence",
         description=(
@@ -490,7 +492,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--register", default=None, help="narrow transitive clobber to one register (e.g. c)")
     parser.add_argument("--symbols", default="pokegold.sym", help="symbol table path")
     parser.add_argument("--json", action="store_true", help="machine-readable JSON")
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
 
     report = build_consequence_report(
         symbol=args.symbol,
@@ -503,6 +509,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         sys.stdout.write(render_text(report))
     return 0 if report.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

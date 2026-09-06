@@ -163,7 +163,7 @@ def self_test() -> str:
     return "vram structured-decode self-test PASS"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.vram_snapshot",
         description="Decode VRAM/OAM/tilemap state from trusted raw 64 KiB snapshots (P6).",
@@ -173,18 +173,28 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="emit structured JSON")
     parser.add_argument("--out", type=Path, default=None, help="write JSON to a file")
     parser.add_argument("--self-test", action="store_true", help="run the P6 structured-decode smoke")
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     if args.self_test:
         print(self_test())
         return 0
     if not args.save_state:
-        parser.error("--save-state is required unless --self-test is used")
+        build_parser().error("--save-state is required unless --self-test is used")
     report = build_vram_snapshot_report(state_path=args.save_state, decode=args.decode)
     if args.out is not None:
         write_json(args.out, report)
         return 0 if report["valid"] else 1
     print(json.dumps(report, indent=2, sort_keys=True) if args.json else format_vram_snapshot_report(report))
     return 0 if report["valid"] else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

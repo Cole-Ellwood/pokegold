@@ -288,7 +288,7 @@ def parse_call_edge(line: AsmLine, *, caller: str, parent_label: str) -> CallEdg
             line=line,
         )
 
-    if token == "jp":
+    if token in {"jp", "jr"}:
         condition, target = _condition_and_target(args)
         if target is None:
             return None

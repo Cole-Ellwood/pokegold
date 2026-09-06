@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import argparse
+import json
 import re
+import sys
 from math import isqrt
 from pathlib import Path
 from typing import Any
@@ -267,16 +270,7 @@ def format_text(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main(argv=None) -> int:
-    """CLI: computed stat for a species at a level/modifier/IV/EV.
-
-    Wired into the front door as ``python -m tools.debugger stat-at`` (v2
-    passthrough). Base stat != computed stat; modifiers scale the computed value.
-    """
-    import argparse
-    import json
-    import sys
-
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m tools.debugger stat-at")
     parser.add_argument("--species", required=True)
     parser.add_argument("--stat", required=True, help="hp/atk/def/spd/sat/sdf")
@@ -285,7 +279,11 @@ def main(argv=None) -> int:
     parser.add_argument("--iv", type=int, default=15)
     parser.add_argument("--ev", type=int, default=65_535)
     parser.add_argument("--json", action="store_true", help="machine-readable JSON")
-    args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     report = build_stat_at_report(
         species=args.species,
         stat=args.stat,
@@ -296,6 +294,12 @@ def main(argv=None) -> int:
     )
     print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else format_text(report))
     return 0 if report.get("valid") else 1
+
+
+def main(argv=None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

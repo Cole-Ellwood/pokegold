@@ -253,7 +253,7 @@ def _render_grid(
     return lines
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.heatmap",
         description=(
@@ -292,10 +292,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="write JSON to a file (implies --json)",
     )
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
     frame_range = _parse_frame_range(args.frame_range)
     if args.frame_range and frame_range is None:
-        parser.error("--frame-range must be A:B with hi greater than lo")
+        build_parser().error("--frame-range must be A:B with hi greater than lo")
 
     report = build_heatmap(
         traces=tuple(args.trace),
@@ -312,6 +316,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(report["grid"])
         sys.stdout.write("\n")
     return 0 if report.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

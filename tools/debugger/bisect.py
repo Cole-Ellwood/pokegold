@@ -49,8 +49,7 @@ V1 candidates (deferred)
 - ``--stash-changes`` to preserve uncommitted work instead of refusing.
 - ``--scenario "shell string"`` form for non-Windows users.
 
-Wired into the front door as ``python -m tools.debugger bisect`` (v2
-passthrough); also callable directly as ``python -m tools.debugger.bisect``.
+Wired into the front door as ``python -m tools.debugger bisect``; also callable directly as ``python -m tools.debugger.bisect``.
 """
 
 from __future__ import annotations
@@ -155,7 +154,8 @@ def _resolve_commit(repo: Path, ref: str) -> str:
 def _bisect_active(repo: Path) -> bool:
     """Detect whether the repo is currently in bisect state."""
 
-    return (repo / ".git" / "BISECT_LOG").exists()
+    log_path = Path(_git(repo, "rev-parse", "--git-path", "BISECT_LOG").strip())
+    return (repo / log_path).exists()
 
 
 def run_bisect(
@@ -309,17 +309,16 @@ def build_parser() -> argparse.ArgumentParser:
             "scenario argv after `--`; nonzero exit means BAD, exit 0 means GOOD"
         ),
     )
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
+def run(args: argparse.Namespace) -> int:
     scenario = list(args.scenario or [])
     if scenario and scenario[0] == "--":
         scenario = scenario[1:]
     if not scenario:
-        parser.error("scenario argv required after `--`")
+        build_parser().error("scenario argv required after `--`")
     repo = args.repo if args.repo is not None else ROOT
     try:
         result = run_bisect(
@@ -339,6 +338,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"  steps:    {result.steps}"
     )
     return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

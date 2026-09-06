@@ -410,16 +410,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the detected finding row as JSON before the PASS line.",
     )
+    parser.set_defaults(func=run)
     return parser
+
+
+def run(args: argparse.Namespace) -> int:
+    if args.self_test:
+        return run_self_test(verbose=args.verbose)
+    build_parser().print_help()
+    return 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.self_test:
-        return run_self_test(verbose=args.verbose)
-    parser.print_help()
-    return 1
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

@@ -2174,12 +2174,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--search-nodes", type=int, default=SEARCH_DEFAULT_MAX_NODES)
     parser.add_argument("--search-log-out", default=None, help="write the found search extension as an input log")
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-
+def run(args: argparse.Namespace) -> int:
     if args.self_test:
         report = run_self_test()
         if args.json:
@@ -2274,6 +2273,12 @@ def main(argv: list[str] | None = None) -> int:
         file=sys.stderr,
     )
     return 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

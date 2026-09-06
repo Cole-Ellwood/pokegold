@@ -15,7 +15,7 @@ Acceptance contract (2026-05-21)
   do NOT raise the exit code.
 
 CLI: ``python -m tools.debugger.session_start`` and the top-level
-``python -m tools.debugger session-start`` passthrough.
+``python -m tools.debugger session-start`` command.
 """
 
 from __future__ import annotations
@@ -280,18 +280,23 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--json", action="store_true", help="emit JSON instead of text")
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
+def run(args: argparse.Namespace) -> int:
     report = build_session_start_report()
     if args.json:
         print(json.dumps(report.to_jsonable(), sort_keys=True))
     else:
         print(_format_text(report))
     return 0 if report.selftest_ok else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

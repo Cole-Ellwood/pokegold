@@ -254,7 +254,7 @@ def _render_missing_markdown(hypothesis_id: str, errors: Sequence[str]) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m tools.debugger.context_packet",
         description=(
@@ -287,7 +287,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="override hypothesis tracker store path (default: project store)",
     )
-    args = parser.parse_args(list(argv) if argv is not None else None)
+    parser.set_defaults(func=run)
+    return parser
+
+
+def run(args: argparse.Namespace) -> int:
 
     packet = build_context_packet(
         args.hypothesis,
@@ -302,6 +306,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(packet["markdown"])
 
     return 0 if packet.get("valid") else 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

@@ -351,18 +351,23 @@ def build_parser() -> argparse.ArgumentParser:
         description="Read-only debugger operator status for a fresh agent.",
     )
     parser.add_argument("--json", action="store_true", help="emit JSON")
+    parser.set_defaults(func=run)
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(list(argv) if argv is not None else None)
+def run(args: argparse.Namespace) -> int:
     report = build_operator_status()
     if args.json:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
         print(format_operator_status(report))
     return 0
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

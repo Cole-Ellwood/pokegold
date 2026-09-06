@@ -4,8 +4,7 @@ import sys
 from typing import Sequence
 
 from .command_metadata import read_only_refusal_for
-from .parsers import build_parser
-from .v2_passthrough import V2_PASSTHROUGH_MODULES, delegate_to_module_main
+from .parsers import build_parser, command_parsers
 
 
 def _strip_global_read_only(argv: list[str]) -> tuple[bool, list[str]]:
@@ -27,18 +26,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         argv = sys.argv[1:]
     argv = list(argv)
     read_only, argv = _strip_global_read_only(argv)
-    # Self-contained v2 ("God") verbs own their argparse; delegate before the
-    # shared parser runs so their --help and flags reach the module cleanly.
-    if argv and argv[0] in V2_PASSTHROUGH_MODULES:
+    parser = build_parser()
+    command = command_parsers(parser).get(argv[0]) if argv else None
+    standalone = command is not None and command.get_default("command_module")
+    if standalone:
+        # Standalone commands historically refuse read-only requests even
+        # before parsing/help; shared commands validate arguments first.
         if read_only:
-            refused = _refuse_read_only(f"debugger-v2:{argv[0]}", argv[1:])
+            refused = _refuse_read_only(command.get_default("command_id"), argv)
             if refused:
                 return refused
-        return delegate_to_module_main(V2_PASSTHROUGH_MODULES[argv[0]], argv[1:])
-    parser = build_parser()
+        # The former standalone dispatch accepted a leading separator.
+        if argv[1:2] == ["--"]:
+            del argv[1]
     args = parser.parse_args(argv)
-    if read_only:
-        refused = _refuse_read_only(f"debugger:{args.command}", argv)
+    if read_only and not standalone:
+        refused = _refuse_read_only(args.command_id, argv)
         if refused:
             return refused
     return int(args.func(args))

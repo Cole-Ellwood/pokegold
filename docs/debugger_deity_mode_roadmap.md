@@ -1033,7 +1033,8 @@ Detailed contract:
 2. Port their `kind→formatter` text rendering into `formatters.py` (or ship a
    JSON-only wrapper first if the text formatter is large).
 3. Register `causal-graph` and `hardware-event-stream` verbs in
-   `v2_passthrough.py`; port their tests.
+   `tools/debugger/parsers.py` using their module-owned parsers and handlers;
+   port their tests.
 4. **Acceptance:** both verbs run from the front door, emit text + JSON, pass
    their ported tests; selftest gains a component for each.
 
