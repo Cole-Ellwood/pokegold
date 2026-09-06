@@ -183,5 +183,50 @@ class ReadAddrAndRangeTests(unittest.TestCase):
         self.assertEqual(read_word(pyboy, Symbol(0, 0xC100)), 0x1234)
 
 
+class WriteByteTests(unittest.TestCase):
+    def writers(self):
+        from tools.trace.boss_ai_state_factory import write_byte as factory_write
+        from tools.boss_ai_debugger.rom_selector_materialize import write_byte as selector_write
+
+        return factory_write, selector_write
+
+    def test_writers_select_only_wramx_banks_and_mask_bytes(self) -> None:
+        for write in self.writers():
+            for address, bank in ((0xCFFF, 2), (0xD000, 2), (0xDFFF, 2), (0xE000, 2), (0xD400, 0)):
+                for value in (-1, 0, 255, 256):
+                    with self.subTest(writer=write.__module__, address=address, bank=bank, value=value):
+                        memory = FakeMemory(flat={0xFF70: 3})
+                        write(FakePyBoy(memory), Symbol(bank, address), value)
+                        key = (bank, address) if 0xD000 <= address <= 0xDFFF and bank else address
+                        self.assertEqual(memory[key], value & 0xFF)
+                        self.assertEqual(memory[0xFF70], 3)
+
+    def test_fallback_restores_bank_on_success_and_failure(self) -> None:
+        class BankSwitchMemory(FakeMemory):
+            def __setitem__(self, key, value):
+                if isinstance(key, tuple):
+                    raise TypeError("tuple writes unsupported")
+                if 0xD000 <= key <= 0xDFFF:
+                    if self.fail_write:
+                        raise RuntimeError("write failed")
+                    self._banked[self[0xFF70], key] = value
+                else:
+                    super().__setitem__(key, value)
+
+        for write in self.writers():
+            for fail_write in (False, True):
+                with self.subTest(writer=write.__module__, fail_write=fail_write):
+                    memory = BankSwitchMemory(flat={0xFF70: 3})
+                    memory.fail_write = fail_write
+                    if fail_write:
+                        with self.assertRaisesRegex(RuntimeError, "write failed"):
+                            write(FakePyBoy(memory), Symbol(2, 0xD400), 0x123)
+                        self.assertEqual(memory._banked, {})
+                    else:
+                        write(FakePyBoy(memory), Symbol(2, 0xD400), 0x123)
+                        self.assertEqual(memory._banked, {(2, 0xD400): 0x23})
+                    self.assertEqual(memory[0xFF70], 3)
+
+
 if __name__ == "__main__":
     unittest.main()

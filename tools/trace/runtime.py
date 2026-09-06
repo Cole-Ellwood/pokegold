@@ -70,6 +70,23 @@ def read_byte(pyboy, symbol: Symbol) -> int:
     return int(pyboy.memory[symbol.address])
 
 
+def write_byte(pyboy, symbol: Symbol, value: int) -> None:
+    value &= 0xFF
+    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
+        try:
+            pyboy.memory[symbol.bank, symbol.address] = value
+            return
+        except Exception:
+            old_bank = int(pyboy.memory[0xFF70])
+            pyboy.memory[0xFF70] = symbol.bank
+            try:
+                pyboy.memory[symbol.address] = value
+            finally:
+                pyboy.memory[0xFF70] = old_bank
+            return
+    pyboy.memory[symbol.address] = value
+
+
 def read_addr(pyboy, bank: int, address: int) -> int:
     return read_byte(pyboy, Symbol(bank, address))
 

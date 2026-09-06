@@ -9,6 +9,7 @@ from typing import Any
 from tools.boss_ai_preference.data import PreferenceDataError
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
+from tools.trace.runtime import write_byte
 
 from .canonical_classes import scenario_class_fields
 from .rom_scenarios import load_scenario_batch, normalize_tier, select_move
@@ -452,23 +453,6 @@ def write_named_byte(
 ) -> None:
     symbol = symbols[name]
     write_byte(pyboy, capture.Symbol(symbol.bank, symbol.address + offset), value)
-
-
-def write_byte(pyboy: Any, symbol: capture.Symbol, value: int) -> None:
-    value &= 0xFF
-    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
-        try:
-            pyboy.memory[symbol.bank, symbol.address] = value
-            return
-        except Exception:
-            old_bank = int(pyboy.memory[0xFF70])
-            pyboy.memory[0xFF70] = symbol.bank
-            try:
-                pyboy.memory[symbol.address] = value
-            finally:
-                pyboy.memory[0xFF70] = old_bank
-            return
-    pyboy.memory[symbol.address] = value
 
 
 def selector_first_pass_hook(context: SelectorPatchContext) -> None:

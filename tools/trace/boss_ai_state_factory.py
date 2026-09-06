@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
 
 from tools.trace import boss_ai_trace_capture as capture
 from tools.trace import runtime as trace_runtime
+from tools.trace.runtime import write_byte
 
 
 DEFAULT_OUT_DIR = ROOT / ".local" / "tmp" / "boss_state_factory"
@@ -459,23 +460,6 @@ def require_symbols(symbols: dict[str, capture.Symbol], routes: list[BossRoute])
     missing = [name for name in sorted(required) if name not in symbols]
     if missing:
         fail("missing required symbols: " + ", ".join(missing))
-
-
-def write_byte(pyboy, symbol: capture.Symbol, value: int) -> None:
-    value &= 0xFF
-    if 0xD000 <= symbol.address <= 0xDFFF and symbol.bank:
-        try:
-            pyboy.memory[symbol.bank, symbol.address] = value
-            return
-        except Exception:
-            old_bank = int(pyboy.memory[0xFF70])
-            pyboy.memory[0xFF70] = symbol.bank
-            try:
-                pyboy.memory[symbol.address] = value
-            finally:
-                pyboy.memory[0xFF70] = old_bank
-            return
-    pyboy.memory[symbol.address] = value
 
 
 def read_one(pyboy, symbols: dict[str, capture.Symbol], name: str) -> int:
