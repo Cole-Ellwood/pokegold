@@ -732,7 +732,7 @@ MenuClickSound::
 	and PAD_A | PAD_B
 	jr z, .nosound
 	ld hl, wMenuFlags
-	bit MENU_NO_CLICK_SFX_F, a
+	bit MENU_NO_CLICK_SFX_F, [hl]
 	jr nz, .nosound
 	call PlayClickSFX
 .nosound
