@@ -6,6 +6,8 @@
 #define NUM_COMPRESSORS              4
 #define COMPRESSION_METHODS         96 /* sum of all values for the methods field in compressors */
 #define MAX_FILE_SIZE            32768
+/* Compressed offsets/counts use unsigned shorts; raw output remains capped separately. */
+#define MAX_COMPRESSED_SIZE      65535
 #define SHORT_COMMAND_COUNT         32
 #define MAX_COMMAND_COUNT         1024
 #define LOOKBACK_LIMIT             128 /* highest negative valid count for a copy command */
@@ -100,7 +102,7 @@ unsigned char * get_uncompressed_data(const struct command *, const unsigned cha
 
 // util.c
 noreturn error_exit(int, const char *, ...);
-unsigned char * read_file_into_buffer(const char *, unsigned short *);
+unsigned char * read_file_into_buffer(const char *, unsigned short *, unsigned);
 struct command pick_best_command(unsigned, struct command, ...);
 int is_better(struct command, struct command);
 short command_size(struct command);

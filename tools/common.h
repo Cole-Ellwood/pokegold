@@ -111,7 +111,9 @@ uint8_t *read_u8(const char *filename, long *size) {
 void write_u8(const char *filename, uint8_t *data, size_t size) {
 	FILE *f = xfopen(filename, 'w');
 	xfwrite(data, size, filename, f);
-	fclose(f);
+	if (fclose(f) == EOF) {
+		error_exit("Could not write to file \"%s\": %s\n", filename, strerror(errno));
+	}
 }
 
 uint32_t read_png_width(const char *filename) {

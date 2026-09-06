@@ -3,7 +3,7 @@
 int main (int argc, char ** argv) {
   struct options options = get_options(argc, argv);
   unsigned short size;
-  unsigned char * file_buffer = read_file_into_buffer(options.input, &size);
+  unsigned char * file_buffer = read_file_into_buffer(options.input, &size, (options.mode & 2) ? MAX_COMPRESSED_SIZE : MAX_FILE_SIZE);
   struct command * commands;
   if (options.mode & 2) {
     unsigned short original_size = size, remainder;
@@ -11,7 +11,7 @@ int main (int argc, char ** argv) {
     if (!commands) error_exit(1, "invalid command stream");
     if (options.mode == 2) {
       unsigned char * uncompressed = get_uncompressed_data(commands, file_buffer, &size);
-      if (!uncompressed) error_exit(1, "output data is too large");
+      if (!uncompressed) error_exit(1, "invalid backreference or output data is too large");
       write_raw_data_to_file(options.output, uncompressed, size);
       free(uncompressed);
     } else

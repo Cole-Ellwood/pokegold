@@ -209,9 +209,8 @@ const uint8_t flipped[256] = {
 bool flip_exists(const uint8_t *tile, const uint8_t *tiles, int tile_size, int num_tiles, bool xflip, bool yflip) {
 	uint8_t flip[tile_size]; // VLA
 	memset(flip, 0, tile_size);
-	int half_size = tile_size / 2;
 	for (int i = 0; i < tile_size; i++) {
-		int j = yflip ? (options.interleave && i < half_size ? half_size : tile_size) - 1 - (i ^ 1) : i;
+		int j = yflip ? tile_size - options.depth - (i / options.depth) * options.depth + i % options.depth : i;
 		flip[j] = xflip ? flipped[tile[i]] : tile[i];
 	}
 	return tile_exists(flip, tiles, tile_size, num_tiles);
@@ -241,8 +240,14 @@ void remove_flip(struct Graphic *graphic, bool xflip, bool yflip) {
 
 void interleave(struct Graphic *graphic, int width) {
 	int tile_size = options.depth * 8;
+	if (width < 8 || width % 8 || graphic->size % tile_size) {
+		error_exit("Invalid interleave geometry\n");
+	}
 	int width_tiles = width / 8;
 	int num_tiles = graphic->size / tile_size;
+	if (num_tiles % width_tiles || (num_tiles / width_tiles) % 2) {
+		error_exit("Interleave requires complete pairs of tile rows\n");
+	}
 	uint8_t *interleaved = xmalloc(graphic->size);
 	for (int i = 0; i < num_tiles; i++) {
 		int row = i / width_tiles;
@@ -256,6 +261,9 @@ void interleave(struct Graphic *graphic, int width) {
 
 int main(int argc, char *argv[]) {
 	parse_args(argc, argv);
+	if (options.depth != 1 && options.depth != 2) {
+		error_exit("Depth must be 1 or 2\n");
+	}
 
 	argc -= optind;
 	argv += optind;

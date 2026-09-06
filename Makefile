@@ -112,6 +112,20 @@ ifeq ($(DEBUG),1)
 RGBASMFLAGS += -E
 endif
 
+# Capture global assembler settings before per-version target flags are inherited.
+# A content-preserving stamp makes normal/trace changes rebuild existing objects.
+rgbasm_config := $(RGBASM) $(RGBASMFLAGS)
+rgbasm_config_file := .local/build/rgbasm.flags
+.PHONY: FORCE
+FORCE:
+
+$(rgbasm_config_file): FORCE
+	@mkdir -p $(@D)
+	@printf '%s\n' '$(subst ','"'"',$(rgbasm_config))' > $@.tmp
+	@cmp -s $@.tmp $@ && rm -f $@.tmp || mv -f $@.tmp $@
+
+$(pokegold_obj) $(pokesilver_obj) $(pokegold_debug_obj): $(rgbasm_config_file)
+
 $(pokegold_obj):         RGBASMFLAGS += -D _GOLD
 $(pokesilver_obj):       RGBASMFLAGS += -D _SILVER
 $(pokegold_debug_obj):   RGBASMFLAGS += -D _GOLD -D _DEBUG

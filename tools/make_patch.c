@@ -228,7 +228,7 @@ void interpret_command(char *command, const struct Symbol *current_hook, const s
 	}
 
 	// Get the arguments
-	char *argv[argc]; // VLA
+	char *argv[argc ? argc : 1]; // A patch command may have no arguments.
 	char *arg = command;
 	for (int i = 0; i < argc; i++) {
 		while (*arg && !isspace((unsigned)*arg)) {
@@ -249,39 +249,48 @@ void interpret_command(char *command, const struct Symbol *current_hook, const s
 		if (!current_hook) {
 			error_exit("Error: No current patch for command: \"%s\"\n", command);
 		}
-		int current_offset = current_hook->offset + (argc > 0 ? parse_number(argv[0], 0) : 0);
-		if (fseek(orig_rom, current_offset, SEEK_SET)) {
-			error_exit("Error: Cannot seek to \"vc_patch %s\" in the original ROM\n", current_hook->name);
-		}
-		if (fseek(new_rom, current_offset, SEEK_SET)) {
-			error_exit("Error: Cannot seek to \"vc_patch %s\" in the new ROM\n", current_hook->name);
-		}
-		int length;
+		long current_offset = (long)current_hook->offset + (argc > 0 ? parse_number(argv[0], 0) : 0);
+		long length;
 		if (argc == 2) {
 			length = parse_number(argv[1], 0);
 		} else {
 			const struct Symbol *current_hook_end = symbol_find_cat(symbols, current_hook->name, "_End");
-			length = current_hook_end->offset - current_offset;
+			length = (long)current_hook_end->offset - current_offset;
 		}
+		long original_size = xfsize("original ROM", orig_rom);
+		long new_size = xfsize("new ROM", new_rom);
+		if (length < 0 || current_offset > original_size || current_offset > new_size
+			|| length > original_size - current_offset || length > new_size - current_offset) {
+			error_exit("Error: Patch span outside ROM: %s\n", current_hook->name);
+		}
+		if (fseek(orig_rom, current_offset, SEEK_SET) || fseek(new_rom, current_offset, SEEK_SET)) {
+			error_exit("Error: Cannot seek to patch: %s\n", current_hook->name);
+		}
+		uint8_t *original_bytes = xmalloc(length ? length : 1);
+		uint8_t *new_bytes = xmalloc(length ? length : 1);
+		xfread(original_bytes, length, "original ROM", orig_rom);
+		xfread(new_bytes, length, "new ROM", new_rom);
 		buffer_append(patches, &(struct Patch){current_offset, length});
 		bool modified = false;
 		if (length == 1) {
-			int c = getc(new_rom);
-			modified = c != getc(orig_rom);
+			int c = new_bytes[0];
+			modified = c != original_bytes[0];
 			fprintf(output, isupper((unsigned)command[0]) ? "0x%02X" : "0x%02x", c);
 		} else {
 			if (command[strlen(command) - 1] != '/') {
-				fprintf(output, command[strlen(command) - 1] == '_' ? "a%d: " : "a%d:", length);
+				fprintf(output, command[strlen(command) - 1] == '_' ? "a%ld: " : "a%ld:", length);
 			}
-			for (int i = 0; i < length; i++) {
+			for (long i = 0; i < length; i++) {
 				if (i) {
 					putc(' ', output);
 				}
-				int c = getc(new_rom);
-				modified |= c != getc(orig_rom);
+				int c = new_bytes[i];
+				modified |= c != original_bytes[i];
 				fprintf(output, isupper((unsigned)command[0]) ? "%02X" : "%02x", c);
 			}
 		}
+		free(original_bytes);
+		free(new_bytes);
 		if (!modified) {
 			fprintf(stderr, PROGRAM_NAME ": Warning: \"vc_patch %s\" doesn't alter the ROM\n", current_hook->name);
 		}
@@ -359,7 +368,11 @@ struct Buffer *process_template(
 	unsigned int ignore_size
 ) {
 	FILE *input = xfopen(template_filename, 'r');
-	FILE *output = xfopen(patch_filename, 'w');
+	// Keep the destination untouched until every template span has been validated.
+	FILE *output = tmpfile();
+	if (!output) {
+		error_exit("Error: Cannot create temporary patch output\n");
+	}
 
 	struct Buffer *patches = buffer_create(sizeof(struct Patch));
 	struct Buffer *buffer = buffer_create(1);
@@ -431,7 +444,20 @@ struct Buffer *process_template(
 	rewind(orig_rom);
 	rewind(new_rom);
 
+	if (ferror(input) || ferror(output) || fflush(output) == EOF) {
+		error_exit("Error: Cannot read template or write patch output\n");
+	}
 	fclose(input);
+	rewind(output);
+	FILE *destination = xfopen(patch_filename, 'w');
+	uint8_t bytes[4096];
+	size_t count;
+	while ((count = fread(bytes, 1, sizeof(bytes), output)) != 0) {
+		xfwrite(bytes, count, patch_filename, destination);
+	}
+	if (ferror(output) || fclose(destination) == EOF) {
+		error_exit("Error: Cannot finish patch output\n");
+	}
 	fclose(output);
 	buffer_free(buffer);
 	return patches;
@@ -449,23 +475,21 @@ bool verify_completeness(FILE *restrict orig_rom, FILE *restrict new_rom, struct
 		int orig_byte = getc(orig_rom);
 		int new_byte = getc(new_rom);
 		if (orig_byte == EOF || new_byte == EOF) {
-			return orig_byte == new_byte;
+			return orig_byte == new_byte && !ferror(orig_rom) && !ferror(new_rom);
 		}
-		struct Patch *patch = &((struct Patch *)patches->data)[index];
-		if (index < patches->size && patch->offset == offset) {
-			if (fseek(orig_rom, patch->size, SEEK_CUR)) {
-				return false;
-			}
-			if (fseek(new_rom, patch->size, SEEK_CUR)) {
-				return false;
-			}
-			offset += patch->size;
+		struct Patch *all = patches->data;
+		while (index < patches->size && (all[index].size == 0
+			|| (offset >= all[index].offset && offset - all[index].offset >= all[index].size))) {
 			index++;
-		} else if (orig_byte != new_byte) {
+		}
+		bool covered = index < patches->size && offset >= all[index].offset;
+		if (!covered && orig_byte != new_byte) {
 			fprintf(stderr, PROGRAM_NAME ": Warning: Unpatched difference at offset: 0x%x\n", offset);
 			fprintf(stderr, "    Original ROM value: 0x%02x\n", orig_byte);
 			fprintf(stderr, "    Patched ROM value: 0x%02x\n", new_byte);
-			fprintf(stderr, "    Current patch offset: 0x%06x\n", patch->offset);
+			if (index < patches->size) {
+				fprintf(stderr, "    Current patch offset: 0x%06x\n", all[index].offset);
+			}
 			return false;
 		}
 	}

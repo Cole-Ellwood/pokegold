@@ -17,7 +17,7 @@ void write_commands_to_textfile (const char * file, const struct command * comma
     if (rv >= 0) rv = -(putc('\n', fp) == EOF);
     if (rv < 0) error_exit(1, "could not write padding to compressed output");
   }
-  if (file) fclose(fp);
+  if ((file ? fclose(fp) : fflush(fp)) == EOF) error_exit(1, "could not finish writing output");
 }
 
 void write_commands_and_padding_to_textfile (const char * file, const struct command * commands, unsigned count, const unsigned char * input_stream,
@@ -41,7 +41,7 @@ void write_commands_and_padding_to_textfile (const char * file, const struct com
     if (rv >= 0) rv = -(putc('\n', fp) == EOF);
     if (rv < 0) error_exit(1, "could not write padding to compressed output");
   }
-  if (file) fclose(fp);
+  if ((file ? fclose(fp) : fflush(fp)) == EOF) error_exit(1, "could not finish writing output");
 }
 
 void write_command_to_textfile (FILE * fp, struct command command, const unsigned char * input_stream) {
@@ -97,7 +97,7 @@ void write_commands_to_file (const char * file, const struct command * commands,
   if (putc(-1, fp) == EOF) error_exit(1, "could not write terminator to compressed output");
   length = ~length & ((1 << alignment) - 1);
   while (length --) if (putc(0, fp) == EOF) error_exit(1, "could not write padding to compressed output");
-  if (file) fclose(fp);
+  if ((file ? fclose(fp) : fflush(fp)) == EOF) error_exit(1, "could not finish writing output");
 }
 
 void write_command_to_file (FILE * fp, struct command command, const unsigned char * input_stream) {
@@ -142,5 +142,5 @@ void write_raw_data_to_file (const char * file, const void * data, unsigned leng
     data = (const char *) data + rv;
     length -= rv;
   }
-  if (file) fclose(fp);
+  if ((file ? fclose(fp) : fflush(fp)) == EOF) error_exit(1, "could not finish writing output");
 }

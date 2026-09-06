@@ -57,10 +57,11 @@ struct command * get_commands_from_file (const unsigned char * data, unsigned sh
 
 unsigned char * get_uncompressed_data (const struct command * commands, const unsigned char * compressed, unsigned short * size) {
   const struct command * limit = commands + *size;
-  unsigned char * result = malloc(MAX_FILE_SIZE + MAX_COMMAND_COUNT);
+  unsigned char * result = malloc(MAX_FILE_SIZE);
   unsigned char * current = result;
   unsigned short p;
   for (; commands < limit; commands ++) {
+    if (commands -> count > MAX_FILE_SIZE - (current - result)) goto error;
     switch (commands -> command) {
       case 0:
         memcpy(current, compressed + commands -> value, commands -> count);
@@ -74,7 +75,11 @@ unsigned char * get_uncompressed_data (const struct command * commands, const un
         current += commands -> count;
         break;
       default: {
-        const unsigned char * ref = ((commands -> value < 0) ? current : result) + commands -> value;
+        int produced = current - result;
+        int offset = commands -> value < 0 ? produced + commands -> value : commands -> value;
+        if (offset < 0 || offset >= produced || (commands -> command == 6 && commands -> count > offset + 1)) goto error;
+        /* Forward copies may overlap bytes produced by this same command. */
+        const unsigned char * ref = result + offset;
         for (p = 0; p < commands -> count; p ++) {
           current[p] = ref[(commands -> command == 6) ? -(int) p : p];
           if (commands -> command == 5) current[p] = bit_flipping_table[current[p]];
@@ -82,11 +87,10 @@ unsigned char * get_uncompressed_data (const struct command * commands, const un
         current += commands -> count;
       }
     }
-    if ((current - result) > MAX_FILE_SIZE) {
-      free(result);
-      return NULL;
-    }
   }
   *size = current - result;
   return realloc(result, *size ? *size : 1);
+  error:
+  free(result);
+  return NULL;
 }

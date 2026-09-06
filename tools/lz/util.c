@@ -10,14 +10,15 @@ noreturn error_exit (int error_code, const char * error, ...) {
   exit(error_code);
 }
 
-unsigned char * read_file_into_buffer (const char * file, unsigned short * size) {
+unsigned char * read_file_into_buffer (const char * file, unsigned short * size, unsigned limit) {
   FILE * fp = file ? fopen(file, "rb") : stdin;
   if (!fp) error_exit(1, "could not open file %s for reading", file);
-  unsigned char * buf = malloc(MAX_FILE_SIZE + 1);
-  int rv = fread(buf, 1, MAX_FILE_SIZE + 1, fp);
+  unsigned char * buf = malloc(limit + 1);
+  if (!buf) error_exit(1, "could not allocate input buffer");
+  size_t rv = fread(buf, 1, limit + 1, fp);
+  if (ferror(fp)) error_exit(1, "could not read from file %s", file ? file : "<standard input>");
   if (file) fclose(fp);
-  if (rv < 0) error_exit(1, "could not read from file %s", file);
-  if (rv > MAX_FILE_SIZE) error_exit(1, "file %s is too big", file ? file : "<standard input>");
+  if (rv > limit) error_exit(1, "file %s is too big", file ? file : "<standard input>");
   *size = rv;
   return buf;
 }
