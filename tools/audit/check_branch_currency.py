@@ -155,7 +155,7 @@ def main(argv: list[str] | None = None) -> int:
     if base is None:
         if args.hook:
             return 0
-        print("branch-currency: no canonical ref (master / origin/master) found; skipping.")
+        print("SKIP: branch-currency: no canonical ref (master / origin/master) found.")
         return 0
 
     stale, lines = build_banner(base)

@@ -1532,25 +1532,30 @@ def main() -> int:
         )
     print("PASS: QoL script flow checks")
 
-    check_branch_currency()
-    check_save_format_version()
-    check_no_stale_shipped_claims()
-    check_vram_request_contract()
-    check_farcall_hl_clobber()
-    check_farcall_a_clobber()
-    check_cross_bank_call()
-    check_ld_a_zero()
-    check_cp_zero()
-    check_grass_regrowth_rom()
-    check_type_passive_matrix()
-    check_boss_ai_decision_paths()
-    check_matchup_cli()
-
-    print("ALL RELEASE SMOKE CHECKS PASSED")
+    results = [
+        check_branch_currency(),
+        check_save_format_version(),
+        check_no_stale_shipped_claims(),
+        check_vram_request_contract(),
+        check_farcall_hl_clobber(),
+        check_farcall_a_clobber(),
+        check_cross_bank_call(),
+        check_ld_a_zero(),
+        check_cp_zero(),
+        check_grass_regrowth_rom(),
+        check_type_passive_matrix(),
+        check_boss_ai_decision_paths(),
+        check_matchup_cli(),
+    ]
+    skipped = results.count(False)
+    if skipped:
+        print(f"RELEASE SMOKE CHECKS COMPLETED: {skipped} audits skipped")
+    else:
+        print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
 
 
-def _run_subaudit(script: str, label: str, *args: str) -> None:
+def _run_subaudit(script: str, label: str, *args: str) -> bool:
     proc = subprocess.run(
         [sys.executable, str(ROOT / "tools/audit" / script), *args],
         cwd=ROOT,
@@ -1565,82 +1570,86 @@ def _run_subaudit(script: str, label: str, *args: str) -> None:
         print(proc.stderr, end="" if proc.stderr.endswith("\n") else "\n", file=sys.stderr)
     if proc.returncode != 0:
         fail(f"{label} audit failed")
+    if any(line.lstrip().startswith("SKIP:") for line in (proc.stdout + "\n" + proc.stderr).splitlines()):
+        print(f"SKIP: {label} audit")
+        return False
     print(f"PASS: {label} audit")
+    return True
 
 
-def check_branch_currency() -> None:
+def check_branch_currency() -> bool:
     # --strict: hard-fail the floor when this branch is behind canonical master
     # on gameplay-critical paths, so a release smoke can't pass on a stale ROM
     # that is missing already-landed fixes.
-    _run_subaudit("check_branch_currency.py", "branch currency", "--strict")
+    return _run_subaudit("check_branch_currency.py", "branch currency", "--strict")
 
 
-def check_save_format_version() -> None:
-    _run_subaudit("check_save_format_version.py", "save format version")
+def check_save_format_version() -> bool:
+    return _run_subaudit("check_save_format_version.py", "save format version")
 
 
-def check_no_stale_shipped_claims() -> None:
-    _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
+def check_no_stale_shipped_claims() -> bool:
+    return _run_subaudit("check_no_stale_shipped_claims.py", "no stale shipped claims")
 
 
-def check_vram_request_contract() -> None:
-    _run_subaudit("check_vram_request_contract.py", "VRAM request contract")
+def check_vram_request_contract() -> bool:
+    return _run_subaudit("check_vram_request_contract.py", "VRAM request contract")
 
 
-def check_farcall_hl_clobber() -> None:
-    _run_subaudit("check_farcall_hl_clobber.py", "farcall hl-clobber")
+def check_farcall_hl_clobber() -> bool:
+    return _run_subaudit("check_farcall_hl_clobber.py", "farcall hl-clobber")
 
 
-def check_farcall_a_clobber() -> None:
-    _run_subaudit("check_farcall_a_clobber.py", "farcall a-clobber")
+def check_farcall_a_clobber() -> bool:
+    return _run_subaudit("check_farcall_a_clobber.py", "farcall a-clobber")
 
 
-def check_cross_bank_call() -> None:
+def check_cross_bank_call() -> bool:
     # Promoted to the floor 2026-07-08 after the gating trace-ROM
     # verification (manifest re-pin + full live-capture re-run) confirmed
     # boss AI behavior does not depend on the pre-f2e18554 broken
     # cross-bank calls. This is the May 2026 type-immunity softlock class.
-    _run_subaudit("check_cross_bank_call.py", "cross-bank call")
+    return _run_subaudit("check_cross_bank_call.py", "cross-bank call")
 
 
-def check_grass_regrowth_rom() -> None:
+def check_grass_regrowth_rom() -> bool:
     # ROM-backed, not a formula mirror. The Python mirror
     # (`tools.debugger grass-regrowth`) stayed green for months while the ROM
     # healed every Grass mon at the dual /64 rate, because the defect was a
     # register clobber in HandleTypePassiveRegrowth_Far. Skips cleanly when
     # PyBoy or the built ROM is unavailable; hard-fails on wrong heal rates.
-    _run_subaudit("check_grass_regrowth_rom.py", "grass regrowth ROM rate")
+    return _run_subaudit("check_grass_regrowth_rom.py", "grass regrowth ROM rate")
 
 
-def check_type_passive_matrix() -> None:
+def check_type_passive_matrix() -> bool:
     # Every type passive at mono and dual strength, driven on the real ROM and
     # compared against docs/mechanics_changes_from_base.md 1.3. Guards the
     # mono/dual branch-collapse class: both Grass regrowth and the Electric
     # Speed / Fighting paralysis interaction shipped with the mono branch
     # unreachable. Also requires the two strengths to differ per passive.
-    _run_subaudit("check_type_passive_matrix.py", "type passive mono/dual matrix")
+    return _run_subaudit("check_type_passive_matrix.py", "type passive mono/dual matrix")
 
 
-def check_boss_ai_decision_paths() -> None:
+def check_boss_ai_decision_paths() -> bool:
     # ROM-driven fixtures pinning boss-AI decision paths: both Haki entry points
     # and their gates, Haki trainer eligibility, normal move choice, and the
     # Destiny Bond trade window. Each branch is pinned at BOTH polarities,
     # because a collapsed branch still passes a one-sided test — that is how the
     # mono/dual type-passive bugs survived their own audits.
     # Fixtures: tools/boss_ai_fixtures/cases.py
-    _run_subaudit("check_boss_ai_decision_paths.py", "boss AI decision paths")
+    return _run_subaudit("check_boss_ai_decision_paths.py", "boss AI decision paths")
 
 
-def check_ld_a_zero() -> None:
-    _run_subaudit("check_ld_a_zero.py", "ld a, 0 -> xor a")
+def check_ld_a_zero() -> bool:
+    return _run_subaudit("check_ld_a_zero.py", "ld a, 0 -> xor a")
 
 
-def check_cp_zero() -> None:
-    _run_subaudit("check_cp_zero.py", "cp 0 -> and a")
+def check_cp_zero() -> bool:
+    return _run_subaudit("check_cp_zero.py", "cp 0 -> and a")
 
 
-def check_matchup_cli() -> None:
-    _run_subaudit("check_matchup_cli.py", "damage matchup CLI")
+def check_matchup_cli() -> bool:
+    return _run_subaudit("check_matchup_cli.py", "damage matchup CLI")
 
 
 if __name__ == "__main__":

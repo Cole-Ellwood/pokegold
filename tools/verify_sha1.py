@@ -20,14 +20,12 @@ def sha1_file(path: Path) -> str:
 
 
 def parse_manifest_line(line: str) -> tuple[str, str] | None:
-    line = line.strip()
-    if not line:
+    line = line.rstrip("\r\n")
+    if not line.strip():
         return None
-    try:
-        expected, name = line.split(maxsplit=1)
-    except ValueError:
-        raise ValueError(f"invalid manifest line: {line!r}") from None
-    return expected.lower(), name.lstrip("*")
+    if len(line) < 43 or line[40] != " " or line[41] not in " *":
+        raise ValueError(f"invalid manifest line: {line!r}")
+    return line[:40].lower(), line[42:]
 
 
 def main() -> int:

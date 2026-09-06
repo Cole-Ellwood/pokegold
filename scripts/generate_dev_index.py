@@ -608,10 +608,11 @@ def maybe_add_boss_ai_wram_budget(lines: list[str], symbols: dict[str, Symbol]) 
     if not start or not end:
         return
 
-    used = end.address - start.address
+    trace_start = symbols.get("wBossAITraceTopMoves")
+    used = (trace_start.address if trace_start else end.address) - start.address
     free = BOSS_AI_RESERVED_BYTES - used
     trace_extra = estimate_boss_ai_trace_bytes()
-    trace_used = used + trace_extra
+    trace_used = end.address - start.address if trace_start else used + trace_extra
     trace_free = BOSS_AI_RESERVED_BYTES - trace_used
 
     lines.extend(
@@ -900,7 +901,8 @@ def main() -> int:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(markdown, encoding="utf-8", newline="\n")
-    print(f"wrote {out_path.relative_to(ROOT).as_posix()}")
+    display_path = out_path.relative_to(ROOT) if out_path.is_relative_to(ROOT) else out_path
+    print(f"wrote {display_path.as_posix()}")
     return 0
 
 

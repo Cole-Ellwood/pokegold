@@ -13,6 +13,7 @@ project's 700-line hand-written threshold.
 from __future__ import annotations
 
 from pathlib import Path
+from html import escape
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
@@ -24,6 +25,7 @@ from reportlab.platypus import (
     Frame,
     PageBreak,
     PageTemplate,
+    NextPageTemplate,
     Paragraph,
     Spacer,
     Table,
@@ -86,6 +88,15 @@ def _make_styles() -> dict[str, ParagraphStyle]:
             "callout", parent=base["BodyText"], fontName="Helvetica",
             fontSize=10, leading=14, textColor=INK, spaceAfter=6,
         ),
+        "table_code": ParagraphStyle(
+            "table_code", fontName="Courier-Bold", fontSize=8.5, leading=10.5,
+        ),
+        "table_label": ParagraphStyle(
+            "table_label", fontName="Helvetica-Bold", fontSize=8, leading=10.5,
+        ),
+        "table_body": ParagraphStyle(
+            "table_body", fontName="Helvetica", fontSize=8.5, leading=10.5,
+        ),
         "caption": ParagraphStyle(
             "caption", parent=base["BodyText"], fontName="Helvetica-Oblique",
             fontSize=9, leading=12, textColor=INK_SOFT, spaceBefore=4, spaceAfter=10,
@@ -142,6 +153,11 @@ def _file_table() -> Table:
         ["scoring.asm / move.asm /", "VANILLA", "The base Gen 2 AI. Boss code calls into these for the starting score."],
         ["switch.asm / items.asm / redundant.asm", "VANILLA", "Same. Boss adjusts on top; it does not replace them."],
     ]
+    rows[1:] = [
+        [Paragraph(escape(cell), STYLES[style])
+         for cell, style in zip(row, ('table_code', 'table_label', 'table_body'))]
+        for row in rows[1:]
+    ]
     tbl = Table(rows, colWidths=[2.1 * inch, 0.9 * inch, 3.8 * inch])
     tbl.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), ACCENT),
@@ -173,6 +189,11 @@ def _data_table() -> Table:
         ["tendency_counter_weights.asm", "Per-observation-class additive points for switch prediction.", "How strongly each recent player behavior shifts the switch-prediction model."],
         ["coach_plan_templates.asm", "Per-trainer fight plans (lead / sack / save lines).", "Picks a fight phase the AI tries to follow, with allowed deviation."],
         ["haki_taunts.asm", "Per-leader taunt line for the Haki fire.", "Printed before the move animation when Haki triggers."],
+    ]
+    rows[1:] = [
+        [Paragraph(escape(cell), STYLES[style])
+         for cell, style in zip(row, ('table_code', 'table_body', 'table_body'))]
+        for row in rows[1:]
     ]
     tbl = Table(rows, colWidths=[2.1 * inch, 2.4 * inch, 2.3 * inch])
     tbl.setStyle(TableStyle([
@@ -399,6 +420,7 @@ def build(output_path: Path) -> Path:
 
     story: list = []
     _cover_page(story)
+    story.append(NextPageTemplate("body"))
     _section_pages(story)
     doc.build(story)
     return output_path

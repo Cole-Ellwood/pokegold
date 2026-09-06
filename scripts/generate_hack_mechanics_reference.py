@@ -807,7 +807,8 @@ def main(argv: list[str] | None = None) -> int:
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(rendered, encoding="utf-8", newline="\n")
-    print(f"wrote {output.relative_to(ROOT)}")
+    display_path = output.relative_to(ROOT) if output.is_relative_to(ROOT) else output
+    print(f"wrote {display_path}")
     return 0
 
 
