@@ -12,6 +12,181 @@ from tools.debugger.instruction_trace import build_instruction_trace_report
 
 
 class InstructionTraceTests(unittest.TestCase):
+    def test_plan_includes_branch_target_immediately_after_loop_terminator(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "test.sym").write_text("01:4000 Scan\n01:4004 Scan.done\n01:4007 Other\n")
+            # Conditional loop exit targets the instruction immediately after
+            # the unconditional back edge, as in the historical link parser.
+            for branch, expected in ((0x28, [0x4000, 0x4002, 0x4004, 0x4006]),
+                                      (0x00, [0x4000, 0x4001, 0x4002])):
+                with self.subTest(branch=branch):
+                    rom = bytearray(32768)
+                    rom[0x4000:0x4008] = bytes([branch, 2 if branch else 0, 0x18, 0xFC, 0x3E, 9, 0xC9, 0])
+                    (root / "test.gbc").write_bytes(rom)
+                    report = build_instruction_trace_report(root=root, rom_path="test.gbc", symbols_path="test.sym",
+                                                           function_symbols=("Scan",))
+                    self.assertTrue(report["valid"], report["errors"])
+                    self.assertEqual([row["pc"] for row in report["functions"][0]["instructions"]], expected)
+
+    def test_capture_observes_stack_bytes_for_pop_and_return_in_ram(self):
+        from types import SimpleNamespace
+        from tools.debugger.instruction_frames import parse_instruction_record
+
+        class Memory(dict):
+            def __getitem__(self, address):
+                self.reads.append(address)
+                return self.get(address, 0)
+
+        class Emulator:
+            def __init__(self, sp):
+                self.register_file = SimpleNamespace(A=0, F=0, B=0, C=0, D=0, E=0, H=0, L=0, SP=sp, PC=0x4000)
+                self.memory = Memory({sp: 0x34, (sp + 1) & 65535: 0x12})
+                self.memory.reads = []
+                self.callbacks = []
+            def hook_register(self, bank, pc, callback, context):
+                self.callbacks.append((pc, callback))
+            def hook_deregister(self, bank, pc):
+                pass
+            def tick(self, *_args):
+                for pc, callback in self.callbacks:
+                    self.register_file.PC = pc
+                    callback(None)
+            def stop(self, save=False):
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = bytearray(32768)
+            rom[0x4000:0x4003] = bytes([0, 0xD1, 0xC9])
+            (root / "unit.gbc").write_bytes(rom)
+            (root / "test.sym").write_text("01:4000 Unit\n01:4003 End\n")
+            for sp, addresses in ((0xC100, [0xC100, 0xC101]), (0xCFFF, [0xCFFF, 0xD000]),
+                                  (0xDFFF, [0xDFFF]), (0xFFFD, [0xFFFD, 0xFFFE]),
+                                  (0xFFFE, [0xFFFE]), (0x8000, [])):
+                with self.subTest(sp=sp):
+                    emulator = Emulator(sp)
+                    with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=emulator):
+                        report = build_instruction_trace_report(root=root, rom_path="unit.gbc", symbols_path="test.sym",
+                                                               function_symbols=("Unit",), execute=True, out_trace="stack.jsonl")
+                    self.assertTrue(report["valid"], report["errors"])
+                    records = [json.loads(line) for line in (root / "stack.jsonl").read_text().splitlines()]
+                    self.assertNotIn("watch_value_specs", records[0])
+                    for record in records[1:]:
+                        frame = parse_instruction_record(record, default_seq=0)["frame"]
+                        self.assertEqual(dict(frame.memory), {address: emulator.memory.get(address) for address in addresses})
+                    self.assertEqual(emulator.memory.reads, addresses * 2)
+
+    def test_overlapping_function_windows_capture_once_and_credit_both_targets(self):
+        from collections import defaultdict
+        from types import SimpleNamespace
+
+        class FakePyBoy:
+            def __init__(self):
+                self.register_file = SimpleNamespace(
+                    A=42, F=0, B=0, C=0, D=0, E=0, H=0, L=0, SP=0xFFFE, PC=0x4000,
+                )
+                self.memory = defaultdict(int)
+                self.callbacks = {}
+
+            def load_state(self, handle):
+                self.loaded_state = handle.read()
+
+            def hook_register(self, bank, pc, callback, context):
+                if (bank, pc) in self.callbacks:
+                    raise ValueError("Hook already registered for this bank and address.")
+                self.callbacks[bank, pc] = callback
+
+            def hook_deregister(self, bank, pc):
+                del self.callbacks[bank, pc]
+
+            def tick(self, *_args):
+                for (_, pc), callback in self.callbacks.items():
+                    self.register_file.PC = pc
+                    callback(None)
+
+            def stop(self, save=False):
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            rom = bytearray(0x8000)
+            rom[0x4000:0x4006] = bytes([0x3E, 0x2A, 0xEA, 0x41, 0xD1, 0xC9])
+            (root / "unit.gbc").write_bytes(rom)
+            (root / "test.sym").write_text(
+                "01:4000 UnitFunc\n01:4002 UnitFunc.body\n01:4006 NextFunc\n",
+                encoding="utf-8",
+            )
+            emulator = FakePyBoy()
+            (root / "initial.state").write_bytes(b"initial")
+            with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=emulator):
+                report = build_instruction_trace_report(
+                    function_symbols=("UnitFunc", "UnitFunc.body"),
+                    rom_path="unit.gbc", symbols_path="test.sym",
+                    save_state="initial.state",
+                    execute=True, require_hit=True, out_trace="trace.jsonl", root=root,
+                )
+            rows = [json.loads(line) for line in (root / "trace.jsonl").read_text().splitlines()]
+            from tools.debugger.report_envelope import sha256_file
+            self.assertEqual(report["state_basis"]["initial_state_sha256"], sha256_file(root / "initial.state"))
+            self.assertEqual(report["trace_sha256"], sha256_file(root / "trace.jsonl"))
+            self.assertEqual(rows[0]["basis"]["state_basis"], report["state_basis"])
+            self.assertEqual(report["backend_sha256"], sha256_file(Path(__file__)))
+            original_basis = report["state_basis"]
+            for state_bytes, frames, changed_key in ((b"changed", 300, "initial_state_sha256"),
+                                                     (b"initial", 301, "input_log_sha256")):
+                (root / "initial.state").write_bytes(state_bytes)
+                with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                    changed = build_instruction_trace_report(
+                        function_symbols=("UnitFunc",), rom_path="unit.gbc", symbols_path="test.sym",
+                        save_state="initial.state", execute=True, frames=frames, root=root)
+                self.assertNotEqual(changed["state_basis"][changed_key], original_basis[changed_key])
+            from tools.debugger.instruction_frames import parse_instruction_record
+            for version, mode, selector, expected in ((17, 1, 0, 1), (17, 1, 7, 7), (17, 0, 7, 1),
+                                                      (8, 1, 2, 2), (15, 1, 3, 3), (16, 1, 4, 4),
+                                                      (7, 1, 7, None), (18, 1, 7, None), (17, 2, 7, None)):
+                with self.subTest(version=version, mode=mode, selector=selector):
+                    header = bytearray([version, 0, 0, 0, 0, 0])
+                    header[4 if version <= 15 else 5] = mode
+                    (root / "initial.state").write_bytes(header)
+                    bank_emulator = FakePyBoy()
+                    bank_emulator.memory[0xFF70] = selector
+                    with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=bank_emulator):
+                        capture = build_instruction_trace_report(
+                            function_symbols=("UnitFunc",), rom_path="unit.gbc", symbols_path="test.sym",
+                            save_state="initial.state", execute=True, out_trace="banks.jsonl", root=root)
+                    self.assertTrue(capture["valid"], capture["errors"])
+                    for line in (root / "banks.jsonl").read_text().splitlines():
+                        record = json.loads(line)
+                        frame = parse_instruction_record(record, default_seq=0)["frame"]
+                        self.assertEqual(dict(frame.bank_state).get("wram"), expected)
+                        if expected is None:
+                            self.assertNotIn("bank_state", record)
+                    self.assertEqual(bank_emulator.memory[0xFF70], selector)
+            (root / "initial.state").write_bytes(bytes([17, 0, 0, 0, 0, 1]))
+            changing = FakePyBoy()
+            def changing_tick(*_args):
+                for selector, ((_, pc), callback) in enumerate(changing.callbacks.items(), 1):
+                    changing.memory[0xFF70] = selector
+                    changing.register_file.PC = pc
+                    callback(None)
+            changing.tick = changing_tick
+            with patch("tools.debugger.instruction_trace.trace_runtime.open_pyboy", return_value=changing):
+                changing_report = build_instruction_trace_report(
+                    function_symbols=("UnitFunc",), rom_path="unit.gbc", symbols_path="test.sym",
+                    save_state="initial.state", execute=True, out_trace="changing.jsonl", root=root)
+            self.assertTrue(changing_report["valid"], changing_report["errors"])
+            self.assertEqual([json.loads(line)["bank_state"]["wram_raw"] for line in
+                              (root / "changing.jsonl").read_text().splitlines()], [1, 2, 3])
+
+        self.assertTrue(report["valid"], report["errors"])
+        self.assertEqual([row["pc"] for row in rows], [0x4000, 0x4002, 0x4005])
+        validation = report["execution_validation"]
+        self.assertEqual(validation["planned_hook_count"], 3)
+        self.assertEqual(validation["hit_function_symbols"], ["UnitFunc", "UnitFunc.body"])
+        self.assertEqual(validation["missing_function_symbols"], [])
+        self.assertEqual(emulator.callbacks, {})
+
     def test_instruction_trace_plans_function_hooks_from_rom(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

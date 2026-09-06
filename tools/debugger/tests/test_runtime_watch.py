@@ -12,6 +12,94 @@ from tools.debugger.runtime_watch import build_watch_event_cause, build_watch_re
 
 
 class WatchTests(unittest.TestCase):
+    def test_sram_symbols_read_their_bank_without_enabling_or_switching_ram(self):
+        from types import SimpleNamespace
+
+        class Memory:
+            def __init__(self, available):
+                self.available = available
+                self.data = {(0, 0xA100): 7, (1, 0xA100): 9}
+
+            def __getitem__(self, key):
+                if isinstance(key, tuple):
+                    if not self.available:
+                        raise RuntimeError("banked SRAM reads unavailable")
+                    return self.data[key]
+                return 255 if 0xA000 <= key <= 0xBFFF else 0
+
+            def __setitem__(self, key, value):
+                raise AssertionError("watch must not mutate mapper or memory")
+
+        class Emulator:
+            def __init__(self, available):
+                self.memory = Memory(available)
+                self.register_file = SimpleNamespace(A=0, F=0, B=0, C=0, D=0, E=0, H=0, L=0, SP=0xFFFE, PC=0x4000)
+
+            def tick(self, *_args):
+                for key in self.memory.data:
+                    self.memory.data[key] += 1
+
+            def stop(self, save=False):
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "unit.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text("00:A100 sFirst\n01:A100 sSecond\n")
+            for available in (True, False):
+                with self.subTest(available=available), patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=Emulator(available)):
+                    if not available:
+                        with self.assertRaisesRegex(RuntimeError, "banked SRAM reads unavailable"):
+                            build_watch_report(watch_symbols=("sFirst", "sSecond"), rom_path="unit.gbc", symbols_path="test.sym",
+                                               frames=1, execute=True, root=root)
+                        continue
+                    report = build_watch_report(watch_symbols=("sFirst", "sSecond"), rom_path="unit.gbc", symbols_path="test.sym",
+                                                frames=1, execute=True, root=root)
+                self.assertTrue(report["valid"], report["errors"])
+                changes = {event["watch"]: (event["old_hex"], event["new_hex"]) for event in report["events"]}
+                self.assertEqual(changes, {"sFirst": ("07", "08"), "sSecond": ("09", "0A")})
+
+    def test_watch_detects_low_byte_changes_in_battle_hp_words(self):
+        from collections import defaultdict
+        from types import SimpleNamespace
+
+        names = ("wBattleMonHP", "wBattleMonMaxHP", "wEnemyMonHP", "wEnemyMonMaxHP")
+
+        class FakePyBoy:
+            def __init__(self):
+                self.memory = defaultdict(int)
+                self.register_file = SimpleNamespace(
+                    A=0, F=0, B=0, C=0, D=0, E=0, H=0, L=0, SP=0xFFFE, PC=0x4000,
+                )
+
+            def tick(self, *_args):
+                for index in range(len(names)):
+                    self.memory[0xC001 + 2 * index] = 1
+                self.memory[0xC008] = 1
+
+            def stop(self, save=False):
+                pass
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "unit.gbc").write_bytes(bytes(0x8000))
+            (root / "test.sym").write_text(
+                "".join(f"00:{0xC000 + 2 * i:04X} {name}\n" for i, name in enumerate(names))
+                + "00:C008 wBattleMonStatus\n", encoding="utf-8",
+            )
+            with patch("tools.debugger.runtime_watch.trace_runtime.open_pyboy", return_value=FakePyBoy()):
+                report = build_watch_report(
+                    watch_symbols=(*names, "wBattleMonStatus"), rom_path="unit.gbc",
+                    symbols_path="test.sym", frames=1, execute=True, root=root,
+                )
+
+        self.assertTrue(report["valid"], report["errors"])
+        events = {event["watch"]: event for event in report["events"]}
+        for name in names:
+            self.assertIn(name, events)
+            self.assertEqual((events[name]["old_hex"], events[name]["new_hex"]), ("0000", "0001"))
+        self.assertEqual(events["wBattleMonStatus"]["new_hex"], "01")
+
     def test_watch_plan_resolves_symbols_without_executing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

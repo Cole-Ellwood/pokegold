@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 import json
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -9,8 +10,9 @@ from tools.damage_debugger.disasm import Instruction
 
 from .address import AddressSpec, address_key, observed_address_key, parse_address_spec
 from .catalog import ROOT
+from .clobber_graph import build_static_call_graph
 from .coverage import load_traces
-from .dynamic_taint import (
+from .instruction_frames import (
     InstructionFrame,
     frame_condition_true,
     frame_flags,
@@ -22,6 +24,7 @@ from .evidence import bank_state_records, evidence_atom, evidence_atoms, merge_e
 from .hardware_evidence import hardware_runtime_event_boundary
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
+from .report_envelope import sha256_file
 from .sm83_model import (
     CGB_VRAM_DMA_REGISTERS,
     CONDITIONAL_CALLS,
@@ -127,6 +130,9 @@ def build_effect_trace_report(
     attach_observed_timer_overflow_effects(events)
     attach_hardware_side_effect_proof_gates(events)
     attach_next_frame_write_validation(events)
+    attach_observed_call_registers(events)
+    attach_farcall_input_hypotheses(events)
+    attach_hypothesis_source_candidates(events, symbol_table=symbol_table, root=root)
     refresh_watch_hits(events, watches)
     attach_effect_evidence_atoms(events)
     errors.extend(parse_errors[:20])
@@ -137,9 +143,7 @@ def build_effect_trace_report(
         checkpoint_interval=checkpoint_interval if checkpoint_interval > 0 else 16,
         max_checkpoints=max_checkpoints if max_checkpoints > 0 else 128,
     )
-    evidence_source_counts = count_effect_field_values(events, "evidence_source")
-    evidence_status_counts = count_effect_field_values(events, "evidence_status")
-    watch_bank_match_counts = count_watch_hit_field_values(events, "bank_match")
+    summary = summarize_effect_events(events)
     output = write_effects_output(events=events, out_effects=out_effects, root=root)
     errors.extend(output.get("errors", []))
     return {
@@ -159,10 +163,6 @@ def build_effect_trace_report(
         "hook_order_mechanisms": hook_order_boundary.get("hook_mechanisms", []),
         "hook_order_non_mutating_instruction_events": hook_order_boundary.get("non_mutating_instruction_events", ""),
         "hook_order_validations": hook_order_validations,
-        "rmw_pre_state_sample_count": count_rmw_pre_state_samples(events),
-        "rmw_pre_state_runtime_observed_count": count_rmw_pre_state_samples(events, proof_status="runtime_observed"),
-        "rmw_pre_state_unvalidated_count": count_rmw_pre_state_samples(events, proof_status="planned_only"),
-        "rmw_pre_state_validation_counts": count_rmw_pre_state_validation_values(events),
         "requested_traces": list(traces),
         "effective_traces": list(effective_traces),
         "trace_count": len(loaded_traces),
@@ -172,46 +172,10 @@ def build_effect_trace_report(
         "checkpoint_interval": checkpoint_interval,
         "max_checkpoints": max_checkpoints,
         "watches": watches,
-        "effect_event_count": len(events),
+        **summary,
         "trace_window": trace_window,
         "trace_window_frame_count": trace_window.get("frame_count", 0),
         "trace_window_checkpoint_count": trace_window.get("checkpoint_count", 0),
-        "memory_read_count": count_effects(events, "memory_read"),
-        "memory_write_count": count_effects(events, "memory_write"),
-        "stack_read_count": count_effects(events, "stack_read"),
-        "stack_write_count": count_effects(events, "stack_write"),
-        "io_read_count": count_effects(events, "io_read"),
-        "io_write_count": count_effects(events, "io_write"),
-        "register_write_count": count_effects(events, "register_write"),
-        "control_effect_count": count_effects(events, "control_flow"),
-        "unmodeled_effect_count": count_unmodeled_effects(events),
-        "effect_proof_status_counts": count_effect_proof_statuses(events),
-        "planned_only_effect_count": count_effects_by_proof_status(events, "planned_only"),
-        "instruction_observed_effect_count": count_effects_by_proof_status(events, "instruction_observed"),
-        "hardware_gated_effect_count": count_hardware_gated_effects(events),
-        "hardware_runtime_event_effect_count": count_hardware_runtime_event_effects(events),
-        "hardware_side_effect_count": count_side_effects(events),
-        "dma_side_effect_count": count_side_effects(events, category="dma"),
-        "dma_copy_read_count": count_effects(events, "dma_read"),
-        "dma_copy_write_count": count_effects(events, "dma_write"),
-        "bank_switch_side_effect_count": count_side_effects(events, category="banking"),
-        "interrupt_entry_count": count_effects(events, "interrupt_entry"),
-        "timer_overflow_count": count_effects(events, "timer_tima_overflow"),
-        "timer_interrupt_request_count": count_effects(events, "timer_interrupt_request_write"),
-        "watch_hit_count": count_watch_hits(events),
-        "watch_read_count": count_watch_effects(events, access="read"),
-        "watch_write_count": count_watch_effects(events, access="write"),
-        "post_value_observed_count": count_effect_post_value_status(events),
-        "post_value_match_count": count_effect_post_value_status(events, "matched"),
-        "post_value_mismatch_count": count_effect_post_value_status(events, "mismatch"),
-        "post_register_observed_count": count_effect_post_register_status(events),
-        "post_register_match_count": count_effect_post_register_status(events, "matched"),
-        "post_register_mismatch_count": count_effect_post_register_status(events, "mismatch"),
-        "unmodeled_observed_change_count": count_unmodeled_observed_changes(events),
-        "watch_bank_match_counts": watch_bank_match_counts,
-        "bank_unverified_watch_hit_count": int(watch_bank_match_counts.get("bus_address_unverified_bank", 0)),
-        "evidence_source_counts": evidence_source_counts,
-        "evidence_status_counts": evidence_status_counts,
         "write_index": write_index,
         "side_effect_index": side_effect_index,
         "events": events[:max_events],
@@ -554,6 +518,12 @@ def ensure_next_observed_state(event: dict[str, Any], next_event: dict[str, Any]
 
 def attach_next_frame_register_validation(event: dict[str, Any], next_event: dict[str, Any]) -> None:
     registers = next_event.get("pre_registers") if isinstance(next_event.get("pre_registers"), dict) else {}
+    known = set(next_event.get("known_registers", []))
+    if "HL" in known:
+        known.update(("H", "L"))
+    for pair in ("AF", "BC", "DE", "HL"):
+        if set(pair) <= known:
+            known.add(pair)
     if not registers:
         return
     matched = 0
@@ -563,6 +533,8 @@ def attach_next_frame_register_validation(event: dict[str, Any], next_event: dic
         if item.get("access") != "register_write":
             continue
         register = str(item.get("register", "")).upper()
+        if register not in known:
+            continue
         observed_value = observed_register_value(registers, register)
         if not register or not observed_value:
             continue
@@ -586,6 +558,312 @@ def attach_next_frame_register_validation(event: dict[str, Any], next_event: dic
         "matched_count": matched,
         "mismatch_count": mismatched,
     }
+
+
+def attach_observed_call_registers(events: list[dict[str, Any]]) -> None:
+    """Describe direct CALL boundaries, without inferring a preservation ABI.
+
+    Require the callee entry and matching RET/continuation stack snapshots.
+    Source identity prevents matching a return from another replay. Interior
+    write references require next-frame confirmation, not just opcode modeling.
+    """
+    def value(event, register):
+        if register not in event.get("known_registers", []):
+            return ""
+        return observed_register_value(event.get("pre_registers", {}), register)
+
+    for index, call in enumerate(events[:-1]):
+        if call.get("opcode") != 0xCD:
+            continue
+        stack = value(call, "SP")
+        if not stack:
+            continue
+        entry = events[index + 1]
+        target = next((item.get("target") for item in call.get("effects", [])
+                       if item.get("access") == "control" and item.get("operation") == "call"), None)
+        target_bank = 0 if target is not None and target < 0x4000 else call["bank"]
+        callee_stack = f"{(int(stack, 16) - 2) & 0xFFFF:04X}"
+        if (entry["trace_source"] != call["trace_source"] or entry["seq"] != call["seq"] + 1
+                or entry["pc"] != target or entry["bank"] != target_bank or value(entry, "SP") != callee_stack):
+            continue
+        for end in range(index + 2, len(events)):
+            returned = events[end]
+            if returned["trace_source"] != call["trace_source"]:
+                break
+            if (returned["pc"] != call["pc"] + call["length"] or returned["bank"] != call["bank"]
+                    or value(returned, "SP") != stack):
+                continue
+            ret = events[end - 1]
+            if (ret["opcode"] not in {0xC9, *CONDITIONAL_RETS}
+                    or returned["seq"] != ret["seq"] + 1 or value(ret, "SP") != callee_stack
+                    or ret["opcode"] in CONDITIONAL_RETS and event_flags(ret) is None
+                    or not event_takes_control_flow(ret)):
+                break
+            changes = {}
+            preserved = []
+            for register in ("A", "B", "C", "D", "E", "H", "L"):
+                before, after = value(call, register), value(returned, register)
+                if not before or not after:
+                    continue
+                if before == after:
+                    preserved.append(register)
+                    continue
+                writes = []
+                for event in events[index + 1:end]:
+                    for item in event.get("effects", []):
+                        if (item.get("access") == "register_write" and register in item.get("register", "")
+                                and item.get("post_register_status") == "matched"):
+                            writes.append(event["seq"])
+                changes[register] = {"before": before, "after": after, "observed_write_seqs": list(dict.fromkeys(writes))}
+            call["evidence_atoms"] = merge_evidence_atoms(call.get("evidence_atoms"), evidence_atom(
+                claim_type="effect.call_registers", origin="effect_trace",
+                observation_type="observed_call_boundary", proof_status="instruction_observed",
+                source_report=call["trace_source"], source_kind="instruction_trace",
+                scope=effect_event_scope(call), precision={"callee_pc": target, "callee_bank": target_bank},
+                detail={"changes": changes, "preserved_registers": preserved, "entry_seq": entry["seq"],
+                        "return_seq": returned["seq"],
+                        "scope": "Observed boundaries and cited writes only; unobserved instructions and intended register-preservation contracts remain unknown."},
+            ))
+            # A later byte comparison to the pre-call value is a useful trial
+            # candidate. Restore at that consumer, since the changed register
+            # may legitimately serve another purpose immediately after return.
+            # This pattern is not an ABI contract or a root-cause verdict.
+            for register, change in changes.items():
+                if register not in "BCDEHL" or not change["observed_write_seqs"]:
+                    continue
+                load_opcode = 0x78 + "BCDEHL".index(register)
+                previous = ret
+                direct_continuity = True
+                for load_index in range(end, len(events) - 1):
+                    load, compare = events[load_index:load_index + 2]
+                    if load["trace_source"] != call["trace_source"]:
+                        break
+                    if (load["seq"] != previous["seq"] + 1
+                            or value(load, register) != change["after"]
+                            or any(item.get("access") == "register_write" and register in item.get("register", "")
+                                   for item in previous.get("effects", []))):
+                        direct_continuity = False
+                    previous = load
+                    if (load["opcode"] != load_opcode or compare["opcode"] != 0xFE
+                            or not load["pc_label"] or not adjacent_trace_events(load, compare)
+                            or value(load, register) != change["after"] or value(compare, "A") != change["after"]):
+                        continue
+                    immediate = next((item.get("value") for item in compare["effects"]
+                                      if item.get("operation") == "opcode_fetch" and item.get("address") == compare["pc"] + 1), None)
+                    if immediate != int(change["before"], 16):
+                        continue
+                    call["evidence_atoms"] = merge_evidence_atoms(call["evidence_atoms"], evidence_atom(
+                        claim_type="diagnosis.hypothesis", origin="effect_trace",
+                        observation_type="observed_call_boundary", proof_status="planned_only",
+                        source_report=call["trace_source"], source_kind="instruction_trace",
+                        scope=effect_event_scope(call),
+                        detail={"consumer_seq": load["seq"], "comparison_seq": compare["seq"],
+                                **_comparison_branch(events, load_index + 1),
+                                "call_register_change": {**change, "entry_seq": entry["seq"],
+                                                         "return_seq": returned["seq"],
+                                                         "direct_continuity_to_consumer": direct_continuity},
+                                "intervention": {"at": load["pc_label"], "register": register,
+                                                 "expected": int(change["after"], 16), "value": immediate},
+                                "scope": "Trial candidate only: a changed register is compared with its prior value; intended behavior and causality remain unverified."},
+                    ))
+                    break
+            break
+
+
+def attach_farcall_input_hypotheses(events):
+    """Suggest a trial when the observed far-call setup replaces a fresh input.
+
+    This recognizes the emitted LD A,bank / LD HL,target / RST $08 sequence.
+    The callee's use of A is evidence for a trial, not an inferred calling ABI.
+    """
+    def value(event, register):
+        return (observed_register_value(event.get("pre_registers", {}), register)
+                if register in event.get("known_registers", []) else "")
+
+    def matched_write(event, register):
+        return next((effect.get("value") for effect in event.get("effects", [])
+                     if effect.get("access") == "register_write" and effect.get("register") == register
+                     and effect.get("post_register_status") == "matched"), None)
+
+    for index in range(1, len(events) - 3):
+        source, setup, address, restart = events[index - 1:index + 3]
+        before = value(setup, "A")
+        bank = matched_write(setup, "A")
+        target = matched_write(address, "HL")
+        if (setup.get("opcode") != 0x3E or address.get("opcode") != 0x21 or restart.get("opcode") != 0xCF
+                or not before or bank is None or target is None or int(before, 16) == bank
+                or not any(effect.get("access") == "register_write" and effect.get("register") == "A"
+                           and effect.get("post_register_status") in {"matched", "observed_without_modeled_value"}
+                           for effect in source.get("effects", []))
+                or not all(adjacent_trace_events(a, b) for a, b in ((source, setup), (setup, address), (address, restart)))):
+            continue
+        previous = restart
+        for entry_index in range(index + 3, len(events)):
+            entry = events[entry_index]
+            if entry["trace_source"] != setup["trace_source"] or entry["seq"] != previous["seq"] + 1:
+                break
+            if entry["pc"] == target and entry["bank"] == bank:
+                if (previous.get("opcode") != 0xE9 or value(previous, "H") + value(previous, "L") != f"{target:04X}"
+                        or value(entry, "A") != f"{bank:02X}" or not entry.get("pc_label")):
+                    break
+                prior = previous
+                for consumer_index, consumer in enumerate(events[entry_index:], entry_index):
+                    if (consumer["trace_source"] != setup["trace_source"] or consumer["seq"] != prior["seq"] + 1
+                            or value(consumer, "A") != f"{bank:02X}"):
+                        break
+                    effects = consumer.get("effects", [])
+                    if any(str(effect.get("kind", "")).startswith("unmodeled") for effect in effects):
+                        break
+                    if any(operand.get("kind") == "register" and operand.get("name", "").lower() == "a"
+                           for effect in effects for operand in effect.get("source_operands", [])):
+                        setup["evidence_atoms"] = merge_evidence_atoms(setup.get("evidence_atoms"), evidence_atom(
+                            claim_type="diagnosis.hypothesis", origin="effect_trace",
+                            observation_type="observed_farcall_input", proof_status="planned_only",
+                            source_report=setup["trace_source"], source_kind="instruction_trace", scope=effect_event_scope(setup),
+                            detail={"consumer_seq": consumer["seq"], **_counted_pointer_loop(events, consumer_index),
+                                    "call_input_change": {"before": before, "after": f"{bank:02X}",
+                                                          "source_seq": source["seq"], "entry_seq": entry["seq"],
+                                                          "callee_bank": bank, "callee_pc": target},
+                                    "intervention": {"at": entry["pc_label"], "register": "A", "expected": bank, "value": int(before, 16)},
+                                    "scope": "Trial candidate only: far-call setup replaces a fresh value subsequently consumed in the callee; intended input and causality remain unverified."},
+                        ))
+                        break
+                    if any(effect.get("access") == "register_write" and "A" in effect.get("register", "") for effect in effects):
+                        break
+                    prior = consumer
+                break
+            previous = entry
+
+
+def _counted_pointer_loop(events, input_index):
+    """Check a recorded nonzero AND A / RET Z / ADD HL,BC; DEC A; JR NZ loop.
+
+    Each arithmetic result, flags update, and branch successor must be observed.
+    Recognizing the instruction pattern alone is not sufficient evidence.
+    """
+    def state(event):
+        if not set("AFBCHL") <= set(event.get("known_registers", [])):
+            return None
+        registers = event["pre_registers"]
+        return tuple(int(observed_register_value(registers, name), 16) for name in ("A", "BC", "HL"))
+
+    def matched(event, *registers):
+        return all(any(effect.get("access") == "register_write" and effect.get("register") == register
+                       and effect.get("post_register_status") == "matched" for effect in event.get("effects", []))
+                   for register in registers)
+
+    if input_index + 2 >= len(events):
+        return {}
+    tested, guard, first = events[input_index:input_index + 3]
+    initial = state(tested)
+    if (tested.get("opcode") != 0xA7 or guard.get("opcode") != 0xC8 or not initial or initial[0] == 0
+            or not matched(tested, "F") or not adjacent_trace_events(tested, guard)
+            or not adjacent_trace_events(guard, first) or event_flags(guard) != event_flags(first)
+            or state(guard) != initial or state(first) != initial):
+        return {}
+    count, stride, pointer = initial
+    start = input_index + 2
+    if start + 3 * count >= len(events):
+        return {}
+    iteration_seqs = []
+    for iteration in range(count):
+        add, decrement, branch, successor = events[start + 3 * iteration:start + 3 * iteration + 4]
+        remaining = count - iteration
+        before_pointer = (pointer + stride * iteration) & 0xFFFF
+        after_pointer = (before_pointer + stride) & 0xFFFF
+        if (add.get("opcode") != 0x09 or decrement.get("opcode") != 0x3D or branch.get("opcode") != 0x20
+                or add["pc"] != first["pc"] or add["bank"] != first["bank"]
+                or not adjacent_trace_events(add, decrement) or not adjacent_trace_events(decrement, branch)
+                or state(add) != (remaining, stride, before_pointer)
+                or state(decrement) != (remaining, stride, after_pointer)
+                or state(branch) != (remaining - 1, stride, after_pointer)
+                or state(successor) != (remaining - 1, stride, after_pointer)
+                or not matched(add, "HL", "F") or not matched(decrement, "A", "F")):
+            return {}
+        target = next((effect.get("target") for effect in branch.get("effects", []) if effect.get("access") == "control"), None)
+        displacement = next((effect.get("value") for effect in branch.get("effects", [])
+                             if effect.get("operation") == "opcode_fetch" and effect.get("address") == branch["pc"] + 1), None)
+        taken = remaining > 1
+        if (displacement != 0xFC or (taken and target != first["pc"]) or event_takes_control_flow(branch) != taken
+                or successor["trace_source"] != tested["trace_source"] or branch["trace_source"] != tested["trace_source"]
+                or successor["seq"] != branch["seq"] + 1 or successor["bank"] != first["bank"]
+                or event_flags(successor) != event_flags(branch)
+                or successor["pc"] != (first["pc"] if taken else branch["pc"] + 2)):
+            return {}
+        iteration_seqs.append([add["seq"], decrement["seq"], branch["seq"]])
+    return {"counted_pointer_loop": {
+        "proof_status": "instruction_observed", "model_source": SM83_MODEL_SOURCE,
+        "input_seq": tested["seq"], "bank": first["bank"], "pc": first["pc"], "exit_seq": successor["seq"],
+        "counter_register": "A", "counter_initial": count, "iterations": count,
+        "pointer_register": "HL", "pointer_initial": pointer, "pointer_final": (pointer + stride * count) & 0xFFFF,
+        "stride_register": "BC", "stride": stride, "iteration_seqs": iteration_seqs,
+        "scope": "Observed arithmetic and control transitions for this nonzero counted loop; earlier input provenance and intended memory-region ownership are separate checks.",
+    }}
+
+
+def _comparison_branch(events, comparison_index):
+    """Cite the first conditional jump while the observed comparison flags survive."""
+    compare = events[comparison_index]
+    flags = next((effect.get("value") for effect in compare.get("effects", [])
+                  if effect.get("access") == "register_write" and effect.get("register") == "F"
+                  and effect.get("post_register_status") == "matched"), None)
+    if flags is None:
+        return {}
+    previous = compare
+    for index in range(comparison_index + 1, len(events) - 1):
+        event, successor = events[index:index + 2]
+        if not adjacent_trace_events(previous, event) or event_flags(event) != flags:
+            break
+        effects = event.get("effects", [])
+        if any(str(effect.get("kind", "")).startswith("unmodeled") for effect in effects):
+            break
+        if event["opcode"] in CONDITIONAL_JUMPS:
+            taken = event_takes_control_flow(event)
+            target = next((effect.get("target") for effect in effects if effect.get("access") == "control"), None) if taken else (event["pc"] + event["length"]) & 0xFFFF
+            bank = 0 if target is not None and target < 0x4000 else event["bank"]
+            if (target is not None and successor["trace_source"] == event["trace_source"]
+                    and successor["seq"] == event["seq"] + 1 and successor["pc"] == target and successor["bank"] == bank):
+                return {"comparison_branch": {"comparison_seq": compare["seq"], "branch_seq": event["seq"],
+                        "successor_seq": successor["seq"], "condition": CONDITIONAL_JUMPS[event["opcode"]],
+                        "taken": taken, "target": target, "bank": bank, "flags_hex": f"{flags:02X}"}}
+            break
+        if (event_takes_control_flow(event)
+                or any(effect.get("access") == "register_write" and "F" in effect.get("register", "") for effect in effects)):
+            break
+        previous = event
+    return {}
+
+
+def attach_hypothesis_source_candidates(events, *, symbol_table, root):
+    calls = [(event, atom) for event in events for atom in event.get("evidence_atoms", [])
+             if atom.get("claim_type") == "diagnosis.hypothesis"]
+    if not calls:
+        return
+    graph = build_static_call_graph(root=root)
+    for event, atom in calls:
+        caller = str(event.get("pc_label", "")).split("+", 1)[0]
+        start = symbol_table.get(caller, {})
+        target = atom["detail"].get("call_input_change")
+        call_type = "farcall" if target else "call"
+        if not target:
+            boundary = next(a for a in event["evidence_atoms"] if a.get("claim_type") == "effect.call_registers")
+            target = boundary["precision"]
+        candidates = []
+        if (start.get("bank") == event["bank"] and start.get("address", 0x10000) <= event["pc"]
+                and not any(entry["bank"] == event["bank"] and start["address"] < entry["address"] <= event["pc"]
+                            for entry in symbol_table.values())):
+            for edge in graph.edges_from(caller):
+                callee = symbol_table.get(edge.callee, {})
+                if (edge.call_type == call_type and edge.condition is None
+                        and callee.get("bank") == target["callee_bank"]
+                        and callee.get("address") == target["callee_pc"]):
+                    candidates.append({"source_file": edge.source_file, "source_symbol": caller,
+                                       "source_line": edge.line_number, "instruction": edge.instruction,
+                                       "source_sha256": sha256_file(root / edge.source_file)})
+        atom["detail"]["source_candidates"] = candidates
+        atom["detail"]["source_mapping_limit"] = (
+            "Matching calls in the indexed source only; repeated calls remain ambiguous and source-to-ROM build correspondence is unverified."
+        )
 
 
 def unmodeled_observed_changes(
@@ -741,6 +1019,9 @@ def instruction_effects(
     hardware_state: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
     effects = opcode_fetch_effects(instruction, frame)
+    if instruction.opcode in (CONDITIONAL_CALLS.keys() | CONDITIONAL_JUMPS.keys() | CONDITIONAL_RETS.keys()) and frame_flags(frame) is None:
+        effects.append(unmodeled_effect("unmodeled_control_flow", instruction.mnemonic, missing_registers=["F"], address_source="condition_flags"))
+        return effects
     effects.extend(attach_frame_bank_state(memory_read_effects(instruction, frame), frame))
     effects.extend(attach_frame_bank_state(register_write_effects(instruction, frame), frame))
     write_effects = attach_frame_bank_state(memory_write_effects(instruction, frame), frame)
@@ -843,6 +1124,7 @@ def update_inferred_bank_state_from_effects(
             continue
         value = source_operand_value(item)
         if value is None:
+            invalidate_bank_write(state, address=address)
             continue
         apply_bank_write(state, address=address, value=value)
     return state
@@ -873,11 +1155,32 @@ def update_hardware_state_from_effects(
             continue
         value = source_operand_value(item)
         if value is None:
+            invalidate_bank_write(out, address=address)
+            if address in CGB_VRAM_DMA_REGISTERS:
+                out.pop(CGB_VRAM_DMA_REGISTERS[address], None)
             continue
         if address in CGB_VRAM_DMA_REGISTERS:
             out[CGB_VRAM_DMA_REGISTERS[address]] = value
         apply_bank_write(out, address=address, value=value)
     return out
+
+
+def invalidate_bank_write(state: dict[str, int], *, address: int) -> None:
+    # An observed write with an unknown value supersedes earlier selector evidence.
+    keys = ()
+    if address == 0xFF4F:
+        keys = ("vram", "vram_raw")
+    elif address == 0xFF70:
+        keys = ("wram", "wram_raw")
+    elif 0x0000 <= address <= 0x1FFF:
+        keys = ("sram_enabled", "sram_enable_raw")
+    elif 0x2000 <= address <= 0x3FFF:
+        keys = ("rom", "rom_raw", "loaded_rom")
+    elif 0x4000 <= address <= 0x5FFF:
+        keys = ("sram", "sram_raw", "sram_rtc_select")
+    for key in keys:
+        state.pop(key, None)
+        state.pop(f"{key}_inferred", None)
 
 
 def apply_bank_write(state: dict[str, int], *, address: int, value: int) -> None:
@@ -1038,7 +1341,10 @@ def register_write_effects(instruction: Instruction, frame: InstructionFrame) ->
     op = int(instruction.opcode)
     if op in {0xAF, 0x97}:
         operation = "xor a" if op == 0xAF else "sub a"
-        return [register_write_effect("A", operation, source_operands=[constant_operand(0, value_source="modeled_zero_idiom")], value=0, value_source="modeled_zero_idiom")]
+        return [
+            register_write_effect(register, operation, source_operands=[constant_operand(value, value_source="modeled_zero_idiom")], value=value, value_source="modeled_zero_idiom")
+            for register, value in (("A", 0), ("F", 0x80 if op == 0xAF else 0xC0))
+        ]
     if op in {0x06, 0x0E, 0x16, 0x1E, 0x26, 0x2E, 0x3E}:
         model = load_semantics(op)
         target = model.register_target
@@ -2108,6 +2414,9 @@ def frame_bank_state(frame: InstructionFrame, name: str) -> int | None:
 
 
 def frame_bank_state_source(frame: InstructionFrame, name: str) -> str:
+    source = dict(frame.bank_state_sources).get(name)
+    if source:
+        return source
     if frame_bank_state(frame, f"{name}_inferred") is not None:
         return f"inferred_bank_state.{name}"
     return f"bank_state.{name}"
@@ -2682,7 +2991,7 @@ def watch_bank_match_status(watch: dict[str, Any], item: dict[str, Any]) -> str:
         return "not_required"
     watch_key = str(watch.get("key", ""))
     effect_key = str(item.get("address_key", ""))
-    if watch_key and effect_key and watch_key == effect_key:
+    if watch_key and effect_key and watch_key.rsplit(":", 1)[0] == effect_key.rsplit(":", 1)[0]:
         return "exact"
     if watch.get("symbol") and not item.get("bank_source"):
         return "bus_address_unverified_bank"
@@ -3244,45 +3553,91 @@ def trace_paths_from_data(data: Any) -> list[str]:
     return unique_list(path for path in paths if str(path).lower().endswith((".json", ".jsonl")))
 
 
-def count_effects(events: list[dict[str, Any]], kind: str) -> int:
-    return sum(1 for event in events for item in event.get("effects", []) if item.get("kind") == kind)
-
-
-def count_effect_proof_statuses(events: list[dict[str, Any]]) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for item in iter_effect_items(events):
-        proof = effect_item_proof_status(item)
-        counts[proof] = counts.get(proof, 0) + 1
-    return counts
-
-
-def count_effects_by_proof_status(events: list[dict[str, Any]], proof_status: str) -> int:
-    return sum(1 for item in iter_effect_items(events) if effect_item_proof_status(item) == proof_status)
-
-
-def count_hardware_gated_effects(events: list[dict[str, Any]]) -> int:
-    return sum(
-        1
-        for item in iter_effect_items(events)
-        if item.get("hardware_event_required") and not item.get("hardware_runtime_event")
-    )
-
-
-def count_hardware_runtime_event_effects(events: list[dict[str, Any]]) -> int:
-    return sum(
-        1
-        for item in iter_effect_items(events)
-        if item.get("hardware_event_required") and item.get("hardware_runtime_event")
-    )
-
-
-def iter_effect_items(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [
-        item
-        for event in events
-        for item in event.get("effects", [])
-        if isinstance(item, dict)
-    ]
+def summarize_effect_events(events: list[dict[str, Any]]) -> dict[str, Any]:
+    # Count only finalized effects, after proof gates and next-frame validation.
+    kinds: Counter = Counter()
+    accesses: Counter = Counter()
+    proofs: Counter = Counter()
+    side_categories: Counter = Counter()
+    pre_proofs: Counter = Counter()
+    pre_validations: Counter = Counter()
+    post_values: Counter = Counter()
+    post_registers: Counter = Counter()
+    evidence_sources: Counter = Counter()
+    evidence_statuses: Counter = Counter()
+    watch_accesses: Counter = Counter()
+    watch_banks: Counter = Counter()
+    hardware_gated = hardware_runtime = unmodeled_changes = 0
+    for event in events:
+        for item in event.get("effects", []):
+            kinds[item.get("kind")] += 1
+            accesses[item.get("access")] += 1
+            proofs[effect_item_proof_status(item)] += 1
+            evidence_sources[str(item.get("evidence_source", "") or "unknown")] += 1
+            evidence_statuses[str(item.get("evidence_status", "") or "unknown")] += 1
+            if item.get("access") == "side_effect":
+                side_categories[item.get("category")] += 1
+            if item.get("hardware_event_required"):
+                if item.get("hardware_runtime_event"):
+                    hardware_runtime += 1
+                else:
+                    hardware_gated += 1
+            if item.get("pre_state_sample") == "hook_pre_instruction":
+                pre_proofs[item.get("pre_state_proof_status")] += 1
+                pre_validations[str(item.get("pre_state_validation", "") or "unknown")] += 1
+            if item.get("post_value_status"):
+                post_values[item["post_value_status"]] += 1
+            if item.get("post_register_status"):
+                post_registers[item["post_register_status"]] += 1
+        for hit in event.get("watch_hits", []):
+            watch_accesses[hit.get("access")] += 1
+            watch_banks[str(hit.get("bank_match", "") or "unknown")] += 1
+        changes = event.get("unmodeled_observed_changes")
+        if isinstance(changes, list):
+            unmodeled_changes += sum(1 for item in changes if isinstance(item, dict))
+    return {
+        "rmw_pre_state_sample_count": sum(pre_proofs.values()),
+        "rmw_pre_state_runtime_observed_count": pre_proofs["runtime_observed"],
+        "rmw_pre_state_unvalidated_count": pre_proofs["planned_only"],
+        "rmw_pre_state_validation_counts": dict(sorted(pre_validations.items())),
+        "effect_event_count": len(events),
+        "memory_read_count": kinds["memory_read"],
+        "memory_write_count": kinds["memory_write"],
+        "stack_read_count": kinds["stack_read"],
+        "stack_write_count": kinds["stack_write"],
+        "io_read_count": kinds["io_read"],
+        "io_write_count": kinds["io_write"],
+        "register_write_count": kinds["register_write"],
+        "control_effect_count": kinds["control_flow"],
+        "unmodeled_effect_count": accesses["unmodeled"],
+        "effect_proof_status_counts": dict(proofs),
+        "planned_only_effect_count": proofs["planned_only"],
+        "instruction_observed_effect_count": proofs["instruction_observed"],
+        "hardware_gated_effect_count": hardware_gated,
+        "hardware_runtime_event_effect_count": hardware_runtime,
+        "hardware_side_effect_count": accesses["side_effect"],
+        "dma_side_effect_count": side_categories["dma"],
+        "dma_copy_read_count": kinds["dma_read"],
+        "dma_copy_write_count": kinds["dma_write"],
+        "bank_switch_side_effect_count": side_categories["banking"],
+        "interrupt_entry_count": kinds["interrupt_entry"],
+        "timer_overflow_count": kinds["timer_tima_overflow"],
+        "timer_interrupt_request_count": kinds["timer_interrupt_request_write"],
+        "watch_hit_count": sum(watch_accesses.values()),
+        "watch_read_count": watch_accesses["read"],
+        "watch_write_count": watch_accesses["write"],
+        "post_value_observed_count": sum(post_values.values()),
+        "post_value_match_count": post_values["matched"],
+        "post_value_mismatch_count": post_values["mismatch"],
+        "post_register_observed_count": sum(post_registers.values()),
+        "post_register_match_count": post_registers["matched"],
+        "post_register_mismatch_count": post_registers["mismatch"],
+        "unmodeled_observed_change_count": unmodeled_changes,
+        "watch_bank_match_counts": dict(sorted(watch_banks.items())),
+        "bank_unverified_watch_hit_count": watch_banks["bus_address_unverified_bank"],
+        "evidence_source_counts": dict(sorted(evidence_sources.items())),
+        "evidence_status_counts": dict(sorted(evidence_statuses.items())),
+    }
 
 
 def effect_item_proof_status(item: dict[str, Any]) -> str:
@@ -3295,95 +3650,6 @@ def effect_item_proof_status(item: dict[str, Any]) -> str:
     if atom_statuses:
         return weakest_effect_proof_status(atom_statuses)
     return "planned_only"
-
-
-def count_side_effects(events: list[dict[str, Any]], *, category: str = "") -> int:
-    return sum(
-        1
-        for event in events
-        for item in event.get("effects", [])
-        if item.get("access") == "side_effect" and (not category or item.get("category") == category)
-    )
-
-
-def count_unmodeled_effects(events: list[dict[str, Any]]) -> int:
-    return sum(1 for event in events for item in event.get("effects", []) if item.get("access") == "unmodeled")
-
-
-def count_rmw_pre_state_samples(events: list[dict[str, Any]], *, proof_status: str = "") -> int:
-    return sum(
-        1
-        for event in events
-        for item in event.get("effects", [])
-        if item.get("pre_state_sample") == "hook_pre_instruction"
-        and (not proof_status or item.get("pre_state_proof_status") == proof_status)
-    )
-
-
-def count_rmw_pre_state_validation_values(events: list[dict[str, Any]]) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for event in events:
-        for item in event.get("effects", []):
-            if item.get("pre_state_sample") != "hook_pre_instruction":
-                continue
-            value = str(item.get("pre_state_validation", "") or "unknown")
-            counts[value] = counts.get(value, 0) + 1
-    return dict(sorted(counts.items()))
-
-
-def count_watch_effects(events: list[dict[str, Any]], *, access: str) -> int:
-    return sum(1 for event in events for hit in event.get("watch_hits", []) if hit.get("access") == access)
-
-
-def count_watch_hits(events: list[dict[str, Any]]) -> int:
-    return sum(1 for event in events for _hit in event.get("watch_hits", []))
-
-
-def count_watch_hit_field_values(events: list[dict[str, Any]], field: str) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for event in events:
-        for hit in event.get("watch_hits", []):
-            value = str(hit.get(field, "") or "unknown")
-            counts[value] = counts.get(value, 0) + 1
-    return dict(sorted(counts.items()))
-
-
-def count_effect_field_values(events: list[dict[str, Any]], field: str) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for event in events:
-        for item in event.get("effects", []):
-            value = str(item.get(field, "") or "unknown")
-            counts[value] = counts.get(value, 0) + 1
-    return dict(sorted(counts.items()))
-
-
-def count_effect_post_value_status(events: list[dict[str, Any]], status: str = "") -> int:
-    return sum(
-        1
-        for event in events
-        for item in event.get("effects", [])
-        if item.get("post_value_status")
-        and (not status or item.get("post_value_status") == status)
-    )
-
-
-def count_effect_post_register_status(events: list[dict[str, Any]], status: str = "") -> int:
-    return sum(
-        1
-        for event in events
-        for item in event.get("effects", [])
-        if item.get("post_register_status")
-        and (not status or item.get("post_register_status") == status)
-    )
-
-
-def count_unmodeled_observed_changes(events: list[dict[str, Any]]) -> int:
-    count = 0
-    for event in events:
-        changes = event.get("unmodeled_observed_changes")
-        if isinstance(changes, list):
-            count += sum(1 for item in changes if isinstance(item, dict))
-    return count
 
 
 def register_operand(register: str, frame: InstructionFrame) -> dict[str, Any]:

@@ -13,6 +13,60 @@ from tools.debugger.taint import build_taint_report
 
 
 class LocalizationTests(unittest.TestCase):
+    def test_unfamiliar_source_retrieval_is_cited_and_refreshes_after_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine").mkdir()
+            (root / "docs").mkdir()
+            (root / "test.sym").write_text("01:4000 RestoreParcel\n01:4100 PoisonTick\n")
+            source = root / "engine" / "storage.asm"
+            source.write_text("RestoreParcel:\n; Withdraw parcel nickname from storage.\n\tret\n")
+            (root / "engine" / "poison.asm").write_text("PoisonTick:\n; Poison damage at 1 hp.\n\tret\n")
+            (root / "docs" / "answer.asm").write_text("LeakedFix:\n; Withdraw parcel nickname from storage.\n")
+            for symptom in ("withdraw parcel nickname with 1 hp", "parcel nickname after withdrawing"):
+                report = build_localization_plan(symptom=symptom, symbols_path="test.sym", root=root)
+                retrieved = [s for s in report["signals"] if s["type"] == "source_retrieval"]
+                self.assertTrue(retrieved)
+                self.assertEqual(retrieved[0]["symbol"], "RestoreParcel")
+                self.assertIn("engine/storage.asm:2", retrieved[0]["note"])
+                self.assertIn("Withdraw parcel nickname", retrieved[0]["note"])
+                self.assertNotIn("LeakedFix", str(report["candidates"]))
+                self.assertNotIn("diagnosis.root_cause", str(report))
+            source.write_text("RestoreParcel:\n; Draw a triangle.\n\tret\n")
+            report = build_localization_plan(symptom="parcel nickname", symbols_path="test.sym", root=root)
+            self.assertFalse([s for s in report["signals"] if s["type"] == "source_retrieval"])
+
+    def test_source_retrieval_covers_new_inventory_event_and_bank_symbols(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine").mkdir()
+            definitions = {
+                "PocketInsert": "Inventory pocket duplicates the inserted token.",
+                "ResumeFestival": "Festival event resumes after dialogue closes.",
+                "RecoverPage": "Recover bank page after returning from interrupt.",
+            }
+            (root / "test.sym").write_text("\n".join(f"01:{0x4000+i*32:04x} {name}" for i, name in enumerate(definitions)))
+            for name, comment in definitions.items():
+                (root / "engine" / (name + ".asm")).write_text(f"{name}:\n; {comment}\n\tret\n")
+            for expected, symptom in (("PocketInsert", "inventory pocket duplicate token"),
+                                      ("ResumeFestival", "festival dialogue closes"),
+                                      ("RecoverPage", "interrupt returning bank page")):
+                with self.subTest(symptom=symptom):
+                    report = build_localization_plan(symptom=symptom, symbols_path="test.sym", root=root)
+                    retrieved = [s for s in report["signals"] if s["type"] == "source_retrieval"]
+                    self.assertEqual(retrieved[0]["symbol"], expected)
+
+    def test_static_reference_fanout_cannot_bury_symptom_matched_routine(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "engine").mkdir()
+            (root / "test.sym").write_text("01:4000 RestoreParcel\n01:4100 CommonCopy\n")
+            (root / "engine" / "storage.asm").write_text(
+                "RestoreParcel:\n; Withdraw parcel nickname from storage.\n"
+                + "\tcall CommonCopy\n" * 30 + "\tret\nCommonCopy:\n\tret\n")
+            report = build_localization_plan(symptom="withdraw parcel nickname", symbols_path="test.sym", root=root)
+            self.assertEqual(report["candidates"][0]["id"], "RestoreParcel")
+
     def test_localize_scores_symbols_and_builds_phase_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

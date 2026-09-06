@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from copy import deepcopy
 import json
 from typing import Any
 
@@ -58,6 +59,11 @@ class EvidenceAtom:
     detail: dict[str, Any] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
+        scope = clean_mapping(self.scope)
+        if "state_basis" in self.scope:
+            # Replay identity distinguishes an empty schedule from a missing
+            # schedule. Cosmetic compaction must not rewrite that contract.
+            scope["state_basis"] = deepcopy(self.scope["state_basis"])
         return {
             "schema_version": 1,
             "claim_type": str(self.claim_type or "evidence.claim"),
@@ -66,7 +72,7 @@ class EvidenceAtom:
             "proof_status": normalize_proof_status(self.proof_status),
             "source_report": str(self.source_report or ""),
             "source_kind": str(self.source_kind or ""),
-            "scope": clean_mapping(self.scope),
+            "scope": scope,
             "subjects": clean_subjects(self.subjects),
             "precision": clean_mapping(self.precision),
             "validation": clean_mapping(self.validation),

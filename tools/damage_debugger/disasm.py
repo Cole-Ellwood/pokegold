@@ -337,7 +337,7 @@ def walk_function(
         next_pc = pc + length
         if op in TERMINATORS_UNCOND:
             # If no forward target lies past our current PC, we're done.
-            if not any(t > next_pc for t in forward_targets):
+            if not any(t >= next_pc for t in forward_targets):
                 break
 
         pc = next_pc

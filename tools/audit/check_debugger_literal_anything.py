@@ -4620,7 +4620,7 @@ def interrupt_entry_ime_model_status() -> dict[str, Any]:
     }
     try:
         from tools.damage_debugger.disasm import Instruction
-        from tools.debugger.dynamic_taint import InstructionFrame
+        from tools.debugger.instruction_frames import InstructionFrame
         from tools.debugger.effect_trace import (
             attach_hardware_side_effect_proof_gates,
             interrupt_entry_effects,

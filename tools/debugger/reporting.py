@@ -130,6 +130,10 @@ def build_static_report(
             findings=findings,
             errors=errors,
         )
+    content = _with_hypothesis_overview(content, [
+        (atom, Path(item["data"].get("root") or root))
+        for item in loaded_reports for atom in dict_items(item["data"].get("evidence_atoms"))
+    ], output_format)
 
     return {
         "schema_version": 1,
@@ -146,6 +150,71 @@ def build_static_report(
         "sources": [summary["source"] for summary in summaries],
         "content": content,
     }
+
+
+def _with_hypothesis_overview(content, hypotheses, output_format):
+    """Present reported evidence without upgrading it to an independent proof."""
+    sections = []
+    is_html = output_format == "html"
+
+    def text(value):
+        return html.escape(str(value)).replace("`", "&#96;")
+
+    def link(label, path, root, line=None):
+        if not path:
+            return ""
+        target = (root / str(path)).resolve()
+        if is_html:
+            return f'<a href="{html.escape(target.as_uri(), quote=True)}">{text(label)}</a>'
+        suffix = f":{line}" if type(line) is int else ""
+        return f"[{text(label)}](<{target.as_posix()}{suffix}>)"
+
+    for atom, root in hypotheses:
+        if (atom.get("claim_type") != "diagnosis.hypothesis"
+                or atom.get("observation_type") != "controlled_runtime_comparison"):
+            continue
+        precision, detail = atom.get("precision", {}), atom.get("detail", {})
+        location = f"{precision.get('source_file', 'Unknown source')}:{precision.get('source_line', '?')}"
+        lines = [link(location, precision.get("source_file"), root, precision.get("source_line"))
+                 + " — " + text(precision.get("source_symbol", "Unknown symbol"))]
+        lines.append(text(f"Reported proof status: {atom.get('proof_status', 'unknown')}."))
+        intervention = detail.get("intervention", {})
+        if intervention:
+            lines.append(text(f"Candidate intervention: {intervention.get('register')} {intervention.get('expected')} → "
+                              f"{intervention.get('value')} at {intervention.get('at')}."))
+        for observation in dict_items(detail.get("observations")):
+            change = observation.get("call_input_change", observation.get("call_register_change", {}))
+            if change:
+                lines.append(text(f"Observed register change: {change.get('before')} → {change.get('after')} (hex)."))
+            loop = observation.get("counted_pointer_loop", {})
+            if loop.get("proof_status") == "instruction_observed":
+                lines.append(text(f"Observed loop: {loop.get('iterations')} iterations, stride {loop.get('stride')} bytes."))
+            store = observation.get("pointer_write", {}).get("store", {})
+            if all(type(store.get(key)) is int for key in ("bank", "address", "value")):
+                lines.append(text(f"Modeled store: bank {store['bank']}:{store['address']:04X} = {store['value']:02X}."))
+            chain = observation.get("causal_chain", [])
+            if chain:
+                lines.append(text(f"{len(chain)} instruction citations. ") + link("Trace", observation.get("trace"), root))
+        artifacts = [("Reproducer", detail.get("reproducer")), ("Supplied expectations", detail.get("regression")),
+                     ("Source mapping", atom.get("source_report"))]
+        artifacts.extend((mode, trial.get("report")) for mode, trial in detail.get("trials", {}).items()
+                         if trial.get("report") != detail.get("reproducer"))
+        links = [link(label, path, root) for label, path in artifacts if path]
+        if links:
+            lines.append(" · ".join(links))
+        lines.append(text(detail.get("uncertainty") or "Remaining proof requirements are not specified in this report."))
+        sections.append("\n".join(f"<p>{line}</p>" for line in lines) if is_html else "\n\n".join(lines))
+    if not sections:
+        return content
+    title = "Controlled hypotheses"
+    limit = "Reported evidence below is not a complete root-cause proof."
+    if is_html:
+        overview = f"<h2>{title}</h2><p>{limit}</p>" + "\n".join(sections)
+        marker = "<h2>Highest Priority Findings</h2>"
+    else:
+        overview = f"## {title}\n\n{limit}\n\n" + "\n\n".join(sections) + "\n\n"
+        marker = "## Highest Priority Findings"
+    return content.replace(marker, overview + marker, 1)
 
 
 def load_reports(

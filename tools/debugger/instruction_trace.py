@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ from .explain import base_label
 from .ingest import sha256_file
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
+from .report_envelope import replay_state_basis
 from .runtime_watch import (
     DEFAULT_ROM,
     DEFAULT_SYMBOLS,
@@ -237,6 +239,7 @@ def build_instruction_trace_report(
         require_hit=require_hit,
         out_trace=out_trace,
     )
+    capture_basis = captured_records[0].get("basis", {}) if captured_records else {}
     return {
         "schema_version": 1,
         "kind": "unified_debugger_instruction_trace",
@@ -247,9 +250,13 @@ def build_instruction_trace_report(
         "errors": errors,
         "warnings": warnings,
         "rom": display_path(rom, root=root),
-        "rom_sha256": sha256_file(rom) if rom.exists() else "",
+        "rom_sha256": capture_basis.get("rom_sha256") or (sha256_file(rom) if rom.exists() else ""),
         "symbols": display_path(sym, root=root),
-        "symbols_sha256": sha256_file(sym) if sym.exists() else "",
+        "symbols_sha256": capture_basis.get("symbols_sha256") or (sha256_file(sym) if sym.exists() else ""),
+        "state_basis": capture_basis.get("state_basis", {}),
+        "backend": capture_basis.get("backend", ""),
+        "backend_sha256": capture_basis.get("backend_sha256", ""),
+        "trace_sha256": sha256_file(resolve_path(out_trace, root=root)) if trace_output.get("written") else "",
         "save_state": display_path(save, root=root) if save is not None else "",
         "input_save_state": save_state,
         "effective_save_state": display_path(save, root=root) if save is not None else "",
@@ -285,6 +292,7 @@ def build_instruction_trace_report(
         "known_limits": [
             "Instruction capture is hook-based over selected function bodies, not whole-CPU reverse execution.",
             "The static plan follows decoded function bodies from the ROM image; runtime capture records only instructions that actually execute during the frame window.",
+            "Per-instruction WRAM bank observations require a loaded PyBoy state with a recognized v8-17 hardware-mode header; other inputs leave bank identity unspecified.",
             "Automatic target selection picks likely trace windows from reports, changed source labels, and symptoms; confirm broad or ambiguous selections before using them as final proof.",
             "Feed the emitted JSONL to dynamic-taint for byte-level causal paths from chosen sources to watched sinks.",
         ],
@@ -746,33 +754,61 @@ def execute_instruction_trace(
         "PyBoy is required for unified instruction tracing. Import failed",
     )
     trace_runtime.disable_realtime(pyboy)
+    backend = type(pyboy).__module__
+    backend_path = getattr(sys.modules.get(backend), "__file__", None)
+    basis = {
+        "rom_sha256": sha256_file(rom), "symbols_sha256": sha256_file(symbols_path),
+        "state_basis": replay_state_basis(save_state, frames),
+        "backend": f"{backend}.{type(pyboy).__name__}",
+        "backend_sha256": sha256_file(Path(backend_path)) if backend_path else "",
+    }
     records: list[dict[str, Any]] = []
-    hooked: list[tuple[int, int]] = []
+    hooked: set[tuple[int, int]] = set()
     errors: list[str] = []
     try:
         setattr(runtime_instruction_record, "seq", 0)
+        cgb_mode = None
         if save_state is not None:
             with save_state.open("rb") as fh:
+                # PyBoy v8-15 stores hardware mode at byte 4; v16-17 at byte 5.
+                # Unknown formats must not interpret DMG's FF70 open-bus read
+                # as WRAM bank 7.
+                header = fh.read(6)
+                if len(header) == 6 and 8 <= header[0] <= 17:
+                    mode = header[4 if header[0] <= 15 else 5]
+                    if mode in (0, 1):
+                        cgb_mode = bool(mode)
+                fh.seek(0)
                 pyboy.load_state(fh)
         for plan in plans:
             for instruction in plan.get("instructions", []):
                 bank = int(instruction["bank"])
                 pc = int(instruction["pc"])
+                # A selected function and its local labels can cover the same
+                # instruction. PyBoy permits only one hook at each address.
+                if (bank, pc) in hooked:
+                    continue
 
                 def make_callback(row: dict[str, Any], function: str):
                     def callback(_ctx: Any) -> None:
                         if len(records) >= max_frames:
                             return
-                        records.append(runtime_instruction_record(
+                        record = runtime_instruction_record(
                             pyboy=pyboy,
                             instruction=row,
                             function=function,
                             watches=watches,
-                        ))
+                        )
+                        if cgb_mode is not None:
+                            record["bank_state"] = {"wram_raw": int(pyboy.memory[0xFF70])} if cgb_mode else {"wram": 1}
+                            record["bank_state_sources"] = {
+                                "wram_raw" if cgb_mode else "wram": "runtime_svbk_read" if cgb_mode else "dmg_fixed_wram_bank",
+                            }
+                        records.append(record)
                     return callback
 
                 pyboy.hook_register(bank, pc, make_callback(instruction, str(plan["symbol"])), None)
-                hooked.append((bank, pc))
+                hooked.add((bank, pc))
         pyboy.tick(frames, False, False)
     except Exception as exc:
         errors.append(f"instruction trace capture failed: {exc}")
@@ -786,6 +822,8 @@ def execute_instruction_trace(
             pyboy.stop(save=False)
         except TypeError:
             pyboy.stop()
+    if records:
+        records[0]["basis"] = basis
     return records, errors
 
 
@@ -804,7 +842,7 @@ def runtime_instruction_record(
     regs["HL"] = ((regs["H"] & 0xFF) << 8) | (regs["L"] & 0xFF)
     seq = int(getattr(runtime_instruction_record, "seq", 0))
     setattr(runtime_instruction_record, "seq", seq + 1)
-    return {
+    record = {
         "kind": "sm83_instruction_trace_frame",
         "event_type": "instruction",
         "seq": seq,
@@ -825,6 +863,16 @@ def runtime_instruction_record(
             if watch.get("found")
         },
     }
+    if instruction["opcode"] in (0xC0, 0xC1, 0xC8, 0xC9, 0xD0, 0xD1, 0xD8, 0xD9, 0xE1, 0xF1):
+        samples = []
+        for offset in (0, 1):
+            address = (regs["SP"] + offset) & 0xFFFF
+            if 0xC000 <= address <= 0xDFFF or 0xFF80 <= address <= 0xFFFE:
+                samples.append({"address": address, "value_hex": f"{int(pyboy.memory[address]):02X}",
+                                "source": "runtime_stack_read"})
+        if samples:
+            record["watch_value_specs"] = samples
+    return record
 
 
 def build_execution_validation(
@@ -841,10 +889,13 @@ def build_execution_validation(
         for plan in plans
         if plan.get("symbol")
     ]
+    observed_pcs = {(record["bank"], record["pc"]) for record in records}
+    # Credit all overlapping target windows from observed PCs, even though the
+    # single recorded frame carries only the first window's function name.
     hit_functions = unique_list(
-        str(record.get("function", ""))
-        for record in records
-        if record.get("function")
+        str(plan["symbol"])
+        for plan in plans
+        if any((row["bank"], row["pc"]) in observed_pcs for row in plan.get("instructions", []))
     )
     hit_function_set = set(hit_functions)
     missing_functions = [
@@ -857,7 +908,10 @@ def build_execution_validation(
         for watch in watches
         if watch.get("found") and watch.get("name")
     ]
-    hook_count = sum(int(plan.get("hook_count", 0)) for plan in plans)
+    hook_count = len({
+        (row["bank"], row["pc"])
+        for plan in plans for row in plan.get("instructions", [])
+    })
     captured_frame_count = len(records)
     warnings: list[str] = []
     errors: list[str] = []

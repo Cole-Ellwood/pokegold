@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from tools.damage_debugger.disasm import Instruction, render_mnemonic
-from tools.damage_debugger.taint import Sink, TaintEngine
+from tools.damage_debugger.disasm import Instruction
+from tools.damage_debugger.taint import EMPTY, Sink, TaintEngine, TaintTag
 
 from .address import parse_address_spec
 from .catalog import ROOT
@@ -16,33 +15,23 @@ from .ingest import sha256_file
 from .provenance import display_path, parse_symbol_table, resolve_path
 from .reporting import load_reports
 from .sm83_model import SM83_MODEL_SOURCE
+from .effect_trace import (
+    frame_with_inferred_bank_state,
+    instruction_effects,
+    memory_write_effects,
+    observed_memory_bank,
+    update_inferred_bank_state_from_effects,
+    update_inferred_bank_state_from_frame,
+)
+from .instruction_frames import (
+    InstructionFrame,
+    frame_register_known,
+    parse_instruction_record,
+    trace_records,
+    parse_int,
+    dict_items,
+)
 from .workflow import command_is_runnable
-
-
-REGISTER_FIELDS = ("A", "F", "B", "C", "D", "E", "H", "L", "HL", "SP")
-INDEX_REG = {0: "b", 1: "c", 2: "d", 3: "e", 4: "h", 5: "l", 6: "[hl]", 7: "a"}
-
-
-@dataclass(frozen=True)
-class InstructionFrame:
-    seq: int
-    bank: int
-    pc: int
-    pc_label: str
-    A: int = 0
-    F: int = 0
-    B: int = 0
-    C: int = 0
-    D: int = 0
-    E: int = 0
-    H: int = 0
-    L: int = 0
-    HL: int = 0
-    SP: int = 0
-    memory: tuple[tuple[int, int], ...] = ()
-    bank_state: tuple[tuple[str, int], ...] = ()
-    bank_state_sources: tuple[tuple[str, str], ...] = ()
-    known_registers: tuple[str, ...] = ()
 
 
 def build_dynamic_taint_report(
@@ -137,6 +126,17 @@ def build_dynamic_taint_report(
         for run in trace_runs
         for attribution in run.get("write_attributions", [])
     ]
+    bank_uncertainty = {
+        run["source"]: [warning for warning in run["warnings"] if warning.startswith("bank identity unverified")]
+        for run in trace_runs
+    }
+    for item in [*paths, *write_attributions]:
+        warnings_for_source = bank_uncertainty.get(item["source"], [])
+        if warnings_for_source:
+            item["confidence"] = min(item["confidence"], 0.5)
+            item["evidence"].extend(warnings_for_source)
+            for contributor in item["contributors"]:
+                contributor["confidence"] = min(contributor["confidence"], 0.5)
     commands = build_commands(
         paths=paths,
         write_attributions=write_attributions,
@@ -340,7 +340,7 @@ def analyze_instruction_trace(
     loaded: dict[str, Any],
     *,
     register_sources: dict[str, str],
-    source_memory: dict[int, str],
+    source_memory: dict[tuple[int, int | None], str],
     sinks: list[Sink],
     symbol_table: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
@@ -359,9 +359,34 @@ def analyze_instruction_trace(
     engine = TaintEngine(sinks=sinks)
     for register, origin in register_sources.items():
         engine.seed_reg(register, origin)
-    for address, origin in source_memory.items():
-        engine.seed_mem(address, origin)
-    taint_report = engine.run(instructions, frames)
+    # The shared engine operates on bus addresses. Select a memory view for
+    # each observed bank, retaining overwritten/empty slots when switching away.
+    memory = {}
+    raw_sources = set()
+    for (address, bank), origin in source_memory.items():
+        memory[(address, bank)] = frozenset({TaintTag(origin)})
+        if bank is None:
+            raw_sources.add(address)
+    by_pc = {(instruction.bank, instruction.pc): instruction for instruction in instructions}
+    inferred = {}
+    normalized_frames = []
+    bank_warnings = []
+    sink_banks = {sink.name: _sink_bank(sink, symbol_table) for sink in sinks}
+    banked_targets = {sink.name: sink.address for sink in sinks if sink_banks[sink.name] is not None}
+    banked_targets.update({origin: address for (address, bank), origin in source_memory.items() if bank is not None})
+    for frame in sorted(frames, key=lambda item: int(item.seq)):
+        instruction = by_pc[(frame.bank, frame.pc)]
+        inferred = update_inferred_bank_state_from_frame(inferred, frame)
+        frame = frame_with_inferred_bank_state(frame, inferred)
+        normalized_frames.append(frame)
+        engine.sinks = [sink for sink in sinks if sink_banks[sink.name] is None or observed_memory_bank(frame, sink.address)[0] in {None, sink_banks[sink.name]}]
+        for name, address in banked_targets.items():
+            if observed_memory_bank(frame, address)[0] is None:
+                bank_warnings.append(f"bank identity unverified for {name}; bus-address taint is provisional")
+        writes = _step_banked_taint(engine, instruction, frame, memory, raw_sources)
+        inferred = update_inferred_bank_state_from_effects(inferred, writes)
+    frames = normalized_frames
+    taint_report = engine.report
     findings = [
         public_finding(finding, source=loaded["source"])
         for finding in taint_report.findings
@@ -387,98 +412,172 @@ def analyze_instruction_trace(
         "unsupported": dict(taint_report.unsupported),
         "unsupported_count": sum(int(count) for count in taint_report.unsupported.values()),
         "errors": errors,
-        "warnings": [*errors[:4]],
+        "warnings": [*errors[:4], *unique_list(bank_warnings)],
         "findings": findings,
         "write_attributions": write_attributions[:120],
     }
 
 
-def parse_instruction_record(record: dict[str, Any], *, default_seq: int) -> dict[str, Any]:
-    try:
-        seq = parse_int(record.get("seq", record.get("index", default_seq)))
-        bank = parse_int(record.get("bank", record.get("pc_bank", 0)))
-        pc = parse_int(record.get("pc", 0))
-        opcode = parse_int(record.get("opcode", record.get("op", "")))
-    except ValueError as exc:
-        return {"error": str(exc), "instruction": None, "frame": None}
-    if opcode < 0 or opcode > 0xFF:
-        return {"error": f"opcode out of byte range: {opcode}", "instruction": None, "frame": None}
-    operand = parse_operand(record.get("operand", record.get("operands", record.get("operand_bytes", []))))
-    if operand is None:
-        return {"error": "operand must be a byte list or hex string", "instruction": None, "frame": None}
-    mnemonic = str(record.get("mnemonic") or render_mnemonic(opcode, operand))
-    registers = parse_registers(record)
-    pc_label = str(record.get("pc_label") or record.get("label") or f"${bank:02X}:{pc:04X}")
-    instruction = Instruction(
-        bank=bank,
-        pc=pc,
-        opcode=opcode,
-        operand=operand,
-        length=max(1, 1 + len(operand)),
-        mnemonic=mnemonic,
-    )
-    frame = InstructionFrame(
-        seq=seq,
-        bank=bank,
-        pc=pc,
-        pc_label=pc_label,
-        A=registers["A"],
-        F=registers["F"],
-        B=registers["B"],
-        C=registers["C"],
-        D=registers["D"],
-        E=registers["E"],
-        H=registers["H"],
-        L=registers["L"],
-        HL=registers["HL"],
-        SP=registers["SP"],
-        memory=parse_raw_watch_memory(record),
-        bank_state=parse_bank_state(record),
-        bank_state_sources=parse_bank_state_sources(record),
-        known_registers=parse_known_registers(record),
-    )
-    return {
-        "error": "",
-        "instruction": instruction,
-        "frame": frame,
-        "bank_state_record_conflicts": bank_state_record_conflicts(
-            record, seq=seq, bank=bank, pc=pc, pc_label=pc_label
-        ),
-    }
+def _step_banked_taint(engine, instruction, frame, memory, raw_sources=()):
+    addresses = {address for address, _bank in memory}
+    view = {}
+    for address in addresses:
+        bank = observed_memory_bank(frame, address)[0]
+        if (address, bank) in memory:
+            view[address] = memory[(address, bank)]
+        elif bank is None:
+            view[address] = frozenset(tag for (stored_address, _), tags in memory.items() if stored_address == address for tag in tags)
+        elif address in raw_sources:
+            view[address] = memory.get((address, None), EMPTY)
+    engine.state.memory = view
+    engine.step(instruction, frame)
+    writes = memory_write_effects(instruction, frame)
+    # The shared byte engine treats CALL/RST as control flow. Their concrete
+    # return-address writes still replace any earlier taint in those stack slots.
+    for item in writes:
+        if "address" in item and any(source.get("kind") == "immediate" for source in item.get("source_operands", [])):
+            engine.state.set_mem(item["address"], EMPTY)
+    addresses.update(engine.state.memory)
+    addresses.update(int(item["address"]) for item in writes if "address" in item)
+    for address in addresses:
+        bank = observed_memory_bank(frame, address)[0]
+        memory[(address, bank)] = engine.state.memory.get(address, EMPTY)
+    return writes
 
 
-def trace_records(data: Any) -> list[dict[str, Any]]:
-    if isinstance(data, list):
-        return [item for item in data if isinstance(item, dict)]
-    if isinstance(data, dict):
-        for key in ("instructions", "frames", "events", "trace", "records"):
-            value = data.get(key)
-            if isinstance(value, list):
-                return [item for item in value if isinstance(item, dict)]
-        if "opcode" in data and "pc" in data:
-            return [data]
-    return []
+def _register_transport(records, *, register, start_seq, end_seq, mbc3=False):
+    """Check one observed register dependency, stopping at uncertain evidence."""
+    result = {"model_source": SM83_MODEL_SOURCE, "register": register,
+              "start_seq": start_seq, "end_seq": end_seq, "proof_status": "planned_only", "errors": [],
+              "mapper": "MBC3" if mbc3 else "unverified",
+              "scope": "Byte dependency over this recorded interval with WRAM/HRAM transport and, when identified, MBC3 register writes; this does not establish SRAM contents, the gameplay invariant, or initiating cause."}
+    if register not in "ABCDEHL" or len(register) != 1 or type(start_seq) is not int or type(end_seq) is not int or not 0 <= start_seq <= end_seq:
+        result["errors"].append("invalid register transport interval")
+        return result
+    if any(type(record.get("seq")) is not int for record in records):
+        result["errors"].append("transport requires explicit integer sequence numbers")
+        return result
+    parsed = [parse_instruction_record(record, default_seq=index) for index, record in enumerate(records)]
+    if any(item["error"] for item in parsed):
+        result["errors"].append("invalid instruction records")
+        return result
+    window = [item for item in parsed if start_seq <= item["frame"].seq <= end_seq]
+    if [item["frame"].seq for item in window] != list(range(start_seq, end_seq + 1)):
+        result["errors"].append("missing, duplicated, or out-of-order transport frames")
+        return result
+    engine = TaintEngine()
+    engine.seed_reg(register, "call_return")
+    memory = {}
+    written_values = {}
+    initial = window[0]["frame"]
+    inferred = {"rom": initial.bank} if 0x4000 <= initial.pc < 0x8000 else {}
+    transfers = []
+    for index, item in enumerate(window):
+        frame, instruction = item["frame"], item["instruction"]
+        if item["bank_state_record_conflicts"] or not (set("AFBCDEHL") | {"SP"}) <= set(frame.known_registers):
+            result["errors"].append(f"missing registers or conflicting bank state at sequence {frame.seq}")
+            break
+        inferred = update_inferred_bank_state_from_frame(inferred, frame)
+        frame = frame_with_inferred_bank_state(frame, inferred)
+        if frame.seq == end_seq:
+            result.update(depends_on_return=bool(engine.state.reg(register)), proof_status="taint_proven", transfers=transfers)
+            break
+        effects = instruction_effects(instruction, frame)
+        mapper_writes = [effect for effect in effects if effect.get("access") == "write"
+                         and type(effect.get("address")) is int and 0x2000 <= effect["address"] <= 0x3FFF]
+        next_inferred = update_inferred_bank_state_from_effects(inferred, effects)
+        following = window[index + 1]["frame"]
+        if (not any(effect.get("access") == "register_write" and register in effect.get("register", "") for effect in effects)
+                and register in following.known_registers and getattr(frame, register) != getattr(following, register)):
+            result["errors"].append(f"unexplained register change after sequence {frame.seq}")
+            break
+        control = next((effect for effect in effects if effect.get("access") == "control"), None)
+        target = control.get("target") if control else (frame.pc + instruction.length) & 0xFFFF
+        if control and target is None and instruction.opcode in (0xC0, 0xC8, 0xC9, 0xD0, 0xD8, 0xD9):
+            observed = dict(frame.memory)
+            low, high = observed.get(frame.SP), observed.get((frame.SP + 1) & 0xFFFF)
+            if low is not None and high is not None:
+                target = low | high << 8
+        target_bank = 0 if target is not None and target < 0x4000 else next_inferred.get("rom")
+        if target is None or following.pc != target or target_bank is None or following.bank != target_bank:
+            result["errors"].append(f"unverified control transition after sequence {frame.seq}")
+            break
+        uncertain = any(str(effect.get("kind", "")).startswith("unmodeled") for effect in effects)
+        for effect in effects:
+            address = effect.get("address")
+            if type(address) is not int or effect.get("access") not in ("read", "write") or effect.get("operation") == "opcode_fetch":
+                continue
+            if mbc3 and effect in mapper_writes and next_inferred.get("rom") is not None:
+                continue
+            # MBC3 RAM enable/select and RTC latch writes do not replace CPU
+            # registers or WRAM/HRAM. This does not prove a later SRAM access.
+            if (mbc3 and effect.get("access") == "write" and type(effect.get("value")) is int
+                    and (0 <= address < 0x2000 or 0x4000 <= address < 0x8000)):
+                continue
+            if not (0xC000 <= address <= 0xDFFF or 0xFF80 <= address <= 0xFFFE):
+                uncertain = True  # Other buses need alias/access-timing evidence.
+            if (0x4000 <= address <= 0xBFFF or 0xD000 <= address <= 0xDFFF) and observed_memory_bank(frame, address)[0] is None:
+                uncertain = True
+        if uncertain:
+            result["errors"].append(f"unmodeled effect or unknown memory bank at sequence {frame.seq}")
+            break
+        if instruction.opcode in (0xC1, 0xD1, 0xE1, 0xF1):
+            observed = dict(frame.memory)
+            addresses = (frame.SP, (frame.SP + 1) & 0xFFFF)
+            values = [observed.get(address) for address in addresses]
+            if any(value is None for value in values):
+                result["errors"].append(f"missing POP stack samples at sequence {frame.seq}")
+                break
+            # A matching loaded value alone cannot establish which write supplied it.
+            # Reconcile tagged stack slots with writes in this exact bank and interval.
+            for address, value in zip(addresses, values):
+                key = (address, observed_memory_bank(frame, address)[0])
+                if memory.get(key) and written_values.get(key) != value:
+                    result["errors"].append(f"POP sample disagrees with tagged stack write at sequence {frame.seq}")
+                    break
+            if result["errors"]:
+                break
+            pair = {0xC1: "BC", 0xD1: "DE", 0xE1: "HL", 0xF1: "AF"}[instruction.opcode]
+            low = values[0] & 0xF0 if pair == "AF" else values[0]
+            if (not (set(pair) | {"SP"}) <= set(following.known_registers)
+                    or getattr(following, pair[0]) != values[1] or getattr(following, pair[1]) != low
+                    or following.SP != (frame.SP + 2) & 0xFFFF):
+                result["errors"].append(f"POP result disagrees with following registers at sequence {frame.seq}")
+                break
+        before = bool(engine.state.reg(register))
+        writes = _step_banked_taint(engine, instruction, frame, memory)
+        for write in writes:
+            if "address" in write:
+                key = (write["address"], observed_memory_bank(frame, write["address"])[0])
+                written_values[key] = write.get("value")
+        inferred = next_inferred
+        if engine.report.unsupported:
+            result["errors"].append(f"unsupported taint instruction at sequence {frame.seq}")
+            break
+        if (before != bool(engine.state.reg(register)) or instruction.opcode in (0xC5, 0xD5, 0xE5, 0xF5, 0xC1, 0xD1, 0xE1, 0xF1)
+                or mapper_writes or any(effect.get("access") == "register_write" and register in effect.get("register", "") for effect in effects)):
+            transfers.append({"seq": frame.seq, "pc": frame.pc, "bank": frame.bank,
+                              "register_depends_on_return": bool(engine.state.reg(register))})
+            if mapper_writes:
+                transfers[-1]["rom_bank_after"] = inferred["rom"]
+    return result
 
 
-def parse_registers(record: dict[str, Any]) -> dict[str, int]:
-    nested = record.get("regs") if isinstance(record.get("regs"), dict) else {}
-    nested_registers = record.get("registers") if isinstance(record.get("registers"), dict) else {}
-    merged = {**nested, **nested_registers, **record}
-    out = {name: parse_int(register_value(merged, name), default=0) for name in REGISTER_FIELDS}
-    if not out["HL"]:
-        out["HL"] = ((out["H"] & 0xFF) << 8) | (out["L"] & 0xFF)
-    if not out["H"] and out["HL"]:
-        out["H"] = (out["HL"] >> 8) & 0xFF
-    if not out["L"] and out["HL"]:
-        out["L"] = out["HL"] & 0xFF
-    return out
+def _symbol_bank(entry: dict[str, Any]) -> int | None:
+    spec = parse_address_spec(f"{int(entry['bank']):02X}:{int(entry['address']):04X}")
+    return spec.bank if spec.exact_key_required else None
 
 
-def register_value(data: dict[str, Any], name: str) -> Any:
-    for key in (name, name.lower(), f"register_{name.lower()}"):
-        if key in data:
-            return data[key]
-    return 0
+def _symbol_matches_frame(entry: dict[str, Any], frame: InstructionFrame) -> bool:
+    bank = _symbol_bank(entry)
+    return bank is None or observed_memory_bank(frame, int(entry["address"]))[0] in {None, bank}
+
+
+def _sink_bank(sink: Sink, symbol_table: dict[str, dict[str, Any]]) -> int | None:
+    if sink.name in symbol_table:
+        return _symbol_bank(symbol_table[sink.name])
+    spec = parse_address_spec(sink.name)
+    return spec.bank if spec.exact_key_required else None
 
 
 def parse_register_sources(source_regs: tuple[str, ...]) -> tuple[dict[str, str], list[str]]:
@@ -499,23 +598,23 @@ def parse_memory_sources(
     source_mems: tuple[str, ...],
     source_symbols: tuple[str, ...],
     symbol_table: dict[str, dict[str, Any]],
-) -> tuple[dict[int, str], list[str]]:
-    out: dict[int, str] = {}
+) -> tuple[dict[tuple[int, int | None], str], list[str]]:
+    out: dict[tuple[int, int | None], str] = {}
     errors: list[str] = []
     for raw in source_mems:
         address_text, origin = split_assignment(raw)
         try:
-            address = parse_address(address_text)
+            spec = parse_address_spec(address_text)
         except ValueError as exc:
             errors.append(str(exc))
             continue
-        out[address] = origin or f"source_mem:${address:04X}"
+        out[(spec.address, spec.bank if spec.exact_key_required else None)] = origin or f"source_mem:${spec.address:04X}"
     for symbol in source_symbols:
         entry = symbol_table.get(symbol)
         if not entry:
             errors.append(f"source symbol not found in symbols: {symbol}")
             continue
-        out[int(entry["address"])] = f"source_symbol:{symbol}"
+        out[(int(entry["address"]), _symbol_bank(entry))] = f"source_symbol:{symbol}"
     return out, errors
 
 
@@ -537,11 +636,11 @@ def parse_sinks(
     for raw in sink_addresses:
         name, _origin = split_assignment(raw)
         try:
-            address = parse_address(name)
+            spec = parse_address_spec(name)
         except ValueError as exc:
             errors.append(str(exc))
             continue
-        sinks.append(Sink(f"${address:04X}", address, sink_size))
+        sinks.append(Sink(spec.evidence(), spec.address, sink_size))
     return sinks, errors
 
 
@@ -552,7 +651,7 @@ def build_write_attributions(
     frames: list[InstructionFrame],
     sinks: list[Sink],
     register_sources: dict[str, str],
-    source_memory: dict[int, str],
+    source_memory: dict[tuple[int, int | None], str],
     symbol_table: dict[str, dict[str, Any]],
     taint_findings: list[Any],
 ) -> list[dict[str, Any]]:
@@ -562,27 +661,34 @@ def build_write_attributions(
         for finding in taint_findings
     }
     attributions: list[dict[str, Any]] = []
+    sink_banks = {sink.name: _sink_bank(sink, symbol_table) for sink in sinks}
     for frame in sorted(frames, key=lambda item: int(item.seq)):
         instruction = by_pc.get((frame.bank, frame.pc))
         if instruction is None:
             continue
-        for write in instruction_memory_writes(instruction, frame):
+        writes = instruction_memory_writes(instruction, frame)
+        if not any(sink.contains(int(write["address"])) for sink in sinks for write in writes):
+            continue
+        compatible_symbols = {name: entry for name, entry in symbol_table.items() if _symbol_matches_frame(entry, frame)}
+        for write in writes:
             address = int(write["address"]) & 0xFFFF
             for sink in sinks:
                 if not sink.contains(address):
+                    continue
+                if sink_banks[sink.name] is not None and observed_memory_bank(frame, address)[0] not in {None, sink_banks[sink.name]}:
                     continue
                 taint = taint_by_write.get((int(frame.seq), address, sink.name), [])
                 source_operands = [
                     enrich_source_operand(
                         operand,
-                        register_sources=register_sources,
-                        source_memory=source_memory,
-                        symbol_table=symbol_table,
+                        register_sources={register: origin for register, origin in register_sources.items() if origin in taint},
+                        source_memory={address: origin for address, origin in source_memory.items() if origin in taint},
+                        symbol_table=compatible_symbols,
                     )
                     for operand in write["source_operands"]
                     if isinstance(operand, dict)
                 ]
-                contributors = contributors_for_operands(source_operands)
+                contributors = contributors_for_taint(taint, register_sources=register_sources, source_memory=source_memory)
                 pc_label = str(frame.pc_label)
                 target = sink.name
                 attributions.append(
@@ -598,7 +704,7 @@ def build_write_attributions(
                         "sink": sink.name,
                         "sink_address": f"{sink.address:04X}",
                         "address": f"{address:04X}",
-                        "address_symbol": symbol_for_address(address, symbol_table),
+                        "address_symbol": symbol_for_address(address, compatible_symbols),
                         "sink_offset": address - sink.address,
                         "write_kind": str(write["kind"]),
                         "source_operands": source_operands,
@@ -620,7 +726,7 @@ def build_write_attributions(
                             pc_label=pc_label,
                             address=address,
                             source_operands=source_operands,
-                            symbol_table=symbol_table,
+                            symbol_table=compatible_symbols,
                         ),
                         "related_files": [],
                         "commands": commands_for_write_attribution(
@@ -634,58 +740,36 @@ def build_write_attributions(
 
 
 def instruction_memory_writes(instruction: Instruction, frame: InstructionFrame) -> list[dict[str, Any]]:
-    op = instruction.opcode
-    if op == 0x02:
-        return [memory_write(pair_value(frame, "bc"), "ld [bc], a", register_operand("a", frame))]
-    if op == 0x12:
-        return [memory_write(pair_value(frame, "de"), "ld [de], a", register_operand("a", frame))]
-    if op in {0x22, 0x32}:
-        return [memory_write(pair_value(frame, "hl"), "ld [hli/hld], a", register_operand("a", frame))]
-    if op == 0x36:
-        value = instruction.operand[0] if instruction.operand else 0
-        return [memory_write(pair_value(frame, "hl"), "ld [hl], n", immediate_operand(value))]
-    if 0x70 <= op <= 0x77 and op != 0x76:
-        source = INDEX_REG[op & 0x07]
-        if source == "[hl]":
-            return []
-        return [memory_write(pair_value(frame, "hl"), f"ld [hl], {source}", register_operand(source, frame))]
-    if op in {0x34, 0x35}:
-        address = pair_value(frame, "hl")
-        kind = "inc [hl]" if op == 0x34 else "dec [hl]"
-        return [memory_write(address, kind, memory_operand(address))]
-    if op == 0x08:
-        address = u16_from_operand(instruction)
-        return [
-            memory_write(address, "ld [nn], sp low", register_operand("sp", frame)),
-            memory_write(address + 1, "ld [nn], sp high", register_operand("sp", frame)),
-        ]
-    if op == 0xEA:
-        return [memory_write(u16_from_operand(instruction), "ld [nn], a", register_operand("a", frame))]
-    if op == 0xE0 and instruction.operand:
-        return [memory_write(0xFF00 + int(instruction.operand[0]), "ldh [n], a", register_operand("a", frame))]
-    if op == 0xE2:
-        return [memory_write(0xFF00 + reg_value(frame, "c"), "ldh [c], a", register_operand("a", frame))]
-    if op == 0xCB and instruction.operand:
-        target = INDEX_REG[int(instruction.operand[0]) & 0x07]
-        if target == "[hl]":
-            sub = int(instruction.operand[0])
-            group = (sub >> 6) & 0x03
-            if group in {0, 2, 3}:
-                address = pair_value(frame, "hl")
-                return [memory_write(address, "cb [hl] read-modify-write", memory_operand(address))]
-    return []
-
-
-def memory_write(address: int, kind: str, *source_operands: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "address": address & 0xFFFF,
-        "kind": kind,
-        "source_operands": [operand for operand in source_operands if operand],
-    }
+    writes = []
+    for item in memory_write_effects(instruction, frame):
+        if "address" not in item:
+            # Incomplete frames must not turn unknown addresses into address zero.
+            continue
+        kind = item["operation"]
+        # Keep the established report wording for these instruction families.
+        if instruction.opcode in {0x22, 0x32}:
+            kind = "ld [hli/hld], a"
+        elif instruction.opcode == 0xCB:
+            kind = "cb [hl] read-modify-write"
+        operands = []
+        for operand in item.get("source_operands", []):
+            if operand["kind"] == "register":
+                operands.append(register_operand(operand["name"], frame))
+            elif operand["kind"] == "memory":
+                operands.append(memory_operand(int(operand["address"], 16)))
+            elif operand["kind"] == "immediate":
+                # Stack writes expose the corresponding byte of the return address.
+                value = item.get("value") if item["kind"] == "stack_write" else int(operand["value"], 16)
+                operands.append(immediate_operand(value))
+        writes.append({"address": item["address"], "kind": kind, "source_operands": operands})
+    return writes
 
 
 def register_operand(register: str, frame: InstructionFrame) -> dict[str, Any]:
     register = register.lower()
+    required = list(register) if register in {"bc", "de", "hl"} else [register]
+    if not all(frame_register_known(frame, name) for name in required):
+        return {"kind": "register", "name": register}
     value = pair_value(frame, register) if register in {"bc", "de", "hl", "sp"} else reg_value(frame, register)
     width = 4 if register in {"bc", "de", "hl", "sp"} else 2
     return {
@@ -713,7 +797,7 @@ def enrich_source_operand(
     operand: dict[str, Any],
     *,
     register_sources: dict[str, str],
-    source_memory: dict[int, str],
+    source_memory: dict[tuple[int, int | None], str],
     symbol_table: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     out = dict(operand)
@@ -731,8 +815,9 @@ def enrich_source_operand(
             symbol = symbol_for_address(address, symbol_table)
             if symbol:
                 out["symbol"] = symbol
-            if address in source_memory:
-                out["origin"] = source_memory[address]
+            origins = [origin for (source_address, _bank), origin in source_memory.items() if source_address == address]
+            if origins:
+                out["origin"] = origins[0]
                 out["contributor"] = True
     return out
 
@@ -798,7 +883,9 @@ def write_attribution_evidence(
 def render_source_operand(operand: dict[str, Any]) -> str:
     kind = str(operand.get("kind", "operand"))
     if kind == "register":
-        text = f"register:{operand.get('name')}=${operand.get('value')}"
+        text = f"register:{operand.get('name')}"
+        if "value" in operand:
+            text += f"=${operand['value']}"
     elif kind == "memory":
         text = f"memory:${operand.get('address')}"
     elif kind == "immediate":
@@ -871,18 +958,12 @@ def pair_value(frame: InstructionFrame, pair: str) -> int:
     raise KeyError(pair)
 
 
-def u16_from_operand(instruction: Instruction) -> int:
-    if len(instruction.operand) < 2:
-        return 0
-    return int(instruction.operand[0]) | (int(instruction.operand[1]) << 8)
-
-
 def build_paths(
     *,
     findings: list[dict[str, Any]],
     sinks: list[Sink],
     register_sources: dict[str, str],
-    source_memory: dict[int, str],
+    source_memory: dict[tuple[int, int | None], str],
     max_paths: int,
 ) -> list[dict[str, Any]]:
     sink_by_name = {sink.name: sink for sink in sinks}
@@ -939,7 +1020,7 @@ def contributors_for_taint(
     taint: list[str],
     *,
     register_sources: dict[str, str],
-    source_memory: dict[int, str],
+    source_memory: dict[tuple[int, int | None], str],
 ) -> list[dict[str, Any]]:
     contributors = []
     for register, origin in register_sources.items():
@@ -952,7 +1033,7 @@ def contributors_for_taint(
                     "confidence": 0.92,
                 }
             )
-    for address, origin in source_memory.items():
+    for (address, _bank), origin in source_memory.items():
         if origin in taint:
             contributors.append(
                 {
@@ -1036,13 +1117,13 @@ def targets_for_sinks(
     return targets
 
 
-def source_summary(*, register_sources: dict[str, str], source_memory: dict[int, str]) -> list[dict[str, Any]]:
+def source_summary(*, register_sources: dict[str, str], source_memory: dict[tuple[int, int | None], str]) -> list[dict[str, Any]]:
     return [
         {"type": "register", "register": register, "origin": origin}
         for register, origin in sorted(register_sources.items())
     ] + [
         {"type": "memory", "address": f"{address:04X}", "origin": origin}
-        for address, origin in sorted(source_memory.items())
+        for (address, _bank), origin in sorted(source_memory.items(), key=lambda item: (item[0][0], -1 if item[0][1] is None else item[0][1]))
     ]
 
 
@@ -1095,36 +1176,6 @@ def split_assignment(raw: str) -> tuple[str, str]:
     return left.strip(), right.strip()
 
 
-def parse_operand(value: Any) -> bytes | None:
-    if value is None or value == "":
-        return b""
-    if isinstance(value, bytes):
-        return value
-    if isinstance(value, int):
-        return bytes([value & 0xFF])
-    if isinstance(value, list | tuple):
-        try:
-            return bytes(parse_int(item) & 0xFF for item in value)
-        except ValueError:
-            return None
-    if isinstance(value, str):
-        text = value.strip().replace("$", "").replace("0x", "").replace("0X", "")
-        text = text.replace(",", " ").replace("[", "").replace("]", "")
-        parts = [part for part in text.split() if part]
-        if len(parts) > 1:
-            try:
-                return bytes(parse_int(part) & 0xFF for part in parts)
-            except ValueError:
-                return None
-        if len(text) % 2:
-            text = "0" + text
-        try:
-            return bytes(int(text[index : index + 2], 16) for index in range(0, len(text), 2))
-        except ValueError:
-            return None
-    return None
-
-
 def parse_address(value: str) -> int:
     text = str(value).strip()
     if ":" in text:
@@ -1135,33 +1186,8 @@ def parse_address(value: str) -> int:
     return parsed
 
 
-def parse_int(value: Any, *, default: int | None = None) -> int:
-    if value is None or value == "":
-        if default is not None:
-            return default
-        raise ValueError("missing integer value")
-    if isinstance(value, int):
-        return value
-    text = str(value).strip()
-    if text.startswith("$"):
-        return int(text[1:], 16)
-    if text.startswith(("0x", "0X")):
-        return int(text, 16)
-    if any(char in "ABCDEFabcdef" for char in text):
-        return int(text, 16)
-    return int(text, 10)
-
-
 def default_symbol_size(symbol: str, fallback: int) -> int:
     return 2 if symbol in {"wCurDamage"} else fallback
-
-
-def dict_items(value: Any) -> list[dict[str, Any]]:
-    if isinstance(value, dict):
-        return [value]
-    if isinstance(value, list | tuple):
-        return [item for item in value if isinstance(item, dict)]
-    return []
 
 
 def string_items(value: Any) -> list[str]:
@@ -1191,195 +1217,6 @@ def unique_list(values: Any) -> list[str]:
 # InstructionFrame construction are unchanged; these populate the extra frame
 # fields and provide the frame predicate helpers.
 
-def parse_known_registers(record: dict[str, Any]) -> tuple[str, ...]:
-    nested = record.get("regs") if isinstance(record.get("regs"), dict) else {}
-    nested_registers = record.get("registers") if isinstance(record.get("registers"), dict) else {}
-    sources = (nested, nested_registers, record)
-    known: set[str] = set()
-    for name in REGISTER_FIELDS:
-        for source in sources:
-            if register_is_present(source, name):
-                known.add(name)
-                break
-    return tuple(sorted(known))
-
-
-def register_is_present(data: dict[str, Any], name: str) -> bool:
-    return any(key in data for key in (name, name.lower(), f"register_{name.lower()}"))
-
-
-def parse_raw_watch_memory(record: dict[str, Any]) -> tuple[tuple[int, int], ...]:
-    out: dict[int, int] = {}
-    parse_watch_value_specs_memory(record, out=out)
-    values = record.get("watch_values")
-    if not isinstance(values, dict):
-        return tuple(sorted(out.items()))
-    for raw_key, raw_value in values.items():
-        try:
-            spec = parse_address_spec(raw_key)
-        except ValueError:
-            continue
-        if spec.bank is not None:
-            continue
-        bytes_value = parse_hex_byte_string(raw_value)
-        if not bytes_value:
-            continue
-        for offset, byte in enumerate(bytes_value):
-            out[(spec.address + offset) & 0xFFFF] = byte
-    return tuple(sorted(out.items()))
-
-
-def parse_watch_value_specs_memory(record: dict[str, Any], *, out: dict[int, int]) -> None:
-    values = record.get("watch_values") if isinstance(record.get("watch_values"), dict) else {}
-    for item in dict_items(record.get("watch_value_specs")):
-        bank = watch_value_spec_bank(item)
-        try:
-            address = parse_int(item.get("address"))
-        except ValueError:
-            continue
-        if not watch_value_spec_observed_on_bus(record, address=address, bank=bank):
-            continue
-        value = item.get("value_hex") or values.get(str(item.get("name", "")))
-        bytes_value = parse_hex_byte_string(value)
-        if not bytes_value:
-            continue
-        for offset, byte in enumerate(bytes_value):
-            out[(address + offset) & 0xFFFF] = byte
-
-
-def watch_value_spec_observed_on_bus(record: dict[str, Any], *, address: int, bank: int | None) -> bool:
-    if bank is None:
-        return True
-    address &= 0xFFFF
-    state = bank_state_mapping(record)
-    if 0xD000 <= address <= 0xDFFF:
-        return bank_state_value(state, "wram") == bank
-    if 0x8000 <= address <= 0x9FFF:
-        return bank_state_value(state, "vram") == bank
-    if 0x4000 <= address <= 0x7FFF:
-        return bank_state_value(state, "rom") == bank
-    if 0xA000 <= address <= 0xBFFF:
-        enabled = bank_state_value(state, "sram_enabled")
-        return enabled != 0 and bank_state_value(state, "sram") == bank
-    return bank == 0
-
-
-def bank_state_value(state: dict[str, Any], key: str) -> int | None:
-    value = state.get(key)
-    if value in {None, ""}:
-        return None
-    try:
-        return parse_int(value)
-    except ValueError:
-        return None
-
-
-def watch_value_spec_bank(item: dict[str, Any]) -> int | None:
-    value = item.get("bank")
-    if value in {None, ""}:
-        return None
-    try:
-        return parse_int(value)
-    except ValueError:
-        return None
-
-
-def parse_hex_byte_string(value: Any) -> tuple[int, ...]:
-    text = str(value).strip().replace(" ", "").replace("_", "")
-    if text.startswith(("0x", "0X")):
-        text = text[2:]
-    if not text or len(text) % 2:
-        return ()
-    try:
-        return tuple(int(text[index : index + 2], 16) for index in range(0, len(text), 2))
-    except ValueError:
-        return ()
-
-
-def parse_bank_state(record: dict[str, Any]) -> tuple[tuple[str, int], ...]:
-    state = bank_state_mapping(record)
-    out: dict[str, int] = {}
-    for key in ("wram", "wram_raw", "vram", "vram_raw", "rom", "loaded_rom", "sram", "sram_enabled"):
-        value = state.get(key, record.get(f"{key}_bank"))
-        if value in {None, ""}:
-            continue
-        try:
-            out[key] = normalize_bank_state_value(key, parse_int(value))
-        except ValueError:
-            continue
-    if "wram" not in out and "wram_raw" in out:
-        out["wram"] = normalize_bank_state_value("wram", out["wram_raw"])
-    if "vram" not in out and "vram_raw" in out:
-        out["vram"] = normalize_bank_state_value("vram", out["vram_raw"])
-    return tuple(sorted(out.items()))
-
-
-def bank_state_mapping(record: dict[str, Any]) -> dict[str, Any]:
-    out = dict(record.get("bank_state")) if isinstance(record.get("bank_state"), dict) else {}
-    for item in dict_items(record.get("bank_state_records")):
-        name = str(item.get("name") or "")
-        if not name or name.endswith("_inferred") or name in out:
-            continue
-        value = parsed_bank_state_record_value(item.get("value"), value_hex=item.get("value_hex"))
-        if value is None:
-            continue
-        out[name] = value
-    return out
-
-
-def bank_state_record_conflicts(
-    record: dict[str, Any],
-    *,
-    seq: int,
-    bank: int,
-    pc: int,
-    pc_label: str,
-) -> list[dict[str, Any]]:
-    legacy = record.get("bank_state")
-    if not isinstance(legacy, dict):
-        return []
-    conflicts: list[dict[str, Any]] = []
-    for item in dict_items(record.get("bank_state_records")):
-        name = str(item.get("name") or "")
-        if not name or name.endswith("_inferred") or name not in legacy:
-            continue
-        legacy_value = parsed_bank_state_record_value(legacy.get(name))
-        typed_value = parsed_bank_state_record_value(item.get("value"), value_hex=item.get("value_hex"))
-        if legacy_value is None or typed_value is None:
-            continue
-        legacy_value = normalize_bank_state_value(name, legacy_value)
-        typed_value = normalize_bank_state_value(name, typed_value)
-        if legacy_value == typed_value:
-            continue
-        conflicts.append(
-            {
-                "key": name,
-                "legacy_value": legacy_value,
-                "typed_value": typed_value,
-                "typed_source": str(item.get("source") or ""),
-                "typed_state_kind": str(item.get("state_kind") or ""),
-                "conflict_kind": "value_mismatch",
-                "frame_pc": f"{bank & 0xFF:02X}:{pc & 0xFFFF:04X}",
-                "seq": seq,
-                "pc_label": pc_label,
-                "proof_action": "preferred_legacy_for_backward_compat",
-            }
-        )
-    return conflicts
-
-
-def parsed_bank_state_record_value(value: Any, *, value_hex: Any = None) -> int | None:
-    raw = value
-    if (raw is None or raw == "") and value_hex is not None and value_hex != "":
-        raw = f"0x{value_hex}"
-    if raw is None or raw == "":
-        return None
-    try:
-        return parse_int(raw)
-    except ValueError:
-        return None
-
-
 def bank_state_record_conflict_warnings(conflicts: list[dict[str, Any]]) -> list[str]:
     warnings: list[str] = []
     for conflict in conflicts[:8]:
@@ -1392,61 +1229,3 @@ def bank_state_record_conflict_warnings(conflicts: list[dict[str, Any]]) -> list
             f"action={conflict.get('proof_action', '')}"
         )
     return warnings
-
-
-def parse_bank_state_sources(record: dict[str, Any]) -> tuple[tuple[str, str], ...]:
-    out: dict[str, str] = {}
-    raw_sources = record.get("bank_state_sources")
-    if isinstance(raw_sources, dict):
-        out.update({str(key): str(value) for key, value in raw_sources.items() if str(value)})
-    for item in dict_items(record.get("bank_state_records")):
-        name = str(item.get("name") or "")
-        source = str(item.get("source") or "")
-        if name and source and name not in out:
-            out[name] = source
-    return tuple(sorted(out.items()))
-
-
-def normalize_bank_state_value(key: str, value: int) -> int:
-    value &= 0xFF
-    if key == "wram":
-        bank = value & 0x07
-        return bank if bank else 1
-    if key == "vram":
-        return value & 0x01
-    if key == "rom":
-        bank = value & 0x7F
-        return bank if bank else 1
-    return value
-
-
-def frame_register_known(frame: InstructionFrame, register: str) -> bool:
-    known = set(frame.known_registers)
-    register = register.upper()
-    if register in known:
-        return True
-    if register in {"H", "L"} and "HL" in known:
-        return True
-    return False
-
-
-def condition_true(condition: str, flags: int) -> bool:
-    zero = bool(flags & 0x80)
-    carry = bool(flags & 0x10)
-    return {
-        "nz": not zero,
-        "z": zero,
-        "nc": not carry,
-        "c": carry,
-    }[condition]
-
-
-def frame_condition_true(frame: InstructionFrame, condition: str) -> bool:
-    flags = frame_flags(frame)
-    return flags is not None and condition_true(condition, flags)
-
-
-def frame_flags(frame: InstructionFrame) -> int | None:
-    if not frame_register_known(frame, "F"):
-        return None
-    return int(frame.F) & 0xFF

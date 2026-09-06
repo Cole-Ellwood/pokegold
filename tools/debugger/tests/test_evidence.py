@@ -7,10 +7,22 @@ from tools.debugger.evidence import (
     bank_state_record,
     bank_state_records,
     evidence_atom,
+    evidence_atoms,
 )
 
 
 class EvidenceSchemaTests(unittest.TestCase):
+    def test_replay_basis_survives_evidence_formatting_exactly(self):
+        for basis in ({"inputs": {"frames": 1, "events": []}, "rng": {"basis": "captured in initial state"}},
+                      {"inputs": {"frames": 0, "events": [{"buttons": [], "released": None}]}}, {}, None):
+            with self.subTest(basis=basis):
+                atom = evidence_atom(claim_type="runtime.observation", origin="test", observation_type="replay",
+                                     proof_status="runtime_observed", scope={"state_basis": basis, "empty": ""})
+                self.assertIn("state_basis", atom["scope"])
+                self.assertEqual(atom["scope"]["state_basis"], basis)
+                self.assertNotIn("empty", atom["scope"])
+                self.assertEqual(evidence_atoms([atom])[0]["scope"]["state_basis"], basis)
+
     def test_evidence_atom_has_shared_proof_vector_axes(self) -> None:
         atom = evidence_atom(
             claim_type="reverse_query.last_writer",

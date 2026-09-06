@@ -228,6 +228,31 @@ def walk_trace_data(
     symbol_by_address: dict[str, str],
 ) -> None:
     if isinstance(data, dict):
+        if (data.get("kind") == "unified_debugger_runtime_experiment"
+                and data.get("valid") is True and data.get("executed") is True):
+            # Initial/final reads are observations, not inferred writes. Keep
+            # interventions separate so restoration cannot satisfy a baseline check.
+            mode = "baseline" if data.get("interventions") == [] else "intervention"
+            for phase in ("initial", "final"):
+                for symbol, value in data.get(phase, {}).get("watch_values", {}).items():
+                    observation = event_from_record(
+                        {"access": "read", "symbol": symbol, "value": value,
+                         "operation": f"{mode}.{phase}"},
+                        source=source, path=f"{path}.{phase}.watch_values.{symbol}",
+                        context={}, symbol_by_address=symbol_by_address,
+                    )
+                    events.append(observation)
+            for index, checkpoint in enumerate(data.get("events", [])):
+                for target in checkpoint.get("targets", []):
+                    for register, value in checkpoint.get("registers", {}).items():
+                        observation = event_from_record(
+                            {"pc": checkpoint["pc"], "bank": checkpoint["bank"],
+                             "pc_label": target, "value": value,
+                             "operation": f"{mode}.checkpoint.{register}"},
+                            source=source, path=f"{path}.events[{index}].registers.{register}",
+                            context={}, symbol_by_address=symbol_by_address,
+                        )
+                        events.append(observation)
         local_context = update_context(context, data)
         event = event_from_record(
             data,

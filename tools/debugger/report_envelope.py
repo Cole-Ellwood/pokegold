@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import subprocess
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from .catalog import ROOT
@@ -11,6 +12,22 @@ from .catalog import ROOT
 SCHEMA_VERSION = 1
 UNKNOWN_HASH = ""
 UNKNOWN_GIT_VALUE = "unknown"
+
+
+def replay_state_basis(save_state: Path | None, frames: int) -> dict[str, Any]:
+    """Identify a state replay with no newly dispatched input events.
+
+    The initial state's latched buttons/RNG remain part of that state's hash;
+    an empty event schedule does not assert that every button is released.
+    """
+    schedule = {"frames": frames, "events": []}
+    encoded = json.dumps(schedule, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {
+        "initial_state_sha256": sha256_file(save_state),
+        "input_log_sha256": hashlib.sha256(encoded).hexdigest().upper(),
+        "inputs": schedule,
+        "rng": {"basis": "captured in initial state" if save_state else "initial state not supplied"},
+    }
 
 # Generated proof artifacts and emulator scratch outputs. Proof identities
 # exclude these paths from their source basis so that refreshing or committing
@@ -51,6 +68,41 @@ def sha256_file(path: Path | str | None, *, root: Path = ROOT) -> str:
 
 def source_commit(root: Path = ROOT) -> str:
     return _git_stdout(root, "rev-parse", "HEAD") or UNKNOWN_GIT_VALUE
+
+
+def source_manifest_hash(root: Path) -> str:
+    """Verify declared source inputs in a history-free export, if supplied.
+
+    The manifest contains only paths, content hashes, and their combined hash.
+    It identifies that declared set; the independent evaluator owns whether the
+    set is complete. Generated build products are not implicitly added to it.
+    """
+    manifest = root / "source_manifest.json"
+    if not manifest.exists():
+        return UNKNOWN_HASH
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or set(data) != {"source_files", "source_tree_sha256"}:
+        raise ValueError("invalid source manifest fields")
+    files = data["source_files"]
+    if not isinstance(files, dict) or not files:
+        raise ValueError("source manifest has no source files")
+    digest = hashlib.sha256()
+    for name, expected in sorted(files.items()):
+        relative = PurePosixPath(name)
+        path = (root / name).resolve()
+        if (not name or "\\" in name or relative.as_posix() != name
+                or relative.is_absolute() or ".." in relative.parts
+                or not path.is_relative_to(root.resolve())):
+            raise ValueError("source manifest path is not a canonical path inside the export")
+        actual = sha256_file(path)
+        if not actual or actual != expected:
+            raise ValueError(f"source manifest content differs: {name}")
+        digest.update(name.encode("utf-8") + b"\0")
+        digest.update(bytes.fromhex(actual))
+    actual = digest.hexdigest().upper()
+    if actual != data["source_tree_sha256"]:
+        raise ValueError("source manifest tree hash differs")
+    return actual
 
 
 def source_tree_hash(

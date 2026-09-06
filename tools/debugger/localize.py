@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from collections import Counter
+import math
+import re
 
 from .catalog import ROOT, keyword_matches, triage_request
 from .mirrors import build_compare_plan
 from .reporting import load_reports
 from .slicing import build_slice_report
+from .provenance import LABEL_DEF_RE, collect_source_paths, display_path
 from .testgen import suggest_tests
 from .workflow import build_gate_plan, command_is_runnable
 
@@ -121,6 +125,7 @@ def build_localization_plan(
         symptom=symptom,
         loaded_reports=loaded_reports,
     )
+    signals.extend(retrieve_source_signals(symptom, root=root, limit=max_candidates))
     candidate_scores = score_candidates(signals)
     candidate_symbols = top_names(candidate_scores["symbols"], max_candidates)
     candidate_files = top_names(candidate_scores["files"], max_candidates)
@@ -227,8 +232,64 @@ def build_localization_plan(
         "known_limits": [
             "This command plans localization and minimization; it does not prove dynamic causality by itself.",
             "Treat static slice candidates as suspects until confirmed by watch, replay, trace, taint, or subsystem materialization.",
+            "Source retrieval ranks lexical matches in current assembly; comments and names are leads, not behavioral expectations or causal proof.",
         ],
     }
+
+
+def retrieval_terms(text: str) -> set[str]:
+    # Split source identifiers as well as prose, without a table of bug-specific
+    # synonyms or locations. Small inflection folding handles heal/heals/healing.
+    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
+    text = re.sub(r"([A-Z])([A-Z][a-z])", r"\1 \2", text)
+    stop = {"the", "and", "for", "from", "with", "this", "that", "when", "after",
+            "before", "into", "only", "does", "not", "has", "have", "but", "its",
+            "was", "are", "between", "instead", "should", "would", "my", "to", "of",
+            "in", "on", "at", "it", "is", "an", "be", "as"}
+    terms = set()
+    for term in re.findall(r"[a-zA-Z]{2,}", text.lower()):
+        if term in stop:
+            continue
+        if len(term) > 5 and term.endswith("ing"):
+            term = term[:-3]
+        elif len(term) > 4 and term.endswith("s") and not term.endswith("ss"):
+            term = term[:-1]
+        terms.add(term)
+    return terms
+
+
+def retrieve_source_signals(symptom: str, *, root: Path, limit: int) -> list[dict[str, Any]]:
+    query = retrieval_terms(symptom)
+    if not query or limit <= 0:
+        return []
+    documents = []
+    for path in collect_source_paths(root=root, include_docs=False, explicit_paths=()):
+        if path.suffix.lower() not in {".asm", ".inc"}:
+            continue
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        starts = [(i, match.group("label")) for i, line in enumerate(lines)
+                  if (match := LABEL_DEF_RE.match(line)) and not match.group("label").startswith(".")]
+        for index, (start, label) in enumerate(starts):
+            end = starts[index + 1][0] if index + 1 < len(starts) else len(lines)
+            block = lines[start:end]
+            terms = retrieval_terms("\n".join(block))
+            matched = query & terms
+            if len(matched) >= min(2, len(query)):
+                documents.append((path, label, start, block, terms, matched))
+    frequencies = Counter(term for document in documents for term in document[4] & query)
+    ranked = []
+    for path, label, start, block, terms, matched in documents:
+        score = sum(1 + math.log((1 + len(documents)) / frequencies[term]) for term in matched)
+        score *= len(matched) / len(query) / math.sqrt(1 + math.log(1 + len(terms)))
+        line_index = max(range(len(block)), key=lambda i: len(query & retrieval_terms(block[i])))
+        cite = f"{display_path(path, root=root)}:{start + line_index + 1}: {block[line_index].strip()}"
+        ranked.append((score, label, cite))
+    ranked.sort(key=lambda item: (-item[0], item[1], item[2]))
+    # File locations live in the citation. Adding one file-weight per matched
+    # function would incorrectly let a large file overwhelm every symbol.
+    return [signal("source_retrieval", symbol=label, source="current source",
+                   note=f"Lexical candidate, not proof: {cite}", weight=max(40, 90 - rank * 2))
+            for rank, (_, label, cite) in enumerate(ranked[:limit])]
 
 
 def collect_signals(
@@ -763,11 +824,23 @@ def signals_from_symptom(symptom: str) -> list[dict[str, Any]]:
 def score_candidates(signals: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
     symbol_scores: dict[str, int] = {}
     file_scores: dict[str, int] = {}
+    slice_symbols: dict[str, int] = {}
+    slice_files: dict[str, int] = {}
     for item in signals:
         weight = int(item.get("weight", 0))
         symbol_name = item.get("symbol")
         routine = item.get("routine")
         file_name = item.get("file")
+        if str(item.get("type", "")).startswith("slice_"):
+            # A call graph establishes connectivity, not independent evidence
+            # for every reference. Bound its influence on each candidate.
+            for name, value in ((symbol_name, weight), (routine, max(15, weight // 2))):
+                if name and not str(name).startswith("$"):
+                    slice_symbols[str(name)] = max(slice_symbols.get(str(name), 0), value)
+            if file_name:
+                name = normalize_path(str(file_name))
+                slice_files[name] = max(slice_files.get(name, 0), weight)
+            continue
         if symbol_name:
             symbol_scores[str(symbol_name)] = symbol_scores.get(str(symbol_name), 0) + weight
         if routine and not routine.startswith("$"):
@@ -775,6 +848,10 @@ def score_candidates(signals: list[dict[str, Any]]) -> dict[str, dict[str, int]]
         if file_name:
             normalized = normalize_path(str(file_name))
             file_scores[normalized] = file_scores.get(normalized, 0) + weight
+    for name, value in slice_symbols.items():
+        symbol_scores[name] = symbol_scores.get(name, 0) + value
+    for name, value in slice_files.items():
+        file_scores[name] = file_scores.get(name, 0) + value
     return {"symbols": symbol_scores, "files": file_scores}
 
 

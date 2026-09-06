@@ -102,6 +102,118 @@ def build_provenance_report(
     }
 
 
+def build_source_mapping_report(
+    *, root: Path, destination: Path, candidate: dict[str, Any], bank: int, pc: int,
+    build, rom_path: str = "pokegold.gbc", symbols_path: str = "pokegold.sym",
+) -> dict[str, Any]:
+    """Map a direct or far source call through an isolated label-only rebuild.
+
+    root is a prepared RGBDS build tree; destination must be new and outside it.
+    The trusted host supplies build(destination), returning a CompletedProcess.
+    No command comes from candidate evidence. Object caches and .local artifacts are excluded so the
+    annotated sources must be assembled. Invalid inputs raise before copying;
+    failed builds retain their artifacts and return no mapping evidence.
+    """
+    import shutil
+    from .clobber_graph import build_static_call_graph
+    from .evidence import evidence_atom
+
+    root, destination = root.resolve(), destination.resolve()
+    if destination.exists():
+        raise FileExistsError(destination)
+    if destination.is_relative_to(root):
+        raise ValueError("mapping destination must be outside the reference tree")
+    if not isinstance(candidate, dict):
+        raise ValueError("source candidate must be an object")
+    for key in ("source_file", "source_symbol", "source_sha256", "instruction"):
+        if not isinstance(candidate.get(key), str) or not candidate[key]:
+            raise ValueError(f"missing candidate {key}")
+    names = (candidate["source_file"], rom_path, symbols_path)
+    if any(Path(name).is_absolute() or not (root / name).resolve().is_relative_to(root)
+           or not (root / name).is_file() for name in names):
+        raise ValueError("source, ROM, and symbols must be files within the reference tree")
+    source = root / candidate["source_file"]
+    payload = source.read_bytes()
+    lines = payload.splitlines(keepends=True)
+    line = candidate.get("source_line")
+    if (type(line) is not int or not 1 <= line <= len(lines)
+            or sha256_file(source) != candidate["source_sha256"]
+            or lines[line - 1].decode("utf-8").strip() != candidate["instruction"]):
+        raise ValueError("stale candidate source, line, or instruction")
+    rom = root / rom_path
+    if (type(bank) is not int or type(pc) is not int or bank < 0 or not 0 <= pc < 0x8000
+            or (bank == 0) != (pc < 0x4000)
+            or bank * 0x4000 + pc % 0x4000 + 3 > rom.stat().st_size):
+        raise ValueError("call address is outside the ROM bank")
+    graph = build_static_call_graph(root=root, source_files=(candidate["source_file"],))
+    edges = [edge for edge in graph.edges_from(candidate["source_symbol"])
+             if edge.line_number == line and edge.call_type in {"call", "farcall"} and edge.condition is None
+             and edge.instruction == candidate["instruction"]]
+    if len(edges) != 1:
+        raise ValueError("candidate does not identify a source call in its block")
+    original_symbols = parse_symbol_table(root / symbols_path)
+    offset = bank * 0x4000 + pc % 0x4000
+    rom_bytes = rom.read_bytes()
+    if edges[0].call_type == "farcall":
+        target = original_symbols.get(edges[0].callee, {})
+        target_bank, target_pc = target.get("bank"), target.get("address")
+        if (target_bank is None or target_pc is None or not 0 <= target_bank <= 255
+                or pc % 0x4000 + 6 > 0x4000
+                or rom_bytes[offset:offset + 6] != bytes([0x3E, target_bank, 0x21, target_pc & 255, target_pc >> 8, 0xCF])):
+            raise ValueError("recorded location does not match the source far-call target and setup")
+    elif rom_bytes[offset] != 0xCD:
+        raise ValueError("recorded location is not a direct unconditional CALL")
+    local_marker = f".__debugger_source_line_{line}"
+    marker = graph.blocks[candidate["source_symbol"]].parent_label + local_marker
+    if local_marker.encode() in payload or marker in original_symbols:
+        raise ValueError("source mapping marker already exists")
+    reference_hashes = {name: sha256_file(root / name) for name in names}
+    lines.insert(line - 1, (local_marker + "\n").encode())
+    annotated = b"".join(lines)
+    report = build_provenance_report(root=root, symbols_path=symbols_path,
+                                     symbols=(candidate["source_symbol"],), source_files=(candidate["source_file"],))
+    report.update(valid=False, evidence_atoms=[], rom_sha256=reference_hashes[rom_path],
+                  execution={"executed": False}, source_mapping={"candidate": dict(candidate), "marker": marker,
+                  "destination": str(destination), "object_cache_excluded": True})
+    try:
+        shutil.copytree(root, destination, ignore=shutil.ignore_patterns(".git", ".local", "*.o"))
+        (destination / candidate["source_file"]).write_bytes(annotated)
+        report["execution"]["executed"] = True
+        completed = build(destination)
+        report["execution"].update(returncode=completed.returncode, stdout=completed.stdout, stderr=completed.stderr,
+                                     command=completed.args if isinstance(completed.args, str) else [str(arg) for arg in completed.args])
+        if completed.returncode != 0:
+            raise ValueError("source mapping build failed")
+        if any(sha256_file(root / name) != digest for name, digest in reference_hashes.items()):
+            raise ValueError("reference changed during build")
+        if (destination / candidate["source_file"]).read_bytes() != annotated:
+            raise ValueError("rebuilt source differs beyond the inserted marker")
+        if sha256_file(destination / rom_path) != reference_hashes[rom_path]:
+            raise ValueError("label-only build changed the ROM")
+        rebuilt_symbols = parse_symbol_table(destination / symbols_path)
+        linked = rebuilt_symbols.pop(marker, None)
+        if not linked or linked["bank"] != bank or linked["address"] != pc:
+            raise ValueError("linked source marker differs from the observed call address")
+        if rebuilt_symbols != original_symbols:
+            raise ValueError("label-only build changed original symbols")
+        report["evidence_atoms"] = [evidence_atom(
+            claim_type="provenance.source_mapping", origin="provenance", observation_type="label_only_rebuild",
+            proof_status="mirror_passed", source_report=str(destination / symbols_path), source_kind="linker_symbols",
+            precision={"source_file": candidate["source_file"], "source_symbol": candidate["source_symbol"],
+                       "source_line": line, "bank": bank, "pc": pc},
+            validation={"rom_identical": True, "original_symbols_unchanged": True, "only_label_added": True},
+            detail={"source_sha256": reference_hashes[candidate["source_file"]],
+                    "instrumented_source_sha256": sha256_file(destination / candidate["source_file"]),
+                    "rebuilt_symbols_sha256": sha256_file(destination / symbols_path)},
+        )]
+    except Exception as exc:
+        report["errors"].append(f"source mapping failed: {exc}")
+    report["valid"] = not report["errors"]
+    report["error_count"] = len(report["errors"])
+    report["known_limits"].append("This verifies a source call address, not causal correctness; the host owns build configuration and toolchain provenance.")
+    return report
+
+
 def parse_symbol_table(path: Path) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():

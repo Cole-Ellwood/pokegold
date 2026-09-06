@@ -11,6 +11,62 @@ from tools.debugger.expect import build_expectation_report
 
 
 class ExpectationTests(unittest.TestCase):
+    def test_runtime_checkpoint_invariant_rejects_correct_output_for_wrong_reason(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expectation = {"type": "event_observed", "event_type": "control_flow",
+                           "pc_symbol": "Caller.shift", "operation": "baseline.checkpoint.register_d", "value": "02"}
+            (root / "expected.json").write_text(json.dumps(expectation))
+            for mode in ("correct", "wrong_value", "wrong_checkpoint", "wrong_register", "after_only", "intervention", "missing", "plan", "invalid"):
+                with self.subTest(mode=mode):
+                    event = {"seq": 0, "bank": 1, "pc": 16384, "targets": ["Caller.shift"],
+                             "registers": {"register_d": "02"}, "after_registers": {"register_d": "02"}}
+                    trial = {"kind": "unified_debugger_runtime_experiment", "valid": True, "executed": True,
+                             "interventions": [], "events": [event],
+                             "final": {"watch_values": {"wBattleMonHP": "002E"}}}
+                    if mode == "wrong_value":
+                        event["registers"]["register_d"] = "CB"
+                    elif mode == "wrong_checkpoint":
+                        event["targets"] = ["Other.shift"]
+                    elif mode == "wrong_register":
+                        event["registers"] = {"register_e": "02"}
+                    elif mode == "after_only":
+                        event["registers"] = {}
+                    elif mode == "intervention":
+                        trial["interventions"] = [{"register": "D", "value": 2, "applied": True}]
+                    elif mode == "missing":
+                        trial["events"] = []
+                    elif mode == "plan":
+                        trial["executed"] = False
+                    elif mode == "invalid":
+                        trial["valid"] = False
+                    (root / "trial.json").write_text(json.dumps(trial))
+                    report = build_expectation_report(reports=("trial.json",), expectation_files=("expected.json",), root=root)
+                    self.assertEqual(report["passed"], mode == "correct")
+
+    def test_runtime_final_expectation_distinguishes_baseline_from_intervention(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            expectation = {"type": "event_observed", "event_type": "memory_read",
+                           "symbol": "wBattleMonHP", "operation": "baseline.final", "value": "002E"}
+            (root / "expected.json").write_text(json.dumps(expectation))
+            for mode in ("correct", "broken", "initial_only", "intervened", "plan", "invalid", "missing"):
+                with self.subTest(mode=mode):
+                    baseline = {"kind": "unified_debugger_runtime_experiment", "valid": mode != "invalid",
+                                "executed": mode != "plan", "interventions": [],
+                                "initial": {"watch_values": {"wBattleMonHP": "002E" if mode == "initial_only" else "002C"}},
+                                "final": {"watch_values": {"wBattleMonHP": "002D" if mode in ("broken", "initial_only") else "002E"}}}
+                    if mode == "missing":
+                        baseline["final"] = {}
+                    if mode == "intervened":
+                        baseline["interventions"] = [{"register": "D", "value": 2, "applied": True}]
+                    restored = {**baseline, "valid": True, "executed": True,
+                                "interventions": [{"register": "D", "value": 2, "applied": True}],
+                                "final": {"watch_values": {"wBattleMonHP": "002E"}}}
+                    (root / "trial.json").write_text(json.dumps({"reports": [baseline, restored]}))
+                    report = build_expectation_report(reports=("trial.json",), expectation_files=("expected.json",), root=root)
+                    self.assertEqual(report["passed"], mode == "correct", report)
+
     def test_expectation_report_passes_event_and_rule(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

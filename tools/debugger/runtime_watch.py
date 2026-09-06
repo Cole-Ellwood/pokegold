@@ -27,6 +27,10 @@ DEFAULT_RESET_SENTINEL_ADDRESSES = (
 )
 WORD_WATCH_SYMBOLS = {
     "wCurDamage",
+    "wBattleMonHP",
+    "wBattleMonMaxHP",
+    "wEnemyMonHP",
+    "wEnemyMonMaxHP",
     "wScriptPos",
     "wScriptAfterPointer",
     "wQueuedScriptAddr",
@@ -681,6 +685,11 @@ def read_watch_bytes(pyboy, watch: dict[str, Any]) -> tuple[int, ...]:
     address = int(watch["address"])
     size = int(watch["size"])
     values: list[int] = []
+    if 0xA000 <= address <= 0xBFFF:
+        # Symbol watches name physical SRAM banks, even while the CPU bus is
+        # disabled or another bank is selected. Do not change mapper registers.
+        return tuple(int(pyboy.memory[bank, current]) if current <= 0xBFFF else int(pyboy.memory[current])
+                     for current in range(address, address + size))
     if 0xD000 <= address <= 0xDFFF and bank:
         try:
             for offset in range(size):
@@ -747,10 +756,12 @@ def register_snapshot(pyboy) -> dict[str, str]:
     if register_file is None:
         return registers
     for name in ("A", "F", "B", "C", "D", "E", "H", "L", "SP", "PC"):
-        if not hasattr(register_file, name):
-            continue
         try:
-            value = int(getattr(register_file, name))
+            # PyBoy exposes HL as a pair rather than separate H/L properties.
+            if name in {"H", "L"} and hasattr(register_file, "HL"):
+                value = (int(register_file.HL) >> (8 if name == "H" else 0)) & 0xFF
+            else:
+                value = int(getattr(register_file, name))
         except Exception:
             continue
         width = 4 if name in {"SP", "PC"} else 2

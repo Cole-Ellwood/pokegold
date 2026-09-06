@@ -18,6 +18,40 @@ from tools.debugger.reporting import build_static_report
 
 
 class StaticReportTests(unittest.TestCase):
+    def test_controlled_hypotheses_precede_generic_findings_without_becoming_proof(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fixture = root / "input source"
+            fixture.mkdir()
+            atom = {"claim_type": "diagnosis.hypothesis", "observation_type": "controlled_runtime_comparison",
+                    "proof_status": "instruction_observed", "precision": {"source_file": "engine/unit.asm", "source_line": 12, "source_symbol": "Caller"},
+                    "source_report": str(root / "mapping.json"), "detail": {
+                        "intervention": {"at": "Callee", "register": "A", "expected": 17, "value": 2},
+                        "reproducer": str(root / "baseline.json"), "regression": str(root / "contract.json"),
+                        "observations": [{"trace": str(root / "trace.jsonl"), "call_input_change": {"before": "02", "after": "11"},
+                                          "counted_pointer_loop": {"iterations": 17, "stride": 47, "proof_status": "instruction_observed"},
+                                          "pointer_write": {"store": {"bank": 0, "address": 0xA91F, "value": 0}},
+                                          "causal_chain": [{"seq": 1}, {"seq": 2}]}],
+                        "uncertainty": "Corrected-source regression remains unverified. <script>bad()</script>"}}
+            for present in (False, True):
+                (root / "investigation.json").write_text(json.dumps({"kind": "unified_debugger_investigation_run", "root": str(fixture),
+                                                                    "valid": True, "evidence_atoms": [atom] if present else []}))
+                for format in ("markdown", "html"):
+                    with self.subTest(present=present, format=format):
+                        report = build_static_report(reports=("investigation.json",), output_format=format, root=root)
+                        content = report["content"]
+                        if not present:
+                            self.assertNotIn("Controlled hypotheses", content)
+                            continue
+                        self.assertLess(content.index("Controlled hypotheses"), content.index("Highest Priority Findings"))
+                        for text in ("Caller", "Callee", "17 iterations", "47", "A91F", "2 instruction citations", "not a complete root-cause proof", "Corrected-source regression remains unverified"):
+                            self.assertIn(text, content)
+                        self.assertIn("baseline.json", content)
+                        self.assertIn("contract.json", content)
+                        self.assertIn("mapping.json", content)
+                        self.assertIn("input%20source" if format == "html" else "input source", content)
+                        self.assertNotIn("<script>bad()</script>", content)
+
     def test_static_report_summarizes_findings_and_commands(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
