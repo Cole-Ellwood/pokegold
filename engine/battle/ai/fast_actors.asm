@@ -55,9 +55,7 @@ BossAI_FastImportActorHP::
 	ld a, [hl]
 	ld [FSA_MAX_HP + 1], a
 	ld c, a
-	ld a, [FSA_WEIGHT]
-	ld hl, $a000
-	call BossAI_FastBuildHPTable
+	farcall BossAI_FastBuildOwnHPTableFar
 	ld [FSA_HP_MODE], a
 	push de
 	ld d, a
@@ -89,9 +87,7 @@ BossAI_FastImportActorHP::
 	ld a, [hl]
 	ld [FSA_PLAYER + 3], a
 	ld c, a
-	ld a, 128
-	ld hl, $a180
-	call BossAI_FastBuildHPTable
+	farcall BossAI_FastBuildPlayerHPTableFar
 	ld [FSA_PLAYER + 37], a
 	push de
 	ld d, a

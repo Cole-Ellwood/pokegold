@@ -8,7 +8,7 @@ def main():
     moves = ("TACKLE", "FIRE_BLAST", "GIGA_DRAIN", "DOUBLE_EDGE", "STRUGGLE",
              "SEISMIC_TOSS", "DRAGON_RAGE", "RECOVER", "REST", "SYNTHESIS",
              "PURSUIT", "SPLASH", "SNORE", "DREAM_EATER", "EXPLOSION",
-             "FALSE_SWIPE", "SUPER_FANG", "FURY_SWIPES", "HARDEN", "AMNESIA")
+             "FALSE_SWIPE", "SUPER_FANG", "FURY_SWIPES", "HARDEN", "AMNESIA", "BARRIER")
     count = 0
     with open_harness("pokegold_ai_reference") as h:
         h.seed_battle(Mon.of("CHARIZARD", 50), Mon.of("DEWGONG", 50))
@@ -57,9 +57,15 @@ def main():
                     expected[62:64] = context[33:35]
                     mem[0xc948] = context[72]
                     recovery = move_name in ("RECOVER", "REST", "SYNTHESIS")
-                    represented = recovery or move_name not in ("HARDEN", "AMNESIA")
+                    boost = {"HARDEN": (1, 1), "BARRIER": (2, 1), "AMNESIA": (2, 4)}.get(move_name)
+                    represented = True
                     maximum = int.from_bytes(context[49:51], "big")
-                    if recovery:
+                    if boost:
+                        # The boss's own boost: opcode 7, stages/axis in the defense
+                        # bytes, check flags only (no effect or hit uncertainty).
+                        expected[4], expected[9] = 7, 0
+                        expected[49], expected[50] = boost[1], boost[0]
+                    elif recovery:
                         denominator = 1 if move_name == "REST" else 2
                         if move_name == "SYNTHESIS":
                             index = 2 - int(not h.rd("wLinkMode") and h.rd("wTimeOfDay") != 1)

@@ -21,6 +21,14 @@ DEF FSA_ENTRY_HP EQU FSA_OWN + 6
 DEF FSA_ENTRY_PHI EQU FSA_OWN + 8
 DEF FSA_WEIGHT EQU FSA_OWN + 34
 DEF FSA_HP_MODE EQU FSA_OWN + 37
+; The boss's own defense boosts, for the active defender: one slot per distinct
+; boost (0 Defense+1, 1 Defense+2, 2 Special Defense+2) holding the truncated
+; (attack, defense) formula operands an incoming attack on that axis meets at
+; the raised own defense, a bit per staged slot, and the incoming regime index
+; of the start state.
+DEF FSA_OWN_VARIANTS EQU FSA_OWN + 16
+DEF FSA_OWN_VARIANT_MASK EQU FSA_OWN + 22
+DEF FSA_START_REGIME EQU FSA_OWN + 23
 ASSERT FSB_ENTRY_LOSS + 2 <= $a4f8
 ASSERT FSA_OWN + 40 == $a420
 
@@ -367,4 +375,77 @@ BossAI_FastProjectPlayerDefense::
 	ld [hl], c
 	ld a, [wPlayerScreens]
 	call BossAI_BuildPublicDamageContext.screen
+	ret
+
+BossAI_FastProjectOwnDefense::
+; B=stages (1 or 2), C=axis (1 Defense, 4 Special Defense), DE=context whose
+; live AD is this defender's owned context (direction 1, AD_OWN_SLOT set).
+; BC=the own defense an incoming attack on that axis meets after the boss's
+; own boost: the raised stat (BossAI_ProjectRaisedDefense on the combat
+; inputs), then the own screen and the known own item, exactly as
+; ValuePublicExchange.ProjectedDefense applies a recorded own boost to a
+; reply. The AD bytes it uses are restored. DE/SP preserved; AF/HL scratch.
+	push bc
+	push de
+; .DefenseInputs re-derives the axis from the live AD's move: stage a boost
+; move with this axis and stage count there for the duration.
+	ad_address AD_MOVE
+	ld a, [hl]
+	ld [FSB_PLAN_REGIME], a ; compile-time scratch, dead here
+	ld a, c
+	cp 4
+	ld a, AMNESIA
+	jr z, .move_ready
+	dec b
+	ld a, HARDEN
+	jr z, .move_ready
+	ld a, BARRIER
+.move_ready
+	ld [hl], a
+	pop de
+	pop bc
+	push bc
+	push de
+	call BossAI_ValuePublicExchange.DefenseInputs ; A=stage, HL=raw, DE=effective, B=steps
+	call BossAI_ProjectRaisedDefense ; BC=raised stat
+	pop de
+	push bc
+	ad_address AD_MOVE
+	ld a, [FSB_PLAN_REGIME]
+	ld [hl], a
+	pop bc
+	ad_address AD_DEFENSE
+	ld a, [hli]
+	ld [FSB_PLAN_PATCH], a ; compile-time scratch, dead here
+	ld a, [hl]
+	ld [FSB_PLAN_DELTAS], a
+	ld [hl], c
+	dec hl
+	ld [hl], b
+	pop bc
+	ad_address AD_CATEGORY
+	ld a, [hl]
+	ld [FSB_PLAN_OPCODE], a
+	ld a, c
+	cp 4
+	ld a, NORMAL ; any physical type selects the physical screen and items
+	jr nz, .category
+	ld a, SPECIAL
+.category
+	ld [hl], a
+	ld a, [wEnemyScreens]
+	call BossAI_BuildPublicDamageContext.screen
+	call BossAI_BuildPublicDamageContext.defender_stat_item
+	ad_address AD_DEFENSE
+	ld a, [hli]
+	ld b, a
+	ld a, [hl]
+	ld c, a
+	ld a, [FSB_PLAN_DELTAS]
+	ld [hld], a
+	ld a, [FSB_PLAN_PATCH]
+	ld [hl], a
+	ad_address AD_CATEGORY
+	ld a, [FSB_PLAN_OPCODE]
+	ld [hl], a
 	ret

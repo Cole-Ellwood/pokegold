@@ -91,6 +91,7 @@ DEF FSM_TEMP EQU $a5d8 ; eight bytes
 DEF FSM_OPCODE EQU FSM_TEMP + 5
 DEF FSM_DELTAS EQU FSM_TEMP + 6 ; store per-regime max-min deltas
 DEF FSM_HALVE EQU FSM_TEMP + 7 ; Selfdestruct: halved truncated defense
+DEF FSM_VARIANT EQU FSM_TEMP + 4 ; own defensive variant slot+1 while an amount compiles against it, 0 none (the header's uncertainty temporary is dead by then)
 ASSERT FSM_TEMP + 8 <= FSN
 
 ; In-bank mirrors. Bytes are the authoritative data files' bytes.
@@ -839,6 +840,7 @@ BossAI_FastCompileReplyNative::
 	xor a
 	ld [FSM_DELTAS], a
 	ld [FSM_HALVE], a
+	ld [FSM_VARIANT], a
 	ld a, [FSM_EFFECT]
 	cp EFFECT_SELFDESTRUCT
 	jr nz, .not_selfdestruct
@@ -1535,6 +1537,9 @@ BossAI_FastCompileReplyNative::
 	ld [FSM_MIN + 1], a
 .store
 ; BC=raw maximum, FSM_MIN=raw minimum; both supported
+	ld a, [FSM_VARIANT]
+	and a
+	jp nz, .StoreVariant
 	push bc
 	ld a, [FSM_REGIME]
 	add a
@@ -1603,11 +1608,58 @@ BossAI_FastCompileReplyNative::
 	or [hl]
 	ld [hl], a
 	ret
+.StoreVariant
+; BC=raw maximum at the raised own defense, FSM_MIN=its minimum. The word goes
+; to the record offset in FSM_TEMP+3; the slot's valid bit, plus its range bit
+; when the endpoints differ, into FSR_VARIANT_FLAGS.
+	ld a, [FSM_TEMP + 3]
+	add LOW(FSR_BASE)
+	ld l, a
+	ld a, 0
+	adc HIGH(FSR_BASE)
+	ld h, a
+	add hl, de
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld a, [FSM_VARIANT]
+	dec a
+	add a
+	ld l, a ; 2*slot: the valid bit's index
+	ld a, 1
+	jr z, .variant_bit_ready
+.variant_bit
+	add a
+	dec l
+	jr nz, .variant_bit
+.variant_bit_ready
+	ld l, a
+	ld a, [FSM_MIN]
+	cp b
+	jr nz, .variant_range
+	ld a, [FSM_MIN + 1]
+	cp c
+	jr z, .variant_flags
+.variant_range
+	ld a, l
+	add a
+	or l
+	ld l, a
+.variant_flags
+	ld a, l
+	ld hl, FSR_BASE + FSR_VARIANT_FLAGS
+	add hl, de
+	or [hl]
+	ld [hl], a
+	ret
 .Base
 ; BC=capped formula base plus two for this category and power, from the
-; cache when present. Selfdestruct's halved defense is never cached.
+; cache when present. Selfdestruct's halved defense and the own defensive
+; variants are never cached.
 	ld a, [FSM_HALVE]
-	and a
+	ld b, a
+	ld a, [FSM_VARIANT]
+	or b
 	jp nz, .Formula
 	ld a, [FSM_CATEGORY]
 	and a
@@ -1667,21 +1719,11 @@ BossAI_FastCompileReplyNative::
 	call .Mul16By8 ; A:HL=product
 	ld b, 0 ; product < 2^16 (42*250)
 	push hl
-	ld a, [FSM_CATEGORY]
-	and a
-	ld a, [FSN_PHYS_ATTACK]
-	jr z, .attack_ready
-	ld a, [FSN_SPEC_ATTACK]
-.attack_ready
+	call .AttackOperand
 	pop bc
 	call .Mul16By8 ; A:HL=24-bit product
 	ld b, a
-	ld a, [FSM_CATEGORY]
-	and a
-	ld a, [FSN_PHYS_DEFENSE]
-	jr z, .defense_ready
-	ld a, [FSN_SPEC_DEFENSE]
-.defense_ready
+	call .DefenseOperand
 	ld c, a
 	ld a, [FSM_HALVE]
 	and a
@@ -1712,6 +1754,49 @@ BossAI_FastCompileReplyNative::
 	ld b, h
 	ld c, l
 	ret
+.AttackOperand
+; A=the category's truncated attack byte, or the own variant's. HL scratch.
+	ld a, [FSM_VARIANT]
+	and a
+	jr nz, .variant_attack
+	ld a, [FSM_CATEGORY]
+	and a
+	ld a, [FSN_PHYS_ATTACK]
+	ret z
+	ld a, [FSN_SPEC_ATTACK]
+	ret
+.variant_attack
+	call .VariantSlot
+	ld a, [hl]
+	ret
+.DefenseOperand
+; A=the category's truncated defense byte, or the own variant's. B/HL preserved.
+	ld a, [FSM_VARIANT]
+	and a
+	jr nz, .variant_defense
+	ld a, [FSM_CATEGORY]
+	and a
+	ld a, [FSN_PHYS_DEFENSE]
+	ret z
+	ld a, [FSN_SPEC_DEFENSE]
+	ret
+.variant_defense
+	push hl
+	call .VariantSlot
+	inc hl
+	ld a, [hl]
+	pop hl
+	ret
+.VariantSlot
+; HL=own variant slot FSM_VARIANT-1: its attack byte, then its defense byte.
+	ld a, [FSM_VARIANT]
+	dec a
+	add a
+	add LOW(FSA_OWN_VARIANTS)
+	ld l, a
+	ld h, HIGH(FSA_OWN_VARIANTS)
+	ret
+ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 
 .Weather
 	ld a, [FSN_WEATHER]
@@ -2234,4 +2319,53 @@ BossAI_FastCompileReplyNative::
 	ld b, h
 	ld c, l
 	pop de
+	ret
+
+BossAI_FastCompileReplyVariants::
+; DE=context whose compact reply BossAI_FastCompileReplyNative just compiled
+; (its compile scratch is live). For a plain damage reply, compile the raw
+; maximum and range bit at the start regime against each own defensive
+; variant on the reply's category (FSA_OWN_VARIANTS) into the record's variant
+; bytes; other opcodes, or no own boost plan, write nothing. SRAM0 open;
+; DE/SP preserved; AF/BC/HL scratch.
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_DAMAGE
+	ret nz
+	ld a, [FSA_OWN_VARIANT_MASK]
+	and a
+	ret z
+	ld b, a
+	ld a, [FSA_START_REGIME]
+	ld [FSM_REGIME], a
+	ld a, [FSM_CATEGORY]
+	and a
+	jr nz, .special_variant
+	bit 0, b
+	jr z, .physical_second
+	ld a, 1 ; Defense+1
+	ld c, FSR_VARIANT_A
+	call .Variant
+	ld a, [FSA_OWN_VARIANT_MASK]
+	ld b, a
+.physical_second
+	bit 1, b
+	ret z
+	ld a, 2 ; Defense+2
+	ld c, FSR_VARIANT_B
+	jr .Variant
+.special_variant
+	bit 2, b
+	ret z
+	ld a, 3 ; Special Defense+2
+	ld c, FSR_VARIANT_A
+.Variant
+; A=slot+1, C=record offset of the variant word.
+	ld [FSM_VARIANT], a
+	ld a, c
+	ld [FSM_TEMP + 3], a
+	call BossAI_FastCompileReplyNative.Amount
+	xor a
+	ld [FSM_VARIANT], a
 	ret

@@ -11,7 +11,11 @@ commit fc7f0a75 (`battle: fix cross-bank softlock on type-immune
 fail-text path`). Use `farcall` for cross-bank calls.
 
 Reads `pokegold.sym` (linker output) for label -> bank assignments. Run
-`make pokegold.gbc` first if the sym file is missing.
+`make pokegold.gbc` first if the sym file is missing. When
+`pokegold_ai_reference.sym` exists it is checked as a second layout: the
+BOSS_AI_REFERENCE-only sections (the fast selector) exist only there, and a
+label's bank may differ between the two builds, so each sym is checked on
+its own.
 
 Caveats / scope:
 - Same-bank calls are silent.
@@ -44,6 +48,7 @@ from pathlib import Path
 from asm_scan import AsmFile, ROOT, TOP_LABEL_RE, SECTION_RE, iter_asm_files
 
 SYM_PATH = ROOT / "pokegold.sym"
+REFERENCE_SYM_PATH = ROOT / "pokegold_ai_reference.sym"
 
 SYM_LINE_RE = re.compile(
     r"^([0-9a-fA-F]{2}):([0-9a-fA-F]{4})\s+([A-Za-z_][A-Za-z0-9_.]*)\s*$"
@@ -57,20 +62,27 @@ CALL_SITE_RE = re.compile(
 SCAN_DIRS = ["engine", "home", "data", "audio", "macros", "gfx", "ram"]
 
 
-def load_sym() -> dict[str, str]:
-    if not SYM_PATH.exists():
+def load_sym(path: Path = SYM_PATH) -> dict[str, str]:
+    if not path.exists():
         sys.stderr.write(
-            f"error: {SYM_PATH} missing; run `make pokegold.gbc` first\n"
+            f"error: {path} missing; run `make pokegold.gbc` first\n"
         )
         sys.exit(2)
     sym: dict[str, str] = {}
-    for line in SYM_PATH.read_text(encoding="utf-8").splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         m = SYM_LINE_RE.match(line)
         if not m:
             continue
         bank, _addr, name = m.groups()
         sym[name] = bank.lower()
     return sym
+
+
+def load_syms() -> list[tuple[Path, dict[str, str]]]:
+    syms = [(SYM_PATH, load_sym(SYM_PATH))]
+    if REFERENCE_SYM_PATH.exists():
+        syms.append((REFERENCE_SYM_PATH, load_sym(REFERENCE_SYM_PATH)))
+    return syms
 
 
 def cross_bank_asm_files() -> list[AsmFile]:
@@ -114,20 +126,26 @@ def scan_file(asm_file: AsmFile, sym: dict[str, str]) -> list[tuple[int, str, st
 
 
 def main() -> int:
-    sym = load_sym()
+    syms = load_syms()
+    asm_files = cross_bank_asm_files()
     total = 0
-    for asm_file in cross_bank_asm_files():
-        viols = scan_file(asm_file, sym)
-        if not viols:
-            continue
-        rel = asm_file.path.relative_to(ROOT).as_posix()
-        for ln, op, tgt, cb, tb in viols:
-            print(
-                f"{rel}:{ln}: cross-bank `{op} {tgt}` "
-                f"(caller bank 0x{cb}, target bank 0x{tb}) — "
-                f"use `farcall {tgt}` instead"
-            )
-            total += 1
+    seen: set[tuple[str, int, str]] = set()
+    for sym_path, sym in syms:
+        for asm_file in asm_files:
+            viols = scan_file(asm_file, sym)
+            if not viols:
+                continue
+            rel = asm_file.path.relative_to(ROOT).as_posix()
+            for ln, op, tgt, cb, tb in viols:
+                if (rel, ln, tgt) in seen:
+                    continue
+                seen.add((rel, ln, tgt))
+                print(
+                    f"{rel}:{ln}: cross-bank `{op} {tgt}` "
+                    f"(caller bank 0x{cb}, target bank 0x{tb} in {sym_path.name}) — "
+                    f"use `farcall {tgt}` instead"
+                )
+                total += 1
     if total:
         print(f"\nFAIL: {total} cross-bank call(s) detected")
         return 1

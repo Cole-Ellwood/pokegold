@@ -1,6 +1,6 @@
 ; Page-aligned event mask table for the exact selector's HP threshold
-; construction (see fast_hp.asm). Included first in the fast-prototype
-; section so the alignment lands on the bank start and wastes nothing.
+; construction (see fast_hp.asm). Included first in the aligned construction
+; section so the alignment wastes nothing.
 ALIGN 8
 BossAI_FastHPEventMasks:
 for n, 256

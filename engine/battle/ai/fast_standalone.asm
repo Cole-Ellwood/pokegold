@@ -26,7 +26,7 @@ BossAI_FastBuildOwnedStandalone::
 	ld a, [hl]
 	and a
 	jp z, .reject_pop
-	cp FSP_SELFDESTRUCT + 1
+	cp FSP_BOOST + 1
 	jp nc, .reject_pop
 	pop bc
 	ld a, c

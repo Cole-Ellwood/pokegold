@@ -37,12 +37,12 @@ BossAI_ComparePublicActionsFastPrototype::
 ; evaluated natively; ordinary pairs may use the direct fallback (status 1).
 	ld c, a
 	push bc
-	call BossAI_FastPreparePublicInputs
+	farcall BossAI_FastPreparePublicInputsFar
 	pop bc
 	jp nc, .reference
 	xor a
 	call OpenSRAM
-	call BossAI_FastClearResults
+	farcall BossAI_FastClearResults
 	ad_address FS_LEGAL_MASK
 	xor a
 	ld [hli], a
@@ -72,7 +72,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [FSC_FAULT]
 	and a
 	jp nz, .restart ; an incoming plan ran at a regime the mask did not cover
-	jp BossAI_FastFinalizeResults
+	farcall BossAI_FastFinalizeResults
+	ret
 
 .replacement
 ; One absent reply, weight 1: T=2*65536*(1024+entry delta) from HP potentials.
@@ -98,9 +99,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr c, .valid_hp
 	jp nz, .restart
 .valid_hp
-	ld a, [FSA_WEIGHT]
-	ld hl, $a000
-	call BossAI_FastBuildHPTable
+	farcall BossAI_FastBuildOwnHPTableFar
 	jp nc, .restart
 	ld [FSA_HP_MODE], a
 	ld a, [FSA_START_HP]
@@ -131,7 +130,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr nz, .replacement_slot
 	ad_address FS_BACKEND
 	ld [hl], 0
-	jp BossAI_FastFinalizeResults
+	farcall BossAI_FastFinalizeResults
+	ret
 
 .restart
 	call CloseSRAM ; discard native state before the old JC lifetime begins
@@ -430,6 +430,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	call BossAI_FastImportActorHP
 	ret nc
 	call BossAI_FastPrepareReplyFacts
+	call .OwnVariants
 	call .ImportOrderFacts
 	call .TieOrder
 	ld a, [FSA_SETUP_FLAGS]
@@ -489,6 +490,13 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld hl, FSA_PLAYER
 	call .ReplyRegimeBit
 	ld b, a
+	ld c, $ff
+.start_regime_index
+	inc c
+	rra
+	jr nc, .start_regime_index
+	ld a, c
+	ld [FSA_START_REGIME], a
 	ld c, 0
 .regime_plan
 	push bc
@@ -961,6 +969,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	call .PrepareReply
 	jr nc, .reply_fallback
+	call BossAI_FastCompileReplyVariants
 	call .ReplyStandalone
 	ret nc
 	call .AccumulateIncoming
@@ -1375,6 +1384,13 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [hl]
 	cp FSR_BOOST
 	jr z, .pair_boost
+	ld b, a
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	cp FSP_BOOST
+	jr z, .pair_own_boost
+	ld a, b
 	cp FSR_SELFDESTRUCT
 	jr z, .pair_full
 	ld a, FSP_OPCODE
@@ -1399,6 +1415,20 @@ BossAI_ComparePublicActionsFastPrototype::
 .pair_boost
 	pop af
 	call .BoostPair
+	jr .pair_total
+.pair_own_boost
+; B=reply opcode. The boss's own boost is native unless the reply's amounts
+; depend on HP advanced within the action (multihit, False Swipe) or it is a
+; Selfdestruct: those keep the exact direct fallback.
+	ld a, b
+	cp FSR_MULTI
+	jr z, .pair_fallback
+	cp FSR_FALSE_SWIPE
+	jr z, .pair_fallback
+	cp FSR_SELFDESTRUCT
+	jr z, .pair_fallback
+	pop af
+	call .OwnBoostPair
 	jr .pair_total
 .pair_native
 	pop af
@@ -1646,6 +1676,309 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, 1
 	ld [FSV_OVERRIDE], a
 	scf
+	ret
+.OwnBoostPair
+; C=plan slot, A=order. The own plan is a deterministic defense boost: mass
+; 256, no HP change, check flags only. Reply first leaves the reply's
+; standalone transition (correction zero). Own first raises the own defense
+; for the reply's hit: when the plan can act and the reply carries a variant
+; for this boost (FSR_VARIANT_FLAGS), the reply runs from the start state with
+; the variant amount and the correction is V(that terminal)-V(start) minus
+; the reply's hit delta. Flags: the reply's standalone flags per positive
+; reply event, the own check flags whenever an order reaches the boss (own
+; first always, reply first when the reply's successor leaves both alive),
+; and on the own-first hit path with a live variant the reply's flags at the
+; variant instead of its standalone hit flags. Outputs FPK_TOTAL/FPK_FLAGS as
+; the factored pair does; carry set.
+	ld [FPK_ORDER], a
+	ld a, c
+	ld [FPK_INDEX], a
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+	ld a, 1
+	ld [FPK_MODE], a
+	ld [FPK_OWN_Z], a ; 256
+	xor a
+	ld [FPK_OWN_Z + 1], a
+	ld [FPK_K], a
+	ld [FPK_K + 1], a
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	call BossAI_FastNormalizedPair.Decode
+	ld a, b
+	ld [FPK_REPLY_Z], a
+	ld a, c
+	ld [FPK_REPLY_Z + 1], a
+	ld a, [FPK_ORDER]
+	ld b, 0
+	cp 2
+	jr nz, .own_boost_flags
+	ld b, 1 << AV_UNKNOWN_ORDER_F
+.own_boost_flags
+	call .OwnBoostReached
+	call .identity_reply_reached ; the reply's standalone flags per positive event
+	ld a, b
+	ld [FPK_FLAGS], a
+	ld a, [FPK_ORDER]
+	cp 1
+	jp z, .own_boost_total ; reply first: the boost lands after the hit
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_CAN_ACT
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jp z, .own_boost_total ; no boost happens
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jp z, .own_boost_total ; no reply hit mass
+	call .OwnBoostVariant
+	jp nc, .own_boost_total ; the reply carries no amount for this boost
+; the reply's hit at the variant, from the start state
+	call BossAI_FastNormalizedPair.InitialContinuation
+	ld hl, $a448
+	xor a
+	call BossAI_FastExecuteReplyPlan
+	xor a
+	ld [FSV_OVERRIDE], a
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .own_boost_variant_flags
+; own first only: the reply's standalone hit flags do not apply on this path;
+; rebuild the union from the own check flags, the miss path and the variant
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_CHECK_FLAGS
+	call .PlanAddress
+	ld b, [hl]
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	cp 255
+	jr z, .own_boost_miss_flags ; no miss mass
+	ld hl, FSR_BASE + FSR_STANDALONE_MISS_FLAGS
+	add hl, de
+	ld a, [hl]
+	or b
+	ld b, a
+.own_boost_miss_flags
+	ld a, b
+	ld [FPK_FLAGS], a
+.own_boost_variant_flags
+	ld a, [$a458]
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
+	push de
+	call BossAI_FastBuildOwnedStandalone.Delta ; BC=V(terminal)-V(start)
+	pop de
+	ld hl, FSR_BASE + FSR_HIT_DELTA + 1
+	add hl, de
+	ld a, c
+	sub [hl]
+	ld c, a
+	dec hl
+	ld a, b
+	sbc [hl]
+	ld b, a
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .own_boost_k
+	sla c
+	rl b ; a single order counts twice, like the factored pair
+.own_boost_k
+	ld a, b
+	ld [FPK_K], a
+	ld a, c
+	ld [FPK_K + 1], a
+.own_boost_total
+	push de
+	call BossAI_FastNormalizedPair.Total
+	pop de
+	scf
+	ret
+.OwnBoostReached
+; B=flag union. Adds the own plan's check flags when an order reaches the
+; boss: own first always (both alive at the start state), reply first when
+; some positive reply event leaves both alive.
+	ld a, [FPK_ORDER]
+	cp 1
+	jr nz, .own_boost_reached
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .own_boost_miss_successor
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	call .BothAlive
+	jr c, .own_boost_reached
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+.own_boost_miss_successor
+	cp 255
+	ret z ; no miss mass
+	ld hl, FSR_BASE + FSR_MISS_HP
+	add hl, de
+	call .BothAlive
+	ret nc
+.own_boost_reached
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_CHECK_FLAGS
+	call .PlanAddress
+	ld a, [hl]
+	or b
+	ld b, a
+	ret
+.BothAlive
+; HL=successor state (own HP word, player HP word). Carry when both live.
+	ld a, [hli]
+	or [hl]
+	ret z
+	inc hl
+	ld a, [hli]
+	or [hl]
+	ret z
+	scf
+	ret
+.OwnBoostVariant
+; FSV_OVERRIDE (active) from the reply's variant for this plan's boost. Carry
+; when the reply carries a valid variant for it.
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_DEFENSE_AXIS
+	call .PlanAddress
+	ld a, [hli]
+	ld b, [hl] ; B=stages
+	ld c, FSR_VARIANT_A
+	cp 4
+	ld a, 4 ; Special Defense+2: bits 4/5
+	jr z, .own_variant_bits
+	xor a ; Defense+1: bits 0/1
+	dec b
+	jr z, .own_variant_bits
+	ld a, 2 ; Defense+2: bits 2/3
+	ld c, FSR_VARIANT_B
+.own_variant_bits
+	ld hl, FSR_BASE + FSR_VARIANT_FLAGS
+	add hl, de
+	ld b, [hl]
+	and a
+	jr z, .own_variant_shifted
+.own_variant_shift
+	srl b
+	dec a
+	jr nz, .own_variant_shift
+.own_variant_shifted
+	ld a, b
+	and 1
+	ret z ; no variant: carry clear
+	ld a, b
+	rra ; the range bit into bit0
+	and 1
+	or 2 ; supported: the compile stored an amount
+	ld [FSV_OVERRIDE + 3], a
+	ld l, c
+	ld h, 0
+	ld bc, FSR_BASE
+	add hl, bc
+	add hl, de
+	ld a, [hli]
+	ld [FSV_OVERRIDE + 1], a
+	ld a, [hl]
+	ld [FSV_OVERRIDE + 2], a
+	ld a, 1
+	ld [FSV_OVERRIDE], a
+	scf
+	ret
+.OwnVariants
+; FSA_OWN_VARIANTS and FSA_OWN_VARIANT_MASK for the boss's own boost plans:
+; one slot per distinct boost (0 Defense+1, 1 Defense+2, 2 Special Defense+2)
+; holding the truncated (attack, defense) operands an incoming attack on that
+; axis meets at the raised own defense (BossAI_FastProjectOwnDefense, then
+; the kernel's joint quartering with the player's prepared attack). The live
+; AD must be this defender's owned context.
+	xor a
+	ld [FSA_OWN_VARIANT_MASK], a
+	ld c, 0
+.own_variant_plan
+	push bc
+	call .PlanIndex
+	cp $ff
+	jr z, .own_variant_next
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	cp FSP_BOOST
+	jr nz, .own_variant_next
+	ld a, FSP_DEFENSE_AXIS
+	call .PlanAddress
+	ld a, [hli]
+	ld c, a ; axis
+	ld b, [hl] ; stages
+	cp 4
+	ld a, 2
+	jr z, .own_variant_slot
+	ld a, b
+	dec a
+.own_variant_slot
+	ld [FSM_TEMP + 4], a ; slot (compile scratch, no compile in progress)
+	add LOW(.SlotBits)
+	ld l, a
+	adc HIGH(.SlotBits)
+	sub l
+	ld h, a
+	ld a, [hl] ; the slot's bit
+	ld hl, FSA_OWN_VARIANT_MASK
+	push af
+	and [hl]
+	jr z, .own_variant_new
+	pop af
+	jr .own_variant_next ; staged by an equivalent boost already
+.own_variant_new
+	pop af
+	or [hl]
+	ld [hl], a
+	farcall BossAI_FastProjectOwnDefense ; BC=own defense after the boost
+	ld a, b
+	ld [FSM_TEMP + 2], a
+	ld a, c
+	ld [FSM_TEMP + 3], a
+	ld a, [FSM_TEMP + 4]
+	cp 2
+	jr z, .own_variant_special
+	ad_address AV_PREPARED_STATS ; the player's physical attack word
+	jr .own_variant_attack
+.own_variant_special
+	ad_address AV_PREPARED_STATS + 4 ; the player's special attack word
+.own_variant_attack
+	ld a, [hli]
+	ld [FSM_TEMP], a
+	ld a, [hl]
+	ld [FSM_TEMP + 1], a
+	ld hl, FSM_TEMP
+	call BossAI_FastPrepareReplyFacts.TruncateStats ; B=attack byte, C=defense byte
+	ld a, [FSM_TEMP + 4]
+	add a
+	add LOW(FSA_OWN_VARIANTS)
+	ld l, a
+	ld h, HIGH(FSA_OWN_VARIANTS)
+	ld [hl], b
+	inc hl
+	ld [hl], c
+.own_variant_next
+	pop bc
+	inc c
+	ld a, c
+	cp 4
+	jr c, .own_variant_plan
 	ret
 .IdentityReplyFlags
 ; HL=plan successor state for one positive own event. Adds the reply's

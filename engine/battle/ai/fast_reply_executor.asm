@@ -6,7 +6,9 @@ BossAI_FastExecuteReplyPlan::
 ; A=original event0hit/1miss. SRAM0 open; actors' maximum HP populated.
 ; DE/SP preserved. Carry=accepted; unsupported opcode rejects without
 ; continuation writes. Invalid event rejects without any writes.
-; Fixed defense/status/other non-HP facts must match the compiled plan.
+; Fixed defense/status/other non-HP facts must match the compiled plan, except
+; that FSV_OVERRIDE (flag exactly 1) replaces the raw maximum and range bit
+; with a defensive variant for the selector's own-boost pairs.
 	ld b, 0
 	jr .validate
 .FlagsOnly
@@ -126,11 +128,20 @@ BossAI_FastExecuteReplyPlan::
 	jr z, .support
 	cp FSR_FANG
 	jr z, .support
+	ld a, [FSV_OVERRIDE]
+	cp 1 ; exactly 1 is live; poisoned or cleared scratch is not
+	jr nz, .plan_range
+	ld a, [FSV_OVERRIDE + 3]
+	bit 0, a
+	jr z, .support
+	jr .range_flag
+.plan_range
 	ld a, FSR_RANGE
 	call .PlanAddress
 	ld a, [FSE_MASK]
 	and [hl]
 	jr z, .support
+.range_flag
 	ld a, [FSE_FLAGS]
 	or 1 << AV_AMOUNT_RANGE_F
 	ld [FSE_FLAGS], a
@@ -167,6 +178,15 @@ BossAI_FastExecuteReplyPlan::
 	ld a, [FSE_MODE]
 	and a
 	jp nz, .done
+	ld a, [FSV_OVERRIDE]
+	cp 1 ; exactly 1 is live; poisoned or cleared scratch is not
+	jr nz, .plan_raw
+	ld a, [FSV_OVERRIDE + 1]
+	ld b, a
+	ld a, [FSV_OVERRIDE + 2]
+	ld c, a
+	jr .Script
+.plan_raw
 	ld a, [FSE_REGIME]
 	add a
 	add FSR_RAW_MAX

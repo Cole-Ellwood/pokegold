@@ -16,7 +16,7 @@ def main():
         initial_sp = int(rf.SP)
         assert h.invoke("OpenSRAM", {"A": 0})
         for move_name in ("TACKLE", "FIRE_BLAST", "GIGA_DRAIN", "DOUBLE_EDGE",
-                          "SEISMIC_TOSS", "RECOVER", "REST", "SPLASH"):
+                          "SEISMIC_TOSS", "RECOVER", "REST", "SPLASH", "HARDEN"):
             for item in (0, ITEMS["LIFE_ORB"], ITEMS["SHELL_BELL"]):
                 h.wr("wEnemyMonItem", item)
                 for own_max, player_max in ((9, 127), (999, 1023), (65535, 1536)):

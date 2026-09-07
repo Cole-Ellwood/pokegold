@@ -33,6 +33,15 @@ ASSERT FS_CONTEXT_SIZE == 472
 ASSERT FS_CONTEXT_SIZE <= wBattle - wBattleAnimTileDict
 ASSERT FS_RESULTS + FS_RECORD_BYTES == $a2f8
 
+; Input preparation, result clearing and finalization run once per decision.
+; They live in their own section behind far entries so the hot fast-prototype
+; bank keeps its space; carry and BC survive the far return.
+PUSHS
+SECTION "Boss AI Fast Results", ROMX
+
+BossAI_FastPreparePublicInputsFar::
+; farcall entry: C=decision kind (the macro clobbers A), B=traversal.
+	ld a, c
 BossAI_FastPreparePublicInputs::
 ; DE=472-byte owned context, A=decision0/2, B=traversal0..15. SRAM closed.
 ; DE preserved, carry=accepted. No selected index or complete vector yet.
@@ -173,7 +182,7 @@ BossAI_FastFinalizeResults::
 	jp nc, .reject
 .mass_ok
 	push hl
-	call BossAI_FastDivide24By16
+	farcall BossAI_FastDivide24By16 ; memory operands; BC and carry survive the far return
 	pop hl
 	ld a, [FS_DIVIDEND]
 	and a
@@ -293,3 +302,4 @@ BossAI_FastFinalizeResults::
 	ld a, [FS_RESULT_PTR + 1]
 	ld l, a
 	ret
+POPS

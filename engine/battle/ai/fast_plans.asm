@@ -46,6 +46,7 @@ DEF FSP_MULTI EQU 3 ; multi-hit damage: per-hit endpoints, HP advanced hit by hi
 DEF FSP_FANG EQU 4 ; Super Fang: half the target's current HP at execution
 DEF FSP_FALSE_SWIPE EQU 5 ; single hit capped at target HP-1 at execution
 DEF FSP_SELFDESTRUCT EQU 6 ; user faints before its hit/miss check; halved defense
+DEF FSP_BOOST EQU 7 ; the boss's own defense boost: deterministic, no HP change, stages/axis at FSP_DEFENSE_STAGE/AXIS
 ASSERT FSP_BASE + 4 * FSP_SIZE == FSA_OWN
 
 ; Compiler scratch is in the existing producer bridge, after entry loss.
@@ -79,8 +80,8 @@ ENDM
 
 BossAI_FastCompileOwnedPlan::
 ; C=original PP slot0..3, DE=prepared owned AD/AV context, SRAM bank0 open.
-; Carry=represented recovery/single-hit amount plan. Clear means an explicit
-; fallback opcode (or invalid input, rejected without writes). No transitions
+; Carry=represented recovery/single-hit amount/family/defense-boost plan. Clear
+; means an explicit fallback opcode (or invalid input, rejected without writes). No transitions
 ; or standalone moments are computed here; caller supplies actor state.
 ; Writes only selected plan + bridge; AD range/output scratch may change.
 ; Restores source flags and maximum postroll; AV and DE/SP are preserved.
@@ -137,7 +138,7 @@ BossAI_FastCompileOwnedPlan::
 	fsp_context_byte AD_POSTROLL, FSP_MIN_POSTROLL
 	fsp_context_byte AD_MAX_POSTROLL, FSP_MAX_POSTROLL
 	call BossAI_ValuePublicExchange.DefenseAxis
-	jp c, .invalid ; zero opcode, no amount/support masks
+	jr c, .boost
 	ld a, [FSB_PREFIX_RECOVERY]
 	and a
 	jr z, .damage
@@ -146,6 +147,22 @@ BossAI_FastCompileOwnedPlan::
 	ld a, [FSB_PREFIX_QUOTA + 1]
 	fsp_store FSP_RECOVERY_QUOTA + 1
 	ld a, FSP_RECOVERY
+	fsp_store FSP_OPCODE
+	scf
+	ret
+.boost
+; B=stages, C=axis. The boss's own Harden/Amnesia: deterministic, no HP
+; change, check flags only. The reply amounts it lowers are compiled per reply
+; against the raised own defense (FSR_VARIANT_FLAGS).
+	push bc
+	ld a, b
+	fsp_store FSP_DEFENSE_STAGE
+	pop bc
+	ld a, c
+	fsp_store FSP_DEFENSE_AXIS
+	xor a
+	fsp_store FSP_DAMAGE_FLAGS
+	ld a, FSP_BOOST
 	fsp_store FSP_OPCODE
 	scf
 	ret

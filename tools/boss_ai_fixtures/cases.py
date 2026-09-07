@@ -1403,3 +1403,24 @@ CASES.append(Case(id="joint_defense_transitions",path="strategy/joint-actions",
     boss=Mon.of("SNORLAX",50,["BARRIER","AMNESIA","SCRATCH","SURF"]),
     player=Mon.of("SNORLAX",50,["BARRIER","AMNESIA","SCRATCH","SURF"]),
     extra={},entry=(),expect={},joint_check={"revealed":["BARRIER","AMNESIA","SCRATCH","SURF"],"check_accuracy":True}))
+
+# The boss's own defense boosts against plain replies in both single orders
+# (the tie is joint_defense_transitions): Defense+1 twice over, Defense+2 and
+# Special Defense+2 behind both screens, both axes under Eviolite with the
+# boss moving second, and a multihit reply that keeps the direct fallback.
+_boost_replies = ["BODY_SLAM", "SURF", "SEISMIC_TOSS", "DOUBLE_EDGE"]
+for name, boss, player, extra, revealed in (
+    ("own_harden_first", Mon.of("PIDGEOT",50,["HARDEN","WITHDRAW","TACKLE","GUST"]),
+     Mon.of("SNORLAX",50,["BODY_SLAM"]), {}, _boost_replies),
+    ("own_barrier_screens_first", Mon.of("ALAKAZAM",50,["BARRIER","AMNESIA","PSYCHIC_M","RECOVER"]),
+     Mon.of("SNORLAX",50,["BODY_SLAM"]), {"wEnemyScreens": 1 << 3 | 1 << 4}, _boost_replies),
+    ("own_boosts_eviolite_slow", Mon.of("SLOWPOKE",50,["AMNESIA","WITHDRAW","SURF","REST"]),
+     Mon.of("ALAKAZAM",50,["PSYCHIC_M"]), {"wEnemyMonItem": ITEMS["EVOLITE"]},
+     ["PSYCHIC_M", "THUNDERBOLT", "SEISMIC_TOSS", "TRI_ATTACK"]),
+    ("own_harden_multihit", Mon.of("PIDGEOT",50,["HARDEN","TACKLE"]),
+     Mon.of("SNORLAX",50,["FURY_ATTACK"]), {}, ["FURY_ATTACK", "BODY_SLAM", "FALSE_SWIPE", "SURF"]),
+):
+    CASES.append(Case(id="joint_"+name,path="strategy/joint-actions",
+        pins="the boss's own defense boosts lower the replies that follow them in every order, with screens and items",
+        boss=boss,player=player,extra=extra,entry=(),expect={},
+        joint_check={"revealed":revealed,"check_accuracy":True}))

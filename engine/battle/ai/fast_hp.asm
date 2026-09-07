@@ -15,6 +15,29 @@ DEF FHP_ACC_REM EQU FS_MATH + 9
 DEF FHP_NEXT EQU FS_MATH + 10
 DEF FHP_RANK EQU FS_MATH + 12
 
+; Construction runs once per defender: it lives in its own aligned section
+; behind far entries, with the mask table it indexes, so the hot
+; fast-prototype bank keeps its space. The lookups further down stay hot.
+PUSHS
+SECTION "Boss AI Fast HP Tables", ROMX, ALIGN[8]
+INCLUDE "engine/battle/ai/fast_hp_masks.asm"
+
+BossAI_FastBuildOwnHPTableFar::
+; farcall entry for the own reservation: BC=max HP, weight from FSA_WEIGHT.
+; The far return leaves A=mode (mirrored through C) and carry as below.
+	ld a, [FSA_WEIGHT]
+	ld hl, $a000
+	call BossAI_FastBuildHPTable
+	ld c, a
+	ret
+BossAI_FastBuildPlayerHPTableFar::
+; farcall entry for the player reservation (weight 128), same outputs.
+	ld a, 128
+	ld hl, $a180
+	call BossAI_FastBuildHPTable
+	ld c, a
+	ret
+
 BossAI_FastBuildHPTable::
 ; HL=$a000 owned reservation or $a180 player reservation. BC=max HP (>0).
 ; A=weight: owned 128/192, player 128. SRAM bank0 open. DE preserved.
@@ -93,7 +116,7 @@ BossAI_FastBuildHPTable::
 	ld [FS_DIVIDEND + 2], a
 	ld a, d
 	ld [FS_DIVISOR + 1], a
-	call BossAI_FastDivide24By16
+	farcall BossAI_FastDivide24By16 ; memory operands; BC and carry survive the far return
 	ld a, c
 	ld [FHP_STEP_REM], a
 	ld a, [FS_DIVIDEND + 1]
@@ -352,10 +375,11 @@ BossAI_FastBuildHPRankOwn192:
 BossAI_FastBuildHPRankPlayer128:
 	fhp_rank_kernel 128, $a180
 PURGE fhp_rank_kernel
+POPS
 
 ; BossAI_FastHPEventMasks (same-bank, byte-indexed ROM data that removes
 ; pointer arithmetic from every threshold event) lives in fast_hp_masks.asm,
-; first in the section so its page alignment costs no bank space.
+; first in the construction section so its page alignment costs no bank space.
 
 BossAI_FastHPDirect::
 ; HL=table, BC=h (0<=h<=M). A=floor(W*h/M). DE preserved.

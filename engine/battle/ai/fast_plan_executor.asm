@@ -76,7 +76,7 @@ BossAI_FastExecuteOwnedPlan::
 	ld a, [hl]
 	and a
 	jr z, .unrepresented
-	cp FSP_SELFDESTRUCT + 1
+	cp FSP_BOOST + 1
 	jr c, .represented
 .unrepresented
 	pop de
@@ -110,6 +110,8 @@ BossAI_FastExecuteOwnedPlan::
 	ld a, FSP_OPCODE
 	call .PlanAddress
 	ld a, [hl]
+	cp FSP_BOOST
+	jp z, .done ; check flags only; the boost acts through the replies' variants
 	cp FSP_RECOVERY
 	jp z, .recovery
 	ld [FSE_OPCODE], a
