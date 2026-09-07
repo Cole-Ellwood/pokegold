@@ -1,7 +1,11 @@
 ; Multiplier ratios for accuracy from modifier -6 to +6
 ; (for other stats, see data/battle/stat_multipliers.asm).
 
+IF DEF(BOSSAI_EMIT_LOCAL_ACCURACY)
+BossAI_FastAccuracyLevelMultipliers: ; in-bank mirror for the offline AI reference
+ELSE
 AccuracyLevelMultipliers:
+ENDC
 	db  33, 100 ; -6 =  33%
 	db  36, 100 ; -5 =  36%
 	db  43, 100 ; -4 =  43%

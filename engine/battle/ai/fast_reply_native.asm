@@ -1,0 +1,1797 @@
+; Native compact reply compiler. It writes the same 48-byte record as
+; BossAI_FastCompileReplyPlan (fast_reply_plans.asm) for an incoming move
+; without running the public producers per reply: move facts come from
+; in-bank mirrors of the authoritative tables, defender facts are prepared
+; once per epoch from the producer templates, and the damage base for each
+; category/power pair is cached. Every rule below is a transcription of the
+; producer path it replaces (BuildPreparedIncoming, FinishPreparedIncoming,
+; PublicHitFacts, the flag exports and the single-hit damage kernel); the
+; differential fixture tools/boss_ai_fixtures/fast_reply_native.py holds it
+; byte-for-byte against that path over every move.
+
+; Per-defender facts, 32 bytes in the formerly uncommitted tail.
+DEF FSN EQU $a5e0
+DEF FSN_LEVEL EQU FSN + 0
+DEF FSN_PLAYER_TYPES EQU FSN + 1 ; two bytes
+DEF FSN_OWN_TYPES EQU FSN + 3 ; two bytes
+DEF FSN_WEATHER EQU FSN + 5
+DEF FSN_FLAGS EQU FSN + 6 ; template AD_FLAGS (status/identified/substitute/balloon)
+DEF FSN_GUARDS EQU FSN + 7 ; bit0 bench Ditto, bit1 player transformed
+DEF FSN_ACC_STAGE EQU FSN + 8 ; player accuracy stage
+DEF FSN_EVA_STAGE EQU FSN + 9 ; own evasion stage
+DEF FSN_OWN_SS5 EQU FSN + 10
+DEF FSN_PLAYER_SS4 EQU FSN + 11
+DEF FSN_OWN_SS3 EQU FSN + 12
+DEF FSN_POWDER EQU FSN + 13 ; Bright Powder subtraction, 0 none
+DEF FSN_FLYING EQU FSN + 14 ; 0, 26 or 27: Flying attacker accuracy numerator
+DEF FSN_PSYCHIC EQU FSN + 15 ; own Psychic typing: a negation chance exists
+DEF FSN_POISON EQU FSN + 16 ; own Poison typing: contact retaliation
+DEF FSN_PLAYER_STATUS EQU FSN + 17
+DEF FSN_PLAYER_SS3 EQU FSN + 18
+DEF FSN_OWN_ITEM EQU FSN + 19
+DEF FSN_HELMET EQU FSN + 20 ; two bytes, Helmet quota or 0
+DEF FSN_OUTRAGE EQU FSN + 22 ; 1 when Outrage is physical for this player
+DEF FSN_PHYS_ATTACK EQU FSN + 23 ; truncated low bytes for the formula
+DEF FSN_PHYS_DEFENSE EQU FSN + 24
+DEF FSN_SPEC_ATTACK EQU FSN + 25
+DEF FSN_SPEC_DEFENSE EQU FSN + 26
+DEF FSN_STEEL EQU FSN + 27
+DEF FSN_MINIMIZED EQU FSN + 28
+DEF FSN_OWN_STATUS EQU FSN + 29
+DEF FSN_SWITCH EQU FSN + 30 ; 1 when the defender is a switch candidate (Pursuit)
+DEF FSN_FOCUS EQU FSN + 31 ; known own Focus Band parameter (survival chance), 0 none
+ASSERT FSN + 32 <= $a600
+; Base+2 caches per category, indexed by power/5, zero = not computed.
+; Physical: 36 words split across the base-state and group areas; special:
+; 51 words in the dead outgoing/incoming template bytes (89..190), which the
+; direct fallback evaluator never reads or writes.
+DEF FSN_PHYS_CACHE_LOW EQU $a590 ; indices 0..23
+DEF FSN_PHYS_CACHE_HIGH EQU $a4f8 ; indices 24..35
+DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
+ASSERT FSN_PHYS_CACHE_LOW + 48 <= FSK_OWN
+ASSERT FSN_PHYS_CACHE_HIGH + 24 <= $a510
+ASSERT FSN_SPEC_CACHE + 102 <= AV_PREPARED_IN_DAMAGE
+; Compile scratch (pair scratch is not live while a reply compiles).
+DEF FSM_EFFECT EQU $a560
+DEF FSM_POWER EQU $a561
+DEF FSM_TYPE EQU $a562
+DEF FSM_ACCURACY EQU $a563
+DEF FSM_CATEGORY EQU $a564 ; 0 physical, 1 special
+DEF FSM_POSTROLL EQU $a565
+DEF FSM_MAX_POSTROLL EQU $a566
+DEF FSM_UNSUPPORTED EQU $a567
+DEF FSM_MIN_HITS EQU $a568
+DEF FSM_MAX_HITS EQU $a569
+DEF FSM_FLAGS EQU $a56a ; AD_FLAGS for the current regime
+DEF FSM_MATCHUP EQU $a56b
+DEF FSM_AMOUNT EQU $a56c ; two bytes, working amount
+DEF FSM_MIN EQU $a56e ; two bytes
+DEF FSM_CONTACT EQU $a570
+DEF FSM_MOVE EQU $a571
+DEF FSM_MASK EQU $a572
+DEF FSM_REGIME EQU $a573
+DEF FSM_STRUGGLE EQU $a574
+DEF FSM_NEGATION EQU $a575
+DEF FSM_CHECK_FLAGS EQU $a576
+DEF FSM_CAN_ACT EQU $a577
+ASSERT FSM_CAN_ACT < $a578
+DEF FSM_TEMP EQU $a5d8 ; eight bytes
+ASSERT FSM_TEMP + 8 <= FSN
+
+; In-bank mirrors. Bytes are the authoritative data files' bytes.
+DEF BOSSAI_EMIT_LOCAL_MOVES EQU 1
+INCLUDE "data/moves/moves.asm"
+PURGE BOSSAI_EMIT_LOCAL_MOVES
+DEF BOSSAI_EMIT_LOCAL_CONTACT_FLAGS EQU 1
+INCLUDE "data/moves/contact_flags.asm"
+PURGE BOSSAI_EMIT_LOCAL_CONTACT_FLAGS
+DEF BOSSAI_EMIT_LOCAL_PRIORITIES EQU 1
+INCLUDE "data/moves/effects_priorities.asm"
+PURGE BOSSAI_EMIT_LOCAL_PRIORITIES
+DEF BOSSAI_EMIT_LOCAL_ACCURACY EQU 1
+INCLUDE "data/battle/accuracy_multipliers.asm"
+PURGE BOSSAI_EMIT_LOCAL_ACCURACY
+DEF BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST EQU 1
+INCLUDE "data/types/type_matchups.asm"
+PURGE BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST
+BossAI_FastTypeMatchupIndex:
+	dw BossAI_FastTypeMatchups.NORMAL, BossAI_FastTypeMatchups.NORMAL_FORESIGHT
+	dw BossAI_FastTypeMatchups.FIGHTING, BossAI_FastTypeMatchups.FIGHTING_FORESIGHT
+	dw BossAI_FastTypeMatchups.FLYING, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.POISON, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GROUND, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ROCK, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END ; BIRD
+	dw BossAI_FastTypeMatchups.BUG, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GHOST, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.STEEL, BossAI_FastTypeMatchups.END
+REPT SPECIAL - STEEL - 1
+	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END
+ENDR
+	dw BossAI_FastTypeMatchups.FIRE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.WATER, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GRASS, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ELECTRIC, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.PSYCHIC_TYPE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ICE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.DRAGON, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.DARK, BossAI_FastTypeMatchups.END
+ASSERT @ - BossAI_FastTypeMatchupIndex == TYPES_END * 4
+ASSERT BANK(BossAI_FastMoves) == BANK(BossAI_FastTypeMatchupIndex)
+
+BossAI_FastPrepareReplyFacts::
+; DE=context after the defender's PreparePublicAction (incoming actor
+; template and both stat pairs are current), AV_SLOT=defender, AV_KIND=
+; candidate kind. Fills FSN from the templates and the public battle state
+; the producers read per reply, and invalidates the base caches. SRAM0 open;
+; DE/SP preserved.
+	ad_address AV_PREPARED_ACTOR + AD_LEVEL
+	ld a, [hl]
+	ld [FSN_LEVEL], a
+	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_TYPES
+	ld a, [hli]
+	ld [FSN_PLAYER_TYPES], a
+	ld a, [hli]
+	ld [FSN_PLAYER_TYPES + 1], a
+	ld a, [hli]
+	ld [FSN_OWN_TYPES], a
+	ld a, [hl]
+	ld [FSN_OWN_TYPES + 1], a
+	ad_address AV_PREPARED_ACTOR + AD_WEATHER
+	ld a, [hl]
+	ld [FSN_WEATHER], a
+	ad_address AV_PREPARED_ACTOR + AD_FLAGS
+	ld a, [hl]
+	and (1 << AD_IDENTIFIED_F) | (1 << AD_DEFENDER_STATUS_F) | (1 << AD_SUBSTITUTE_F) | (1 << AD_BALLOON_F)
+	ld [FSN_FLAGS], a
+	ad_address AV_KIND
+	ld a, [hl]
+	cp AV_SWITCH_ACTION
+	ld a, 0
+	jr nz, .kind_ready
+	inc a
+.kind_ready
+	ld [FSN_SWITCH], a
+; player facts
+	ld a, [wPlayerAccLevel]
+	ld [FSN_ACC_STAGE], a
+	ld a, [wPlayerSubStatus4]
+	ld [FSN_PLAYER_SS4], a
+	ld a, [wPlayerSubStatus3]
+	ld [FSN_PLAYER_SS3], a
+	ld a, [wBattleMonStatus]
+	ld [FSN_PLAYER_STATUS], a
+	ld a, [wPlayerSubStatus5]
+	and 1 << SUBSTATUS_TRANSFORMED
+	ld a, 0
+	jr z, .transform_ready
+	ld a, 2
+.transform_ready
+	ld [FSN_GUARDS], a
+; own facts: active battler or a neutral bench entry
+	ad_address AV_SLOT
+	ld a, [hl]
+	cp $ff
+	jr nz, .bench
+	ld a, [wEnemyEvaLevel]
+	ld [FSN_EVA_STAGE], a
+	ld a, [wEnemySubStatus5]
+	ld [FSN_OWN_SS5], a
+	ld a, [wEnemySubStatus3]
+	ld [FSN_OWN_SS3], a
+	ld a, [wEnemyMinimized]
+	ld [FSN_MINIMIZED], a
+	ld a, [wEnemyMonItem]
+	ld [FSN_OWN_ITEM], a
+	ld a, [wEnemyMonStatus]
+	ld [FSN_OWN_STATUS], a
+	jr .own_ready
+.bench
+	ld hl, wOTPartyMon1Species
+	ld bc, PARTYMON_STRUCT_LENGTH
+	call AddNTimes
+	push hl
+	ld a, [hl]
+	cp DITTO
+	jr nz, .not_ditto
+	ld hl, FSN_GUARDS
+	set 0, [hl]
+.not_ditto
+	pop hl
+	push hl
+	ld bc, MON_ITEM
+	add hl, bc
+	ld a, [hl]
+	ld [FSN_OWN_ITEM], a
+	pop hl
+	ld bc, MON_STATUS
+	add hl, bc
+	ld a, [hl]
+	ld [FSN_OWN_STATUS], a
+	ld a, BASE_STAT_LEVEL
+	ld [FSN_EVA_STAGE], a
+	xor a
+	ld [FSN_OWN_SS5], a
+	ld [FSN_OWN_SS3], a
+	ld [FSN_MINIMIZED], a
+.own_ready
+; typing-derived constants
+	ld a, STEEL
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld [FSN_STEEL], a
+	ld a, FLYING
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	and a
+	jr z, .flying_ready
+	cp 2
+	ld a, 26
+	jr nz, .flying_ready
+	ld a, 27
+.flying_ready
+	ld [FSN_FLYING], a
+	ld a, PSYCHIC_TYPE
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld [FSN_PSYCHIC], a
+	ld a, POISON
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld [FSN_POISON], a
+; Bright Powder / Focus Band parameters of the known own item
+	xor a
+	ld [FSN_POWDER], a
+	ld [FSN_FOCUS], a
+	ld a, [FSN_OWN_ITEM]
+	and a
+	jr z, .powder_ready
+	dec a
+	ld hl, ItemAttributes + ITEMATTR_EFFECT
+	ld bc, ITEMATTR_STRUCT_LENGTH
+	call AddNTimes
+	ld a, BANK(ItemAttributes)
+	call GetFarByte
+	ld b, a
+	inc hl
+	ld a, BANK(ItemAttributes)
+	call GetFarByte
+	ld c, a
+	ld a, b
+	cp HELD_BRIGHTPOWDER
+	jr nz, .focus_band
+	ld a, c
+	ld [FSN_POWDER], a
+	jr .powder_ready
+.focus_band
+	cp HELD_FOCUS_BAND
+	jr nz, .powder_ready
+	ld a, c
+	ld [FSN_FOCUS], a
+.powder_ready
+; Helmet quota: the attacker's (player's) max HP/6, minimum one, only for a
+; known Rocky Helmet on the defender
+	xor a
+	ld [FSN_HELMET], a
+	ld [FSN_HELMET + 1], a
+	ld a, [FSN_OWN_ITEM]
+	cp ROCKY_HELMET
+	jr nz, .helmet_ready
+	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_MAXHP
+	ld a, [hli]
+	ld b, a
+	ld a, [hl]
+	ld c, a
+	or b
+	jr z, .helmet_ready
+	ld a, 1
+	ld h, ROCKY_HELMET_DEN
+	call BossAI_FastCompileReplyNative.Scale
+	ld a, b
+	ld [FSN_HELMET], a
+	ld a, c
+	ld [FSN_HELMET + 1], a
+.helmet_ready
+; Outrage's public category: physical only for a Dragon attacker whose raw
+; public Attack exceeds its raw public Sp. Atk.
+	xor a
+	ld [FSN_OUTRAGE], a
+	ld a, DRAGON
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	and a
+	jr z, .outrage_ready
+	ld bc, 0
+	farcall BossAI_EstimatePlayerDamageStat
+	ld a, b
+	ld [FSM_TEMP], a
+	ld a, c
+	ld [FSM_TEMP + 1], a
+	ld bc, 3
+	farcall BossAI_EstimatePlayerDamageStat
+	ld hl, FSM_TEMP + 1
+	ld a, c
+	sub [hl]
+	dec hl
+	ld a, b
+	sbc [hl]
+	jr nc, .outrage_ready ; Sp. Atk >= Attack stays special
+	ld a, 1
+	ld [FSN_OUTRAGE], a
+.outrage_ready
+; truncated formula operands per category, as .Formula truncates them
+	ad_address AV_PREPARED_STATS
+	call .TruncateStats
+	ld a, b
+	ld [FSN_PHYS_ATTACK], a
+	ld a, c
+	ld [FSN_PHYS_DEFENSE], a
+	ad_address AV_PREPARED_STATS + 4
+	call .TruncateStats
+	ld a, b
+	ld [FSN_SPEC_ATTACK], a
+	ld a, c
+	ld [FSN_SPEC_DEFENSE], a
+; base caches
+	push de
+	ld hl, FSN_PHYS_CACHE_LOW
+	ld b, 48
+	call .ClearBytes
+	ld hl, FSN_PHYS_CACHE_HIGH
+	ld b, 24
+	call .ClearBytes
+	pop de
+	ad_address FSN_SPEC_CACHE
+	ld b, 102
+	call .ClearBytes
+	ret
+.ClearBytes
+	xor a
+.clear_byte
+	ld [hli], a
+	dec b
+	jr nz, .clear_byte
+	ret
+.TruncateStats
+; HL=attack word then defense word. B=attack byte, C=defense byte after the
+; kernel's once-only quartering when either stat exceeds 255.
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	inc hl
+	push bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	pop hl ; HL=attack, BC=defense
+	ld a, h
+	or b
+	jr z, .truncated
+	srl b
+	rr c
+	srl b
+	rr c
+	ld a, b
+	or c
+	jr nz, .defense_truncated
+	inc c
+.defense_truncated
+	srl h
+	rr l
+	srl h
+	rr l
+	ld a, h
+	or l
+	jr nz, .truncated
+	inc l
+.truncated
+	ld b, l
+	ld a, c
+	and a
+	ret nz
+	inc c ; the kernel's defense-zero guard
+	ret
+.Contribution
+; A=type, HL=type pair. A=0 none, 1 one of two distinct types, 2 both.
+; BC/DE preserved (callers keep the running amount in BC).
+	push bc
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	ld a, [hl]
+	cp c
+	jr nz, .dual
+	cp b
+	ld a, 0
+	jr nz, .contribution_done
+	ld a, 2
+	jr .contribution_done
+.dual
+	cp b
+	jr z, .half
+	ld a, c
+	cp b
+	ld a, 0
+	jr nz, .contribution_done
+.half
+	ld a, 1
+.contribution_done
+	pop bc
+	ret
+
+BossAI_FastCompileReplyNative::
+; DE=context, C=regime mask, A=reply move ID (nonzero). FSN prepared for
+; this defender. Writes the 48-byte record at FSR_BASE exactly as
+; BossAI_FastCompileReplyPlan would (opcode0 records keep their header).
+; Carry=represented (damage/recovery/Pursuit opcode). SRAM0 open; DE/SP
+; preserved; AF/BC/HL scratch. Uses only compile scratch, the caches and
+; FSM_TEMP; no producer prefix byte other than the special cache changes.
+	ld [FSM_MOVE], a
+	ld a, c
+	ld [FSM_MASK], a
+	ld hl, FSR_BASE
+	add hl, de
+	ld b, FSR_SIZE
+	xor a
+.clear
+	ld [hli], a
+	dec b
+	jr nz, .clear
+; move facts from the mirror
+	ld a, [FSM_MOVE]
+	dec a
+	ld l, a
+	ld h, 0
+	add hl, hl
+	add hl, hl
+	add hl, hl
+	ld c, a
+	ld b, 0
+	ld a, l
+	sub c
+	ld l, a
+	ld a, h
+	sbc b
+	ld h, a ; 7*(move-1)
+	ld bc, BossAI_FastMoves + MOVE_EFFECT
+	add hl, bc
+	ld a, [hli]
+	ld [FSM_EFFECT], a
+	ld a, [hli]
+	ld [FSM_POWER], a
+	ld a, [hli]
+	ld [FSM_TYPE], a
+	ld a, [hl]
+	ld [FSM_ACCURACY], a
+	ld a, [FSM_MOVE]
+	dec a
+	ld c, a
+	ld b, 0
+	ld hl, BossAI_FastMoveContactFlags
+	add hl, bc
+	ld a, [hl]
+	ld [FSM_CONTACT], a
+; category: type bucket, with Outrage's public override
+	ld a, [FSM_TYPE]
+	cp SPECIAL
+	ld a, 0
+	jr c, .category_ready
+	inc a
+	ld b, a
+	ld a, [FSM_MOVE]
+	cp OUTRAGE
+	ld a, b
+	jr nz, .category_ready
+	ld a, [FSN_OUTRAGE]
+	xor 1
+.category_ready
+	ld [FSM_CATEGORY], a
+; defaults, then effect support (BuildPublicDamageContext.EffectSupport)
+	ld a, 1
+	ld [FSM_POSTROLL], a
+	ld [FSM_MAX_POSTROLL], a
+	ld [FSM_MIN_HITS], a
+	ld [FSM_MAX_HITS], a
+	xor a
+	ld [FSM_STRUGGLE], a
+	ld [FSM_CHECK_FLAGS], a
+	ld a, [FSN_GUARDS]
+	and 1
+	ld [FSM_UNSUPPORTED], a
+	call .EffectSupport
+; ValuePublicExchange.MoveReplyPursuit: an explicit opposing Pursuit is not a
+; switch punish, so its maximum multiplier is normalized to the minimum's.
+	ld a, [FSM_EFFECT]
+	cp EFFECT_PURSUIT
+	jr nz, .pursuit_normalized
+	ld a, [FSM_POSTROLL]
+	ld [FSM_MAX_POSTROLL], a
+.pursuit_normalized
+	call .MultiHitItemState
+; a multi-hit attack against a substitute stays unknown
+	ld a, [FSN_FLAGS]
+	bit AD_SUBSTITUTE_F, a
+	jr z, .support_ready
+	ld a, [FSM_MAX_HITS]
+	cp 2
+	jr c, .support_ready
+	ld a, 1
+	ld [FSM_UNSUPPORTED], a
+.support_ready
+; copyguards: a transformed player keeps only constant damage
+	ld a, [FSN_GUARDS]
+	and 2
+	jr z, .guards_ready
+	ld a, [FSM_EFFECT]
+	cp EFFECT_STATIC_DAMAGE
+	jr z, .guards_ready
+	cp EFFECT_LEVEL_DAMAGE
+	jr z, .guards_ready
+	cp EFFECT_SUPER_FANG
+	jr z, .guards_ready
+	ld a, 1
+	ld [FSM_UNSUPPORTED], a
+.guards_ready
+; survival facts: a damaging move into a Psychic defender or a known Focus
+; Band leaves an independent survival roll, which makes even a certain hit
+; uncertain
+	xor a
+	ld [FSM_NEGATION], a
+	ld a, [FSM_POWER]
+	and a
+	jr z, .negation_ready
+	ld a, [FSN_PSYCHIC]
+	ld b, a
+	ld a, [FSN_FOCUS]
+	or b
+	ld [FSM_NEGATION], a
+.negation_ready
+	call .Accuracy
+	call .PlayerCanAct
+; header
+	call .Priority
+	ld [FSM_TEMP + 3], a
+	call .EffectUncertainty
+	ld b, a
+	call .HitUncertainty
+	or b
+	ld [FSM_TEMP + 4], a
+	ld hl, FSR_BASE + FSR_MOVE
+	add hl, de
+	ld a, [FSM_MOVE]
+	ld [hli], a
+	inc hl
+	ld a, [FSM_ACCURACY]
+	ld [hli], a
+	ld a, [FSM_TEMP + 3]
+	ld [hli], a
+	ld a, [FSM_CAN_ACT]
+	ld [hli], a
+	ld a, [FSM_CHECK_FLAGS]
+	ld [hli], a
+	ld a, [FSM_TEMP + 4]
+	ld [hl], a
+	ld hl, FSR_BASE + FSR_MIN_HITS
+	add hl, de
+	ld a, [FSM_MIN_HITS]
+	ld [hli], a
+	ld a, [FSM_MAX_HITS]
+	ld [hl], a
+; opcode
+	ld a, [FSN_SWITCH]
+	and a
+	jr z, .ordinary
+	ld a, [FSM_EFFECT]
+	cp EFFECT_PURSUIT
+	jr nz, .ordinary
+	ld a, FSR_PURSUIT
+	jr .store_opcode
+.ordinary
+	ld a, [FSM_MOVE]
+	cp HARDEN
+	jr z, .fallback
+	cp WITHDRAW
+	jr z, .fallback
+	cp BARRIER
+	jr z, .fallback
+	cp ACID_ARMOR
+	jr z, .fallback
+	cp AMNESIA
+	jr z, .fallback
+	call .RecoveryQuota
+	jr nc, .damage
+	ld hl, FSR_BASE + FSR_RECOVERY_QUOTA
+	add hl, de
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld a, FSR_RECOVERY
+.store_opcode
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld [hl], a
+	scf
+	ret
+.fallback
+	and a
+	ret
+.damage
+	ld a, [FSM_EFFECT]
+	cp EFFECT_SELFDESTRUCT
+	jr z, .fallback
+	cp EFFECT_FALSE_SWIPE
+	jr z, .fallback
+	cp EFFECT_SUPER_FANG
+	jr z, .fallback
+	ld a, [FSM_MIN_HITS]
+	dec a
+	jr nz, .fallback
+	ld a, [FSM_MAX_HITS]
+	dec a
+	jr nz, .fallback
+	ld hl, FSR_BASE + FSR_STEEL
+	add hl, de
+	ld a, [FSN_STEEL]
+	ld [hl], a
+	ld hl, FSR_BASE + FSR_POWER
+	add hl, de
+	ld a, [FSM_POWER]
+	ld [hl], a
+	call .Descriptor
+	ld hl, FSR_BASE + FSR_HP_DEPEND
+	add hl, de
+	ld [hl], 3
+	inc hl
+	ld a, [FSM_MASK]
+	ld [hl], a
+	xor a
+	ld [FSM_REGIME], a
+.regime
+	ld a, [FSM_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .Bits
+	add hl, bc
+	ld a, [FSM_MASK]
+	and [hl]
+	jr z, .next_regime
+	call .Amount
+.next_regime
+	ld hl, FSM_REGIME
+	inc [hl]
+	ld a, [hl]
+	cp 4
+	jr c, .regime
+	ld a, FSR_DAMAGE
+	jr .store_opcode
+.Bits
+	db 1, 2, 4, 8
+
+.EffectSupport
+; BuildPublicDamageContext.EffectSupport for the incoming direction.
+	ld a, [FSM_MOVE]
+	cp STRUGGLE
+	jr nz, .effect
+	ld a, 1
+	ld [FSM_STRUGGLE], a
+	ret
+.effect
+	ld a, [FSM_EFFECT]
+	cp EFFECT_MULTI_HIT
+	jr z, .multi
+	cp EFFECT_DOUBLE_HIT
+	jr z, .double
+	cp EFFECT_POISON_MULTI_HIT
+	jr z, .double
+	cp EFFECT_SOLARBEAM
+	jr z, .solar
+	cp EFFECT_DREAM_EATER
+	jr z, .dream
+	cp EFFECT_SNORE
+	jr z, .snore
+	cp EFFECT_EARTHQUAKE
+	jr z, .grounded_attack
+	cp EFFECT_GUST
+	jr z, .flying_attack
+	cp EFFECT_TWISTER
+	jr z, .flying_attack
+	cp EFFECT_STOMP
+	jr z, .stomp
+	cp EFFECT_PURSUIT
+	jr z, .pursuit
+	ld b, a
+	ld hl, .DirectEffects
+.supported_loop
+	ld a, [hli]
+	cp -1
+	jr z, .unsupported
+	cp b
+	jr nz, .supported_loop
+	ret
+.double
+	ld a, 2
+	ld [FSM_MIN_HITS], a
+	ld [FSM_MAX_HITS], a
+	ret
+.multi
+	ld a, 2
+	ld [FSM_MIN_HITS], a
+	ld a, 5
+	ld [FSM_MAX_HITS], a
+	ret
+.solar
+	ld a, [FSN_WEATHER]
+	cp WEATHER_SUN
+	ret z
+	ld a, [FSN_PLAYER_SS3]
+	bit SUBSTATUS_CHARGED, a
+	ret nz
+	jr .unsupported
+.dream
+	ld a, [FSN_OWN_STATUS]
+	jr .sleeping
+.snore
+	ld a, [FSN_PLAYER_STATUS]
+.sleeping
+	and SLP_MASK
+	ret nz
+	jr .unsupported
+.grounded_attack
+	ld a, [FSN_OWN_SS3]
+	bit SUBSTATUS_UNDERGROUND, a
+	ret z
+	jr .double_postroll
+.flying_attack
+	ld a, [FSN_OWN_SS3]
+	bit SUBSTATUS_FLYING, a
+	ret z
+	jr .double_postroll
+.stomp
+	ld a, [FSN_MINIMIZED]
+	and a
+	ret z
+.double_postroll
+	ld a, 2
+	ld [FSM_POSTROLL], a
+	ld [FSM_MAX_POSTROLL], a
+	ret
+.pursuit
+	ld a, 2
+	ld [FSM_MAX_POSTROLL], a
+	ret
+.unsupported
+	ld a, 1
+	ld [FSM_UNSUPPORTED], a
+	ret
+.DirectEffects
+	db EFFECT_NORMAL_HIT, EFFECT_POISON_HIT, EFFECT_LEECH_HIT
+	db EFFECT_BURN_HIT, EFFECT_FREEZE_HIT, EFFECT_PARALYZE_HIT
+	db EFFECT_SELFDESTRUCT, EFFECT_ALWAYS_HIT, EFFECT_RAMPAGE
+	db EFFECT_FLINCH_HIT, EFFECT_PAY_DAY, EFFECT_TRI_ATTACK
+	db EFFECT_SUPER_FANG, EFFECT_STATIC_DAMAGE, EFFECT_TRAP_TARGET
+	db EFFECT_JUMP_KICK, EFFECT_RECOIL_HIT
+	db EFFECT_ATTACK_DOWN_HIT, EFFECT_DEFENSE_DOWN_HIT, EFFECT_SPEED_DOWN_HIT
+	db EFFECT_SP_ATK_DOWN_HIT, EFFECT_SP_DEF_DOWN_HIT
+	db EFFECT_ACCURACY_DOWN_HIT, EFFECT_EVASION_DOWN_HIT
+	db EFFECT_CONFUSE_HIT, EFFECT_HYPER_BEAM, EFFECT_RAGE, EFFECT_LEVEL_DAMAGE
+	db EFFECT_DEFROST_OPPONENT, EFFECT_FALSE_SWIPE, EFFECT_PRIORITY_HIT
+	db EFFECT_THIEF, EFFECT_FLAME_WHEEL, EFFECT_SACRED_FIRE, EFFECT_RAPID_SPIN
+	db EFFECT_DEFENSE_UP_HIT, EFFECT_ATTACK_UP_HIT, EFFECT_ALL_UP_HIT
+	db EFFECT_THUNDER
+	db -1
+.MultiHitItemState
+; A known Rocky Helmet on the defender makes a contact multi-hit unknown.
+	ld a, [FSM_MAX_HITS]
+	cp 2
+	ret c
+	ld a, [FSN_OWN_ITEM]
+	cp ROCKY_HELMET
+	ret nz
+	ld a, [FSM_CONTACT]
+	and a
+	ret z
+	ld a, 1
+	ld [FSM_UNSUPPORTED], a
+	ret
+
+.Accuracy
+; PublicHitFacts.BeforeStages and ApplyAccuracyModifiers, incoming side.
+	ld a, [FSN_OWN_SS5]
+	bit SUBSTATUS_LOCK_ON, a
+	jr z, .fly_dig
+	ld a, [FSN_OWN_SS3]
+	bit SUBSTATUS_FLYING, a
+	jr z, .certain
+	ld a, [FSM_MOVE]
+	cp EARTHQUAKE
+	jr z, .fly_dig
+	cp MAGNITUDE
+	jr z, .fly_dig
+	cp FISSURE
+	jr nz, .certain
+.fly_dig
+	ld a, [FSN_OWN_SS3]
+	and 1 << SUBSTATUS_FLYING | 1 << SUBSTATUS_UNDERGROUND
+	jr z, .can_hit
+	ld b, a
+	ld a, [FSM_MOVE]
+	bit SUBSTATUS_FLYING, b
+	jr z, .underground
+	cp GUST
+	jr z, .can_hit
+	cp WHIRLWIND
+	jr z, .can_hit
+	cp THUNDER
+	jr z, .can_hit
+	cp TWISTER
+	jr z, .can_hit
+	jr .cannot_hit
+.underground
+	cp EARTHQUAKE
+	jr z, .can_hit
+	cp FISSURE
+	jr z, .can_hit
+	cp MAGNITUDE
+	jr nz, .cannot_hit
+.can_hit
+	ld a, [FSN_PLAYER_SS4]
+	bit SUBSTATUS_X_ACCURACY, a
+	jr nz, .certain
+	ld a, [FSM_EFFECT]
+	cp EFFECT_ALWAYS_HIT
+	jr z, .certain
+	cp EFFECT_THUNDER
+	jr nz, .stages
+	ld a, [FSN_WEATHER]
+	cp WEATHER_RAIN
+	jr z, .certain
+	cp WEATHER_SUN
+	jr nz, .stages
+	ld a, 50 percent + 1
+	ld [FSM_ACCURACY], a
+	jr .stages
+.certain
+	ld a, $ff
+	ld [FSM_ACCURACY], a
+	ret
+.cannot_hit
+	xor a
+	ld [FSM_ACCURACY], a
+	ret
+.stages
+	ld a, [FSN_ACC_STAGE]
+	ld b, a
+	ld a, [FSN_EVA_STAGE]
+	cp b
+	jr c, .apply_stages
+	ld a, [FSN_FLAGS]
+	bit AD_IDENTIFIED_F, a
+	jr nz, .bright_powder
+.apply_stages
+	ld a, [FSM_ACCURACY]
+	ld c, a
+	ld b, 0
+	ld a, [FSN_ACC_STAGE]
+	call .AccuracyStage
+	ld a, [FSN_EVA_STAGE]
+	ld l, a
+	ld a, MAX_STAT_LEVEL + 1
+	sub l
+	call .AccuracyStage
+	call .ClampAccuracy
+	ld a, c
+	ld [FSM_ACCURACY], a
+.bright_powder
+	ld a, [FSN_POWDER]
+	ld c, a
+	ld a, [FSM_ACCURACY]
+	sub c
+	jr nc, .powder_floor
+	xor a
+.powder_floor
+	ld [FSM_ACCURACY], a
+	cp $ff
+	ret z
+	ld c, a
+	ld b, 0
+	ld a, [FSN_FLYING]
+	and a
+	ret z
+	ld h, 25
+	call .Scale
+	call .MinOne
+	call .ClampAccuracy
+	ld a, c
+	ld [FSM_ACCURACY], a
+	ret
+.AccuracyStage
+; A=stage, BC=accuracy. BC scaled by the stage's ratio.
+	dec a
+	cp MAX_STAT_LEVEL
+	jr c, .valid_stage
+	ld a, BASE_STAT_LEVEL - 1
+.valid_stage
+	add a
+	ld l, a
+	ld h, 0
+	push bc
+	ld bc, BossAI_FastAccuracyLevelMultipliers
+	add hl, bc
+	pop bc
+	ld a, [hli]
+	ld h, [hl]
+	jp .Scale
+.ClampAccuracy
+	ld a, b
+	and a
+	ret z
+	ld bc, $ff
+	ret
+
+.PlayerCanAct
+; ValuePublicExchange.PlayerCanAct: FSM_CAN_ACT and FSM_CHECK_FLAGS.
+	xor a
+	ld [FSM_CAN_ACT], a
+	ld a, [FSN_PLAYER_SS4]
+	bit SUBSTATUS_RECHARGE, a
+	ret nz
+	ld a, [FSN_PLAYER_SS3]
+	bit SUBSTATUS_FLINCHED, a
+	ret nz
+	bit SUBSTATUS_CONFUSED, a
+	call nz, .TransitionFlag
+	ld a, [FSN_PLAYER_STATUS]
+	bit PAR, a
+	call nz, .TransitionFlag
+	ld a, [FSN_PLAYER_STATUS]
+	and SLP_MASK
+	jr z, .not_sleeping
+	cp 1
+	jr z, .sleep_wake
+	ld a, [FSM_MOVE]
+	cp SNORE
+	jr z, .can_act
+	cp SLEEP_TALK
+	ret nz
+	call .TransitionFlag
+	jr .can_act
+.sleep_wake
+	call .TransitionFlag
+	ld a, [FSM_MOVE]
+	cp SNORE
+	ret z
+	cp SLEEP_TALK
+	ret z
+	jr .can_act
+.not_sleeping
+	ld a, [FSN_PLAYER_STATUS]
+	bit FRZ, a
+	jr z, .can_act
+	ld a, [FSM_MOVE]
+	cp FLAME_WHEEL
+	jr z, .thaw
+	cp SACRED_FIRE
+	ret nz
+.thaw
+	call .TransitionFlag
+.can_act
+	ld a, 1
+	ld [FSM_CAN_ACT], a
+	ret
+.TransitionFlag
+	ld a, [FSM_CHECK_FLAGS]
+	or 1 << AV_UNKNOWN_TRANSITION_F
+	ld [FSM_CHECK_FLAGS], a
+	ret
+
+.Priority
+; A=priority (PublicMovePriority.FromEffect).
+	ld a, [FSM_MOVE]
+	cp VITAL_THROW
+	ld a, 0
+	ret z
+	ld a, [FSM_EFFECT]
+	ld c, a
+	ld hl, BossAI_FastMoveEffectPriorities
+.priority_loop
+	ld a, [hli]
+	cp -1
+	jr z, .default_priority
+	cp c
+	jr z, .priority_found
+	inc hl
+	jr .priority_loop
+.priority_found
+	ld a, [hl]
+	ret
+.default_priority
+	ld a, BASE_PRIORITY
+	ret
+
+.EffectUncertainty
+; A=transition flag when the effect is not HP-only, or when a contact move
+; meets a Poison defender.
+	ld a, [FSM_EFFECT]
+	ld b, a
+	ld hl, .HPOnlyEffects
+.effect_loop
+	ld a, [hli]
+	cp -1
+	jr z, .transition
+	cp b
+	jr nz, .effect_loop
+	ld a, [FSN_POISON]
+	and a
+	jr z, .no_effect_flag
+	ld a, [FSM_CONTACT]
+	and a
+	jr nz, .transition
+.no_effect_flag
+	xor a
+	ret
+.transition
+	ld a, 1 << AV_UNKNOWN_TRANSITION_F
+	ret
+.HPOnlyEffects
+	db EFFECT_NORMAL_HIT, EFFECT_ALWAYS_HIT, EFFECT_STATIC_DAMAGE
+	db EFFECT_LEVEL_DAMAGE, EFFECT_SUPER_FANG, EFFECT_FALSE_SWIPE
+	db EFFECT_SELFDESTRUCT, EFFECT_RECOIL_HIT, EFFECT_LEECH_HIT, EFFECT_DREAM_EATER
+	db EFFECT_MULTI_HIT, EFFECT_DOUBLE_HIT, EFFECT_EARTHQUAKE, EFFECT_GUST
+	db EFFECT_PURSUIT, EFFECT_PAY_DAY, EFFECT_PRIORITY_HIT
+	db -1
+.HitUncertainty
+; A=hit flag: any roll, or a certain hit that negation or a substitute can
+; still deny.
+	ld a, [FSM_ACCURACY]
+	and a
+	ret z
+	cp 255
+	jr nz, .uncertain_hit
+	ld a, [FSM_NEGATION]
+	and a
+	jr nz, .uncertain_hit
+	ld a, [FSN_FLAGS]
+	bit AD_SUBSTITUTE_F, a
+	jr nz, .uncertain_hit
+	xor a
+	ret
+.uncertain_hit
+	ld a, 1 << AV_UNKNOWN_HIT_F
+	ret
+
+.RecoveryQuota
+; BC=uncapped quota, carry=recognized (BossAI_FastRecoveryQuota with the
+; player's maximum HP).
+	ld a, [FSM_EFFECT]
+	cp EFFECT_HEAL
+	jr z, .ordinary_heal
+	cp EFFECT_MORNING_SUN
+	ld b, MORN_F
+	jr z, .time
+	cp EFFECT_SYNTHESIS
+	ld b, DAY_F
+	jr z, .time
+	cp EFFECT_MOONLIGHT
+	ld b, NITE_F
+	jr z, .time
+	ld bc, 0
+	and a
+	ret
+.ordinary_heal
+	ld a, [FSM_MOVE]
+	cp REST
+	ld a, 0
+	jr z, .fraction
+	inc a
+	jr .fraction
+.time
+	ld c, 2
+	ld a, [wLinkMode]
+	and a
+	jr nz, .weather_fraction
+	ld a, [wTimeOfDay]
+	cp b
+	jr z, .weather_fraction
+	dec c
+.weather_fraction
+	ld a, [FSN_WEATHER]
+	and a
+	jr z, .time_fraction
+	inc c
+	cp WEATHER_SUN
+	jr z, .time_fraction
+	dec c
+	dec c
+.time_fraction
+	ld a, 3
+	sub c
+.fraction
+	push af
+	ld a, [FSA_PLAYER + 2]
+	ld b, a
+	ld a, [FSA_PLAYER + 3]
+	ld c, a
+	or b
+	jr z, .zero_quota
+	pop af
+	and a
+	jr z, .quota_ready
+.shift
+	srl b
+	rr c
+	dec a
+	jr nz, .shift
+	ld a, b
+	or c
+	jr nz, .quota_ready
+	inc c
+.quota_ready
+	scf
+	ret
+.zero_quota
+	pop af
+	scf
+	ret
+
+.Descriptor
+; Item tag 1 for a known contact Helmet without a substitute, effect tag for
+; drain/recoil; same descriptor table as the sequential executors.
+	ld c, 0
+	ld a, [FSN_OWN_ITEM]
+	cp ROCKY_HELMET
+	jr nz, .effect_tag
+	ld a, [FSN_FLAGS]
+	bit AD_SUBSTITUTE_F, a
+	jr nz, .effect_tag
+	ld a, [FSM_CONTACT]
+	and a
+	jr z, .effect_tag
+	ld hl, FSR_BASE + FSR_ITEM_QUOTA
+	add hl, de
+	ld a, [FSN_HELMET]
+	ld [hli], a
+	ld a, [FSN_HELMET + 1]
+	ld [hl], a
+	ld c, 1
+.effect_tag
+	ld a, [FSM_EFFECT]
+	cp EFFECT_LEECH_HIT
+	jr z, .drain
+	cp EFFECT_DREAM_EATER
+	jr z, .drain
+	cp EFFECT_RECOIL_HIT
+	jr nz, .descriptor
+	ld a, c
+	add 6
+	ld c, a
+	jr .descriptor
+.drain
+	ld a, c
+	add 3
+	ld c, a
+.descriptor
+	sla c
+	ld b, 0
+	ld hl, BossAI_FastOwnCommandDescriptors
+	add hl, bc
+	ld b, h
+	ld c, l
+	ld hl, FSR_BASE + FSR_DESCRIPTOR
+	add hl, de
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ret
+
+.Amount
+; One regime: RAW_MAX, plus the regime's range and support bits, from the
+; single-hit kernel path with a cached formula base.
+	ld a, [FSM_REGIME]
+	add a
+	and (1 << AD_ATTACKER_LOW_F) | (1 << AD_DEFENDER_HIGH_F)
+	ld b, a
+	ld a, [FSN_FLAGS]
+	or b
+	ld [FSM_FLAGS], a
+	ld a, [FSM_UNSUPPORTED]
+	and a
+	jr nz, .unknown
+	ld a, [FSM_POWER]
+	and a
+	jr nz, .known_power
+.unknown
+	ret ; raw stays zero; no range/support bits
+.known_power
+	ld bc, EFFECTIVE
+	call .Chart
+	ld a, c
+	ld [FSM_MATCHUP], a
+	ld a, b
+	or c
+	jr z, .fixed ; immune: supported zero
+	ld a, [FSN_FLAGS]
+	bit AD_BALLOON_F, a
+	jr z, .check_fixed
+	ld a, [FSM_TYPE]
+	cp GROUND
+	jr nz, .check_fixed
+	ld bc, 0
+	jr .fixed
+.check_fixed
+	ld a, [FSM_EFFECT]
+	cp EFFECT_STATIC_DAMAGE
+	jr z, .static
+	cp EFFECT_LEVEL_DAMAGE
+	jr z, .level
+	call .Base
+	ld a, [FSM_STRUGGLE]
+	and a
+	jr nz, .variation
+	call .Weather
+	ld a, [FSM_TYPE]
+	ld hl, FSN_PLAYER_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .no_stab
+	ld a, 3
+	ld h, 2
+	call .Scale
+.no_stab
+	call .Chart
+	call .Passives
+.variation
+; minimum endpoint: roll 217/255 then the post-roll multiplier; the maximum
+; keeps the pre-roll amount then the post-roll multiplier
+	ld a, b
+	ld [FSM_AMOUNT], a
+	ld a, c
+	ld [FSM_AMOUNT + 1], a
+	ld a, 217
+	ld h, 255
+	call .Scale
+	ld a, [FSM_POSTROLL]
+	ld h, 1
+	call .Scale
+	ld a, b
+	ld [FSM_MIN], a
+	ld a, c
+	ld [FSM_MIN + 1], a
+	ld a, [FSM_AMOUNT]
+	ld b, a
+	ld a, [FSM_AMOUNT + 1]
+	ld c, a
+	ld a, [FSM_MAX_POSTROLL]
+	ld h, 1
+	call .Scale
+	jr .store
+.static
+	ld a, [FSM_POWER]
+	jr .fixed_byte
+.level
+	ld a, [FSN_LEVEL]
+.fixed_byte
+	ld c, a
+	ld b, 0
+.fixed
+	ld a, b
+	ld [FSM_MIN], a
+	ld a, c
+	ld [FSM_MIN + 1], a
+.store
+; BC=raw maximum, FSM_MIN=raw minimum; both supported
+	push bc
+	ld a, [FSM_REGIME]
+	add a
+	ld c, a
+	ld b, 0
+	ld hl, FSR_BASE + FSR_RAW_MAX
+	add hl, de
+	add hl, bc
+	pop bc
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	push bc
+	ld a, [FSM_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .Bits
+	add hl, bc
+	ld a, [hl]
+	ld [FSM_TEMP], a
+	pop bc
+	ld hl, FSR_BASE + FSR_SUPPORT
+	add hl, de
+	or [hl]
+	ld [hl], a
+	ld a, [FSM_MIN]
+	cp b
+	jr nz, .range
+	ld a, [FSM_MIN + 1]
+	cp c
+	ret z
+.range
+	ld a, [FSM_TEMP]
+	ld hl, FSR_BASE + FSR_RANGE
+	add hl, de
+	or [hl]
+	ld [hl], a
+	ret
+.Base
+; BC=capped formula base plus two for this category and power, from the
+; cache when present.
+	ld a, [FSM_POWER]
+	ld c, a
+	ld b, $ff
+.divide_five
+	inc b
+	ld a, c
+	sub 5
+	ld c, a
+	jr nc, .divide_five
+	ld a, b ; power/5
+	ld [FSM_TEMP + 2], a
+	ld a, [FSM_CATEGORY]
+	and a
+	jr nz, .special_slot
+	ld a, [FSM_TEMP + 2]
+	cp 24
+	jr nc, .physical_high
+	add a
+	ld l, a
+	ld h, 0
+	ld bc, FSN_PHYS_CACHE_LOW
+	add hl, bc
+	jr .cache_slot
+.physical_high
+	cp 36
+	jr nc, .uncached
+	sub 24
+	add a
+	ld l, a
+	ld h, 0
+	ld bc, FSN_PHYS_CACHE_HIGH
+	add hl, bc
+	jr .cache_slot
+.special_slot
+	ld a, [FSM_TEMP + 2]
+	cp 51
+	jr nc, .uncached
+	add a
+	ld l, a
+	ld h, 0
+	add hl, de
+	ld bc, FSN_SPEC_CACHE
+	add hl, bc
+.cache_slot
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	or c
+	jr z, .fill_cache
+	ret
+.fill_cache
+	push hl
+	call .Formula
+	pop hl
+	ld [hl], c
+	dec hl
+	ld [hl], b
+	ret
+.uncached
+	jr .Formula
+.Formula
+; BC=cap997(floor(floor(floor((floor(2L/5)+2)*P*A)/D)/50))+2 with the
+; category's truncated operands; known incoming item factors are identity.
+	ld a, [FSN_LEVEL]
+	ld c, a
+	ld b, 0
+	sla c
+	rl b
+	ld a, 5
+	call .Div16By8
+	ld a, c
+	add 2 ; the kernel adds two to the low quotient byte only
+	ld c, a
+	ld a, [FSM_POWER]
+	call .Mul16By8 ; A:HL=product
+	ld b, 0 ; product < 2^16 (42*250)
+	push hl
+	ld a, [FSM_CATEGORY]
+	and a
+	ld a, [FSN_PHYS_ATTACK]
+	jr z, .attack_ready
+	ld a, [FSN_SPEC_ATTACK]
+.attack_ready
+	pop bc
+	call .Mul16By8 ; A:HL=24-bit product
+	ld b, a
+	ld a, [FSM_CATEGORY]
+	and a
+	ld a, [FSN_PHYS_DEFENSE]
+	jr z, .defense_ready
+	ld a, [FSN_SPEC_DEFENSE]
+.defense_ready
+	ld c, a
+	call .Div24By8
+	ld c, 50
+	call .Div24By8
+; cap at 997, then +2
+	ld a, b
+	and a
+	jr nz, .cap
+	ld a, h
+	cp HIGH(998)
+	jr c, .plus_two
+	jr nz, .cap
+	ld a, l
+	cp LOW(998)
+	jr c, .plus_two
+.cap
+	ld hl, 997
+.plus_two
+	inc hl
+	inc hl
+	ld b, h
+	ld c, l
+	ret
+
+.Weather
+	ld a, [FSN_WEATHER]
+	cp WEATHER_RAIN
+	jr z, .rain
+	cp WEATHER_SUN
+	ret nz
+	ld a, [FSM_TYPE]
+	cp FIRE
+	jr z, .weather_up
+	cp WATER
+	ret nz
+	jr .weather_down
+.rain
+	ld a, [FSM_TYPE]
+	cp WATER
+	jr z, .weather_up
+	cp FIRE
+	jr z, .weather_down
+	ld a, [FSM_EFFECT]
+	cp EFFECT_SOLARBEAM
+	ret nz
+.weather_down
+	ld a, 1
+	ld h, 2
+	jp .Scale
+.weather_up
+	ld a, 3
+	ld h, 2
+	jp .Scale
+
+.Chart
+; Apply each matching chart row in source order to BC. Foresight rows are
+; skipped for an identified defender.
+	ld a, [FSM_STRUGGLE]
+	and a
+	ret nz
+	xor a
+	call .chart_pointer
+	call .chart_loop
+	ld a, [FSN_FLAGS]
+	bit AD_IDENTIFIED_F, a
+	ret nz
+	ld a, 2
+	call .chart_pointer
+.chart_loop
+	ld a, [hli]
+	cp -1
+	ret z
+	cp -2
+	ret z
+	push hl
+	ld l, a
+	ld a, [FSM_TYPE]
+	cp l
+	pop hl
+	ret nz
+	ld a, [hli]
+	push hl
+	ld l, a
+	ld a, [FSN_OWN_TYPES]
+	cp l
+	jr z, .chart_type_match
+	ld a, [FSN_OWN_TYPES + 1]
+	cp l
+.chart_type_match
+	pop hl
+	jr nz, .chart_next
+	ld a, [hli]
+	push hl
+	call .MajestyFactor
+	and a
+	jr z, .immune
+	ld h, 10
+	call .Scale
+	pop hl
+	jr .chart_loop
+.immune
+	pop hl
+	ld bc, 0
+	ret
+.chart_next
+	inc hl
+	jr .chart_loop
+.chart_pointer
+; A=0 ordinary rows or 2 Foresight-only rows; BC preserved.
+	push bc
+	ld c, a
+	ld a, [FSM_TYPE]
+	cp TYPES_END
+	jr nc, .chart_empty
+	add a
+	add a
+	add c
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastTypeMatchupIndex
+	add hl, bc
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	pop bc
+	ret
+.chart_empty
+	pop bc
+	ld hl, BossAI_FastTypeMatchups.END
+	ret
+.MajestyFactor
+	and a
+	ret nz
+	ld a, [FSM_EFFECT]
+	cp EFFECT_STATIC_DAMAGE
+	jr z, .zero_factor
+	cp EFFECT_LEVEL_DAMAGE
+	jr z, .zero_factor
+	cp EFFECT_SUPER_FANG
+	jr z, .zero_factor
+	push hl
+	ld a, DRAGON
+	ld hl, FSN_PLAYER_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	pop hl
+	and a
+	ret z
+	ld a, NOT_VERY_EFFECTIVE
+	ret
+.zero_factor
+	xor a
+	ret
+
+.Passives
+	ld a, b
+	or c
+	ret z
+	ld a, [FSM_TYPE]
+	cp NORMAL
+	jr nz, .fire
+	ld a, NORMAL
+	ld hl, FSN_PLAYER_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .fire
+	cp 2
+	ld a, 31
+	ld h, 30
+	jr nz, .normal_scale
+	ld a, 16
+	ld h, 15
+.normal_scale
+	call .Scale
+.fire
+	ld a, [FSM_TYPE]
+	cp FIRE
+	jr nz, .ghost
+	ld a, [FSM_FLAGS]
+	bit AD_ATTACKER_LOW_F, a
+	jr z, .ghost
+	ld a, FIRE
+	ld hl, FSN_PLAYER_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .ghost
+	cp 2
+	ld a, 11
+	ld h, 10
+	jr nz, .fire_scale
+	ld a, 6
+	ld h, 5
+.fire_scale
+	call .Scale
+.ghost
+	ld a, [FSM_FLAGS]
+	bit AD_DEFENDER_STATUS_F, a
+	jr z, .dragon
+	ld a, GHOST
+	ld hl, FSN_PLAYER_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .dragon
+	cp 2
+	ld a, 21
+	ld h, 20
+	jr nz, .ghost_scale
+	ld a, 11
+	ld h, 10
+.ghost_scale
+	call .Scale
+.dragon
+	ld a, [FSM_MATCHUP]
+	cp EFFECTIVE + 1
+	jr nc, .ground
+	ld a, DRAGON
+	ld hl, FSN_OWN_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .category
+	cp 2
+	ld a, 2
+	ld h, 3
+	jr nz, .dragon_scale
+	ld a, 1
+	ld h, 2
+.dragon_scale
+	call .Scale
+	jr .category
+.ground
+	ld a, GROUND
+	ld hl, FSN_OWN_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .category
+	cp 2
+	ld a, 19
+	ld h, 20
+	jr nz, .ground_scale
+	ld a, 9
+	ld h, 10
+.ground_scale
+	call .Scale
+.category
+	ld a, [FSM_CATEGORY]
+	and a
+	jr nz, .water
+	ld a, BUG
+	ld hl, FSN_OWN_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .ice
+	cp 2
+	ld a, 19
+	ld h, 20
+	jr nz, .category_scale
+	ld a, 9
+	ld h, 10
+	jr .category_scale
+.water
+	ld a, WATER
+	ld hl, FSN_OWN_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	jr z, .ice
+	cp 2
+	ld a, 39
+	ld h, 40
+	jr nz, .category_scale
+	ld a, 19
+	ld h, 20
+.category_scale
+	call .Scale
+.ice
+	ld a, [FSM_FLAGS]
+	bit AD_DEFENDER_HIGH_F, a
+	ret z
+	ld a, ICE
+	ld hl, FSN_OWN_TYPES
+	call BossAI_FastPrepareReplyFacts.Contribution
+	and a
+	ret z
+	cp 2
+	ld a, 39
+	ld h, 40
+	jr nz, .Scale
+	ld a, 19
+	ld h, 20
+.Scale
+; BC*A/H, floor, minimum one for positive input, zero stays zero, true
+; 16-bit overflow saturates (BossAI_DamageKernel.Scale). DE preserved.
+	push af
+	ld a, b
+	or c
+	jr nz, .scale_nonzero
+	pop af
+	ret
+.scale_nonzero
+	pop af
+	cp h
+	ret z
+	push hl
+	call .Mul16By8 ; A:HL=24-bit product
+	pop bc
+	ld c, b ; divisor
+	ld b, a
+	call .Div24By8 ; B:HL=quotient
+	ld a, b
+	and a
+	ld bc, $ffff
+	ret nz
+	ld b, h
+	ld c, l
+.MinOne
+	ld a, b
+	or c
+	ret nz
+	inc c
+	ret
+.Mul16By8
+; BC*A -> A:HL (24-bit, A high). DE preserved.
+	push de
+	ld e, 8
+	ld hl, 0
+	ld d, 0
+.mul_bit
+	add hl, hl
+	rl d
+	rla
+	jr nc, .mul_next
+	add hl, bc
+	jr nc, .mul_next
+	inc d
+.mul_next
+	dec e
+	jr nz, .mul_bit
+	ld a, d
+	pop de
+	ret
+.Div24By8
+; B:HL / C -> B:HL, A=remainder. DE preserved.
+	push de
+	ld d, c
+	ld e, 24
+	xor a
+.div_bit
+	add hl, hl
+	rl b
+	rla
+	jr c, .div_subtract ; ninth remainder bit
+	cp d
+	jr c, .div_next
+.div_subtract
+	sub d
+	inc l
+.div_next
+	dec e
+	jr nz, .div_bit
+	pop de
+	ret
+.Div16By8
+; BC / A -> BC, A=remainder. DE preserved.
+	push de
+	ld d, a
+	ld e, 16
+	xor a
+	ld h, b
+	ld l, c
+.div16_bit
+	add hl, hl
+	rla
+	jr c, .div16_subtract
+	cp d
+	jr c, .div16_next
+.div16_subtract
+	sub d
+	inc l
+.div16_next
+	dec e
+	jr nz, .div16_bit
+	ld b, h
+	ld c, l
+	pop de
+	ret

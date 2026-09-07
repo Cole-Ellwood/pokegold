@@ -1,11 +1,13 @@
-IF DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS)
+IF DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST)
+BossAI_FastTypeMatchups: ; second in-bank copy for the fast selector
+ELIF DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS)
 BossAI_TypeMatchups:
 ELSE
 TypeMatchups:
 ENDC
 ; Optional row-group anchors for the local AI copy; combat bytes are unchanged.
 MACRO bossai_type_group
-IF DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS)
+IF DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS) || DEF(BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST)
 .\1:
 ENDC
 ENDM

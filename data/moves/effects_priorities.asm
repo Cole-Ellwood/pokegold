@@ -1,4 +1,8 @@
+IF DEF(BOSSAI_EMIT_LOCAL_PRIORITIES)
+BossAI_FastMoveEffectPriorities: ; in-bank mirror for the offline AI reference
+ELSE
 MoveEffectPriorities:
+ENDC
 	db EFFECT_PROTECT,      3
 	db EFFECT_ENDURE,       3
 	db EFFECT_PRIORITY_HIT, 2

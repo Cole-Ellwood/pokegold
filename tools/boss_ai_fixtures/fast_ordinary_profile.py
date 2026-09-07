@@ -38,6 +38,8 @@ PHASES = {
     "BossAI_FastImportActorHP": "hp_tables",
     "BossAI_FastBuildOwnedStandalone": "owned_standalone",
     "BossAI_FastPrepareReply": "reply_prepare",
+    "BossAI_FastCompileReplyNative": "reply_compile_native",
+    "BossAI_FastPrepareReplyFacts": "reply_facts",
     "BossAI_FastBuildReplyStandalone": "reply_standalone",
     "BossAI_FastNormalizedPair.CorrectionOnly": "native_pair",
     "BossAI_FastScalarPair": "scalar_pair",

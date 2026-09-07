@@ -1,5 +1,6 @@
 ; Characteristics of each move.
 
+IF !DEF(move)
 MACRO move
 	db \1 ; animation
 	db \2 ; effect
@@ -10,8 +11,13 @@ MACRO move
 	db \7 percent ; effect chance
 	assert \6 <= 40, "PP must be 40 or less"
 ENDM
+ENDC
 
+IF DEF(BOSSAI_EMIT_LOCAL_MOVES)
+BossAI_FastMoves: ; in-bank mirror for the offline AI reference
+ELSE
 Moves:
+ENDC
 ; entries correspond to move ids (see constants/move_constants.asm)
 	table_width MOVE_LENGTH
 	move IRON_HEAD    , EFFECT_FLINCH_HIT       ,  80, STEEL       , 100, 25,  20

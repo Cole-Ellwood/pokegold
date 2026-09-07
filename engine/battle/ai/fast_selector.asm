@@ -420,6 +420,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld c, [hl]
 	call BossAI_FastImportActorHP
 	ret nc
+	call BossAI_FastPrepareReplyFacts
 	call .ImportOrderFacts
 	ld a, [FSA_SETUP_FLAGS]
 	ld b, a
@@ -666,6 +667,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	call .InitUnaryRecord
 	call .ReplyRegimes
 	farcall BossAI_PreparePublicAction ; this bench actor's reply epoch
+	call BossAI_FastPrepareReplyFacts
 	call .ReplySweep
 	ret nc
 	call .CommitIncoming
@@ -843,8 +845,9 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], 0
 	ad_address FS_REPLY_REGIMES
 	ld c, [hl]
-	farcall BossAI_FastPrepareReply
-	ret
+	ad_address FS_REPLY_ID
+	ld a, [hl]
+	jp BossAI_FastCompileReplyNative
 
 .ReplyStandalone
 ; Standalone record for the compiled reply: the scalar path for plain
