@@ -1,7 +1,23 @@
-; Complete unweighted pair over every positive original-event pair and every
-; modeled order. Terminals come from the direct reference (only the old
-; producer prefix is mutable; no legacy JC or SRAM HP-table lifetime is
-; entered) or, in the native mode, from the compact executors.
+; Cold whole-pair and unary fallback evaluators, in their own bank behind far
+; entries so the hot fast-prototype bank keeps its space. Complete unweighted
+; pair over every positive original-event pair and every modeled order.
+; Terminals come from the direct reference (only the old producer prefix is
+; mutable; no legacy JC or SRAM HP-table lifetime is entered) or, in the
+; native mode, from the compact executors reached through main-bank stubs.
+
+BossAI_FastFallbackPairCorrectionFar::
+; Selector entry: C=plan, DE=context, order descriptor in FS_ORDER (the
+; farcall macro clobbers A and HL). Carry and BC survive the far return.
+	ld hl, FS_ORDER
+	add hl, de
+	ld a, [hl]
+	jr BossAI_FastFallbackPair.CorrectionOnly
+BossAI_FastFallbackPairNativeFar::
+	ld hl, FS_ORDER
+	add hl, de
+	ld a, [hl]
+	jr BossAI_FastFallbackPair.Native
+
 BossAI_FastFallbackPair::
 ; C=compiled owned plan0..3 (including opcode0), DE=current reply/context,
 ; A=actual order descriptor0own first/1reply first/2modeled tie.
@@ -22,7 +38,7 @@ BossAI_FastFallbackPair::
 ; every order (a Selfdestruct miss is not identity, so all four terminals
 ; interact). Both standalone records, actors and HP tables must be live;
 ; both opcodes must be represented. FPK_FLAGS holds action flags plus the
-; modeled-tie flag, like BossAI_FastNormalizedPair.
+; modeled-tie flag, like BossAI_FastFallbackPair.
 	ld b, 3
 .validate
 	cp 3
@@ -90,9 +106,9 @@ BossAI_FastFallbackPair::
 	ld [FPK_FLAGS], a
 .own_event
 	xor a
-	call BossAI_FastNormalizedPair.Accuracy
+	call BossAI_FastFallbackPair.Accuracy
 	ld a, [FPK_FIRST_EVENT]
-	call BossAI_FastNormalizedPair.EventMass
+	call BossAI_FastFallbackPair.EventMass
 	ld a, b
 	ld [FPK_OWN_Z], a
 	ld a, c
@@ -103,9 +119,9 @@ BossAI_FastFallbackPair::
 	ld [FPK_SECOND_EVENT], a
 .reply_event
 	ld a, 1
-	call BossAI_FastNormalizedPair.Accuracy
+	call BossAI_FastFallbackPair.Accuracy
 	ld a, [FPK_SECOND_EVENT]
-	call BossAI_FastNormalizedPair.EventMass
+	call BossAI_FastFallbackPair.EventMass
 	ld a, b
 	ld [FPK_REPLY_Z], a
 	ld a, c
@@ -132,18 +148,18 @@ BossAI_FastFallbackPair::
 	ld a, [hl]
 	jr .accumulate
 .native_terminal
-	call BossAI_FastNormalizedPair.InitialContinuation
+	call BossAI_FastFallbackPair.InitialContinuation
 	ld a, [FPK_CURRENT]
 	and a
 	jr nz, .reply_first
-	call .OwnAction
-	call .ReplyAction
+	farcall BossAI_FastFallbackOwnAction
+	farcall BossAI_FastFallbackReplyAction
 	jr .terminal
 .reply_first
-	call .ReplyAction
-	call .OwnAction
+	farcall BossAI_FastFallbackReplyAction
+	farcall BossAI_FastFallbackOwnAction
 .terminal
-	call BossAI_FastBuildOwnedStandalone.Delta
+	farcall BossAI_FastFallbackDelta ; BC=V(final)-V(initial)
 	ld hl, 1024
 	add hl, bc ; U=1024+V(final)-V(initial), positive
 	ld b, h
@@ -167,7 +183,7 @@ BossAI_FastFallbackPair::
 	ld [FS_MULTIPLIER + 1], a
 	ld a, [FPK_OWN_Z + 1]
 	ld [FS_MULTIPLIER + 2], a
-	call BossAI_FastMultiply40By24
+	farcall BossAI_FastMultiply40By24
 	ld hl, FS_PRODUCT
 	ld de, FS_MULTIPLICAND
 	ld b, 5
@@ -183,7 +199,7 @@ BossAI_FastFallbackPair::
 	ld [FS_MULTIPLIER + 1], a
 	ld a, [FPK_REPLY_Z + 1]
 	ld [FS_MULTIPLIER + 2], a
-	call BossAI_FastMultiply40By24
+	farcall BossAI_FastMultiply40By24
 	ld a, [FPK_ORDER]
 	cp 2
 	jr z, .add
@@ -199,7 +215,7 @@ BossAI_FastFallbackPair::
 	rl [hl]
 .add
 	ld hl, FS_PRODUCT + 4
-	call BossAI_FastNormalizedPair.AddTotal
+	call BossAI_FastFallbackPair.AddTotal
 	ld hl, FPK_LEFT
 	dec [hl]
 	jr z, .next_reply
@@ -220,7 +236,7 @@ BossAI_FastFallbackPair::
 	jp c, .own_event
 	ld a, [FPK_MODE]
 	and a
-	call nz, BossAI_FastNormalizedPair.SubtractBaseline
+	call nz, BossAI_FastFallbackPair.SubtractBaseline
 	pop de
 	scf
 	ret
@@ -231,36 +247,24 @@ BossAI_FastFallbackPair::
 .reject
 	and a
 	ret
-.OwnAction
-	call BossAI_FastNormalizedPair.Context
-	ld hl, $a448
-	ld a, [FPK_INDEX]
-	ld c, a
-	ld a, [FPK_FIRST_EVENT]
-	jp BossAI_FastExecuteOwnedPlan
-.ReplyAction
-	call BossAI_FastNormalizedPair.Context
-	ld hl, $a448
-	ld a, [FPK_SECOND_EVENT]
-	jp BossAI_FastExecuteReplyPlan
 .EventContext
 ; All FarCall inputs live in the producer prefix, not A/HL. The direct entry
 ; rebuilds AD and initializes HP/defense/uncertainty on every original event.
-	call BossAI_FastNormalizedPair.Context
+	call BossAI_FastFallbackPair.Context
 	ld a, FSP_SLOT
-	call BossAI_FastNormalizedPair.OwnAddress
+	call BossAI_FastFallbackPair.OwnAddress
 	ld a, [hl]
 	ad_address AV_SLOT
 	ld [hl], a
 	ld a, FSP_MOVE
-	call BossAI_FastNormalizedPair.OwnAddress
+	call BossAI_FastFallbackPair.OwnAddress
 	ld a, [hl]
 	ad_address AV_MOVE
 	ld [hl], a
 	ad_address AV_KIND
 	ld [hl], AV_MOVE_ACTION
 	ld a, FSR_MOVE
-	call BossAI_FastNormalizedPair.ReplyAddress
+	call BossAI_FastFallbackPair.ReplyAddress
 	ld a, [hl]
 	ad_address AV_REPLY
 	ld [hl], a
@@ -286,15 +290,154 @@ BossAI_FastFallbackPair::
 	ld [hl], a
 	ret
 
-; Common-sum allocation after the pair total: $a578..$a58f.
-DEF FSC_INCOMING EQU $a57d ; signed32 sum of weight*reply moment, current defender
-DEF FSC_MASS EQU $a581 ; M=2*W_R for the whole decision
-DEF FSC_ENTRY_DELTA EQU $a583 ; signed16 entry potential change, zero when active
-DEF FSC_BASELINE EQU $a585 ; 2*65536*(1024+entry delta): the unary standalone baseline
-DEF FSC_TEMP EQU $a58a ; five-byte accumulation temporary
-ASSERT FPK_TOTAL + 5 == FSC_INCOMING
-ASSERT FSC_TEMP + 5 == FSC_FAULT
-ASSERT FSC_FAULT < $a590
+; Local copies of the factored pair's small helpers (the originals live in
+; the fast-prototype bank).
+.Accuracy
+; A=0owned/1reply. Original p, including ignored original recovery accuracy.
+	and a
+	jr nz, .reply_accuracy
+	ld a, FSP_ACCURACY
+	call .OwnAddress
+	jr .read_accuracy
+.reply_accuracy
+	ld a, FSR_ACCURACY
+	call .ReplyAddress
+.read_accuracy
+	ld a, [hl]
+.Decode
+	ld b, 0
+	ld c, a
+	cp 255
+	ret nz
+	inc b
+	inc c
+	ret
+.EventMass
+	and a
+	ret z
+	xor a
+	sub c
+	ld c, a
+	ld a, 1
+	sbc b
+	ld b, a
+	ret
+.OwnAddress
+	push af
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld b, 0
+	rept 6
+	sla c
+	rl b
+	endr
+	ld hl, FSP_BASE
+	add hl, bc
+	pop af
+	ld c, a
+	ld b, 0
+	add hl, bc
+	ret
+.ReplyAddress
+	push af
+	call .Context
+	ld hl, FSR_BASE
+	add hl, de
+	pop af
+	ld c, a
+	ld b, 0
+	add hl, bc
+	ret
+.Context
+	ld a, [FPK_CONTEXT]
+	ld d, a
+	ld a, [FPK_CONTEXT + 1]
+	ld e, a
+	ret
+.InitialContinuation
+	ld hl, $a448
+	ld b, 24
+	xor a
+.clear_continuation
+	ld [hli], a
+	dec b
+	jr nz, .clear_continuation
+	ld a, [FSA_START_HP]
+	ld [$a448], a
+	ld a, [FSA_START_HP + 1]
+	ld [$a449], a
+	ld a, [FSA_PLAYER]
+	ld [$a44a], a
+	ld a, [FSA_PLAYER + 1]
+	ld [$a44b], a
+	ret
+.SubtractBaseline
+; FPK_TOTAL already contains the full fallback N. Replace the same baseline
+; assigned to this pair, using current stored moments (zero for opcode0).
+	ld hl, FPK_TOTAL + 1
+	ld a, [hl]
+	sub 8
+	ld [hld], a
+	ld a, [hl]
+	sbc 0
+	ld [hl], a
+	ld a, FSP_MOMENT
+	call .OwnAddress
+	call .SubtractMoment512
+	ld a, FSR_MOMENT
+	call .ReplyAddress
+.SubtractMoment512
+	call .ShiftMoment512
+	ld b, 5
+	scf
+.negate
+	ld a, [hl]
+	cpl
+	adc 0
+	ld [hld], a
+	dec b
+	jr nz, .negate
+	ld hl, FS_MULTIPLICAND + 4
+.AddTotal
+	ld de, FPK_TOTAL + 4
+	ld b, 5
+	and a
+.add_total
+	ld a, [de]
+	adc [hl]
+	ld [de], a
+	dec de
+	dec hl
+	dec b
+	jr nz, .add_total
+	ret
+.ShiftMoment512
+	ld a, [hli]
+	ld [FS_MULTIPLICAND + 2], a
+	add a
+	sbc a
+	ld [FS_MULTIPLICAND], a
+	ld [FS_MULTIPLICAND + 1], a
+	ld a, [hli]
+	ld [FS_MULTIPLICAND + 3], a
+	ld a, [hl]
+	ld [FS_MULTIPLICAND + 4], a
+	ld b, 9
+.shift_moment
+	ld hl, FS_MULTIPLICAND + 4
+	sla [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec b
+	jr nz, .shift_moment
+	ld hl, FS_MULTIPLICAND + 4
+	ret
 
 BossAI_FastUnaryFallback::
 ; B=candidate kind (switch or wait), C=owned slot ($ff active), DE=context whose
@@ -330,16 +473,16 @@ BossAI_FastUnaryFallback::
 	jr nz, .clear
 .event
 	ld a, 1
-	call BossAI_FastNormalizedPair.Accuracy
+	call BossAI_FastFallbackPair.Accuracy
 	ld a, [FPK_SECOND_EVENT]
-	call BossAI_FastNormalizedPair.EventMass
+	call BossAI_FastFallbackPair.EventMass
 	ld a, b
 	ld [FPK_REPLY_Z], a
 	ld a, c
 	ld [FPK_REPLY_Z + 1], a
 	or b
-	jr z, .next
-	call BossAI_FastNormalizedPair.Context
+	jp z, .next
+	call BossAI_FastFallbackPair.Context
 	ld a, [FPK_INDEX]
 	ad_address AV_SLOT
 	ld [hl], a
@@ -349,7 +492,7 @@ BossAI_FastUnaryFallback::
 	ad_address AV_MOVE
 	ld [hl], STRUGGLE
 	ld a, FSR_MOVE
-	call BossAI_FastNormalizedPair.ReplyAddress
+	call BossAI_FastFallbackPair.ReplyAddress
 	ld a, [hl]
 	ad_address AV_REPLY
 	ld [hl], a
@@ -377,7 +520,7 @@ BossAI_FastUnaryFallback::
 	ld [FS_MULTIPLIER + 1], a
 	ld a, [FPK_REPLY_Z + 1]
 	ld [FS_MULTIPLIER + 2], a
-	call BossAI_FastMultiply40By24
+	farcall BossAI_FastMultiply40By24
 	ld b, 9
 .shift
 	ld hl, FS_PRODUCT + 4
@@ -393,7 +536,7 @@ BossAI_FastUnaryFallback::
 	dec b
 	jr nz, .shift
 	ld hl, FS_PRODUCT + 4
-	call BossAI_FastNormalizedPair.AddTotal
+	call BossAI_FastFallbackPair.AddTotal
 .next
 	ld hl, FPK_SECOND_EVENT
 	inc [hl]

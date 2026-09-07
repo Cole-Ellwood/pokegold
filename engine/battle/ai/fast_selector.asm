@@ -1109,7 +1109,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld b, [hl]
 	ad_address FS_DEFENDER
 	ld c, [hl]
-	call BossAI_FastUnaryFallback
+	farcall BossAI_FastUnaryFallback
 	ret nc
 	ad_address FS_BACKEND
 	ld [hl], 1
@@ -1191,7 +1191,9 @@ BossAI_ComparePublicActionsFastPrototype::
 .pair_full
 ; a miss that is not identity: every event pair through the executors
 	pop af
-	call BossAI_FastFallbackPair.Native
+	ad_address FS_ORDER
+	ld [hl], a
+	farcall BossAI_FastFallbackPairNativeFar
 	jr .pair_total
 .pair_identity
 	pop af
@@ -1220,7 +1222,9 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr z, .fallback_order
 	xor a
 .fallback_order
-	call BossAI_FastFallbackPair.CorrectionOnly
+	ad_address FS_ORDER
+	ld [hl], a
+	farcall BossAI_FastFallbackPairCorrectionFar
 	jr nc, .pair_total
 	ad_address FS_BACKEND
 	ld [hl], 1

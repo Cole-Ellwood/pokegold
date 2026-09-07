@@ -374,10 +374,13 @@ INCLUDE "engine/battle/ai/fast_actors.asm"
 INCLUDE "engine/battle/ai/fast_standalone.asm"
 INCLUDE "engine/battle/ai/fast_reply_standalone.asm"
 INCLUDE "engine/battle/ai/fast_pair.asm"
-INCLUDE "engine/battle/ai/fast_pair_fallback.asm"
+INCLUDE "engine/battle/ai/fast_fallback_stubs.asm"
 INCLUDE "engine/battle/ai/fast_scalar_pair.asm"
 INCLUDE "engine/battle/ai/fast_reply_native.asm"
 INCLUDE "engine/battle/ai/fast_selector.asm"
+
+SECTION "Boss AI Fast Fallback", ROMX
+INCLUDE "engine/battle/ai/fast_pair_fallback.asm"
 ENDC
 
 

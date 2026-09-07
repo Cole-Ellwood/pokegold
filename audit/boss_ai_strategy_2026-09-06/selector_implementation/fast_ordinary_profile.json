@@ -1,5 +1,5 @@
 {
-  "rom_sha256": "2d718978203140a91064d22b3539a933cf1c17b55efdecd86c14e690f129319b",
+  "rom_sha256": "228cc38e8b1bbe55730cde7ed2c6d20e1120c40e519d2e2cdca4efa870382c98",
   "oracle_sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
   "unit": "DMG T-cycles, bank-qualified entry through the final CloseSRAM return; caller setup excluded",
   "reference_entry": "BossAI_ComparePublicActionsWithTables on the frozen oracle",
@@ -9,18 +9,18 @@
   "worst_native": {
     "case": "joint_broad_prior_mass",
     "scan": 0,
-    "native_cycles": 40452496,
+    "native_cycles": 40509712,
     "reference_cycles": 132211028,
     "status": 1,
     "phases": {
-      "reply_compile_native": 13361892,
-      "orchestration": 6705488,
+      "reply_compile_native": 13366292,
+      "orchestration": 6727744,
       "scalar_pair": 5277244,
       "scalar_standalone": 4608044,
       "reply_standalone": 2400060,
-      "fallback_pair": 2357244,
+      "fallback_pair": 2374604,
       "native_pair": 1870544,
-      "unary_fallback": 1763360,
+      "unary_fallback": 1776560,
       "owned_prepare": 1114736,
       "hp_tables": 552060,
       "reply_facts": 229432,
@@ -37,16 +37,16 @@
     }
   },
   "phase_totals_all_rows": {
-    "reply_compile_native": 33481920,
-    "orchestration": 32283224,
+    "reply_compile_native": 33490720,
+    "orchestration": 32483888,
     "scalar_pair": 22050712,
     "owned_prepare": 19501296,
-    "fallback_pair": 15788496,
+    "fallback_pair": 15901728,
     "scalar_standalone": 11712800,
     "native_pair": 8723256,
     "reply_standalone": 6344136,
     "hp_tables": 5046984,
-    "unary_fallback": 3526720,
+    "unary_fallback": 3553120,
     "reply_facts": 2479292,
     "entry_inputs": 1835280,
     "owned_standalone": 1331176,
@@ -164,14 +164,14 @@
       "scan": 0,
       "status": 1,
       "phases": {
-        "reply_compile_native": 13361892,
-        "orchestration": 6705488,
+        "reply_compile_native": 13366292,
+        "orchestration": 6727744,
         "scalar_pair": 5277244,
         "scalar_standalone": 4608044,
         "reply_standalone": 2400060,
-        "fallback_pair": 2357244,
+        "fallback_pair": 2374604,
         "native_pair": 1870544,
-        "unary_fallback": 1763360,
+        "unary_fallback": 1776560,
         "owned_prepare": 1114736,
         "hp_tables": 552060,
         "reply_facts": 229432,
@@ -218,21 +218,21 @@
         "BossAI_ValuePublicExchange": 45
       },
       "reference_cycles": 132211028,
-      "native_cycles": 40452496
+      "native_cycles": 40509712
     },
     {
       "case": "joint_broad_prior_mass",
       "scan": 15,
       "status": 1,
       "phases": {
-        "reply_compile_native": 13361892,
-        "orchestration": 6627456,
+        "reply_compile_native": 13366292,
+        "orchestration": 6649712,
         "scalar_pair": 5275228,
         "scalar_standalone": 4610060,
         "reply_standalone": 2400060,
-        "fallback_pair": 2357244,
+        "fallback_pair": 2374604,
         "native_pair": 1870544,
-        "unary_fallback": 1763360,
+        "unary_fallback": 1776560,
         "owned_prepare": 1114736,
         "hp_tables": 552060,
         "reply_facts": 229452,
@@ -279,7 +279,7 @@
         "BossAI_ValuePublicExchange": 45
       },
       "reference_cycles": 132230960,
-      "native_cycles": 40374484
+      "native_cycles": 40431700
     },
     {
       "case": "joint_equal_slots",
@@ -1455,8 +1455,8 @@
       "status": 1,
       "phases": {
         "scalar_pair": 4545444,
-        "orchestration": 3175680,
-        "fallback_pair": 2206736,
+        "orchestration": 3197936,
+        "fallback_pair": 2224096,
         "reply_compile_native": 1509180,
         "native_pair": 1307508,
         "scalar_standalone": 767540,
@@ -1503,7 +1503,7 @@
         "BossAI_ValuePublicExchange": 20
       },
       "reference_cycles": 48668688,
-      "native_cycles": 14597872
+      "native_cycles": 14637488
     },
     {
       "case": "joint_speed_tie_transformed",
@@ -1511,8 +1511,8 @@
       "status": 1,
       "phases": {
         "scalar_pair": 4547204,
-        "orchestration": 3162648,
-        "fallback_pair": 2206736,
+        "orchestration": 3184904,
+        "fallback_pair": 2224096,
         "reply_compile_native": 1509180,
         "native_pair": 1307508,
         "scalar_standalone": 765780,
@@ -1559,7 +1559,7 @@
         "BossAI_ValuePublicExchange": 20
       },
       "reference_cycles": 48677532,
-      "native_cycles": 14584840
+      "native_cycles": 14624456
     },
     {
       "case": "joint_speed_tie_speed_high_byte",
@@ -1785,7 +1785,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 715356,
-        "orchestration": 402168,
+        "orchestration": 421392,
         "native_pair": 401104,
         "reply_compile_native": 120852,
         "hp_tables": 93476,
@@ -1830,7 +1830,7 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 4184084,
-      "native_cycles": 2022360
+      "native_cycles": 2041584
     },
     {
       "case": "joint_accuracy_mixed",
@@ -1838,7 +1838,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 715356,
-        "orchestration": 491220,
+        "orchestration": 510444,
         "native_pair": 401104,
         "reply_compile_native": 120852,
         "hp_tables": 93476,
@@ -1883,14 +1883,14 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 4189032,
-      "native_cycles": 2111332
+      "native_cycles": 2130556
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 373380,
+        "orchestration": 396532,
         "owned_prepare": 280324,
         "reply_compile_native": 120808,
         "hp_tables": 92900,
@@ -1932,14 +1932,14 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 813352,
-      "native_cycles": 1030544
+      "native_cycles": 1053696
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 462432,
+        "orchestration": 485584,
         "owned_prepare": 280324,
         "reply_compile_native": 120808,
         "hp_tables": 92900,
@@ -1981,7 +1981,7 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 814456,
-      "native_cycles": 1119172
+      "native_cycles": 1142324
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -1989,7 +1989,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 362100,
-        "orchestration": 263836,
+        "orchestration": 271692,
         "native_pair": 104736,
         "hp_tables": 92900,
         "reply_compile_native": 89376,
@@ -2034,7 +2034,7 @@
         "BossAI_PublicDamageRange": 6
       },
       "reference_cycles": 1667800,
-      "native_cycles": 1151676
+      "native_cycles": 1159532
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -2042,7 +2042,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 362100,
-        "orchestration": 352888,
+        "orchestration": 360744,
         "native_pair": 104736,
         "hp_tables": 92900,
         "reply_compile_native": 89376,
@@ -2087,7 +2087,7 @@
         "BossAI_PublicDamageRange": 6
       },
       "reference_cycles": 1669836,
-      "native_cycles": 1240304
+      "native_cycles": 1248160
     },
     {
       "case": "joint_accuracy_early_ko",
@@ -2095,7 +2095,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 205252,
-        "orchestration": 191956,
+        "orchestration": 194128,
         "hp_tables": 92324,
         "reply_compile_native": 72768,
         "reply_standalone": 42636,
@@ -2140,14 +2140,14 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 688856,
-      "native_cycles": 767228
+      "native_cycles": 769400
     },
     {
       "case": "joint_accuracy_early_ko",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 281008,
+        "orchestration": 283180,
         "owned_prepare": 205252,
         "hp_tables": 92324,
         "reply_compile_native": 72768,
@@ -2193,7 +2193,7 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 689960,
-      "native_cycles": 855856
+      "native_cycles": 858028
     },
     {
       "case": "joint_accuracy_impossible_hits",
@@ -2412,9 +2412,9 @@
       "scan": 0,
       "status": 1,
       "phases": {
-        "fallback_pair": 3330268,
+        "fallback_pair": 3352164,
         "owned_prepare": 610264,
-        "orchestration": 254460,
+        "orchestration": 257876,
         "hp_tables": 93476,
         "native_pair": 71016,
         "scalar_pair": 62256,
@@ -2461,16 +2461,16 @@
         "BossAI_ValuePublicExchange": 28
       },
       "reference_cycles": 3283504,
-      "native_cycles": 4626804
+      "native_cycles": 4652116
     },
     {
       "case": "joint_defense_transitions",
       "scan": 15,
       "status": 1,
       "phases": {
-        "fallback_pair": 3330268,
+        "fallback_pair": 3352164,
         "owned_prepare": 610264,
-        "orchestration": 339852,
+        "orchestration": 343268,
         "hp_tables": 93476,
         "native_pair": 71016,
         "scalar_pair": 62256,
@@ -2517,7 +2517,7 @@
         "BossAI_ValuePublicExchange": 28
       },
       "reference_cycles": 3288392,
-      "native_cycles": 4712196
+      "native_cycles": 4737508
     }
   ]
 }
