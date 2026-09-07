@@ -414,6 +414,50 @@ record accumulation moved off SRAM temporaries. Defense-boost replies must
 also become native before any timing claim: they are the only remaining
 fallback and the only remaining producer calls.
 
+#### Evening pass (2026-09-07): 59.1M -> 40.5M
+
+Seven further commits, each exact on the frozen oracle (76 vectors) and the
+unit fixtures before it was made:
+
+| Commit | Change | Broad benchmark after |
+| --- | --- | ---: |
+| `8c35e94c` | Move mirror keeps only the four bytes the compiler reads (756 bytes of bank freed) | 59.1M |
+| `baa37c8a` | Per-defender chart table (two 2-bit row codes per attacking type, Foresight and Dragon majesty folded in), Scale skips divisors 1 and 2 and computes 217/255 with a shift identity, pair correction total uses 16x8 and 24x8 signed multiplies, 40x24 multiply shortcuts an exact 256 | 51.6M |
+| `696dbb6b` | Scalar gate caches and standalone record writes from one base pointer | 47.4M |
+| `3d9afcea` | Unrolled record clear, masked-regime loop, direct (H+1)/H and (H-1)/H passive ratios, keyed incoming-regime cache (state plus both maxima), base-pointer eligibility | 45.0M |
+| `1bb3bd86` | Reply set bit table, equal-priority order once per defender, inline plan index, unary flags committed once per defender | 44.2M |
+| `e47ed142` | Identity replies get a trivial standalone record (start state, zero moment, executor gate flags); aligned mask table first in the bank | 41.5M |
+| `7e2db61a` | Packed passive contributions per epoch, power/5 once per compile, neutral accuracy stages skip | 40.5M |
+
+Phase split now (broad benchmark, one scan): native compile 13.4M (1,524
+compiles, 8.8k each), orchestration 6.7M, scalar pairs 5.3M (636 pairs,
+8.3k each), scalar standalone 4.6M (1,494 replies minus 61 identity
+replies per defender), executor standalone 2.4M (149 family replies),
+fallback pair 2.4M and unary fallback 1.8M (defense boosts only), factored
+native pairs 1.9M, owned preparation 1.1M, HP tables 0.55M.
+
+Where the remaining factor of five has to come from. Every remaining item is
+per (defender, reply) work, and 1,494 such evaluations leave about 5,000
+cycles each for everything (compile, standalone, the active defender's
+pairs and the loop overhead) inside the 8,388,608 budget; today each costs
+about 27,000. A census of the compiled records shows 249 replies collapse to
+about 140 distinct records per defender (the largest group is the 61
+identity replies, already shortcut), so grouping identical records saves
+under half of the standalone and pair work, not the five-fold needed. The
+five bench defenders (1,245 of the 1,494 evaluations) need only the reply's
+standalone moment and flags, and most of what the compile does for them is
+defender-independent (effect support, accuracy before evasion and Bright
+Powder, can-act, priority, recovery quota, uncertainty flags, hits). The
+remaining plan is therefore: (1) free bank space by moving the cold fallback
+evaluators behind far entry points (77 bytes remain in the bank); (2) cache
+the defender-independent compile facts once per reply in WRAMX bank 2 (about
+14 bytes per reply; the observation log leaves most of the bank free) so
+bench compiles do only the amount, item and typing-dependent parts; (3) a
+lighter bench standalone that produces the moment and flags without the full
+record; (4) defense-boost replies native; (5) grouping identical records for
+the active defender's pairs. The two-second target is not met and no timing
+claim is made.
+
 The [replacement profile](fast_replacement_profile.json) was refreshed on the
 restructured bench loop: the largest native sample is 623,988 cycles
 (`replacement_hp65535_spikes2`, oracle 925,704); among maxima <=999 the largest

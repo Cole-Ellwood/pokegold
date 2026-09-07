@@ -351,3 +351,35 @@ thing the reviewer should look for in the rest.
 4. Bank space: 67 bytes left in the fast-prototype section. Deduplicate the
    two executor tails or open a second reference-only section before adding
    code.
+
+---
+
+# Continuation 2026-09-07 (Claude Fable, evening): performance pass
+
+Seven more commits on `master` (`8c35e94c` .. `7e2db61a`), each validated by
+the frozen-oracle comparison (76 vectors), the compiler differential (5,588)
+and the pair/standalone fixtures before it was made. Broad benchmark 59.1M
+-> 40.5M cycles; target 8,388,608, not met. `status.md` "Evening pass" has
+the per-commit table, the current phase split and the plan for the
+remaining factor of five (bank space, per-reply facts cache in WRAMX bank 2,
+lighter bench standalone, defense boosts native, record grouping).
+
+Facts a successor needs:
+
+- The fast-prototype bank has 77 bytes free. Nothing more fits until the
+  cold fallback evaluators (`BossAI_FastFallbackPair`, `BossAI_FastUnaryFallback`,
+  about 750 bytes) move to their own section behind far entry points, or the
+  two executors share one body.
+- Scratch added today: `$a494..$a4a6` chart table (19 entries, compact type
+  index), `$a4a7` Dragon majesty, `$a4a8..$a4b1` keyed incoming-regime cache,
+  `$a4b2..$a4b3` packed passive contributions; control byte 451 holds the
+  equal-priority tie order; `FS_UNARY_FLAGS` accumulates reached reply flags
+  during the sweep and reaches the unary record in `.CommitIncoming`.
+- Fixture footprints that changed: `fast_pair.py` and
+  `fast_reply_standalone.py` allow `$a4a8..$a4b1`, `$a56d..$a56f`,
+  `$a5c0..$a5d7`.
+- Profiling: `.local/ai-two-second/phase_profile.py <case> <label,list>`
+  (entry-order attribution) is the tool that guided every step; a label
+  list of about 90 symbols runs in five to ten minutes. `flat_profile.py`
+  (every symbol) does not finish in reasonable time.
+- Game ROM bytes unchanged throughout (SHA1 `85a2fe838a28f23b198845e63876a637580e91a9`).

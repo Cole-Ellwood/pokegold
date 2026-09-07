@@ -88,3 +88,29 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
   the right independent check for the compile but it means the fixture
   encodes the same idea twice. The executor comparisons against
   `ValuePublicExchange` are the real independent evidence.
+
+## Evening performance pass (Claude-authored, 2026-09-07)
+
+- `BossAI_FastCompileReplyNative.Scale` now has six entry conditions (A==H,
+  H==1, A==H+1, A==H-1, 217/255, general). The general path with
+  `.Div24By8` is reached only by the 2/3 Dragon passive and Selfdestruct's
+  uncached formula. A table of the eleven (A,H) pairs the compiler actually
+  uses would read better than the arithmetic dispatch.
+- `.Passives` reads two packed contribution bytes with rotate-and-mask
+  sequences. Eight plain bytes would be clearer; the packing exists only
+  because the bridge area between the regime cache and `FSB_PREFIX` had two
+  bytes left.
+- The keyed incoming-regime cache compares eight bytes on every call. It hits
+  on every standalone and on pair states that repeat the start state; a
+  per-defender "start regime" byte set by the facts preparation would be
+  cheaper but was wrong for the unit fixtures, which call the scalar routines
+  without the facts pass. Fix the fixtures' setup rather than the cache if
+  this ever matters.
+- `fast_selector.asm` `.IdentityStandalone` duplicates the executor's gate
+  logic for the trivial record (check flags, damage flags when able to act,
+  unknown damage on an unsupported hit). If the executor's gates change, this
+  must change with them; a shared "flags at a living state" routine would
+  remove the duplication.
+- The three profile scripts under `.local/ai-two-second/` are scratch; the
+  label-list profiler is worth promoting into `tools/boss_ai_fixtures/` as a
+  proper tool since every performance step relied on it.
