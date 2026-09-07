@@ -187,33 +187,36 @@ BossAI_FastScalarPair::
 	ret
 
 .CacheOwn
-; Copy the own plan's gate fields into FSK_OWN.
-	ld a, FSP_CAN_ACT
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hli]
-	ld [FSK_OWN + FSK_CAN_ACT], a
-	ld a, [hli]
-	ld [FSK_OWN + FSK_CHECK], a
-	ld a, [hl]
-	ld [FSK_OWN + FSK_DAMAGE_FLAGS], a
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hli]
-	ld [FSK_OWN + FSK_OPCODE], a
-	ld a, [hl]
-	ld [FSK_OWN + FSK_ACCURACY], a
-	ld a, FSP_RANGE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hli]
-	ld [FSK_OWN + FSK_RANGE], a
-	ld a, [hl]
-	ld [FSK_OWN + FSK_SUPPORT], a
-	ld a, FSP_MOVE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+; Copy the own plan's gate fields into FSK_OWN from one base pointer.
+	ld a, [FPK_INDEX]
+	ld l, a
+	ld h, 0
+	rept 6
+	add hl, hl
+	endr
+	ld bc, FSP_BASE + FSP_MOVE
+	add hl, bc
+	ld a, [hli] ; FSP_MOVE
 	ld [FSK_OWN + FSK_MOVE], a
-	ld a, FSP_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hli] ; FSP_OPCODE
+	ld [FSK_OWN + FSK_OPCODE], a
+	ld a, [hli] ; FSP_ACCURACY
+	ld [FSK_OWN + FSK_ACCURACY], a
+	inc hl ; FSP_PRIORITY
+	ld a, [hli] ; FSP_CAN_ACT
+	ld [FSK_OWN + FSK_CAN_ACT], a
+	ld a, [hli] ; FSP_CHECK_FLAGS
+	ld [FSK_OWN + FSK_CHECK], a
+	ld a, [hli] ; FSP_DAMAGE_FLAGS
+	ld [FSK_OWN + FSK_DAMAGE_FLAGS], a
+	ld bc, FSP_RANGE - FSP_HIT_FLAGS
+	add hl, bc
+	ld a, [hli] ; FSP_RANGE
+	ld [FSK_OWN + FSK_RANGE], a
+	ld a, [hli] ; FSP_SUPPORT
+	ld [FSK_OWN + FSK_SUPPORT], a
+	ld bc, FSP_RECOVERY_QUOTA - FSP_RAW_MIN
+	add hl, bc
 	ld a, [hli]
 	ld [FSK_OWN + FSK_QUOTA], a
 	ld a, [hl]
@@ -222,40 +225,36 @@ BossAI_FastScalarPair::
 	ld [FSK_OWN + FSK_POWER], a
 	ret
 .CacheReply
-; Copy the compact reply's gate fields into FSK_REPLY.
-	ld a, FSR_CAN_ACT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hli]
-	ld [FSK_REPLY + FSK_CAN_ACT], a
-	ld a, [hli]
-	ld [FSK_REPLY + FSK_CHECK], a
-	ld a, [hl]
-	ld [FSK_REPLY + FSK_DAMAGE_FLAGS], a
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hli]
-	ld [FSK_REPLY + FSK_OPCODE], a
-	ld a, [hl]
-	ld [FSK_REPLY + FSK_ACCURACY], a
-	ld a, FSR_RANGE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hli]
-	ld [FSK_REPLY + FSK_RANGE], a
-	ld a, [hl]
-	ld [FSK_REPLY + FSK_SUPPORT], a
-	ld a, FSR_MOVE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+; Copy the compact reply's gate fields into FSK_REPLY from one base pointer.
+	call BossAI_FastNormalizedPair.Context
+	ld hl, FSR_BASE + FSR_MOVE
+	add hl, de
+	ld a, [hli] ; FSR_MOVE
 	ld [FSK_REPLY + FSK_MOVE], a
-	ld a, FSR_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hli]
+	ld a, [hli] ; FSR_OPCODE
+	ld [FSK_REPLY + FSK_OPCODE], a
+	ld a, [hli] ; FSR_ACCURACY
+	ld [FSK_REPLY + FSK_ACCURACY], a
+	inc hl ; FSR_PRIORITY
+	ld a, [hli] ; FSR_CAN_ACT
+	ld [FSK_REPLY + FSK_CAN_ACT], a
+	ld a, [hli] ; FSR_CHECK_FLAGS
+	ld [FSK_REPLY + FSK_CHECK], a
+	ld a, [hli] ; FSR_DAMAGE_FLAGS
+	ld [FSK_REPLY + FSK_DAMAGE_FLAGS], a
+	ld bc, FSR_RANGE - FSR_HIT_FLAGS
+	add hl, bc
+	ld a, [hli] ; FSR_RANGE
+	ld [FSK_REPLY + FSK_RANGE], a
+	ld a, [hli] ; FSR_SUPPORT
+	ld [FSK_REPLY + FSK_SUPPORT], a
+	ld a, [hli] ; FSR_RECOVERY_QUOTA
 	ld [FSK_REPLY + FSK_QUOTA], a
-	ld a, [hl]
+	ld a, [hli]
 	ld [FSK_REPLY + FSK_QUOTA + 1], a
-	ld a, FSR_POWER
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld bc, FSR_POWER - FSR_RECOVERY_QUOTA - 2
+	add hl, bc
+	ld a, [hl] ; FSR_POWER
 	ld [FSK_REPLY + FSK_POWER], a
 	ret
 
@@ -840,43 +839,45 @@ BossAI_FastScalarReplyStandalone::
 	ld hl, 0
 .standalone_hit
 	push hl ; hit delta
-	ld a, FSR_HIT_HP
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld de, FSK_NEXT
-	call .StoreSuccessor
-	ld a, FSR_HIT_DELTA
-	call BossAI_FastNormalizedPair.ReplyAddress
-	pop bc
-	push bc
-	ld [hl], b
-	inc hl
-	ld [hl], c
+	call BossAI_FastNormalizedPair.Context
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	ld d, h
+	ld e, l ; DE=record bytes 28..: successors, deltas, moment
+	ld hl, FSK_NEXT
+	call .copy4
 ; the miss successor is the start state for damage, the hit successor for
 ; deterministic recovery (whose miss delta equals the hit delta)
-	ld a, FSR_MISS_HP
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld de, FSK_STATE
+	ld hl, FSK_STATE
 	ld a, [FSK_REPLY + FSK_OPCODE]
 	cp FSR_RECOVERY
 	jr nz, .standalone_miss_state
-	ld de, FSK_NEXT
+	ld hl, FSK_NEXT
 .standalone_miss_state
-	call .StoreSuccessor
-	ld a, FSR_MISS_DELTA
-	call BossAI_FastNormalizedPair.ReplyAddress
-	pop bc
-	push bc
+	call .copy4
+	pop hl ; hit delta
+	ld a, h
+	ld [de], a
+	inc de
+	ld a, l
+	ld [de], a
+	inc de
+	ld bc, 0
 	ld a, [FSK_REPLY + FSK_OPCODE]
 	cp FSR_RECOVERY
-	jr z, .standalone_miss_delta
-	ld bc, 0
+	jr nz, .standalone_miss_delta
+	ld b, h
+	ld c, l
 .standalone_miss_delta
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	pop hl ; hit delta
+	ld a, b
+	ld [de], a
+	inc de
+	ld a, c
+	ld [de], a
+	inc de
 ; moment = p*hit + (256-p)*miss: recovery is deterministic (256*delta);
 ; identity-on-miss damage is p*hit delta.
+	push de
 	ld a, [FSK_REPLY + FSK_OPCODE]
 	cp FSR_RECOVERY
 	ld a, 0
@@ -887,39 +888,39 @@ BossAI_FastScalarReplyStandalone::
 	xor a
 .moment_scale
 	call BossAI_FastMulSigned16By8 ; A:HL=signed 24-bit product
-	ld b, a
-	push hl
-	push bc
-	ld a, FSR_MOMENT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	pop bc
-	ld [hl], b
-	inc hl
-	pop bc
-	ld [hl], b
-	inc hl
-	ld [hl], c
+	pop de
+	ld [de], a
+	inc de
+	ld a, h
+	ld [de], a
+	inc de
+	ld a, l
+	ld [de], a
 ; flags at the start state for both original events
 	ld hl, FSK_STATE
 	ld de, FSK_NEXT
-	ld b, 4
-.restore_state
-	ld a, [hli]
-	ld [de], a
-	inc de
-	dec b
-	jr nz, .restore_state
+	call .copy4
 	xor a
 	ld [FSK_EVENT], a
 	call .StandaloneFlags
+	ld b, a
 	ld a, 1
 	ld [FSK_EVENT], a
+	push bc
 	call .StandaloneFlags
+	pop bc
+	ld c, a
+	call BossAI_FastNormalizedPair.Context
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld [hl], b
+	inc hl
+	ld [hl], c
 	pop de
 	scf
 	ret
 .StandaloneFlags
-; Flags of the reply at the start state for FSK_EVENT into FSR+24/25.
+; A=flags of the reply at the start state for FSK_EVENT.
 	ld hl, FSK_STATE
 	ld a, [hli]
 	or [hl]
@@ -928,27 +929,19 @@ BossAI_FastScalarReplyStandalone::
 	ld a, [hli]
 	or [hl]
 	jr z, .standalone_no_flags
-	call BossAI_FastScalarPair.ReplyFlagsAt
-	jr .standalone_store_flags
+	jp BossAI_FastScalarPair.ReplyFlagsAt
 .standalone_no_flags
 	xor a
-.standalone_store_flags
-	push af
-	ld a, [FSK_EVENT]
-	add FSR_STANDALONE_HIT_FLAGS
-	call BossAI_FastNormalizedPair.ReplyAddress
-	pop af
-	ld [hl], a
 	ret
-.StoreSuccessor
-; HL=record field, DE=four-byte state.
+.copy4
+; Four bytes from HL to DE; both advance.
 	ld b, 4
-.store_successor_byte
-	ld a, [de]
-	ld [hli], a
+.copy4_byte
+	ld a, [hli]
+	ld [de], a
 	inc de
 	dec b
-	jr nz, .store_successor_byte
+	jr nz, .copy4_byte
 	ret
 .DeltaFromStart
 ; HL=V(FSK_NEXT)-V(start) using the stored start potentials.
