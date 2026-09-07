@@ -353,17 +353,9 @@ BossAI_FastBuildHPRankPlayer128:
 	fhp_rank_kernel 128, $a180
 PURGE fhp_rank_kernel
 
-; Same-bank, byte-indexed ROM data removes pointer arithmetic from every
-; threshold event. No SRAM or retained state is added.
-ALIGN 8
-BossAI_FastHPEventMasks:
-for n, 256
-if n % 8 == 0
-	db 0
-else
-	db 1 << ((n % 8) - 1)
-endc
-endr
+; BossAI_FastHPEventMasks (same-bank, byte-indexed ROM data that removes
+; pointer arithmetic from every threshold event) lives in fast_hp_masks.asm,
+; first in the section so its page alignment costs no bank space.
 
 BossAI_FastHPDirect::
 ; HL=table, BC=h (0<=h<=M). A=floor(W*h/M). DE preserved.

@@ -363,6 +363,7 @@ INCLUDE "engine/battle/ai/joint_action.asm"
 INCLUDE "engine/battle/ai/fast_reference.asm"
 
 SECTION "Boss AI Fast Prototype", ROMX
+INCLUDE "engine/battle/ai/fast_hp_masks.asm"
 INCLUDE "engine/battle/ai/fast_math.asm"
 INCLUDE "engine/battle/ai/fast_hp.asm"
 INCLUDE "engine/battle/ai/fast_results.asm"

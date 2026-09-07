@@ -881,11 +881,17 @@ BossAI_ComparePublicActionsFastPrototype::
 	jp BossAI_FastCompileReplyNative
 
 .ReplyStandalone
-; Standalone record for the compiled reply: the scalar path for plain
-; families, otherwise the sequential builder whose continuation flags are
-; copied into the record. Carry=complete. Also classifies identity replies.
+; Standalone record for the compiled reply. Identity replies (no HP change
+; from any state) get their trivial record directly; plain families take the
+; scalar path; the rest use the sequential builder, whose continuation flags
+; are copied into the record. Carry=complete.
+	call .ClassifyIdentity
+	ad_address FS_REPLY_IDENTITY
+	ld a, [hl]
+	and a
+	jr nz, .IdentityStandalone
 	call BossAI_FastScalarReplyStandalone
-	jr c, .standalone_ready
+	ret c
 	call BossAI_FastBuildReplyStandalone
 	ret nc
 	ld a, [$a458] ; original-hit continuation flags
@@ -894,8 +900,65 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hli], a
 	ld a, [$a470] ; original-miss continuation flags
 	ld [hl], a
-.standalone_ready
-	call .ClassifyIdentity
+	scf
+	ret
+.IdentityStandalone
+; Both successors are the start state and the deltas and moment are zero.
+; The flags follow the executor's gates at the start state: the check flags,
+; plus the damage flags when the reply can act, plus unknown damage on the
+; hit of a reply whose compiled regimes are unsupported (accuracy permitting).
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	ld b, 2
+.identity_successor
+	ld a, [FSA_START_HP]
+	ld [hli], a
+	ld a, [FSA_START_HP + 1]
+	ld [hli], a
+	ld a, [FSA_PLAYER]
+	ld [hli], a
+	ld a, [FSA_PLAYER + 1]
+	ld [hli], a
+	dec b
+	jr nz, .identity_successor
+	xor a
+	rept 7
+	ld [hli], a
+	endr
+	ld hl, FSR_BASE + FSR_CHECK_FLAGS
+	add hl, de
+	ld b, [hl]
+	ld c, b
+	dec hl
+	ld a, [hl] ; FSR_CAN_ACT
+	and a
+	jr z, .identity_flags
+	inc hl
+	inc hl
+	ld a, [hl] ; FSR_DAMAGE_FLAGS
+	or b
+	ld b, a
+	ld c, a
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .identity_flags
+	ld hl, FSR_BASE + FSR_VALID
+	add hl, de
+	ld a, [hli]
+	inc hl
+	and [hl] ; FSR_SUPPORT within the compiled regimes
+	jr nz, .identity_flags
+	ld a, b
+	or 1 << AV_UNKNOWN_DAMAGE_F
+	ld b, a
+.identity_flags
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld a, b
+	ld [hli], a
+	ld [hl], c
 	scf
 	ret
 .ClassifyIdentity
@@ -952,6 +1015,10 @@ BossAI_ComparePublicActionsFastPrototype::
 .AccumulateIncoming
 ; B+=weight*mu_reply (signed32). The unary candidate collects the reply's
 ; standalone flags over its positive original events.
+	ad_address FS_REPLY_IDENTITY
+	ld a, [hl]
+	and a
+	jr nz, .incoming_flags ; zero moment
 	ld hl, FSR_BASE + FSR_MOMENT
 	add hl, de
 	ld a, [hli]
@@ -996,6 +1063,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	dec d
 	jr nz, .add_incoming_byte
 	pop de
+.incoming_flags
 	ad_address FS_UNARY_INDEX
 	ld a, [hl]
 	cp $ff
