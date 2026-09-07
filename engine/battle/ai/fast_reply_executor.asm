@@ -1,5 +1,6 @@
 ; Execute the compact incoming plan without mutable producer reads.
 ; Uses the same sequential executor scratch as owned actions, never their plans.
+DEF FSC_FAULT EQU $a58f ; sticky: an incoming plan was executed at an uncompiled regime
 BossAI_FastExecuteReplyPlan::
 ; DE=context base (only reply399..446 read), HL=continuation24,
 ; A=original event0hit/1miss. SRAM0 open; actors' maximum HP populated.
@@ -93,6 +94,14 @@ BossAI_FastExecuteReplyPlan::
 	add hl, bc
 	ld a, [hl]
 	ld [FSE_MASK], a
+	ld a, FSR_VALID
+	call .PlanAddress
+	ld a, [FSE_MASK]
+	and [hl]
+	jr nz, .regime_compiled
+	ld a, 1
+	ld [FSC_FAULT], a ; the selector restarts through the reference
+.regime_compiled
 	ld a, FSR_RANGE
 	call .PlanAddress
 	ld a, [FSE_MASK]

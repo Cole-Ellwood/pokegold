@@ -14,6 +14,7 @@ DEF FS_UNARY_INDEX EQU FS_CONTROL + 9 ; wait/switch record index, $ff none
 DEF FS_UNARY_KIND EQU FS_CONTROL + 10
 DEF FS_PLAN_FLAGS EQU FS_CONTROL + 11 ; setup|open prior|unknown order, move plans
 DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate
+DEF FS_REPLY_REGIMES EQU FS_CONTROL + 13 ; HP regimes a reply can reach for this defender
 DEF FS_PLAN_INDEX EQU FS_CONTROL + 14 ; four original result indices, $ff unused
 DEF FSA_OWN_SPEED EQU FSA_OWN + 14
 DEF FSA_ITEM_CLASS EQU FSA_OWN + 32 ; 1=Quick Claw
@@ -44,6 +45,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr z, .replacement
 	ad_address FS_BACKEND
 	ld [hl], 0
+	xor a
+	ld [FSC_FAULT], a
 	call .ReplyMass
 	jp nc, .restart
 	call .ActiveDefender
@@ -57,6 +60,9 @@ BossAI_ComparePublicActionsFastPrototype::
 .bench_next
 	call .BenchAdvance
 	jr nz, .bench
+	ld a, [FSC_FAULT]
+	and a
+	jp nz, .restart ; an incoming plan ran at a regime the mask did not cover
 	jp BossAI_FastFinalizeResults
 
 .replacement
@@ -453,11 +459,110 @@ BossAI_ComparePublicActionsFastPrototype::
 	cp 4
 	jr c, .plan_init
 	call .InitUnaryRecord
+	call .ReplyRegimes
 	call .ReplySweep
 	ret nc
 	call .CommitIncoming
 	scf
 	ret
+
+.ReplyRegimes
+; FS_REPLY_REGIMES=bit per incoming HP regime reachable on this defender: the
+; start state plus every live plan's original-event successors. Regime bit0 is
+; the player's attacker-low predicate 3*HP<max, bit1 the own defender-high
+; predicate 2*HP>max, both in the executor's wrapped 16-bit arithmetic.
+	ld a, [FSA_START_HP]
+	ld b, a
+	ld a, [FSA_START_HP + 1]
+	ld c, a
+	ld hl, FSA_PLAYER
+	call .ReplyRegimeBit
+	ld b, a
+	ld c, 0
+.regime_plan
+	push bc
+	call .PlanIndex
+	cp $ff
+	jr z, .regime_next
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .regime_next
+	ld a, FSP_HIT_HP
+	call .PlanAddress
+	call .SuccessorRegimeBit
+	pop bc
+	or b
+	ld b, a
+	push bc
+	ld a, FSP_MISS_HP
+	call .PlanAddress
+	call .SuccessorRegimeBit
+	pop bc
+	or b
+	ld b, a
+	push bc
+.regime_next
+	pop bc
+	inc c
+	ld a, c
+	cp 4
+	jr c, .regime_plan
+	ld a, b
+	ad_address FS_REPLY_REGIMES
+	ld [hl], a
+	ret
+.SuccessorRegimeBit
+; HL=plan successor: own HP word then player HP word.
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	inc hl
+.ReplyRegimeBit
+; BC=own HP, HL=player HP word. A=1<<regime for an incoming action from that
+; state. BC/HL scratch; DE preserved.
+	push de
+	push bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, bc ; 3*player HP, wrapped like the executor
+	ld a, [FSA_PLAYER + 3]
+	ld e, a
+	ld a, [FSA_PLAYER + 2]
+	ld d, a
+	ld a, l
+	sub e
+	ld a, h
+	sbc d
+	ld a, 0
+	adc 0 ; 1 when 3*HP<max
+	pop bc
+	sla c
+	rl b ; 2*own HP, wrapped
+	ld e, a
+	ld a, [FSA_MAX_HP]
+	cp b
+	jr c, .regime_high
+	jr nz, .regime_bit
+	ld a, [FSA_MAX_HP + 1]
+	cp c
+	jr nc, .regime_bit
+.regime_high
+	set 1, e
+.regime_bit
+	ld d, 0
+	ld hl, .RegimeBits
+	add hl, de
+	ld a, [hl]
+	pop de
+	ret
+.RegimeBits
+	db 1, 2, 4, 8
 
 .AddPlan
 ; C=plan slot, B=move, A=original result index. Compiles the plan now.
@@ -559,6 +664,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	call .UnaryBaseline
 	call .InitUnaryRecord
+	call .ReplyRegimes
 	farcall BossAI_PreparePublicAction ; this bench actor's reply epoch
 	call .ReplySweep
 	ret nc
@@ -735,12 +841,21 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	ad_address AV_BRANCH
 	ld [hl], 0
+	ad_address FS_REPLY_REGIMES
+	ld c, [hl]
 	farcall BossAI_FastPrepareReply
 	ret
 
 .AccumulateIncoming
-; B+=weight*mu_reply (signed32). The unary candidate also collects the
-; reply's reached flags over its positive original events.
+; B+=weight*mu_reply (signed32). The reply's standalone flags are kept in its
+; record for the scalar pair path, and the unary candidate collects them over
+; its positive original events.
+	ld a, [$a458] ; original-hit continuation flags
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld [hli], a
+	ld a, [$a470] ; original-miss continuation flags
+	ld [hl], a
 	ld hl, FSR_BASE + FSR_MOMENT
 	add hl, de
 	ld a, [hli]
@@ -886,7 +1001,17 @@ BossAI_ComparePublicActionsFastPrototype::
 	and a
 	jr z, .pair_fallback
 	pop af
+	push af
+	push bc
+	call BossAI_FastScalarPair
+	pop bc
+	jr c, .pair_scalar
+	pop af
 	call BossAI_FastNormalizedPair.CorrectionOnly
+	jr .pair_total
+.pair_scalar
+	pop af
+	scf
 	jr .pair_total
 .pair_fallback
 	pop af

@@ -271,7 +271,8 @@ BossAI_FastPrepareReplacementFacts::
 ; every input through DE/BC or the context. Each bridge leaves the producer
 ; prefix in the state the next same-bank helper reads.
 DEF FSB_QUICK_CLAW EQU $a48f ; 1 when the active owned actor holds Quick Claw
-ASSERT FSB_QUICK_CLAW < FSB_PREFIX
+DEF FSB_REPLY_REGIMES EQU $a490 ; regime mask compiled for the current reply
+ASSERT FSB_REPLY_REGIMES < FSB_PREFIX
 
 BossAI_FastPrepareOwnedCandidate::
 ; DE=context with AV_SLOT/KIND/MOVE/BRANCH supplied, C=plan slot0..3. Prepares
@@ -315,8 +316,16 @@ BossAI_FastPrepareActiveFacts::
 	ret
 
 BossAI_FastPrepareReply::
-; DE=context with AV_SLOT/AV_KIND/AV_REPLY set inside the defender's prepared
-; epoch. Builds the reply template and compiles the compact incoming plan.
+; DE=context with AV_SLOT/AV_KIND/AV_REPLY (nonzero) set inside the defender's
+; prepared epoch; C=mask of HP regimes this reply can reach (bit r). Builds
+; the incoming context for the reply directly in the live AD, without the
+; prepared-range call or template copy that the prepared evaluator needed,
+; then compiles the compact incoming plan for the masked regimes only.
 ; Carry=represented; clear leaves opcode0 with a valid move/accuracy header.
-	call BossAI_PreparePublicReply
-	jp BossAI_FastCompileReplyPlan
+	push bc
+	ad_address AV_REPLY
+	ld c, [hl]
+	call BossAI_BuildPreparedIncoming
+	call BossAI_ValuePublicExchange.MoveReplyPursuit
+	pop bc
+	jp BossAI_FastCompileReplyPlan.Masked

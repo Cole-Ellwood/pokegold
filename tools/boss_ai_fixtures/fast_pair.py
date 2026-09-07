@@ -8,7 +8,7 @@ from tools.boss_ai_fixtures.fast_standalone import phi
 
 
 def main():
-    count = 0
+    count = scalar = 0
     rng = random.Random(20260907)
     moves = ("TACKLE", "FIRE_BLAST", "LEECH_LIFE", "DOUBLE_EDGE", "RECOVER", "REST", "SPLASH", "DREAM_EATER")
     with open_harness("pokegold_ai_reference") as h:
@@ -62,6 +62,7 @@ def main():
             assert h.invoke("BossAI_FastCompileReplyPlan", regs) and h.outcome()["carry"]
             assert h.invoke("BossAI_FastBuildOwnedStandalone", {**regs, "C": slot}) and h.outcome()["carry"]
             assert h.invoke("BossAI_FastBuildReplyStandalone", regs) and h.outcome()["carry"]
+            mem[0xca8f + 24], mem[0xca8f + 25] = mem[0xa458], mem[0xa470]  # standalone reply flags for the scalar path
             plans = bytes(mem[0xa2f8:0xa3f8])
             reply_plan = bytes(mem[0xca8f:0xcabf])
             probabilities = [256 if a == 255 else a for a in (own_accuracy, reply_accuracy if reply else 0)]
@@ -103,6 +104,18 @@ def main():
                 after = bytes(mem[0xa000:0xa600])
                 mutable = {*range(0x448, 0x460), *range(0x510, 0x560), *range(0x578, 0x57d)}
                 assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable)
+                # Scalar path: identical correction/flags whenever it accepts the pair.
+                mem[0xa578:0xa57d] = [0x77] * 5
+                mem[0xa54e] = 0x77
+                before_scalar = bytes(mem[0xa000:0xa600])
+                assert h.invoke("BossAI_FastScalarPair", {**regs, "C": slot, "A": order})
+                if h.outcome()["carry"]:
+                    scalar += 1
+                    assert int.from_bytes(bytes(mem[0xa578:0xa57d]), "big") == (expected_total - baseline) % (1 << 40), (own_move, reply, scenario, order, "scalar total")
+                    assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, "scalar flags", mem[0xa54e], expected_flags)
+                after_scalar = bytes(mem[0xa000:0xa600])
+                scalar_mutable = {*range(0x510, 0x530), *range(0x54c, 0x578), *range(0x578, 0x57d)}
+                assert all(a == b for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if i not in scalar_mutable)
                 assert bytes(mem[0xc900:0xca8f]) == bytes([0xa5] * 399)
                 assert bytes(mem[0xca8f:0xcabf]) == reply_plan
                 assert bytes(mem[0xcabf:0xcad8]) == bytes([0x69] * 25)
@@ -116,7 +129,7 @@ def main():
             assert h.invoke("BossAI_FastNormalizedPair", {**regs, "C": slot, "A": order}) and not h.outcome()["carry"]
             assert bytes(mem[0xa000:0xa600]) == before and bytes(mem[0xc900:0xcad8]) == wram
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {count} factored native pair numerators/flags, producer poisoning, record guards and 7 no-write rejections")
+    print(f"PASS: {count} factored native pair numerators/flags ({scalar} also through the scalar path), producer poisoning, record guards and 7 no-write rejections")
 
 
 if __name__ == "__main__":

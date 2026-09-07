@@ -374,6 +374,7 @@ INCLUDE "engine/battle/ai/fast_standalone.asm"
 INCLUDE "engine/battle/ai/fast_reply_standalone.asm"
 INCLUDE "engine/battle/ai/fast_pair.asm"
 INCLUDE "engine/battle/ai/fast_pair_fallback.asm"
+INCLUDE "engine/battle/ai/fast_scalar_pair.asm"
 INCLUDE "engine/battle/ai/fast_selector.asm"
 ENDC
 

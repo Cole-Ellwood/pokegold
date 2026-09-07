@@ -221,7 +221,8 @@ DEF FSC_ENTRY_DELTA EQU $a583 ; signed16 entry potential change, zero when activ
 DEF FSC_BASELINE EQU $a585 ; 2*65536*(1024+entry delta): the unary standalone baseline
 DEF FSC_TEMP EQU $a58a ; five-byte accumulation temporary
 ASSERT FPK_TOTAL + 5 == FSC_INCOMING
-ASSERT FSC_TEMP + 5 <= $a590
+ASSERT FSC_TEMP + 5 == FSC_FAULT
+ASSERT FSC_FAULT < $a590
 
 BossAI_FastUnaryFallback::
 ; B=candidate kind (switch or wait), C=owned slot ($ff active), DE=context whose

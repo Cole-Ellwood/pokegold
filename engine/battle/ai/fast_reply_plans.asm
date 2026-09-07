@@ -60,6 +60,13 @@ BossAI_FastCompileReplyPlan::
 ; without writes. Fixed non-HP context/defense is a caller precondition.
 ; Writes reply48 + bridge + AD range scratch; restores flags/postroll.
 ; Other WRAM records, all four owned plans, AV and DE/SP are preserved.
+; This entry compiles all four HP regimes.
+	ld c, 15
+.Masked
+; C=regime mask. Only masked regimes get amounts/range/support bits; the
+; mask is recorded in FSR_VALID and the executor faults on any other regime.
+	ld a, c
+	ld [FSB_REPLY_REGIMES], a
 	ad_address AV_REPLY
 	ld a, [hl]
 	and a
@@ -173,6 +180,14 @@ BossAI_FastCompileReplyPlan::
 	ld [FSB_PLAN_REGIME], a
 .regime
 	ld a, [FSB_PLAN_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .Bits
+	add hl, bc
+	ld a, [FSB_REPLY_REGIMES]
+	and [hl]
+	jp z, .next_regime ; unreachable regime: amount and masks stay zero
+	ld a, [FSB_PLAN_REGIME]
 	add a ; maps regime bits0..1 to AD flags1..2
 	ld b, a
 	ld a, [FSB_PLAN_FLAGS]
@@ -217,6 +232,7 @@ BossAI_FastCompileReplyPlan::
 	ld [hl], a
 .next
 	pop af
+.next_regime
 	ld hl, FSB_PLAN_REGIME
 	inc [hl]
 	ld a, [hl]
@@ -230,7 +246,7 @@ BossAI_FastCompileReplyPlan::
 	ld [hl], a
 	ld a, 3
 	fsr_store FSR_HP_DEPEND
-	ld a, 15
+	ld a, [FSB_REPLY_REGIMES]
 	fsr_store FSR_VALID
 	ld a, FSR_DAMAGE
 	fsr_store FSR_OPCODE
