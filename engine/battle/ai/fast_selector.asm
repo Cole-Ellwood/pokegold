@@ -784,7 +784,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	call .PrepareReply
 	jr nc, .reply_fallback
-	call BossAI_FastBuildReplyStandalone
+	call .ReplyStandalone
 	ret nc
 	call .AccumulateIncoming
 	jr .reply_plans
@@ -846,16 +846,26 @@ BossAI_ComparePublicActionsFastPrototype::
 	farcall BossAI_FastPrepareReply
 	ret
 
-.AccumulateIncoming
-; B+=weight*mu_reply (signed32). The reply's standalone flags are kept in its
-; record for the scalar pair path, and the unary candidate collects them over
-; its positive original events.
+.ReplyStandalone
+; Standalone record for the compiled reply: the scalar path for plain
+; families, otherwise the sequential builder whose continuation flags are
+; copied into the record. Carry=complete.
+	call BossAI_FastScalarReplyStandalone
+	ret c
+	call BossAI_FastBuildReplyStandalone
+	ret nc
 	ld a, [$a458] ; original-hit continuation flags
 	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
 	add hl, de
 	ld [hli], a
 	ld a, [$a470] ; original-miss continuation flags
 	ld [hl], a
+	scf
+	ret
+
+.AccumulateIncoming
+; B+=weight*mu_reply (signed32). The unary candidate collects the reply's
+; standalone flags over its positive original events.
 	ld hl, FSR_BASE + FSR_MOMENT
 	add hl, de
 	ld a, [hli]
@@ -911,15 +921,18 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld b, 0
 	and a
 	jr z, .miss_flags
-	ld a, [$a458] ; original-hit continuation flags
-	ld b, a
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld b, [hl]
 	ld hl, FSR_BASE + FSR_ACCURACY
 	add hl, de
 	ld a, [hl]
 .miss_flags
 	cp 255
 	jr z, .reply_flags_ready
-	ld a, [$a470] ; original-miss continuation flags
+	ld hl, FSR_BASE + FSR_STANDALONE_MISS_FLAGS
+	add hl, de
+	ld a, [hl]
 	or b
 	ld b, a
 .reply_flags_ready

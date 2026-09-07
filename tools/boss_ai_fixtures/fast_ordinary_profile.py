@@ -40,6 +40,8 @@ PHASES = {
     "BossAI_FastPrepareReply": "reply_prepare",
     "BossAI_FastBuildReplyStandalone": "reply_standalone",
     "BossAI_FastNormalizedPair.CorrectionOnly": "native_pair",
+    "BossAI_FastScalarPair": "scalar_pair",
+    "BossAI_FastScalarReplyStandalone": "scalar_standalone",
     "BossAI_FastFallbackPair.CorrectionOnly": "fallback_pair",
     "BossAI_FastUnaryFallback": "unary_fallback",
     "BossAI_FastFinalizeResults": "finalize",

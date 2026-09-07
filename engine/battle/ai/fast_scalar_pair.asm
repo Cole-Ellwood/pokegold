@@ -1,11 +1,12 @@
-; Scalar pair corrections for plain families. No executor runs: the hit/hit
-; terminal of each order is at most two potential lookups, and reached flags
-; come from the compact records evaluated at the first action's successor.
-; Eligible when the own plan is plain single-hit damage (descriptor effect 0,
-; item 0) or recovery, and the reply is plain damage (no Helmet/drain/recoil)
-; or recovery. Unsupported incoming amounts keep their conservative KO. Every
-; other family stays with the sequential evaluator, whose semantics this
-; mirrors field for field (see fast_plan_executor/fast_reply_executor).
+; Scalar pair corrections and standalone records for plain families. No
+; executor runs: hit/hit terminals are at most two potential lookups per
+; order, and reached flags come from a cached copy of each record's gate
+; fields evaluated at the first action's successor. Eligible when the own
+; plan is plain single-hit damage (descriptor effect 0, item 0) or recovery,
+; and the reply is plain damage (no Helmet/drain/recoil) or recovery.
+; Unsupported incoming amounts keep their conservative KO. Every other family
+; stays with the sequential evaluator, whose gates these routines mirror
+; field for field (see fast_plan_executor/fast_reply_executor).
 DEF FSK_STATE EQU $a560 ; own HP, player HP after the first action
 DEF FSK_NEXT EQU $a564 ; state after the second action
 DEF FSK_EVENT EQU $a568 ; second action's original event during flag passes
@@ -13,9 +14,25 @@ DEF FSK_REGIME EQU $a569 ; regime index of the second action
 DEF FSK_BIT EQU $a56a ; its bit
 DEF FSK_FLAGS EQU $a56b ; flags reached by the second action
 DEF FSK_UNION EQU $a56c ; flags of one order/event path
-DEF FSR_STANDALONE_HIT_FLAGS EQU 24 ; reply record bytes filled by the selector
+DEF FSK_ACC EQU $a56d ; three-byte multiply accumulator
+ASSERT FSK_ACC + 3 <= $a578
+; Record gate caches: 12 bytes each, in the formerly uncommitted tail.
+DEF FSK_OWN EQU $a5c0
+DEF FSK_REPLY EQU $a5cc
+DEF FSK_CHECK EQU 0
+DEF FSK_CAN_ACT EQU 1
+DEF FSK_OPCODE EQU 2
+DEF FSK_DAMAGE_FLAGS EQU 3
+DEF FSK_ACCURACY EQU 4
+DEF FSK_RANGE EQU 5
+DEF FSK_SUPPORT EQU 6
+DEF FSK_MOVE EQU 7
+DEF FSK_QUOTA EQU 8 ; two bytes
+DEF FSK_POWER EQU 10
+DEF FSK_CACHE_END EQU FSK_REPLY + 12
+ASSERT FSK_CACHE_END <= $a5e0
+DEF FSR_STANDALONE_HIT_FLAGS EQU 24 ; reply record bytes owned by these paths
 DEF FSR_STANDALONE_MISS_FLAGS EQU 25
-ASSERT FSK_UNION < $a578
 
 BossAI_FastScalarPair::
 ; C=owned plan0..3, A=order0..2, DE=context whose compact reply carries its
@@ -37,31 +54,13 @@ BossAI_FastScalarPair::
 	ld [FPK_CONTEXT], a
 	ld a, e
 	ld [FPK_CONTEXT + 1], a
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
-	cp FSP_RECOVERY
-	jr z, .own_ok
-	cp FSP_DAMAGE
-	jp nz, .reject
-	ld a, FSP_DESCRIPTOR
-	call BossAI_FastNormalizedPair.OwnAddress
-	call .PlainDescriptor
+	call .OwnEligible
 	jp nc, .reject
-.own_ok
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
-	cp FSR_RECOVERY
-	jr z, .reply_ok
-	cp FSR_DAMAGE
-	jp nz, .reject
-	ld a, FSR_DESCRIPTOR
-	call BossAI_FastNormalizedPair.ReplyAddress
-	call .PlainDescriptor
+	call .ReplyEligible
 	jp nc, .reject
-.reply_ok
 	push de
+	call .CacheOwn
+	call .CacheReply
 	ld a, 1
 	ld [FPK_MODE], a
 	xor a
@@ -74,30 +73,22 @@ BossAI_FastScalarPair::
 	ld a, 1 << AV_UNKNOWN_ORDER_F
 	ld [FPK_FLAGS], a
 .masses
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_OPCODE]
 	ld bc, 256
 	cp FSP_RECOVERY
 	jr z, .own_mass
-	ld a, FSP_ACCURACY
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_ACCURACY]
 	call BossAI_FastNormalizedPair.Decode
 .own_mass
 	ld a, b
 	ld [FPK_OWN_Z], a
 	ld a, c
 	ld [FPK_OWN_Z + 1], a
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_OPCODE]
 	ld bc, 256
 	cp FSR_RECOVERY
 	jr z, .reply_mass
-	ld a, FSR_ACCURACY
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_ACCURACY]
 	call BossAI_FastNormalizedPair.Decode
 .reply_mass
 	ld a, b
@@ -157,6 +148,29 @@ BossAI_FastScalarPair::
 	and a
 	ret
 
+.OwnEligible
+; Carry when the current owned plan is recovery or plain single-hit damage.
+	ld a, FSP_OPCODE
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hl]
+	cp FSP_RECOVERY
+	jr z, .eligible
+	cp FSP_DAMAGE
+	jr nz, .ineligible
+	ld a, FSP_DESCRIPTOR
+	call BossAI_FastNormalizedPair.OwnAddress
+	jr .PlainDescriptor
+.ReplyEligible
+; Carry when the compact reply is recovery or plain damage.
+	ld a, FSR_OPCODE
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hl]
+	cp FSR_RECOVERY
+	jr z, .eligible
+	cp FSR_DAMAGE
+	jr nz, .ineligible
+	ld a, FSR_DESCRIPTOR
+	call BossAI_FastNormalizedPair.ReplyAddress
 .PlainDescriptor
 ; HL=big-endian descriptor pointer field. Carry when effect and item tags are 0.
 	ld a, [hli]
@@ -164,9 +178,87 @@ BossAI_FastScalarPair::
 	ld h, a
 	ld a, [hli]
 	or [hl]
-	ret nz
+	jr nz, .ineligible
+.eligible
 	scf
 	ret
+.ineligible
+	and a
+	ret
+
+.CacheOwn
+; Copy the own plan's gate fields into FSK_OWN.
+	ld a, FSP_CAN_ACT
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hli]
+	ld [FSK_OWN + FSK_CAN_ACT], a
+	ld a, [hli]
+	ld [FSK_OWN + FSK_CHECK], a
+	ld a, [hl]
+	ld [FSK_OWN + FSK_DAMAGE_FLAGS], a
+	ld a, FSP_OPCODE
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hli]
+	ld [FSK_OWN + FSK_OPCODE], a
+	ld a, [hl]
+	ld [FSK_OWN + FSK_ACCURACY], a
+	ld a, FSP_RANGE
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hli]
+	ld [FSK_OWN + FSK_RANGE], a
+	ld a, [hl]
+	ld [FSK_OWN + FSK_SUPPORT], a
+	ld a, FSP_MOVE
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hl]
+	ld [FSK_OWN + FSK_MOVE], a
+	ld a, FSP_RECOVERY_QUOTA
+	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [hli]
+	ld [FSK_OWN + FSK_QUOTA], a
+	ld a, [hl]
+	ld [FSK_OWN + FSK_QUOTA + 1], a
+	xor a
+	ld [FSK_OWN + FSK_POWER], a
+	ret
+.CacheReply
+; Copy the compact reply's gate fields into FSK_REPLY.
+	ld a, FSR_CAN_ACT
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hli]
+	ld [FSK_REPLY + FSK_CAN_ACT], a
+	ld a, [hli]
+	ld [FSK_REPLY + FSK_CHECK], a
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_DAMAGE_FLAGS], a
+	ld a, FSR_OPCODE
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hli]
+	ld [FSK_REPLY + FSK_OPCODE], a
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_ACCURACY], a
+	ld a, FSR_RANGE
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hli]
+	ld [FSK_REPLY + FSK_RANGE], a
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_SUPPORT], a
+	ld a, FSR_MOVE
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_MOVE], a
+	ld a, FSR_RECOVERY_QUOTA
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hli]
+	ld [FSK_REPLY + FSK_QUOTA], a
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_QUOTA + 1], a
+	ld a, FSR_POWER
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hl]
+	ld [FSK_REPLY + FSK_POWER], a
+	ret
+
 .AddK
 ; HL=signed order correction.
 	ld a, [FPK_K + 1]
@@ -231,6 +323,8 @@ BossAI_FastScalarPair::
 	inc de
 	dec b
 	jr nz, .load_state_byte
+.CheckState
+; FSK_NEXT=FSK_STATE; carry when FSK_STATE has a fainted actor.
 	ld hl, FSK_STATE
 	ld de, FSK_NEXT
 	ld b, 4
@@ -256,21 +350,16 @@ BossAI_FastScalarPair::
 
 .ApplyReply
 ; FSK_NEXT: the reply's hit transition from FSK_STATE (both living).
-	ld a, FSR_CAN_ACT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_CAN_ACT]
 	and a
 	ret z
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_OPCODE]
 	cp FSR_RECOVERY
 	jr nz, .reply_damage
-	ld a, FSR_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hli]
+	ld a, [FSK_REPLY + FSK_QUOTA]
 	ld b, a
-	ld c, [hl]
+	ld a, [FSK_REPLY + FSK_QUOTA + 1]
+	ld c, a
 	ld a, [FSA_PLAYER + 2]
 	ld d, a
 	ld a, [FSA_PLAYER + 3]
@@ -278,10 +367,12 @@ BossAI_FastScalarPair::
 	ld hl, FSK_NEXT + 2
 	jp BossAI_FastGainHP
 .reply_damage
+	ld a, [FSK_REPLY + FSK_ACCURACY]
+	and a
+	ret z ; an impossible hit changes nothing even on its hit event
 	call .IncomingRegime
-	ld a, FSR_SUPPORT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_REPLY + FSK_SUPPORT]
+	ld hl, FSK_BIT
 	and [hl]
 	jr z, .reply_unsupported
 	ld a, [FSK_REGIME]
@@ -294,9 +385,7 @@ BossAI_FastScalarPair::
 	ld hl, FSK_NEXT
 	jp BossAI_FastLoseHP
 .reply_unsupported
-	ld a, FSR_POWER
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_POWER]
 	and a
 	ret z
 	xor a
@@ -305,21 +394,16 @@ BossAI_FastScalarPair::
 	ret
 .ApplyOwn
 ; FSK_NEXT: the own plan's hit transition from FSK_STATE (both living).
-	ld a, FSP_CAN_ACT
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_CAN_ACT]
 	and a
 	ret z
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_OPCODE]
 	cp FSP_RECOVERY
 	jr nz, .own_damage
-	ld a, FSP_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hli]
+	ld a, [FSK_OWN + FSK_QUOTA]
 	ld b, a
-	ld c, [hl]
+	ld a, [FSK_OWN + FSK_QUOTA + 1]
+	ld c, a
 	ld a, [FSA_MAX_HP]
 	ld d, a
 	ld a, [FSA_MAX_HP + 1]
@@ -327,10 +411,12 @@ BossAI_FastScalarPair::
 	ld hl, FSK_NEXT
 	jp BossAI_FastGainHP
 .own_damage
+	ld a, [FSK_OWN + FSK_ACCURACY]
+	and a
+	ret z
 	call .OutgoingRegime
-	ld a, FSP_SUPPORT
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_OWN + FSK_SUPPORT]
+	ld hl, FSK_BIT
 	and [hl]
 	ret z ; unsupported own amount: no HP change, flag only
 	ld a, [FSK_REGIME]
@@ -503,8 +589,8 @@ BossAI_FastScalarPair::
 	xor a
 	ld [FPK_FIRST_EVENT], a
 .own_event
-	xor a
-	call BossAI_FastNormalizedPair.Accuracy
+	ld a, [FSK_OWN + FSK_ACCURACY]
+	call BossAI_FastNormalizedPair.Decode
 	ld a, [FPK_FIRST_EVENT]
 	call BossAI_FastNormalizedPair.EventMass
 	ld a, b
@@ -513,8 +599,8 @@ BossAI_FastScalarPair::
 	xor a
 	ld [FPK_SECOND_EVENT], a
 .reply_event
-	ld a, 1
-	call BossAI_FastNormalizedPair.Accuracy
+	ld a, [FSK_REPLY + FSK_ACCURACY]
+	call BossAI_FastNormalizedPair.Decode
 	ld a, [FPK_SECOND_EVENT]
 	call BossAI_FastNormalizedPair.EventMass
 	ld a, b
@@ -591,22 +677,15 @@ BossAI_FastScalarPair::
 .ReplyFlagsAt
 ; A=flags the reply reaches from FSK_STATE (both living) at event FSK_EVENT,
 ; mirroring BossAI_FastExecuteReplyPlan's gates.
-	ld a, FSR_CHECK_FLAGS
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_CHECK]
 	ld [FSK_FLAGS], a
-	ld a, FSR_CAN_ACT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_CAN_ACT]
 	and a
 	jr z, .reply_flags_done
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_OPCODE]
 	cp FSR_RECOVERY
 	jr nz, .reply_damage_flags
-	ld a, FSR_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.ReplyAddress
+	ld hl, FSK_REPLY + FSK_QUOTA
 	ld a, [hli]
 	or [hl]
 	jr z, .reply_flags_done
@@ -619,9 +698,7 @@ BossAI_FastScalarPair::
 	ld a, [FSA_PLAYER + 2]
 	call .BelowMaximum
 	jr nc, .reply_flags_done
-	ld a, FSR_MOVE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_MOVE]
 	cp REST
 	jr nz, .reply_flags_done
 	ld a, [FSK_FLAGS]
@@ -629,33 +706,27 @@ BossAI_FastScalarPair::
 	ld [FSK_FLAGS], a
 	jr .reply_flags_done
 .reply_damage_flags
-	ld a, FSR_DAMAGE_FLAGS
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_DAMAGE_FLAGS]
 	ld hl, FSK_FLAGS
 	or [hl]
 	ld [hl], a
 	ld a, [FSK_EVENT]
 	and a
 	jr nz, .reply_flags_done
-	ld a, FSR_ACCURACY
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [hl]
+	ld a, [FSK_REPLY + FSK_ACCURACY]
 	and a
 	jr z, .reply_flags_done
 	call .IncomingRegime
-	ld a, FSR_RANGE
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_REPLY + FSK_RANGE]
+	ld hl, FSK_BIT
 	and [hl]
 	jr z, .reply_support_flag
 	ld a, [FSK_FLAGS]
 	or 1 << AV_AMOUNT_RANGE_F
 	ld [FSK_FLAGS], a
 .reply_support_flag
-	ld a, FSR_SUPPORT
-	call BossAI_FastNormalizedPair.ReplyAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_REPLY + FSK_SUPPORT]
+	ld hl, FSK_BIT
 	and [hl]
 	jr nz, .reply_flags_done
 	ld a, [FSK_FLAGS]
@@ -668,22 +739,15 @@ BossAI_FastScalarPair::
 .OwnFlagsAt
 ; A=flags the own plan reaches from FSK_STATE (both living) at event
 ; FSK_EVENT, mirroring BossAI_FastExecuteOwnedPlan's gates.
-	ld a, FSP_CHECK_FLAGS
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_CHECK]
 	ld [FSK_FLAGS], a
-	ld a, FSP_CAN_ACT
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_CAN_ACT]
 	and a
 	jr z, .own_flags_done
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_OPCODE]
 	cp FSP_RECOVERY
 	jr nz, .own_damage_flags
-	ld a, FSP_RECOVERY_QUOTA
-	call BossAI_FastNormalizedPair.OwnAddress
+	ld hl, FSK_OWN + FSK_QUOTA
 	ld a, [hli]
 	or [hl]
 	jr z, .own_flags_done
@@ -696,9 +760,7 @@ BossAI_FastScalarPair::
 	ld a, [FSA_MAX_HP]
 	call .BelowMaximum
 	jr nc, .own_flags_done
-	ld a, FSP_MOVE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_MOVE]
 	cp REST
 	jr nz, .own_flags_done
 	ld a, [FSK_FLAGS]
@@ -706,33 +768,27 @@ BossAI_FastScalarPair::
 	ld [FSK_FLAGS], a
 	jr .own_flags_done
 .own_damage_flags
-	ld a, FSP_DAMAGE_FLAGS
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_DAMAGE_FLAGS]
 	ld hl, FSK_FLAGS
 	or [hl]
 	ld [hl], a
 	ld a, [FSK_EVENT]
 	and a
 	jr nz, .own_flags_done
-	ld a, FSP_ACCURACY
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [hl]
+	ld a, [FSK_OWN + FSK_ACCURACY]
 	and a
 	jr z, .own_flags_done
 	call .OutgoingRegime
-	ld a, FSP_RANGE
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_OWN + FSK_RANGE]
+	ld hl, FSK_BIT
 	and [hl]
 	jr z, .own_support_flag
 	ld a, [FSK_FLAGS]
 	or 1 << AV_AMOUNT_RANGE_F
 	ld [FSK_FLAGS], a
 .own_support_flag
-	ld a, FSP_SUPPORT
-	call BossAI_FastNormalizedPair.OwnAddress
-	ld a, [FSK_BIT]
+	ld a, [FSK_OWN + FSK_SUPPORT]
+	ld hl, FSK_BIT
 	and [hl]
 	jr nz, .own_flags_done
 	ld a, [FSK_FLAGS]
@@ -748,4 +804,236 @@ BossAI_FastScalarPair::
 	sub c
 	ld a, h
 	sbc d
+	ret
+
+BossAI_FastScalarReplyStandalone::
+; DE=context with a compiled reply and live actors. For plain damage or
+; recovery replies, writes the same record bytes as
+; BossAI_FastBuildReplyStandalone (successors, deltas, moment) plus the
+; standalone flags at FSR_BASE+24/25, using the actor start potentials and
+; one lookup per changed HP word. Carry=handled; clear=not eligible without
+; record writes. SRAM0 open; DE/SP preserved.
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+	call BossAI_FastScalarPair.ReplyEligible
+	ret nc
+	push de
+	call BossAI_FastScalarPair.CacheReply
+	ld hl, FSA_START_HP
+	ld a, [hli]
+	ld [FSK_STATE], a
+	ld a, [hl]
+	ld [FSK_STATE + 1], a
+	ld hl, FSA_PLAYER
+	ld a, [hli]
+	ld [FSK_STATE + 2], a
+	ld a, [hl]
+	ld [FSK_STATE + 3], a
+	call BossAI_FastScalarPair.CheckState
+	jr c, .standalone_gated
+	call BossAI_FastScalarPair.ApplyReply
+	call .DeltaFromStart
+	jr .standalone_hit
+.standalone_gated
+	ld hl, 0
+.standalone_hit
+	push hl ; hit delta
+	ld a, FSR_HIT_HP
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld de, FSK_NEXT
+	call .StoreSuccessor
+	ld a, FSR_HIT_DELTA
+	call BossAI_FastNormalizedPair.ReplyAddress
+	pop bc
+	push bc
+	ld [hl], b
+	inc hl
+	ld [hl], c
+; the miss successor is the start state for damage, the hit successor for
+; deterministic recovery (whose miss delta equals the hit delta)
+	ld a, FSR_MISS_HP
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld de, FSK_STATE
+	ld a, [FSK_REPLY + FSK_OPCODE]
+	cp FSR_RECOVERY
+	jr nz, .standalone_miss_state
+	ld de, FSK_NEXT
+.standalone_miss_state
+	call .StoreSuccessor
+	ld a, FSR_MISS_DELTA
+	call BossAI_FastNormalizedPair.ReplyAddress
+	pop bc
+	push bc
+	ld a, [FSK_REPLY + FSK_OPCODE]
+	cp FSR_RECOVERY
+	jr z, .standalone_miss_delta
+	ld bc, 0
+.standalone_miss_delta
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	pop hl ; hit delta
+; moment = p*hit + (256-p)*miss: recovery is deterministic (256*delta);
+; identity-on-miss damage is p*hit delta.
+	ld a, [FSK_REPLY + FSK_OPCODE]
+	cp FSR_RECOVERY
+	ld a, 0
+	jr z, .moment_scale ; A=0 means 256
+	ld a, [FSK_REPLY + FSK_ACCURACY]
+	cp 255
+	jr nz, .moment_scale
+	xor a
+.moment_scale
+	call BossAI_FastMulSigned16By8 ; A:HL=signed 24-bit product
+	ld b, a
+	push hl
+	push bc
+	ld a, FSR_MOMENT
+	call BossAI_FastNormalizedPair.ReplyAddress
+	pop bc
+	ld [hl], b
+	inc hl
+	pop bc
+	ld [hl], b
+	inc hl
+	ld [hl], c
+; flags at the start state for both original events
+	ld hl, FSK_STATE
+	ld de, FSK_NEXT
+	ld b, 4
+.restore_state
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .restore_state
+	xor a
+	ld [FSK_EVENT], a
+	call .StandaloneFlags
+	ld a, 1
+	ld [FSK_EVENT], a
+	call .StandaloneFlags
+	pop de
+	scf
+	ret
+.StandaloneFlags
+; Flags of the reply at the start state for FSK_EVENT into FSR+24/25.
+	ld hl, FSK_STATE
+	ld a, [hli]
+	or [hl]
+	jr z, .standalone_no_flags
+	inc hl
+	ld a, [hli]
+	or [hl]
+	jr z, .standalone_no_flags
+	call BossAI_FastScalarPair.ReplyFlagsAt
+	jr .standalone_store_flags
+.standalone_no_flags
+	xor a
+.standalone_store_flags
+	push af
+	ld a, [FSK_EVENT]
+	add FSR_STANDALONE_HIT_FLAGS
+	call BossAI_FastNormalizedPair.ReplyAddress
+	pop af
+	ld [hl], a
+	ret
+.StoreSuccessor
+; HL=record field, DE=four-byte state.
+	ld b, 4
+.store_successor_byte
+	ld a, [de]
+	ld [hli], a
+	inc de
+	dec b
+	jr nz, .store_successor_byte
+	ret
+.DeltaFromStart
+; HL=V(FSK_NEXT)-V(start) using the stored start potentials.
+	ld hl, 0
+	push hl
+	ld hl, FSK_STATE
+	ld de, FSK_NEXT
+	call BossAI_FastScalarPair.SameWord
+	jr z, .start_own_same
+	ld hl, FSK_NEXT
+	call BossAI_FastScalarPair.OwnPhi
+	ld a, [FSA_START_PHI + 1]
+	ld l, a
+	ld a, c
+	sub l
+	ld l, a
+	ld a, [FSA_START_PHI]
+	ld h, a
+	ld a, b
+	sbc h
+	ld h, a
+	pop bc
+	add hl, bc
+	push hl
+.start_own_same
+	ld hl, FSK_STATE + 2
+	ld de, FSK_NEXT + 2
+	call BossAI_FastScalarPair.SameWord
+	jr z, .start_player_same
+	ld hl, FSK_NEXT + 2
+	call BossAI_FastScalarPair.PlayerPhi
+	ld a, [FSA_PLAYER + 5]
+	ld l, a
+	ld a, [FSA_PLAYER + 4]
+	ld h, a
+	call BossAI_FastScalarPair.SubtractWord ; start player Phi minus new
+	pop bc
+	add hl, bc
+	push hl
+.start_player_same
+	pop hl
+	ret
+
+BossAI_FastMulSigned16By8::
+; HL=signed 16-bit value, A=unsigned factor (0 means 256). A:HL=signed
+; 24-bit product (A high byte). BC and FSK_ACC scratch; DE preserved.
+	and a
+	jr nz, .multiply
+	ld a, h
+	ld h, l
+	ld l, 0
+	ret
+.multiply
+	push de
+	ld c, a
+	ld a, h
+	add a
+	sbc a
+	ld d, a ; D:HL=sign-extended multiplicand
+	xor a
+	ld [FSK_ACC], a
+	ld [FSK_ACC + 1], a
+	ld [FSK_ACC + 2], a
+	ld b, 8
+.bit
+	srl c ; least significant factor bit first, multiplicand doubles each step
+	jr nc, .next_bit
+	ld a, [FSK_ACC + 2]
+	add l
+	ld [FSK_ACC + 2], a
+	ld a, [FSK_ACC + 1]
+	adc h
+	ld [FSK_ACC + 1], a
+	ld a, [FSK_ACC]
+	adc d
+	ld [FSK_ACC], a
+.next_bit
+	add hl, hl
+	rl d
+	dec b
+	jr nz, .bit
+	ld a, [FSK_ACC + 2]
+	ld l, a
+	ld a, [FSK_ACC + 1]
+	ld h, a
+	ld a, [FSK_ACC]
+	pop de
 	ret

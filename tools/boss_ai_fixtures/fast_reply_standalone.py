@@ -5,7 +5,7 @@ from tools.boss_ai_fixtures.fast_standalone import phi
 
 
 def main():
-    count = 0
+    count = scalar = 0
     with open_harness("pokegold_ai_reference") as h:
         h.seed_battle(Mon.of("CHARIZARD", 50), Mon.of("DEWGONG", 50))
         mem, rf = h.pb.memory, h.pb.register_file
@@ -81,6 +81,21 @@ def main():
                                 after = bytes(mem[0xa000:0xa600])
                                 mutable = {*range(0x448, 0x478), *range(0x510, 0x560)}
                                 assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable)
+                                # Scalar standalone: same record bytes plus flags at 24/25 when eligible.
+                                mem[0xca8f + 24:0xca8f + 43] = [0x77] * 19
+                                before = bytes(mem[0xa000:0xa600])
+                                assert h.invoke("BossAI_FastScalarReplyStandalone", regs)
+                                if h.outcome()["carry"]:
+                                    scalar += 1
+                                    actual = bytes(mem[0xca8f:0xcabf])
+                                    assert actual[28:43] == expected[28:43], (move, item, own_max, own, player, accuracy, weight, "scalar",
+                                        [(i, a, b) for i, (a, b) in enumerate(zip(actual, expected)) if a != b and 28 <= i < 43])
+                                    assert (actual[24], actual[25]) == (states[0][1], states[1][1]), (move, item, own, player, accuracy, "scalar flags", actual[24], actual[25], states)
+                                else:
+                                    assert bytes(mem[0xca8f + 24:0xca8f + 43]) == bytes([0x77] * 19)
+                                after = bytes(mem[0xa000:0xa600])
+                                scalar_mutable = {*range(0x54c, 0x578), *range(0x5c0, 0x5e0)}
+                                assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in scalar_mutable)
                                 assert bytes(mem[0xc900:0xca8f]) == bytes([0x5a] * 399)
                                 assert bytes(mem[0xcabf:0xcad8]) == bytes([0x69] * 25)
                                 assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
@@ -91,7 +106,7 @@ def main():
             assert h.invoke("BossAI_FastBuildReplyStandalone", regs) and not h.outcome()["carry"]
             assert bytes(mem[0xa000:0xa600]) == before and bytes(mem[0xc900:0xcad8]) == wram
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {count} full incoming standalone records/moments and 3 no-write rejections")
+    print(f"PASS: {count} ({scalar} also scalar) full incoming standalone records/moments and 3 no-write rejections")
 
 
 if __name__ == "__main__":
