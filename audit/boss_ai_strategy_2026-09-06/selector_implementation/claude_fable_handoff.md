@@ -383,3 +383,24 @@ Facts a successor needs:
   list of about 90 symbols runs in five to ten minutes. `flat_profile.py`
   (every symbol) does not finish in reasonable time.
 - Game ROM bytes unchanged throughout (SHA1 `85a2fe838a28f23b198845e63876a637580e91a9`).
+
+---
+
+# Continuation 2026-09-07 (Claude Fable, late): boosts native, cold bank
+
+Commits `984a531b` (fallback evaluators in their own bank) and the native
+defense-boost family (see `status.md` "Native defense-boost replies and the
+cold-bank move"). Every gate exact; 25 of 26 decisions native-only; broad
+benchmark 36.9M cycles (target 8,388,608, not met).
+
+New scratch: `$a4f8..$a50f` defensive variants (eight 3-byte slots, two per
+plan), `$a4b4..$a4b7` amount override (flag exactly 1 while live), the
+`BossAI_FastProjectPlayerDefense` bridge in `fast_producers.asm` uses
+`$a491..$a493` as temporaries. `FSR_BOOST`=9 with stages/axis at record
+bytes 43/44. The physical base cache no longer caches powers of 120 and
+above.
+
+Own boost plans (the boss's Harden etc.) are the one remaining fallback
+family: they need the reply amounts at the raised own defense, i.e. the
+native reply compiler run with an overridden defense fact for the affected
+category, which is a small extension of the same variant idea.

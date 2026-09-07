@@ -170,8 +170,12 @@ provisional control-field list above where they differ):
   physical formula-base cache; special base cache in the dead outgoing
   template bytes at context 89..190. Reply record bytes 7, 8, 23 and 26 hold
   per-regime maximum-minus-minimum deltas for multihit and False Swipe
-  replies. The group-mass area, the variant area and the base-state area
-  remain unassigned.
+  replies. Later on 2026-09-07: `$a4f8..$a50f` holds the eight defensive
+  variants (two 3-byte slots per plan: raw minimum at the start regime, then
+  range / supported / special-axis / valid bits), `$a4b4..$a4b7` the amount
+  override the boost pair hands the owned executor (flag exactly 1 while
+  live), and the fallback evaluators live in a separate bank behind far
+  entries. The group-mass area and the base-state area remain unassigned.
 
 Lifetime sequence:
 

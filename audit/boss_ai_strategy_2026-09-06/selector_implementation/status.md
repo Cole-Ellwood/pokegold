@@ -36,8 +36,9 @@ incoming family is not yet represented use the exact direct fallback.
   quota. These are stage metadata; their consumers enforce reachability.
 - `fast_plans.asm` compiles owned single-hit/recovery amount plans in the fixed
   64-byte layout. Four raw HP regimes retain support and range masks separately.
-  Defense boosts receive the explicit fallback opcode; multihit, Super Fang,
-  False Swipe and Selfdestruct became native families on 2026-09-07 (see
+  Own defense-boost plans (the boss's own Harden and relatives) receive the
+  explicit fallback opcode; multihit, Super Fang, False Swipe, Selfdestruct
+  and, on the reply side, defense boosts became native on 2026-09-07 (see
   "Performance work and native families"). Amounts require fixed non-HP
   context inputs.
 - `fast_plan_executor.asm` executes one represented owned action, including
@@ -102,9 +103,9 @@ not an unimplemented ordinary native evaluator.
   moments are post-entry by construction. Records start at
   `(M<<16)*(1024+entry_delta)`; entry KO leaves the reply gated and the mass
   intact.
-- Unrepresented replies (opcode 0: defense boosts, multihit or False Swipe
-  replies whose roll range is wider than a byte, and anything the compiler
-  rejects) use the new
+- Unrepresented replies (opcode 0: multihit or False Swipe replies whose
+  roll range is wider than a byte, and anything the compiler rejects) use
+  the new
   `BossAI_FastUnaryFallback` for the wait/switch candidate: the direct
   evaluator runs each positive original reply event with own event mass 256
   and a single order, and the routine subtracts the exact baseline
@@ -413,6 +414,46 @@ could hold), and the orchestration arithmetic (7.7M) needs the five-byte
 record accumulation moved off SRAM temporaries. Defense-boost replies must
 also become native before any timing claim: they are the only remaining
 fallback and the only remaining producer calls.
+
+#### Native defense-boost replies and the cold-bank move (2026-09-07, late)
+
+- `984a531b`: `BossAI_FastFallbackPair` and `BossAI_FastUnaryFallback` moved
+  to their own "Boss AI Fast Fallback" section behind far entries (order
+  descriptor through `FS_ORDER`, executors and the standalone delta through
+  three main-bank stubs in `fast_fallback_stubs.asm`); 777 bytes of the
+  fast-prototype bank recovered.
+- Native boost replies (Harden, Withdraw, Barrier, Acid Armor, Amnesia):
+  both compilers emit `FSR_BOOST`=9 with the stages and axis in the hit bytes
+  and zero damage flags (the reference's `.Reply` returns after
+  `.DefenseBoost`, so only check flags reach the record). The reply executor
+  treats the opcode as check flags only; the selector writes the identity
+  standalone record for it (zero moment). When an owned plain damage plan is
+  prepared, `.PlanVariants` computes its raw minimum at the start regime
+  against the player's defense raised by one and two stages (physical) or
+  special defense raised by two (special) through
+  `BossAI_FastProjectPlayerDefense` (the player's public estimate raised with
+  `BossAI_ProjectRaisedDefense`, then the player's screen, as
+  `ValuePublicExchange.ProjectedDefense`) and the producer range; the eight
+  three-byte slots live at `$a4f8..$a50f` (raw minimum, then range /
+  supported / special-axis / valid bits), replacing the rarely used physical
+  base-cache high part. A boost pair (`.BoostPair`) keeps the identity pair's
+  flag rules and, on the reply-first hit path when the reply can act and the
+  boost touches the plan's axis, runs the own hit through the compact
+  executor with the variant amount (override at `$a4b4..$a4b7`, live only
+  while its flag byte is exactly 1) and takes the correction
+  V(terminal)-V(start) minus the own hit delta, doubled for a single order;
+  mass 256 for the deterministic boost. Own boost plans stay on the fallback.
+- Result: 25 of 26 ordinary decisions native-only (`joint_defense_transitions`
+  keeps the fallback for the boss's own boost plan); broad benchmark 40.5M ->
+  36.9M cycles; `joint_speed_tie_transformed` 12.6M. Per-pair boost
+  corrections equal the direct fallback's on every boost reply of the broad
+  case (`debug_joint_pairs.py`). Fixtures: `fast_reply.py` 30,720 (boost
+  records and executor flags), differential 5,588, pair 3,744, standalone
+  2,160/3,000, own executor 8,208, fallback 1,248/88, replacement 116,
+  restart 52. Two defects the whole-selector comparison caught before the
+  commit: the boost record's axis byte was clobbered by the store macro's use
+  of BC, and the boost pair read the own hit delta with a clobbered plan slot
+  and treated an axis mismatch as a match (carry from `cp`).
 
 #### Evening pass (2026-09-07): 59.1M -> 40.5M
 
