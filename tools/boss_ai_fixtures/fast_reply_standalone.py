@@ -100,7 +100,7 @@ def main():
                                 assert bytes(mem[0xcabf:0xcad8]) == bytes([0x69] * 25)
                                 assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
                                 count += 1
-        for opcode in (0, 9, 255):
+        for opcode in (0, 10, 255):
             mem[0xca90] = opcode
             before, wram = bytes(mem[0xa000:0xa600]), bytes(mem[0xc900:0xcad8])
             assert h.invoke("BossAI_FastBuildReplyStandalone", regs) and not h.outcome()["carry"]

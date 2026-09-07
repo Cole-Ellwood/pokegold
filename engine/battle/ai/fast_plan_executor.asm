@@ -12,6 +12,10 @@ DEF FSE_MASK EQU FSE_REGIME + 1
 ; runs Delta; a normal action resets this byte before executing its script.
 DEF FSE_MODE EQU $a54b ; 0execute,1flags only
 DEF FSE_OPCODE EQU $a53f
+; Amount override for a defensive variant (the selector's boost pairs): the
+; flag byte is exactly 1 while live (any other value is inactive, so poisoned
+; scratch cannot arm it), then the raw minimum and bit0 range / bit1 supported.
+DEF FSV_OVERRIDE EQU $a4b4
 ; Family scratch. It aliases the damage script's inputs and is consumed
 ; before .Script writes them.
 DEF FSX_A EQU $a530 ; working amount (transition endpoint)
@@ -149,20 +153,38 @@ BossAI_FastExecuteOwnedPlan::
 	jr z, .support
 	cp FSP_FANG
 	jr z, .support
+	ld a, [FSV_OVERRIDE]
+	cp 1 ; exactly 1 is live; poisoned or cleared scratch is not
+	jr nz, .plan_range
+	ld a, [FSV_OVERRIDE + 3]
+	bit 0, a
+	jr z, .support
+	jr .range_flag
+.plan_range
 	ld a, FSP_RANGE
 	call .PlanAddress
 	ld a, [FSE_MASK]
 	and [hl]
 	jr z, .support
+.range_flag
 	ld a, [FSE_FLAGS]
 	or 1 << AV_AMOUNT_RANGE_F
 	ld [FSE_FLAGS], a
 .support
+	ld a, [FSV_OVERRIDE]
+	cp 1 ; exactly 1 is live; poisoned or cleared scratch is not
+	jr nz, .plan_support
+	ld a, [FSV_OVERRIDE + 3]
+	bit 1, a
+	jr nz, .raw
+	jr .unsupported
+.plan_support
 	ld a, FSP_SUPPORT
 	call .PlanAddress
 	ld a, [FSE_MASK]
 	and [hl]
 	jr nz, .raw
+.unsupported
 	ld a, [FSE_FLAGS]
 	or 1 << AV_UNKNOWN_DAMAGE_F
 	ld [FSE_FLAGS], a
@@ -178,6 +200,15 @@ BossAI_FastExecuteOwnedPlan::
 	ld a, [FSE_MODE]
 	and a
 	jp nz, .done
+	ld a, [FSV_OVERRIDE]
+	cp 1 ; exactly 1 is live; poisoned or cleared scratch is not
+	jr nz, .plan_raw
+	ld a, [FSV_OVERRIDE + 1]
+	ld b, a
+	ld a, [FSV_OVERRIDE + 2]
+	ld c, a
+	jr .Script
+.plan_raw
 	ld a, [FSE_REGIME]
 	add a
 	add FSP_RAW_MIN

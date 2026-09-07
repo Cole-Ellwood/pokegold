@@ -3,6 +3,10 @@ from tools.boss_ai_fixtures.harness import Mon, MOVES, TYPES, open_harness
 from tools.boss_ai_fixtures.cases import ITEMS
 from tools.boss_ai_fixtures.damage import EFFECTS
 
+# Defense boosts compile to opcode 9 with (stages, axis) in the hit bytes.
+BOOSTS = {MOVES["HARDEN"]: (1, 1), MOVES["WITHDRAW"]: (1, 1), MOVES["BARRIER"]: (2, 1),
+          MOVES["ACID_ARMOR"]: (2, 1), MOVES["AMNESIA"]: (2, 4)}
+
 
 def expected_plan(h, context, regs):
     """Independent full-record expectation using the reference's stage APIs."""
@@ -20,6 +24,9 @@ def expected_plan(h, context, regs):
         out[offset] |= mem[0xc948]
     if context[51] == 1 and context[2] == EFFECTS["EFFECT_PURSUIT"]:
         out[1] = 3
+    elif context[28] in BOOSTS:
+        out[1], (out[43], out[44]) = 9, BOOSTS[context[28]]
+        out[6] = 0  # check flags only: no effect or hit uncertainty
     elif context[28] in (MOVES["RECOVER"], MOVES["REST"], MOVES["SYNTHESIS"]):
         maximum = int.from_bytes(context[49:51], "big")
         denominator = 1 if context[28] == MOVES["REST"] else 2
@@ -111,17 +118,6 @@ def edge_cases(h, regs):
         before_sram = bytes(mem[0xa000:0xa600])
         assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": event, "HL": 0xa448})
         assert not h.outcome()["carry"] and bytes(mem[0xa000:0xa600]) == before_sram
-    for move in ("HARDEN", "AMNESIA"):
-        mem[0xc900:0xcad8] = [0] * 472
-        assert h.invoke("BossAI_BuildOwnedDamageContext", {**regs, "A": 0xff, "B": 0, "C": MOVES[move]})
-        mem[0xc936] = MOVES[move]
-        owned = bytes(mem[0xa2f8:0xa3f8])
-        assert h.invoke("BossAI_FastCompileReplyPlan", regs) and not h.outcome()["carry"]
-        assert mem[0xca90] == 0 and bytes(mem[0xca96:0xcaba]) == bytes(36)
-        assert bytes(mem[0xa2f8:0xa3f8]) == owned
-        before = bytes(mem[0xa448:0xa478])
-        assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": 0, "HL": 0xa448})
-        assert not h.outcome()["carry"] and bytes(mem[0xa448:0xa478]) == before
     # A per-hit roll range wider than a byte leaves the family to the fallback:
     # the header is written, the opcode stays 0 and the executor rejects.
     mem[0xc900:0xcad8] = [0] * 472
@@ -149,7 +145,8 @@ def main():
         for move in ("TACKLE", "FIRE_BLAST", "GIGA_DRAIN", "DOUBLE_EDGE",
                      "STRUGGLE", "SEISMIC_TOSS", "DRAGON_RAGE", "RECOVER",
                      "REST", "SYNTHESIS", "PURSUIT", "SPLASH", "SNORE", "DREAM_EATER", "LEECH_LIFE",
-                     "FURY_SWIPES", "BONEMERANG", "TWINEEDLE", "SUPER_FANG", "FALSE_SWIPE", "EXPLOSION"):
+                     "FURY_SWIPES", "BONEMERANG", "TWINEEDLE", "SUPER_FANG", "FALSE_SWIPE", "EXPLOSION",
+                     "HARDEN", "BARRIER", "AMNESIA"):
             for item in (0, ITEMS["ROCKY_HELMET"]):
                 h.wr("wEnemyMonItem", item)
                 for maximum, player_max in ((9, 17), (999, 703), (65535, 65535), (50000, 65535)):

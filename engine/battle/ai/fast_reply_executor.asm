@@ -34,7 +34,7 @@ BossAI_FastExecuteReplyPlan::
 	ld a, [hl]
 	and a
 	jr z, .reject
-	cp FSR_SELFDESTRUCT + 1
+	cp FSR_BOOST + 1
 	jr c, .represented
 .reject
 	pop de
@@ -73,6 +73,8 @@ BossAI_FastExecuteReplyPlan::
 	jp z, .pursuit
 	cp FSR_RECOVERY
 	jp z, .recovery
+	cp FSR_BOOST
+	jp z, .done ; check flags only; the boost acts through the own plans' variants
 	ld [FSE_OPCODE], a
 	ld a, FSR_DAMAGE_FLAGS
 	call .PlanAddress

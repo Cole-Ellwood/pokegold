@@ -329,3 +329,42 @@ BossAI_FastPrepareReply::
 	call BossAI_ValuePublicExchange.MoveReplyPursuit
 	pop bc
 	jp BossAI_FastCompileReplyPlan.Masked
+
+BossAI_FastProjectPlayerDefense::
+; B=stages (1 or 2), C=axis (1 Defense, 4 Special Defense), DE=an own plan's
+; outgoing context. AD_DEFENSE becomes the player's public defense estimate
+; raised by B stages, then the player's screen, exactly as
+; ValuePublicExchange.ProjectedDefense applies a recorded player boost to an
+; own attack (no player item factor). DE/SP preserved; AF/BC/HL scratch.
+	ld a, b
+	ld [FSB_PLAN_PATCH], a ; stages (compile-time scratch, dead here)
+	ld a, c
+	ld [FSB_PLAN_DELTAS], a ; axis
+	ld b, 0
+	ld hl, wPlayerAtkLevel
+	add hl, bc
+	ld a, [hl]
+	ld [FSB_PLAN_OPCODE], a ; current stage
+	push de
+	ld b, 0 ; raw
+	call BossAI_EstimatePlayerDamageStat
+	push bc
+	ld a, [FSB_PLAN_DELTAS]
+	ld c, a
+	ld b, 1 ; staged
+	call BossAI_EstimatePlayerDamageStat
+	ld d, b
+	ld e, c
+	pop hl ; raw
+	ld a, [FSB_PLAN_PATCH]
+	ld b, a
+	ld a, [FSB_PLAN_OPCODE]
+	call BossAI_ProjectRaisedDefense ; BC=new stat
+	pop de
+	ad_address AD_DEFENSE
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld a, [wPlayerScreens]
+	call BossAI_BuildPublicDamageContext.screen
+	ret

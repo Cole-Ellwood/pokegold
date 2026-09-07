@@ -46,7 +46,6 @@ ASSERT FSN + 32 <= $a600
 ; 51 words in the dead outgoing/incoming template bytes (89..190), which the
 ; direct fallback evaluator never reads or writes.
 DEF FSN_PHYS_CACHE_LOW EQU $a590 ; indices 0..23
-DEF FSN_PHYS_CACHE_HIGH EQU $a4f8 ; indices 24..35
 DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
 ; Per-defender chart rows by attacking type: two 2-bit codes in chart order
 ; (low field first; 1 double, 2 halve, 3 no effect), then whether the
@@ -63,7 +62,6 @@ ASSERT FSN_MAJESTY + 1 <= $a4a8 ; the regime cache follows ($a4a8..$a4b1)
 DEF FSN_PASSIVES EQU $a4b2
 ASSERT FSN_PASSIVES + 2 <= FSB_PREFIX
 ASSERT FSN_PHYS_CACHE_LOW + 48 <= FSK_OWN
-ASSERT FSN_PHYS_CACHE_HIGH + 24 <= $a510
 ASSERT FSN_SPEC_CACHE + 102 <= AV_PREPARED_IN_DAMAGE
 ; Compile scratch (pair scratch is not live while a reply compiles).
 DEF FSM_EFFECT EQU $a560
@@ -423,9 +421,6 @@ BossAI_FastPrepareReplyFacts::
 	push de
 	ld hl, FSN_PHYS_CACHE_LOW
 	ld b, 48
-	call .ClearBytes
-	ld hl, FSN_PHYS_CACHE_HIGH
-	ld b, 24
 	call .ClearBytes
 	pop de
 	ad_address FSN_SPEC_CACHE
@@ -798,16 +793,19 @@ BossAI_FastCompileReplyNative::
 	jr .store_opcode
 .ordinary
 	ld a, [FSM_MOVE]
+	ld bc, $0101 ; ValuePublicExchange.DefenseAxis: B=stages, C=axis
 	cp HARDEN
-	jr z, .fallback
+	jr z, .boost
 	cp WITHDRAW
-	jr z, .fallback
+	jr z, .boost
+	inc b
 	cp BARRIER
-	jr z, .fallback
+	jr z, .boost
 	cp ACID_ARMOR
-	jr z, .fallback
+	jr z, .boost
+	ld c, 4
 	cp AMNESIA
-	jr z, .fallback
+	jr z, .boost
 	call .RecoveryQuota
 	jr nc, .damage
 	ld hl, FSR_BASE + FSR_RECOVERY_QUOTA
@@ -824,9 +822,17 @@ BossAI_FastCompileReplyNative::
 	ret z ; unrepresented after all: header written, fallback follows
 	scf
 	ret
-.fallback
-	and a
-	ret
+.boost
+	ld hl, FSR_BASE + FSR_BOOST_STEPS
+	add hl, de
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld hl, FSR_BASE + FSR_DAMAGE_FLAGS
+	add hl, de
+	ld [hl], 0
+	ld a, FSR_BOOST
+	jr .store_opcode
 .damage
 	ld a, FSR_DAMAGE
 	ld [FSM_OPCODE], a
@@ -1616,15 +1622,7 @@ BossAI_FastCompileReplyNative::
 	add hl, bc
 	jr .cache_slot
 .physical_high
-	cp 36
-	jr nc, .uncached
-	sub 24
-	add a
-	ld l, a
-	ld h, 0
-	ld bc, FSN_PHYS_CACHE_HIGH
-	add hl, bc
-	jr .cache_slot
+	jr .uncached ; powers of 120 and above: rare, computed each time
 .special_slot
 	ld a, [FSM_TEMP + 2]
 	cp 51

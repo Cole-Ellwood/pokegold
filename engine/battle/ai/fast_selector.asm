@@ -15,6 +15,11 @@ DEF FS_UNARY_KIND EQU FS_CONTROL + 10
 DEF FS_PLAN_FLAGS EQU FS_CONTROL + 11 ; setup|open prior|unknown order, move plans
 DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate; reached reply flags accumulate here during the sweep
 DEF FS_TIE_ORDER EQU FS_CONTROL + 4 ; order of an equal-priority pair for this defender's speeds
+; Defensive variants of the four plans at the start regime: per plan two
+; three-byte slots (raw minimum, then bit0 range / bit1 supported / bit2
+; special-defense axis / bit7 valid): slot 0 Defense+1, slot 1 Defense+2 for
+; a physical plan or Special Defense+2 for a special one.
+DEF FSV_BASE EQU $a4f8 ; 24 bytes (the former physical base cache high part)
 DEF FS_REPLY_REGIMES EQU FS_CONTROL + 13 ; HP regimes a reply can reach for this defender
 DEF FS_REPLY_IDENTITY EQU FS_CONTROL + 18 ; 1 when the current reply never changes HP
 DEF FS_ORDER EQU FS_CONTROL + 19 ; order descriptor of the pair being evaluated
@@ -50,6 +55,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], 0
 	xor a
 	ld [FSC_FAULT], a
+	ld [FSV_OVERRIDE], a ; no defensive variant is live
 	call .ReplyMass
 	jp nc, .restart
 	call .ActiveDefender
@@ -587,7 +593,172 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], b
 	ad_address AV_BRANCH
 	ld [hl], 0
+	push bc
 	farcall BossAI_FastPrepareOwnedCandidate
+	pop bc
+	jr .PlanVariants
+.PlanVariants
+; C=plan slot, AD prefix=this plan's outgoing context. For a plain damage plan
+; store the raw minimum at the start regime against the player's raised
+; defense (see FSV_BASE); other opcodes leave both slots invalid.
+	ld a, c
+	add a
+	ld l, a
+	add a
+	add l ; 6*slot
+	ld l, a
+	ld h, 0
+	push bc
+	ld bc, FSV_BASE
+	add hl, bc
+	pop bc
+	ld a, h
+	ld [FSC_TEMP], a
+	ld a, l
+	ld [FSC_TEMP + 1], a
+	xor a
+	inc hl
+	inc hl
+	ld [hli], a ; slot 0 invalid
+	inc hl
+	inc hl
+	ld [hl], a ; slot 1 invalid
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	cp FSP_DAMAGE
+	ret nz
+	ad_address AD_CATEGORY
+	ld a, [hl]
+	cp SPECIAL
+	jr nc, .special_variants
+	ld bc, $0101 ; Defense+1
+	call .Variant
+	call .NextVariantSlot
+	ld bc, $0201 ; Defense+2
+	jr .Variant
+.special_variants
+	call .NextVariantSlot
+	ld bc, $0204 ; Special Defense+2
+	jr .Variant
+.NextVariantSlot
+; FSC_TEMP += 3 (the slots straddle the $a500 page boundary).
+	ld a, [FSC_TEMP + 1]
+	add 3
+	ld [FSC_TEMP + 1], a
+	ret nc
+	ld hl, FSC_TEMP
+	inc [hl]
+	ret
+.Variant
+; B=stages, C=axis, FSC_TEMP=destination slot. Runs the producer's range at
+; the start regime with the raised player defense and restores the plan's
+; context bytes it changed.
+	push bc
+	ad_address AD_DEFENSE
+	ld a, [hli]
+	ld [FSC_TEMP + 2], a
+	ld a, [hl]
+	ld [FSC_TEMP + 3], a
+	ad_address AD_FLAGS
+	ld a, [hl]
+	ld [FSC_TEMP + 4], a
+	call .OutgoingStartRegime
+	add a
+	ld b, a
+	ld a, [FSC_TEMP + 4]
+	and ~((1 << AD_ATTACKER_LOW_F) | (1 << AD_DEFENDER_HIGH_F))
+	or b
+	ad_address AD_FLAGS
+	ld [hl], a
+	pop bc
+	push bc
+	farcall BossAI_FastProjectPlayerDefense
+	farcall BossAI_FastExportDamageRange
+	pop bc
+	ld a, [FSC_TEMP]
+	ld h, a
+	ld a, [FSC_TEMP + 1]
+	ld l, a
+	ld a, [FSB_RAW_MIN]
+	ld [hli], a
+	ld a, [FSB_RAW_MIN + 1]
+	ld [hli], a
+	ld a, [FSB_RANGE_FLAGS]
+	and 1 << AV_AMOUNT_RANGE_F
+	jr z, .variant_range_ready
+	ld a, 1
+.variant_range_ready
+	ld b, a
+	ld a, [FSB_RANGE_SUPPORT]
+	and a
+	jr z, .variant_support_ready
+	ld a, 2
+.variant_support_ready
+	or b
+	set 7, a
+	ld b, a
+	ld a, c
+	cp 4
+	ld a, b
+	jr nz, .variant_axis_ready
+	set 2, a
+.variant_axis_ready
+	ld [hl], a
+	ld a, [FSC_TEMP + 2]
+	ad_address AD_DEFENSE
+	ld [hli], a
+	ld a, [FSC_TEMP + 3]
+	ld [hl], a
+	ld a, [FSC_TEMP + 4]
+	ad_address AD_FLAGS
+	ld [hl], a
+	ret
+.OutgoingStartRegime
+; A=the own attack's regime at the start state from the plan context:
+; attacker-low (3*own HP below own max) plus twice defender-high (2*player HP
+; above player max), in the executors' wrapped 16-bit arithmetic.
+	ad_address AD_ATTACKER_HP
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, bc
+	push hl
+	ad_address AD_ATTACKER_MAXHP
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	pop hl
+	ld a, l
+	sub c
+	ld a, h
+	sbc b
+	ld a, 0
+	adc 0
+	push af
+	ad_address AD_DEFENDER_HP
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	sla c
+	rl b
+	ad_address AD_DEFENDER_MAXHP
+	ld a, [hli]
+	cp b
+	jr c, .outgoing_high
+	jr nz, .outgoing_low
+	ld a, [hl]
+	cp c
+	jr nc, .outgoing_low
+.outgoing_high
+	pop af
+	or 2
+	ret
+.outgoing_low
+	pop af
 	ret
 
 .ImportOrderFacts
@@ -890,6 +1061,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [hl]
 	and a
 	jr nz, .IdentityStandalone
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_BOOST
+	jr z, .IdentityStandalone ; no HP change, check flags only (damage flags are zero)
 	call BossAI_FastScalarReplyStandalone
 	ret c
 	call BossAI_FastBuildReplyStandalone
@@ -939,6 +1115,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	or b
 	ld b, a
 	ld c, a
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_BOOST
+	jr z, .identity_flags ; a boost is not an amount: no unknown-damage bit
 	ld hl, FSR_BASE + FSR_ACCURACY
 	add hl, de
 	ld a, [hl]
@@ -1181,6 +1362,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld hl, FSR_BASE + FSR_OPCODE
 	add hl, de
 	ld a, [hl]
+	cp FSR_BOOST
+	jr z, .pair_boost
 	cp FSR_SELFDESTRUCT
 	jr z, .pair_full
 	ld a, FSP_OPCODE
@@ -1202,6 +1385,10 @@ BossAI_ComparePublicActionsFastPrototype::
 	call .OrRecordFlags
 	scf
 	ret
+.pair_boost
+	pop af
+	call .BoostPair
+	jr .pair_total
 .pair_native
 	pop af
 	push af
@@ -1275,7 +1462,180 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld b, a
 	ld a, FSP_MISS_HP
 	call .PlanAddress
-	jr .IdentityReplyFlags
+	jp .IdentityReplyFlags
+.BoostPair
+; C=plan slot, A=order. The reply is a deterministic defense boost: mass 256,
+; no HP change, check flags only. Own first leaves the own standalone
+; transition (correction zero). Reply first raises the player's defense for
+; the own hit: the own plan runs with its variant amount and the correction is
+; V(that terminal)-V(start) minus the own hit delta. Flags: the own standalone
+; flags per positive own event with the reply's flags when reached (as the
+; identity pair), and on the reply-first hit path the own flags at the
+; variant instead of the standalone hit flags. Outputs FPK_TOTAL/FPK_FLAGS as
+; the factored pair does; carry set.
+	push af
+	ld [FPK_ORDER], a
+	ld a, c
+	ld [FPK_INDEX], a
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+	ld a, 1
+	ld [FPK_MODE], a
+	ld [FPK_REPLY_Z], a ; 256
+	xor a
+	ld [FPK_REPLY_Z + 1], a
+	ld [FPK_K], a
+	ld [FPK_K + 1], a
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	call BossAI_FastNormalizedPair.Decode
+	ld a, b
+	ld [FPK_OWN_Z], a
+	ld a, c
+	ld [FPK_OWN_Z + 1], a
+	pop af
+	push af
+	ld a, [FPK_INDEX]
+	ld c, a
+	pop af
+	call .IdentityPair ; B=flag union for own first, the miss paths and the tie flag
+	ld a, b
+	ld [FPK_FLAGS], a
+	ld a, [FPK_ORDER]
+	and a
+	jp z, .boost_total ; own first: the boost lands after the hit
+	ld hl, FSR_BASE + FSR_CAN_ACT
+	add hl, de
+	ld a, [hl]
+	and a
+	jp z, .boost_total ; no boost happens
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jp z, .boost_total ; no own hit mass
+	call .BoostVariant
+	jp nc, .boost_total ; the boost does not touch this plan's defense axis
+; the own hit at the variant, from the start state
+	call BossAI_FastNormalizedPair.InitialContinuation
+	ld a, [FPK_INDEX]
+	ld c, a
+	xor a
+	ld hl, $a448
+	call BossAI_FastExecuteOwnedPlan
+	xor a
+	ld [FSV_OVERRIDE], a
+	ld a, [FPK_INDEX]
+	ld c, a ; the executor and Delta clobber BC
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .boost_variant_flags
+; reply first only: the standalone hit flags the identity pair added do not
+; apply on this path; rebuild the union from the miss path and the variant
+	ld a, FSP_STANDALONE_MISS_FLAGS
+	call .PlanAddress
+	ld b, [hl]
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	cp 255
+	jr nz, .boost_miss_flags
+	ld b, 0 ; no miss mass
+.boost_miss_flags
+	ld hl, FSR_BASE + FSR_CHECK_FLAGS
+	add hl, de
+	ld a, [hl]
+	or b
+	ld [FPK_FLAGS], a
+.boost_variant_flags
+	ld a, [$a458]
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
+	push de
+	call BossAI_FastBuildOwnedStandalone.Delta
+	pop de
+	push bc
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_HIT_DELTA
+	call .PlanAddress
+	inc hl
+	pop bc
+	ld a, c
+	sub [hl]
+	ld c, a
+	dec hl
+	ld a, b
+	sbc [hl]
+	ld b, a
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .boost_k
+	sla c
+	rl b ; a single order counts twice, like the factored pair
+.boost_k
+	ld a, b
+	ld [FPK_K], a
+	ld a, c
+	ld [FPK_K + 1], a
+.boost_total
+	push de
+	call BossAI_FastNormalizedPair.Total
+	pop de
+	scf
+	ret
+.BoostVariant
+; The variant slot for this plan and the current boost reply into
+; FSV_OVERRIDE (active). Carry when the boost touches the plan's defense axis
+; and the slot is valid.
+	ld a, [FPK_INDEX]
+	add a
+	ld l, a
+	add a
+	add l
+	ld l, a
+	ld h, 0
+	ld bc, FSV_BASE
+	add hl, bc
+	push hl
+	ld hl, FSR_BASE + FSR_BOOST_STEPS
+	add hl, de
+	ld a, [hli]
+	ld c, [hl] ; C=axis
+	pop hl
+	dec a
+	jr z, .boost_slot_ready ; one stage: slot 0 (Defense only)
+	inc hl
+	inc hl
+	inc hl ; slot 1
+.boost_slot_ready
+	ld a, [hli]
+	ld [FSV_OVERRIDE + 1], a
+	ld a, [hli]
+	ld [FSV_OVERRIDE + 2], a
+	ld a, [hl]
+	ld [FSV_OVERRIDE + 3], a
+	bit 7, a
+	ret z ; invalid slot: carry clear
+	bit 2, a
+	ld b, 1
+	jr z, .boost_slot_axis
+	ld b, 4
+.boost_slot_axis
+	ld a, b
+	cp c
+	jr z, .boost_axis_matches
+	and a ; axis mismatch: the boost does not change this plan's amount
+	ret
+.boost_axis_matches
+	ld a, 1
+	ld [FSV_OVERRIDE], a
+	scf
+	ret
 .IdentityReplyFlags
 ; HL=plan successor state for one positive own event. Adds the reply's
 ; standalone flags to B when an order reaches the reply from that state.

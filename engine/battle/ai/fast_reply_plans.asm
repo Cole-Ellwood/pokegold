@@ -37,6 +37,9 @@ DEF FSR_MULTI EQU 5 ; multi-hit damage: per-hit maxima, HP advanced hit by hit
 DEF FSR_FANG EQU 6 ; Super Fang: half the target's current HP at execution
 DEF FSR_FALSE_SWIPE EQU 7 ; single hit capped at target HP-1 at execution
 DEF FSR_SELFDESTRUCT EQU 8 ; user faints before its hit/miss check; halved defense
+DEF FSR_BOOST EQU 9 ; deterministic defense boost: no HP change, raises the own plans' defender
+DEF FSR_BOOST_STEPS EQU 43 ; 1 or 2 stages (reuses the hit bytes)
+DEF FSR_BOOST_AXIS EQU 44 ; 1 Defense, 4 Special Defense
 ; Multi-hit and False Swipe keep the per-regime maximum minus minimum in
 ; four otherwise unused header/payload bytes so executors can rebuild the
 ; minimum endpoint for the range flag at the real state.
@@ -143,7 +146,22 @@ BossAI_FastCompileReplyPlan::
 	ret
 .ordinary
 	call BossAI_ValuePublicExchange.DefenseAxis
-	jp c, .invalid ; zero opcode, no amount/support masks
+	jr nc, .not_boost
+; B=stages, C=axis. The boost itself never changes HP and carries only the
+; check flags; the selector applies it to the own plans' variants.
+	push bc
+	ld a, b
+	fsr_store FSR_BOOST_STEPS ; the store macro uses BC
+	pop bc
+	ld a, c
+	fsr_store FSR_BOOST_AXIS
+	xor a
+	fsr_store FSR_DAMAGE_FLAGS
+	ld a, FSR_BOOST
+	fsr_store FSR_OPCODE
+	scf
+	ret
+.not_boost
 	ld a, [FSB_PREFIX_RECOVERY]
 	and a
 	jr z, .damage
