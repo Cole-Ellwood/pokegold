@@ -137,6 +137,30 @@ The continuation's two-byte first-event mass is an unweighted original-event
 mass in 0..256. Grouped masses remain in the reserved three-byte group fields;
 never copy a grouped mass such as 72,192 into that continuation field.
 
+Implemented allocation (2026-09-07, ordinary orchestration; supersedes the
+provisional control-field list above where they differ):
+
+- WRAM control 447..471: 447 decision kind, 448 traversal flags, 449 defender
+  slot / bench cursor, 450 bench count, 452 plan cursor, 453 reply cursor,
+  454 replies left, 455 reply weight, 456 unary record index ($ff none),
+  457 unary kind, 458 move-plan flags, 459 unary flags, 461..464 plan index map
+  (original result index per plan slot, $ff unused), 467..468 legal mask,
+  469..470 total reply weight, 471 backend status. Bytes 451, 460, 465..466 are
+  unused. No saved-bank bytes exist: the selector never reads hardware bank
+  state.
+- Common sums $a578..$a58f: $a578 pair total (5), $a57d shared incoming sum
+  (signed 32), $a581 mass M, $a583 entry delta (signed 16), $a585 unary
+  baseline `2*65536*(1024+entry delta)` (5), $a58a accumulation temporary
+  (5), $a58f spare.
+- Actor view extras: own/player speed at actor 14..15, item class at own 32
+  (1 = Quick Claw), setup flags at own 35, speed mode at own 36 (bit0 unknown
+  public order). Bench defenders overwrite own start HP/Phi with the
+  post-entry values after the entry delta is recorded.
+- Producer bridge: $a48f Quick Claw class exported by
+  `BossAI_FastPrepareActiveFacts`.
+- The 64 bytes at $a5c0..$a5ff, the group-mass area, the variant area and the
+  base-state area remain unassigned.
+
 Lifetime sequence:
 
 1. Enumerate candidates/replies before live SRAM records where possible.

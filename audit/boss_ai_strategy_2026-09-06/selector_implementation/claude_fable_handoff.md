@@ -201,3 +201,81 @@ source of truth. No new failure is awaiting repair at this checkpoint.
 When returning control to the user/Codex, update the status and this handoff (or
 append a clearly dated continuation) with exact changes, tests, hashes, remaining
 work and any review gaps. Keep communication concise and progress-oriented.
+
+---
+
+# Continuation 2026-09-07 (Claude Fable): ordinary orchestration landed
+
+## What changed
+
+Ordinary decisions are now evaluated natively by
+`BossAI_ComparePublicActionsFastPrototype`; the "restart immediately" path is
+gone. `audit/boss_ai_strategy_2026-09-06/selector_implementation/status.md`
+has the full description ("Ordinary orchestration (2026-09-07)"), the
+validation evidence and the phase profile. Files touched:
+
+| File | Change |
+| --- | --- |
+| `engine/battle/ai/fast_selector.asm` | Rewritten: ordinary orchestration (active defender, bench switches, wait, reply sweep, shared incoming sum, record accumulation, 40-bit helpers); replacement logic kept, restructured around shared bench-cursor helpers. |
+| `engine/battle/ai/fast_pair_fallback.asm` | Appended: common-sum allocation `FSC_*` ($a57d..$a58e) and `BossAI_FastUnaryFallback` (wait/switch unary fallback with exact baseline subtraction). |
+| `engine/battle/ai/fast_producers.asm` | Appended: `FSB_QUICK_CLAW` ($a48f), bridges `BossAI_FastPrepareOwnedCandidate`, `BossAI_FastPrepareActiveFacts`, `BossAI_FastPrepareReply`. |
+| `engine/battle/ai/fast_reference.asm` | Appended: `BossAI_FastForcedAction` (index-10 forced/wait classification, farcall-safe). |
+| `tools/boss_ai_fixtures/fast_reference.py` | `--prototype` accepts native status 0/1 for ordinary kinds, exempts the private SRAM reservation from the footprint check for native ordinary runs, adds a hidden-information rerun, reports which fixtures used fallback. |
+| `tools/boss_ai_fixtures/fast_unary_fallback.py` | New unit fixture (88 cases + 4 rejections). |
+| `tools/boss_ai_fixtures/fast_ordinary_profile.py` | New: whole-decision and disjoint-phase timing of the 24 ordinary joint fixtures, oracle vs native, writes `fast_ordinary_profile.json`. |
+| `tools/audit/check_boss_ai_decision_paths.py` | Release-smoke wrapper now runs `suite="production"` and reports `FixtureError` as FAIL. It had been failing since the runner gained suites: `run_all()` defaulted to the reference suite on the game ROM. Pre-existing, not caused by this work. |
+| `audit/.../selector_implementation/status.md`, `cleanup_notes.md`, `fast_ordinary_profile.json`, `fast_replacement_profile.json` | Status rewrite, code-quality notes requested by the user, profiles. |
+| `audit/.../selector_implementation_contract.md` | "Implemented allocation" note for the control bytes, common sums, actor-view bytes and bridge byte now in use. |
+| `docs/generated/dev_index.md` | Regenerated after rebuilding `pokegold.gbc` (unchanged production behaviour; the rebuild only checked the game ROM was current with source). |
+
+## Evidence (ROM `83070fc20a59f278f82d9f7052510285aba956aab563a53cef4493b383048d01` unless noted)
+
+- `fast_reference.py --prototype`: PASS, 76 vectors (26 fixtures x 2 scans +
+  24 hidden-information reruns), 5 invalid entries. 19 native-only, 7 with
+  fallback. Log `.local/ai-two-second/ordinary-prototype-run3.log`.
+- `fast_reference.py --replacement-boundaries`: PASS, 116 vectors (ROM
+  `e8628a6c...`, before the header guard; the guard is on the ordinary path).
+- `fast_reference.py`: PASS, 52 vectors.
+- `fast_unary_fallback.py`: PASS 88 + 4 rejections. `fast_pair.py` 1,728 and
+  `fast_pair_fallback.py` 1,248: PASS.
+- `python -m tools.boss_ai_fixtures --rom pokegold_ai_reference --suite all`:
+  PASS all 839 (`orchestration-fixtures.log` on `e8628a6c...`,
+  `orchestration-fixtures-final.log` on the current ROM).
+- `tools/audit/check_boss_ai_decision_paths.py` (production suite on the
+  rebuilt `pokegold.gbc`, SHA1 `85a2fe838a28f23b198845e63876a637580e91a9`):
+  PASS 473. `check_cross_bank_call.py`, `check_farcall_hl_clobber.py`,
+  `check_farcall_a_clobber.py`: PASS.
+- Timing: NOT met. Broad benchmark 180,985,824 native cycles vs 132,211,028
+  oracle (WithTables) vs 8,388,608 budget. Reply preparation with the existing
+  four-regime producers is 104M of it. See status.md "Ordinary timing".
+
+## Review gap
+
+The independent Astra-low reviewer configuration was not available here. The
+orchestration code and the audit-wrapper fix are self-reviewed plus
+fixture-validated only. Please route `fast_selector.asm`, the appended
+routines, `fast_reference.py` and `fast_unary_fallback.py` through that
+reviewer before treating them as approved. Everything previously approved is
+unchanged (hashes in status.md).
+
+## Next steps (from the profile, in order)
+
+1. Lazy reply regimes via `FSR_VALID` (cheap, 2-4x on the dominant phase).
+2. Milestone 4 native amount arithmetic (mandatory for the target).
+3. Native fallback families + reply grouping; adversarial fixtures; timing
+   gates; production ABI/interrupt ownership.
+
+Design lead, not a reviewed requirement: the selector already computes each
+plan's hit-successor HP before the reply sweep, so the needed-regime mask for
+a reply is the initial-state regime plus the regime at each live plan's hit
+successor, and can be handed to the compiler through a control byte; the
+executor should reject an unmarked regime (carry clear) and the selector then
+falls back for that pair. Do not fill regimes lazily inside the executor: the
+producer prefix is dead by then.
+
+## Git
+
+Two checkpoint commits were made on `master` (not pushed): the first captures
+the Codex checkpoint exactly as handed over (all previously uncommitted work,
+original versions of the four appended/rewritten sources), the second is this
+session's orchestration work. `git show --stat HEAD` lists the second.

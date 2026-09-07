@@ -213,3 +213,135 @@ BossAI_FastFallbackPair::
 	ad_address AV_BRANCH
 	ld [hl], a
 	ret
+
+; Common-sum allocation after the pair total: $a578..$a58f.
+DEF FSC_INCOMING EQU $a57d ; signed32 sum of weight*reply moment, current defender
+DEF FSC_MASS EQU $a581 ; M=2*W_R for the whole decision
+DEF FSC_ENTRY_DELTA EQU $a583 ; signed16 entry potential change, zero when active
+DEF FSC_BASELINE EQU $a585 ; 2*65536*(1024+entry delta): the unary standalone baseline
+DEF FSC_TEMP EQU $a58a ; five-byte accumulation temporary
+ASSERT FPK_TOTAL + 5 == FSC_INCOMING
+ASSERT FSC_TEMP + 5 <= $a590
+
+BossAI_FastUnaryFallback::
+; B=candidate kind (switch or wait), C=owned slot ($ff active), DE=context whose
+; compact reply supplies FSR_MOVE/FSR_ACCURACY (opcode may be 0). FSC_BASELINE
+; must hold the exact standalone baseline already assigned to this candidate.
+; Only positive original reply events run, through the direct unprepared
+; evaluator: own event mass 256 and a single order, so
+; FPK_TOTAL = 512*sum(p*U) - baseline in the signed40 ring and FPK_FLAGS is the
+; union of reached flags. SRAM0 open, DE/SP preserved, carry=accepted; other
+; kinds reject before any write. The producer prefix is rebuilt per event.
+	ld a, b
+	cp AV_SWITCH_ACTION
+	jr z, .kind_ok
+	cp AV_WAIT_ACTION
+	jp nz, .reject
+.kind_ok
+	ld [FPK_CURRENT], a
+	ld a, c
+	ld [FPK_INDEX], a
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+	push de
+	xor a
+	ld [FPK_FLAGS], a
+	ld [FPK_SECOND_EVENT], a
+	ld hl, FPK_TOTAL
+	ld b, 5
+.clear
+	ld [hli], a
+	dec b
+	jr nz, .clear
+.event
+	ld a, 1
+	call BossAI_FastNormalizedPair.Accuracy
+	ld a, [FPK_SECOND_EVENT]
+	call BossAI_FastNormalizedPair.EventMass
+	ld a, b
+	ld [FPK_REPLY_Z], a
+	ld a, c
+	ld [FPK_REPLY_Z + 1], a
+	or b
+	jr z, .next
+	call BossAI_FastNormalizedPair.Context
+	ld a, [FPK_INDEX]
+	ad_address AV_SLOT
+	ld [hl], a
+	ld a, [FPK_CURRENT]
+	ad_address AV_KIND
+	ld [hl], a
+	ad_address AV_MOVE
+	ld [hl], STRUGGLE
+	ld a, FSR_MOVE
+	call BossAI_FastNormalizedPair.ReplyAddress
+	ld a, [hl]
+	ad_address AV_REPLY
+	ld [hl], a
+	ld a, [FPK_SECOND_EVENT]
+	add a
+	ad_address AV_BRANCH
+	ld [hl], a
+	farcall BossAI_ValuePublicExchangeFromContext
+	xor a
+	ld [FS_MULTIPLICAND], a
+	ld [FS_MULTIPLICAND + 1], a
+	ld [FS_MULTIPLICAND + 2], a
+	ld a, b
+	ld [FS_MULTIPLICAND + 3], a
+	ld a, c
+	ld [FS_MULTIPLICAND + 4], a
+	ad_address AV_UNCERTAIN
+	ld a, [hl]
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
+	xor a
+	ld [FS_MULTIPLIER], a
+	ld a, [FPK_REPLY_Z]
+	ld [FS_MULTIPLIER + 1], a
+	ld a, [FPK_REPLY_Z + 1]
+	ld [FS_MULTIPLIER + 2], a
+	call BossAI_FastMultiply40By24
+	ld b, 9
+.shift
+	ld hl, FS_PRODUCT + 4
+	sla [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec b
+	jr nz, .shift
+	ld hl, FS_PRODUCT + 4
+	call BossAI_FastNormalizedPair.AddTotal
+.next
+	ld hl, FPK_SECOND_EVENT
+	inc [hl]
+	ld a, [hl]
+	cp 2
+	jp c, .event
+	ld hl, FSC_BASELINE + 4
+	ld de, FPK_TOTAL + 4
+	ld b, 5
+	and a
+.subtract
+	ld a, [de]
+	sbc [hl]
+	ld [de], a
+	dec de
+	dec hl
+	dec b
+	jr nz, .subtract
+	pop de
+	scf
+	ret
+.reject
+	and a
+	ret

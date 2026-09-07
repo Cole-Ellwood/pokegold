@@ -23,15 +23,20 @@ sys.path.insert(0, str(ROOT))
 
 def main() -> int:
     try:
-        from tools.boss_ai_fixtures.runner import Skip, report, run_all
+        from tools.boss_ai_fixtures.runner import FixtureError, Skip, report, run_all
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"SKIP: boss-AI decision-path fixtures (import failed: {exc})")
         return 0
     try:
-        results, _ = run_all()
+        # The game build has no offline reference evaluator; the reference suite
+        # runs separately against pokegold_ai_reference (see --suite in __main__).
+        results, _ = run_all(suite="production")
     except Skip as exc:
         print(f"SKIP: boss-AI decision-path fixtures ({exc})")
         return 0
+    except FixtureError as exc:
+        print(f"FAIL: boss-AI decision-path fixtures ({exc})")
+        return 1
     return report(results)
 
 

@@ -168,3 +168,32 @@ BossAI_ComparePublicActionsFastReferenceRestart::
 	ret
 
 ASSERT BANK(BossAI_ComparePublicActionsFastReferenceRestart) == BANK(BossAI_ComparePublicActions)
+
+BossAI_FastForcedAction::
+; DE=context whose candidate block sits at FS_ACTIONS (same offset as
+; JC_ACTIONS). Mirrors the reference .Candidate rules for original index 10.
+; C=0 no forced candidate, 1 forced move (B=move), 2 forced wait conversion.
+; Farcall-safe: inputs and outputs use BC/DE only.
+	ad_address JC_ACTIONS + AC_MODE
+	ld a, [hl]
+	cp AC_FORCED
+	ld c, 0
+	ret nz
+	ad_address JC_ACTIONS + AC_FORCED_MOVE
+	ld c, [hl]
+	ld a, c
+	and a
+	jr z, .wait
+	cp CANNOT_MOVE
+	jr z, .wait
+	ld a, [wEnemySubStatus4]
+	bit SUBSTATUS_RECHARGE, a
+	jr nz, .wait
+	call BossAI_ComparePublicActions.ForcedCanExecute
+	jr nc, .wait
+	ld b, c
+	ld c, 1
+	ret
+.wait
+	ld c, 2
+	ret

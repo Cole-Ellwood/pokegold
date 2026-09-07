@@ -266,3 +266,57 @@ BossAI_FastPrepareReplacementFacts::
 	ld a, c
 	ld [FSB_ENTRY_LOSS + 1], a
 	ret
+
+; Orchestration bridges: the ordinary selector lives in another bank and marshals
+; every input through DE/BC or the context. Each bridge leaves the producer
+; prefix in the state the next same-bank helper reads.
+DEF FSB_QUICK_CLAW EQU $a48f ; 1 when the active owned actor holds Quick Claw
+ASSERT FSB_QUICK_CLAW < FSB_PREFIX
+
+BossAI_FastPrepareOwnedCandidate::
+; DE=context with AV_SLOT/KIND/MOVE/BRANCH supplied, C=plan slot0..3. Prepares
+; the candidate epoch (speeds, outgoing template, incoming actor), restores the
+; owned outgoing context and compiles the compact plan. Carry=represented; clear
+; leaves an explicit fallback plan whose header (accuracy/priority) is valid.
+; Live AD is the owned context (direction 1) on return. DE/SP preserved.
+	push bc
+	call BossAI_PreparePublicAction
+	call BossAI_ValuePublicExchange.LoadPreparedOutgoing
+	pop bc
+	jp BossAI_FastCompileOwnedPlan
+
+BossAI_FastPrepareActiveFacts::
+; DE=context. Establishes the active defender's preparation epoch with a
+; Struggle carrier of wait kind: speeds and speed mode in AV, incoming actor
+; template, AV_WEIGHT, setup flags (a47c), the wait candidate's action-check
+; flags (prefix) and the Quick Claw class. The live AD is left as the owned
+; Struggle context (direction 1) for actor import. DE/SP preserved.
+	ad_address AV_SLOT
+	ld [hl], $ff
+	ad_address AV_KIND
+	ld [hl], AV_WAIT_ACTION
+	ad_address AV_MOVE
+	ld [hl], STRUGGLE
+	ad_address AV_BRANCH
+	ld [hl], 0
+	call BossAI_PreparePublicAction
+	call BossAI_ValuePublicExchange.LoadPreparedOutgoing
+	call BossAI_ValuePublicExchange.SetWeight
+	call BossAI_FastExportSetupFlags
+	ld c, 0
+	call BossAI_FastExportActionPrefix
+	call BossAI_BuildPublicDamageContext.OwnItem
+	cp QUICK_CLAW
+	ld a, 0
+	jr nz, .item_class
+	inc a
+.item_class
+	ld [FSB_QUICK_CLAW], a
+	ret
+
+BossAI_FastPrepareReply::
+; DE=context with AV_SLOT/AV_KIND/AV_REPLY set inside the defender's prepared
+; epoch. Builds the reply template and compiles the compact incoming plan.
+; Carry=represented; clear leaves opcode0 with a valid move/accuracy header.
+	call BossAI_PreparePublicReply
+	jp BossAI_FastCompileReplyPlan

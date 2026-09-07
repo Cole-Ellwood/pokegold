@@ -1,20 +1,36 @@
-; Native replacement orchestration; ordinary decisions currently restart
-; through the complete compatibility adapter. This is not the timing gate.
-DEF FS_NATIVE_SLOT EQU FS_CONTROL + 2
+; Native selector orchestration. Ordinary decisions stream one compiled reply
+; per defender over standalone moments plus correction-only pair terms;
+; replacement decisions value entry potentials directly. Invalid HP domains
+; discard native state and restart through the complete compatibility adapter.
+; This is the structural prototype, not the timing gate.
+DEF FS_DEFENDER EQU FS_CONTROL + 2 ; $ff active, else bench slot (also the bench cursor)
+DEF FS_NATIVE_SLOT EQU FS_DEFENDER
 DEF FS_NATIVE_LEFT EQU FS_CONTROL + 3
+DEF FS_PLAN EQU FS_CONTROL + 5 ; plan cursor
+DEF FS_REPLY_ID EQU FS_CONTROL + 6
+DEF FS_REPLY_LEFT EQU FS_CONTROL + 7
+DEF FS_REPLY_W EQU FS_CONTROL + 8
+DEF FS_UNARY_INDEX EQU FS_CONTROL + 9 ; wait/switch record index, $ff none
+DEF FS_UNARY_KIND EQU FS_CONTROL + 10
+DEF FS_PLAN_FLAGS EQU FS_CONTROL + 11 ; setup|open prior|unknown order, move plans
+DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate
+DEF FS_PLAN_INDEX EQU FS_CONTROL + 14 ; four original result indices, $ff unused
+DEF FSA_OWN_SPEED EQU FSA_OWN + 14
+DEF FSA_ITEM_CLASS EQU FSA_OWN + 32 ; 1=Quick Claw
+DEF FSA_SETUP_FLAGS EQU FSA_OWN + 35
+DEF FSA_SPEED_MODE EQU FSA_OWN + 36 ; bit0: public order unknown
+DEF FSA_PLAYER_SPEED EQU FSA_PLAYER + 14
+ASSERT FS_PLAN_INDEX + 4 <= FS_LEGAL_MASK - 1
 
 BossAI_ComparePublicActionsFastPrototype::
 ; DE=472-byte context, A=decision0/2, B=scan0..15, SRAM closed. Same full
-; record ABI/finalizer as the compatibility adapter. Native replacement
-; computes entry HP potentials directly; all other paths return status2.
+; record ABI/finalizer as the compatibility adapter. Both decision kinds are
+; evaluated natively; ordinary pairs may use the direct fallback (status 1).
 	ld c, a
 	push bc
 	call BossAI_FastPreparePublicInputs
 	pop bc
 	jp nc, .reference
-	ld a, c
-	cp AV_REPLACEMENT_ACTION
-	jp nz, .reference
 	xor a
 	call OpenSRAM
 	call BossAI_FastClearResults
@@ -22,25 +38,33 @@ BossAI_ComparePublicActionsFastPrototype::
 	xor a
 	ld [hli], a
 	ld [hl], a
-	ad_address FS_SCAN
-	bit 0, [hl]
-	ld a, 0
-	jr z, .first
-	ld a, PARTY_LENGTH - 1
-.first
-	ad_address FS_NATIVE_SLOT
-	ld [hli], a
-	ld [hl], PARTY_LENGTH
-.candidate
-	ad_address FS_NATIVE_SLOT
-	ld c, [hl]
-	ld b, 0
-	ld hl, .SlotBits
-	add hl, bc
+	ad_address FS_KIND ; result clearing clobbers C
 	ld a, [hl]
-	ad_address FS_ACTIONS + AC_SWITCH_MASK
-	and [hl]
-	jp z, .next
+	cp AV_REPLACEMENT_ACTION
+	jr z, .replacement
+	ad_address FS_BACKEND
+	ld [hl], 0
+	call .ReplyMass
+	jp nc, .restart
+	call .ActiveDefender
+	jp nc, .restart
+	call .BenchStart
+.bench
+	call .BenchLegal
+	jr z, .bench_next
+	call .SwitchDefender
+	jp nc, .restart
+.bench_next
+	call .BenchAdvance
+	jr nz, .bench
+	jp BossAI_FastFinalizeResults
+
+.replacement
+; One absent reply, weight 1: T=2*65536*(1024+entry delta) from HP potentials.
+	call .BenchStart
+.replacement_slot
+	call .BenchLegal
+	jr z, .replacement_next
 	ad_address FS_NATIVE_SLOT
 	ld a, [hl]
 	ad_address AV_SLOT
@@ -73,6 +97,79 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [FSA_START_PHI], a
 	ld a, c
 	ld [FSA_START_PHI + 1], a
+	call .ApplyEntry
+	ld hl, 1024
+	add hl, bc
+	ld a, [FSA_START_PHI + 1]
+	ld c, a
+	ld a, l
+	sub c
+	ld c, a
+	ld a, [FSA_START_PHI]
+	ld b, a
+	ld a, h
+	sbc b
+	ld b, a
+	call .StoreReplacementRecord
+.replacement_next
+	call .BenchAdvance
+	jr nz, .replacement_slot
+	ad_address FS_BACKEND
+	ld [hl], 0
+	jp BossAI_FastFinalizeResults
+
+.restart
+	call CloseSRAM ; discard native state before the old JC lifetime begins
+	ad_address FS_KIND
+	ld c, [hl]
+	inc hl
+	ld b, [hl]
+.reference
+	farcall BossAI_FastReferenceRestartFromC
+	ret
+
+.BenchStart
+	ad_address FS_SCAN
+	bit 0, [hl]
+	ld a, 0
+	jr z, .bench_first
+	ld a, PARTY_LENGTH - 1
+.bench_first
+	ad_address FS_NATIVE_SLOT
+	ld [hli], a
+	ld [hl], PARTY_LENGTH
+	ret
+.BenchLegal
+; Z when the cursor's bench slot is not a legal switch/replacement entry.
+	ad_address FS_NATIVE_SLOT
+	ld c, [hl]
+	ld b, 0
+	ld hl, .SlotBits
+	add hl, bc
+	ld a, [hl]
+	ad_address FS_ACTIONS + AC_SWITCH_MASK
+	and [hl]
+	ret
+.BenchAdvance
+; Z when every bench slot has been visited.
+	ad_address FS_NATIVE_LEFT
+	dec [hl]
+	ret z
+	ad_address FS_SCAN
+	bit 0, [hl]
+	ad_address FS_NATIVE_SLOT
+	jr nz, .bench_previous
+	inc [hl]
+	jr .bench_advanced
+.bench_previous
+	dec [hl]
+.bench_advanced
+	or 1
+	ret
+
+.ApplyEntry
+; Own actor and table live. Entry HP/Phi follow the bridge's entry loss;
+; BC=entry Phi.
 	ld a, [FSB_ENTRY_LOSS]
 	ld b, a
 	ld a, [FSB_ENTRY_LOSS + 1]
@@ -88,44 +185,6 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [FSA_ENTRY_PHI], a
 	ld a, c
 	ld [FSA_ENTRY_PHI + 1], a
-	ld hl, 1024
-	add hl, bc
-	ld a, [FSA_START_PHI + 1]
-	ld c, a
-	ld a, l
-	sub c
-	ld c, a
-	ld a, [FSA_START_PHI]
-	ld b, a
-	ld a, h
-	sbc b
-	ld b, a
-	call .StoreRecord
-.next
-	ad_address FS_NATIVE_LEFT
-	dec [hl]
-	jr z, .done
-	ad_address FS_SCAN
-	bit 0, [hl]
-	ad_address FS_NATIVE_SLOT
-	jr nz, .previous
-	inc [hl]
-	jp .candidate
-.previous
-	dec [hl]
-	jp .candidate
-.done
-	ad_address FS_BACKEND
-	ld [hl], 0
-	jp BossAI_FastFinalizeResults
-.restart
-	call CloseSRAM ; discard native state before the old JC lifetime begins
-	ad_address FS_KIND
-	ld c, [hl]
-	inc hl
-	ld b, [hl]
-.reference
-	farcall BossAI_FastReferenceRestartFromC
 	ret
 .Potential
 	push de
@@ -136,21 +195,13 @@ BossAI_ComparePublicActionsFastPrototype::
 	call BossAI_FastHPPotential
 	pop de
 	ret
-.StoreRecord
+.StoreReplacementRecord
 ; BC=1024+entryPhi-startPhi. One absent reply/order has M=2 and T=score*2*65536.
 	push bc
 	ad_address FS_NATIVE_SLOT
 	ld a, [hl]
-	add 4
-	add a
-	ld c, a
-	add a
-	add a
-	add c
-	ld c, a
-	ld b, 0
-	ld hl, FS_RESULTS
-	add hl, bc
+	add NUM_MOVES
+	call .RecordPointer
 	pop bc
 	xor a
 	ld [hli], a
@@ -172,23 +223,970 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	ad_address FS_NATIVE_SLOT
 	ld a, [hl]
+	add NUM_MOVES
+	jp .SetLegal
+.SlotBits
+	db 1, 2, 4, 8, 16, 32
+
+; ---------------------------------------------------------------------------
+; Ordinary decisions
+
+.ReplyMass
+; W_R=sum of reply weights into FS_REPLY_WEIGHT; M=2*W_R into FSC_MASS.
+; Carry iff 1<=W_R<=282 so that M<=564 stays inside the finalizer's domain.
+	ld bc, 0
+	ld a, 1
+.mass_reply
+	push af
+	push bc
+	call .ReplyWeight
+	pop bc
+	jr nc, .mass_next
+	add c
+	ld c, a
+	ld a, b
+	adc 0
+	ld b, a
+.mass_next
+	pop af
+	inc a
+	cp NUM_ATTACKS + 1
+	jr c, .mass_reply
+	ld a, b
+	or c
+	ret z
+	ld a, b
+	cp HIGH(283)
+	jr c, .mass_ok
+	ret nz
+	ld a, c
+	cp LOW(283)
+	ret nc
+.mass_ok
+	av_store_word FS_REPLY_WEIGHT
+	sla c
+	rl b
+	ld a, b
+	ld [FSC_MASS], a
+	ld a, c
+	ld [FSC_MASS + 1], a
+	scf
+	ret
+
+.ReplyWeight
+; A=move ID. Carry when the reply is possible, then A=its weight.
+	ld c, a
+	ld hl, FS_REPLIES + PR_POSSIBLE
+	call .ReplyBit
+	ret z
+	ld a, c
+	ld hl, FS_REPLIES + PR_REVEALED
+	call .ReplyBit
+	ld a, 1
+	jr z, .weight_ready
+	ld a, JC_REVEALED_WEIGHT
+.weight_ready
+	scf
+	ret
+.ReplyBit
+; A=move ID, HL=set offset in the context. Z means absent; C preserved.
+	push bc
+	add hl, de
+	ld c, a
+	srl a
+	srl a
+	srl a
+	ld b, 0
+	push bc
+	ld c, a
+	add hl, bc
+	pop bc
+	ld a, c
+	and 7
+	ld c, a
+	ld a, 1
+	jr z, .bit_ready
+.bit_shift
+	add a
+	dec c
+	jr nz, .bit_shift
+.bit_ready
+	and [hl]
+	pop bc
+	ret
+
+.OpenPrior
+; A=the open-moveset prior flag for non-replacement candidates, else 0.
+	ad_address FS_REPLIES + PR_FLAGS
+	bit PR_FOUR_REVEALED_F, [hl]
+	ld a, 0
+	ret nz
+	ld a, 1 << JC_PUBLIC_PRIOR_F
+	ret
+
+.ClearPlanIndex
+	ad_address FS_PLAN_INDEX
+	ld a, $ff
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ret
+.PlanIndex
+; C=plan slot. A=original result index ($ff unused); BC preserved.
+	push bc
+	ad_address FS_PLAN_INDEX
+	ld b, 0
+	add hl, bc
+	ld a, [hl]
+	pop bc
+	ret
+.PlanAddress
+; C=plan slot, A=field offset. HL=field address; BC/DE preserved.
+	push bc
+	ld l, c
+	ld h, 0
+	rept 6
+	add hl, hl
+	endr
+	ld c, a
+	ld b, 0
+	add hl, bc
+	ld bc, FSP_BASE
+	add hl, bc
+	pop bc
+	ret
+
+.ActiveDefender
+; Moves, the forced action and wait share the active actor, one reply sweep
+; and one shared incoming moment sum. Carry=complete; clear=invalid HP domain.
+	ld a, $ff
+	ad_address FS_DEFENDER
+	ld [hl], a
+	ad_address FS_UNARY_INDEX
+	ld [hl], a
+	call .ClearPlanIndex
+	ad_address FS_UNARY_KIND
+	ld [hl], AV_WAIT_ACTION
+	ad_address FS_ACTIONS + AC_MODE
+	ld a, [hl]
+	cp AC_CHOICE
+	jr z, .choice
+	cp AC_WAIT
+	ld a, NUM_MOVES + PARTY_LENGTH + 1
+	jr z, .unary_index
+	farcall BossAI_FastForcedAction
+	ld a, c
+	dec a
+	jr nz, .forced_wait
+	ld c, 0
+	ld a, NUM_MOVES + PARTY_LENGTH
+	call .AddPlan
+	jr .candidates_ready
+.forced_wait
+	ld a, NUM_MOVES + PARTY_LENGTH
+.unary_index
+	ad_address FS_UNARY_INDEX
+	ld [hl], a
+	jr .candidates_ready
+.choice
+	ld c, 0
+.choice_slot
+	ad_address FS_ACTIONS + AC_MOVES
+	ld b, 0
+	add hl, bc
+	ld a, [hl]
+	and a
+	jr z, .choice_next
+	ld b, a
+	ld a, c
+	push bc
+	call .AddPlan
+	pop bc
+.choice_next
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr c, .choice_slot
+.candidates_ready
+	farcall BossAI_FastPrepareActiveFacts
+	ad_address AV_WEIGHT
+	ld c, [hl]
+	call BossAI_FastImportActorHP
+	ret nc
+	call .ImportOrderFacts
+	ld a, [FSA_SETUP_FLAGS]
+	ld b, a
+	call .OpenPrior
+	or b
+	ld b, a
+	ld a, [FSB_PREFIX_CHECK]
+	or b
+	ad_address FS_UNARY_FLAGS
+	ld [hl], a
+	ld a, [FSA_SPEED_MODE]
+	and a
+	ld a, b
+	jr z, .plan_flags
+	or 1 << AV_UNKNOWN_ORDER_F
+.plan_flags
+	ad_address FS_PLAN_FLAGS
+	ld [hl], a
+	xor a
+	ld [FSC_ENTRY_DELTA], a
+	ld [FSC_ENTRY_DELTA + 1], a
+	call .UnaryBaseline
+	ld c, 0
+.plan_init
+	call .PlanIndex
+	cp $ff
+	jr z, .plan_init_next
+	push bc
+	call BossAI_FastBuildOwnedStandalone ; fallback plans keep zero moments
+	pop bc
+	push bc
+	call .InitMovePlan
+	pop bc
+.plan_init_next
+	inc c
+	ld a, c
+	cp 4
+	jr c, .plan_init
+	call .InitUnaryRecord
+	call .ReplySweep
+	ret nc
+	call .CommitIncoming
+	scf
+	ret
+
+.AddPlan
+; C=plan slot, B=move, A=original result index. Compiles the plan now.
+	push bc
+	push af
+	ad_address FS_PLAN_INDEX
+	ld b, 0
+	add hl, bc
+	pop af
+	ld [hl], a
+	pop bc
+	ad_address AV_SLOT
+	ld [hl], $ff
+	ad_address AV_KIND
+	ld [hl], AV_MOVE_ACTION
+	ad_address AV_MOVE
+	ld [hl], b
+	ad_address AV_BRANCH
+	ld [hl], 0
+	farcall BossAI_FastPrepareOwnedCandidate
+	ret
+
+.ImportOrderFacts
+; Speeds, speed mode, item class and setup flags into the actor views.
+	av_load_word AV_OWN_SPEED
+	ld a, b
+	ld [FSA_OWN_SPEED], a
+	ld a, c
+	ld [FSA_OWN_SPEED + 1], a
+	av_load_word AV_PLAYER_SPEED
+	ld a, b
+	ld [FSA_PLAYER_SPEED], a
+	ld a, c
+	ld [FSA_PLAYER_SPEED + 1], a
+	ad_address AV_BRANCH
+	ld a, [hl]
+	and 1 << AV_PREPARED_SPEED_UNKNOWN_F
+	ld a, 0
+	jr z, .speed_mode
+	inc a
+.speed_mode
+	ld [FSA_SPEED_MODE], a
+	ld a, [FSB_QUICK_CLAW]
+	ld [FSA_ITEM_CLASS], a
+	ld a, [FSB_SETUP_FLAGS]
+	ld [FSA_SETUP_FLAGS], a
+	ret
+
+.SwitchDefender
+; One bench entry at the cursor: entry hazards on a fresh actor, then one reply
+; sweep whose baseline is the post-entry state. Carry=complete.
+	call .ClearPlanIndex
+	ad_address FS_DEFENDER
+	ld a, [hl]
+	ad_address AV_SLOT
+	ld [hl], a
+	add NUM_MOVES
+	ad_address FS_UNARY_INDEX
+	ld [hl], a
+	ad_address FS_UNARY_KIND
+	ld [hl], AV_SWITCH_ACTION
+	ad_address AV_KIND
+	ld [hl], AV_SWITCH_ACTION
+	ad_address AV_MOVE
+	ld [hl], STRUGGLE
+	ad_address AV_BRANCH
+	ld [hl], 0
+	farcall BossAI_FastPrepareReplacementFacts
+	ld a, [FSA_WEIGHT]
+	ld c, a
+	call BossAI_FastImportActorHP
+	ret nc
+	call .ApplyEntry
+	ld a, [FSA_START_PHI + 1]
+	ld l, a
+	ld a, c
+	sub l
+	ld [FSC_ENTRY_DELTA + 1], a
+	ld a, [FSA_START_PHI]
+	ld h, a
+	ld a, b
+	sbc h
+	ld [FSC_ENTRY_DELTA], a
+; The post-entry state is the standalone baseline for every reply.
+	ld hl, FSA_ENTRY_HP
+	ld a, [hli]
+	ld [FSA_START_HP], a
+	ld a, [hli]
+	ld [FSA_START_HP + 1], a
+	ld a, [hli]
+	ld [FSA_START_PHI], a
+	ld a, [hl]
+	ld [FSA_START_PHI + 1], a
+	ld a, [FSB_SETUP_FLAGS]
+	ld b, a
+	call .OpenPrior
+	or b
+	ad_address FS_UNARY_FLAGS
+	ld [hl], a
+	call .UnaryBaseline
+	call .InitUnaryRecord
+	farcall BossAI_PreparePublicAction ; this bench actor's reply epoch
+	call .ReplySweep
+	ret nc
+	call .CommitIncoming
+	scf
+	ret
+
+.EntryUtility
+; BC=1024+entry delta.
+	ld a, [FSC_ENTRY_DELTA + 1]
+	ld c, a
+	ld a, [FSC_ENTRY_DELTA]
+	ld b, a
+	ld hl, 1024
+	add hl, bc
+	ld b, h
+	ld c, l
+	ret
+.UnaryBaseline
+; FSC_BASELINE=(1024+entry delta)<<17.
+	ld hl, FSC_BASELINE
+	xor a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	push hl
+	call .EntryUtility
+	pop hl
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld hl, FSC_BASELINE
+	ld b, 17
+	jp .ShiftLeft
+
+.InitMovePlan
+; C=plan slot. T=M<<26+(M<<8)*mu_own, mass M, plan flags, legal bit.
+	call .PlanIndex
+	cp $ff
+	ret z
+	push bc
+	push af
+	ld hl, FSC_TEMP
+	ld b, 26
+	call .MassShiftedTo
+	pop af
+	push af
+	ld hl, FSC_TEMP
+	call .CopyToRecord
+	pop af
+	pop bc
+	push af
+	ld a, FSP_MOMENT
+	call .PlanAddress
+	call .SignExtend24
+	call .MassMultiplier8
+	call BossAI_FastMultiply40By24
+	pop af
+	push af
+	ld hl, FS_PRODUCT
+	call .AddToRecord
+	pop af
+	ad_address FS_PLAN_FLAGS
+	ld b, [hl]
+	jp .SetRecordMeta
+
+.InitUnaryRecord
+; Wait or switch: T=(M<<16)*(1024+entry delta), mass M, unary flags, legal bit.
+	ad_address FS_UNARY_INDEX
+	ld a, [hl]
+	cp $ff
+	ret z
+	push af
+	ld hl, FS_MULTIPLICAND
+	ld b, 16
+	call .MassShiftedTo
+	call .EntryUtility
+	xor a
+	ld [FS_MULTIPLIER], a
+	ld a, b
+	ld [FS_MULTIPLIER + 1], a
+	ld a, c
+	ld [FS_MULTIPLIER + 2], a
+	call BossAI_FastMultiply40By24
+	pop af
+	push af
+	ld hl, FS_PRODUCT
+	call .CopyToRecord
+	pop af
+	ad_address FS_UNARY_FLAGS
+	ld b, [hl]
+	jp .SetRecordMeta
+
+.ReplySweep
+; Stream every possible reply once for the current defender. Carry=complete.
+	ld hl, FSC_INCOMING
+	xor a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld [hl], a
+	ad_address FS_SCAN
+	bit 1, [hl]
+	ld a, 1
+	jr z, .first_reply
+	ld a, NUM_ATTACKS
+.first_reply
+	ad_address FS_REPLY_ID
+	ld [hli], a
+	ld [hl], NUM_ATTACKS
+.reply
+	ad_address FS_REPLY_ID
+	ld a, [hl]
+	call .ReplyWeight
+	jr nc, .reply_next
+	ad_address FS_REPLY_W
+	ld [hl], a
+	call .PrepareReply
+	jr nc, .reply_fallback
+	call BossAI_FastBuildReplyStandalone
+	ret nc
+	call .AccumulateIncoming
+	jr .reply_plans
+.reply_fallback
+; A rejected compile must still have written this reply's header; a stale
+; record would feed the direct fallback the wrong move.
+	ld hl, FSR_BASE + FSR_MOVE
+	add hl, de
+	ld a, [hl]
+	ad_address FS_REPLY_ID
+	cp [hl]
+	jr z, .header_ok
+	and a
+	ret
+.header_ok
+	call .UnaryFallback
+	ret nc
+.reply_plans
+	call .Plans
+	ret nc
+.reply_next
+	ad_address FS_REPLY_LEFT
+	dec [hl]
+	jr z, .sweep_done
+	ad_address FS_SCAN
+	bit 1, [hl]
+	ad_address FS_REPLY_ID
+	jr nz, .previous_reply
+	inc [hl]
+	jr .reply
+.previous_reply
+	dec [hl]
+	jr .reply
+.sweep_done
+	scf
+	ret
+
+.PrepareReply
+; Marshal the defender/reply selectors, then bridge template + compile.
+	ad_address FS_DEFENDER
+	ld a, [hl]
+	ad_address AV_SLOT
+	ld [hl], a
+	inc a
+	ld a, AV_MOVE_ACTION
+	jr z, .reply_kind
+	ld a, AV_SWITCH_ACTION
+.reply_kind
+	ad_address AV_KIND
+	ld [hl], a
+	ad_address FS_REPLY_ID
+	ld a, [hl]
+	ad_address AV_REPLY
+	ld [hl], a
+	ad_address AV_BRANCH
+	ld [hl], 0
+	farcall BossAI_FastPrepareReply
+	ret
+
+.AccumulateIncoming
+; B+=weight*mu_reply (signed32). The unary candidate also collects the
+; reply's reached flags over its positive original events.
+	ld hl, FSR_BASE + FSR_MOMENT
+	add hl, de
+	ld a, [hli]
+	ld b, a
+	add a
+	sbc a
+	ld [FSC_TEMP], a
+	ld a, b
+	ld [FSC_TEMP + 1], a
+	ld a, [hli]
+	ld [FSC_TEMP + 2], a
+	ld a, [hl]
+	ld [FSC_TEMP + 3], a
+	ad_address FS_REPLY_W
+	ld a, [hl]
+	cp JC_REVEALED_WEIGHT
+	jr nz, .add_incoming
+	ld b, 3
+.shift_incoming
+	ld hl, FSC_TEMP + 3
+	sla [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec b
+	jr nz, .shift_incoming
+.add_incoming
+	ld hl, FSC_TEMP + 3
+	ld bc, FSC_INCOMING + 3
+	push de
+	ld d, 4
+	and a
+.add_incoming_byte
+	ld a, [bc]
+	adc [hl]
+	ld [bc], a
+	dec hl
+	dec bc
+	dec d
+	jr nz, .add_incoming_byte
+	pop de
+	ad_address FS_UNARY_INDEX
+	ld a, [hl]
+	cp $ff
+	ret z
+	push af
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	ld b, 0
+	and a
+	jr z, .miss_flags
+	ld a, [$a458] ; original-hit continuation flags
+	ld b, a
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+.miss_flags
+	cp 255
+	jr z, .reply_flags_ready
+	ld a, [$a470] ; original-miss continuation flags
+	or b
+	ld b, a
+.reply_flags_ready
+	pop af
+	jp .OrRecordFlags
+
+.UnaryFallback
+; Unrepresented reply: the wait/switch candidate takes the direct evaluator's
+; complete value minus its already assigned baseline. Carry=accepted.
+	ad_address FS_UNARY_INDEX
+	ld a, [hl]
+	cp $ff
+	scf
+	ret z
+	ad_address FS_UNARY_KIND
+	ld b, [hl]
+	ad_address FS_DEFENDER
+	ld c, [hl]
+	call BossAI_FastUnaryFallback
+	ret nc
+	ad_address FS_BACKEND
+	ld [hl], 1
+	ad_address FS_UNARY_INDEX
+	ld a, [hl]
+	jp .AddPairTotal
+
+.Plans
+; Each live plan consumes one correction for the current reply. Carry=complete.
+	ad_address FS_SCAN
+	bit 0, [hl]
+	ld a, 0
+	jr z, .first_plan
+	ld a, 3
+.first_plan
+	ad_address FS_PLAN
+	ld [hl], a
+	ld b, 4
+.plan
+	push bc
+	ad_address FS_PLAN
+	ld c, [hl]
+	call .PlanIndex
+	cp $ff
+	jr z, .plan_skip
+	call .PlanPair
+	jr c, .plan_skip
+	pop bc
+	ret
+.plan_skip
+	pop bc
+	ad_address FS_SCAN
+	bit 0, [hl]
+	ad_address FS_PLAN
+	jr nz, .previous_plan
+	inc [hl]
+	jr .plan_next
+.previous_plan
+	dec [hl]
+.plan_next
+	dec b
+	jr nz, .plan
+	scf
+	ret
+
+.PlanPair
+; C=plan slot, A=original index. Native correction when both sides are
+; represented, otherwise the direct pair fallback. Carry=accepted.
+	push af
+	call .OrderDescriptor
+	push af
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .pair_fallback
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .pair_fallback
+	pop af
+	call BossAI_FastNormalizedPair.CorrectionOnly
+	jr .pair_total
+.pair_fallback
+	pop af
+	cp 2
+	jr z, .fallback_order
+	xor a
+.fallback_order
+	call BossAI_FastFallbackPair.CorrectionOnly
+	jr nc, .pair_total
+	ad_address FS_BACKEND
+	ld [hl], 1
+	scf
+.pair_total
+	pop bc
+	ret nc
+	ld a, b
+	jp .AddPairTotal
+
+.OrderDescriptor
+; C=plan slot. A=0 own first, 1 reply first, 2 genuine modeled tie. Priority
+; first; unknown speed or Quick Claw at equal speed keeps the reference's
+; conservative reply-first order (their flags are candidate/setup flags).
+	push bc
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_ABSENT
+	ld a, 0
+	jr z, .order_done
+	ld a, FSP_PRIORITY
+	call .PlanAddress
+	ld b, [hl]
+	ld hl, FSR_BASE + FSR_PRIORITY
+	add hl, de
+	ld a, [hl]
+	cp b
+	ld a, 0
+	jr c, .order_done
+	ld a, 1
+	jr nz, .order_done
+	ld a, [FSA_SPEED_MODE]
+	and a
+	ld a, 1
+	jr nz, .order_done
+	ld a, [FSA_OWN_SPEED + 1]
+	ld c, a
+	ld a, [FSA_PLAYER_SPEED + 1]
+	sub c
+	ld c, a
+	ld a, [FSA_OWN_SPEED]
+	ld b, a
+	ld a, [FSA_PLAYER_SPEED]
+	sbc b
+	jr c, .own_first_order
+	or c
+	ld a, 1
+	jr nz, .order_done
+	ld a, [FSA_ITEM_CLASS]
+	and a
+	ld a, 1
+	jr nz, .order_done
+	ld a, 2
+	jr .order_done
+.own_first_order
+	xor a
+.order_done
+	pop bc
+	ret
+
+.AddPairTotal
+; A=record index. T+=weight*FPK_TOTAL; uncertainty|=FPK_FLAGS. Carry set.
+	push af
+	ld hl, FPK_TOTAL
+	ld bc, FSC_TEMP
+	call .CopyFive
+	ad_address FS_REPLY_W
+	ld a, [hl]
+	cp JC_REVEALED_WEIGHT
+	jr nz, .weighted
+	ld hl, FSC_TEMP
+	ld b, 3
+	call .ShiftLeft
+.weighted
+	pop af
+	push af
+	ld hl, FSC_TEMP
+	call .AddToRecord
+	pop af
+	ld hl, FPK_FLAGS
+	ld b, [hl]
+	call .OrRecordFlags
+	scf
+	ret
+
+.CommitIncoming
+; T+=512*B for every live plan and the unary candidate of this defender.
+	ld a, [FSC_INCOMING]
+	ld [FSC_TEMP + 1], a
+	add a
+	sbc a
+	ld [FSC_TEMP], a
+	ld a, [FSC_INCOMING + 1]
+	ld [FSC_TEMP + 2], a
+	ld a, [FSC_INCOMING + 2]
+	ld [FSC_TEMP + 3], a
+	ld a, [FSC_INCOMING + 3]
+	ld [FSC_TEMP + 4], a
+	ld hl, FSC_TEMP
+	ld b, 9
+	call .ShiftLeft
+	ld c, 0
+.commit_plan
+	call .PlanIndex
+	cp $ff
+	jr z, .commit_next
+	push bc
+	ld hl, FSC_TEMP
+	call .AddToRecord
+	pop bc
+.commit_next
+	inc c
+	ld a, c
+	cp 4
+	jr c, .commit_plan
+	ad_address FS_UNARY_INDEX
+	ld a, [hl]
+	cp $ff
+	ret z
+	ld hl, FSC_TEMP
+	jp .AddToRecord
+
+; ---------------------------------------------------------------------------
+; Record and wide-arithmetic helpers. Records are big-endian five-byte T,
+; two-byte M, two-byte score (finalizer), one uncertainty byte.
+
+.RecordPointer
+; A=index. HL=record address; BC scratch.
+	ld c, a
+	add a
+	add a
+	add c
 	add a
 	ld c, a
 	ld b, 0
-	ld hl, .ResultBits
+	ld hl, FS_RESULTS
 	add hl, bc
-	ld a, [hli]
-	ld b, a
-	ld c, [hl]
-	ad_address FS_LEGAL_MASK
+	ret
+.CopyToRecord
+; A=index, HL=five-byte source. Record T=source.
+	push hl
+	call .RecordPointer
+	pop bc
+	push de
+	ld d, 5
+.copy_record_byte
+	ld a, [bc]
+	ld [hli], a
+	inc bc
+	dec d
+	jr nz, .copy_record_byte
+	pop de
+	ret
+.AddToRecord
+; A=index, HL=five-byte big-endian addend. Record T+=addend modulo 2^40.
+	push hl
+	call .RecordPointer
+	pop bc
+	rept 4
+	inc hl
+	inc bc
+	endr
+	push de
+	ld d, 5
+	and a
+.add_record_byte
+	ld a, [bc]
+	adc [hl]
+	ld [hl], a
+	dec hl
+	dec bc
+	dec d
+	jr nz, .add_record_byte
+	pop de
+	ret
+.OrRecordFlags
+; A=index, B=flags.
+	push bc
+	call .RecordPointer
+	ld bc, 9
+	add hl, bc
+	pop bc
 	ld a, [hl]
 	or b
-	ld [hli], a
-	ld a, [hl]
-	or c
 	ld [hl], a
 	ret
-.SlotBits
-	db 1, 2, 4, 8, 16, 32
-.ResultBits
-	bigdw 1 << 4, 1 << 5, 1 << 6, 1 << 7, 1 << 8, 1 << 9
+.SetRecordMeta
+; A=index, B=initial flags. Stores M, the flags and the legal bit.
+	push bc
+	push af
+	call .RecordPointer
+	ld bc, 5
+	add hl, bc
+	ld a, [FSC_MASS]
+	ld [hli], a
+	ld a, [FSC_MASS + 1]
+	ld [hli], a
+	inc hl
+	inc hl
+	pop af
+	pop bc
+	ld [hl], b
+.SetLegal
+; A=index. Sets its bit in the big-endian legal mask.
+	ad_address FS_LEGAL_MASK + 1
+	cp 8
+	jr c, .legal_low
+	dec hl
+	sub 8
+.legal_low
+	ld b, a
+	ld a, 1
+	inc b
+.legal_shift
+	dec b
+	jr z, .legal_set
+	add a
+	jr .legal_shift
+.legal_set
+	or [hl]
+	ld [hl], a
+	ret
+.CopyFive
+; HL=source, BC=destination. DE preserved.
+	push de
+	ld d, b
+	ld e, c
+	ld b, 5
+.copy_five_byte
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .copy_five_byte
+	pop de
+	ret
+.ShiftLeft
+; HL=five-byte big-endian value, B=bit count (0 allowed).
+	inc b
+	dec b
+	ret z
+.shift_left_bit
+	push hl
+	rept 4
+	inc hl
+	endr
+	sla [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	pop hl
+	dec b
+	jr nz, .shift_left_bit
+	ret
+.MassShiftedTo
+; HL=five-byte destination, B=shift. Destination=M<<B.
+	push hl
+	xor a
+	ld [hli], a
+	ld [hli], a
+	ld [hli], a
+	ld a, [FSC_MASS]
+	ld [hli], a
+	ld a, [FSC_MASS + 1]
+	ld [hl], a
+	pop hl
+	jp .ShiftLeft
+.MassMultiplier8
+; FS_MULTIPLIER=M<<8.
+	ld a, [FSC_MASS]
+	ld [FS_MULTIPLIER], a
+	ld a, [FSC_MASS + 1]
+	ld [FS_MULTIPLIER + 1], a
+	xor a
+	ld [FS_MULTIPLIER + 2], a
+	ret
+.SignExtend24
+; HL=signed 24-bit big-endian value. FS_MULTIPLICAND=its five-byte extension.
+	ld a, [hli]
+	ld [FS_MULTIPLICAND + 2], a
+	add a
+	sbc a
+	ld [FS_MULTIPLICAND], a
+	ld [FS_MULTIPLICAND + 1], a
+	ld a, [hli]
+	ld [FS_MULTIPLICAND + 3], a
+	ld a, [hl]
+	ld [FS_MULTIPLICAND + 4], a
+	ret

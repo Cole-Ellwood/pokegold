@@ -3,7 +3,7 @@ import argparse
 from dataclasses import replace
 from tools.boss_ai_fixtures.cases import CASES
 from tools.boss_ai_fixtures.fast_results import INVALID, packed
-from tools.boss_ai_fixtures.harness import Mon, open_harness
+from tools.boss_ai_fixtures.harness import Mon, MOVES, open_harness
 from tools.boss_ai_fixtures.joint import ITEMS, seed_joint_case
 from tools.boss_ai_fixtures.runner import run_case, check
 
@@ -48,6 +48,7 @@ def main():
     entry = ("BossAI_ComparePublicActionsFastPrototype" if prototype else
              "BossAI_ComparePublicActionsFastReferenceRestart")
     tested = 0
+    backends = {}
     for case in replacement_boundaries() if args.replacement_boundaries else CASES:
         if case.joint_check is None:
             continue
@@ -60,9 +61,12 @@ def main():
         best = min(legal, key=lambda i: (-records[i][2], i)) if legal else 255
         score, uncertainty = (records[best][2], records[best][3]) if legal else (0, 255)
         replacement = prototype and case.joint_check.get("kind", 0) == 2
-        native = replacement and not case.joint_check.get("native_restart")
+        ordinary = prototype and case.joint_check.get("kind", 0) == 0
+        native = (replacement or ordinary) and not case.joint_check.get("native_restart")
+        # Ordinary native decisions report 0 (native only) or 1 (pair/unary fallback used).
+        statuses = {0, 1} if ordinary and native else {0} if native else {2}
         expected = (packed(records) + bytes((best, uncertainty)) +
-                    score.to_bytes(2, "big") + mask.to_bytes(2, "big") + bytes((0 if native else 2, 1)))
+                    score.to_bytes(2, "big") + mask.to_bytes(2, "big") + bytes((1,)))
         with open_harness("pokegold_ai_reference") as h:
             h.invoke("BossAI_ResetTurnCaches")
             h.seed_battle(case.boss, case.player, tier=case.tier,
@@ -85,7 +89,10 @@ def main():
                 assert h.invoke(entry, {
                     "A": case.joint_check.get("kind", 0), "B": scan,
                     "D": base >> 8, "E": base & 255}, frame_budget=30000)
-                assert bytes(mem[base:base + 128]) == expected, (case.id, scan)
+                out = bytes(mem[base:base + 128])
+                assert out[:126] + out[127:] == expected, (case.id, scan, out[:126].hex(), expected[:126].hex())
+                assert out[126] in statuses, (case.id, scan, out[126])
+                backends.setdefault(case.id, set()).add(out[126])
                 assert (h.outcome()["bc"], h.outcome()["carry"]) == (score, bool(legal))
                 assert int(rf.SP) == sp and (int(rf.D) << 8 | int(rf.E)) == base
                 assert h.rd("hROMBank") == h.syms[entry].bank
@@ -95,9 +102,22 @@ def main():
                 after = bytes(mem[0xa000:0xa620])
                 assert all(a == b for i, (a, b) in enumerate(zip(sram, after))
                            if not (0x280 <= i < 0x2f8 or 0x510 <= i < 0x530 or
+                                   ordinary and native and i < 0x600 or
                                    replacement and (i < 0x180 or 0x3f8 <= i < 0x420 or
                                                i == 0x47c or 0x487 <= i < 0x489))), case.id
                 assert h.invoke("CloseSRAM")
+                tested += 1
+            if ordinary and native and case.joint_check.get("hidden_invariance", True):
+                # Private player move/PP/item/input must not change the native vector.
+                h.wr("wBattleMonItem", 255)
+                h.wr("wCurPlayerMove", MOVES["EXPLOSION"])
+                for i in range(4):
+                    h.wr("wBattleMonMoves", MOVES["EXPLOSION"], i)
+                    h.wr("wBattleMonPP", 0, i)
+                mem[base:base + 472] = [0x5a] * 472
+                assert h.invoke(entry, {"A": 0, "B": 0, "D": base >> 8, "E": base & 255}, frame_budget=30000)
+                out = bytes(mem[base:base + 128])
+                assert out[:126] + out[127:] == expected, (case.id, "hidden")
                 tested += 1
             assert not random_calls
             h.pb.hook_deregister(random_symbol.bank, random_symbol.address)
@@ -112,7 +132,10 @@ def main():
             assert mem[0xc97e] == 255 and not h.outcome()["carry"] and h.outcome()["bc"] == 0
             assert mem[0xa000] == 255
             assert int(rf.SP) == sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
-    print(f"PASS: {tested} frozen-reference restart vectors and 5 invalid entries; "
+    fallback = sorted(case for case, seen in backends.items() if 1 in seen)
+    if backends:
+        print(f"backend status: {len(backends) - len(fallback)} native-only, {len(fallback)} with fallback: {fallback}")
+    print(f"PASS: {tested} frozen-reference {'prototype' if prototype else 'restart'} vectors and 5 invalid entries; "
           "DE/SP/bank/SRAM and context boundaries")
 
 

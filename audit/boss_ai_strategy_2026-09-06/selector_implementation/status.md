@@ -1,11 +1,14 @@
 # Exact selector implementation status
 
-Updated 2026-09-07. Paused at the user's request after the reviewed pair/fallback
-checkpoint. The complete native selector is **not implemented or integrated**.
-The two-second whole-decision target remains unverified. The private prototype
-now evaluates replacement decisions natively and routes ordinary decisions through
-a complete slow compatibility restart. It is included only in `BOSS_AI_REFERENCE`
-builds; no gameplay caller exists.
+Updated 2026-09-07 (Claude Fable continuation). Ordinary selector orchestration
+is now **implemented and validated** against the frozen reference on every
+existing joint fixture; the complete native selector is still a private
+`BOSS_AI_REFERENCE` prototype with no gameplay caller. The two-second
+whole-decision target is **not met**: the structural prototype with the
+existing amount producers measures 181M DMG T-cycles on the broad benchmark
+against an 8.4M budget (see "Ordinary timing" below). Replacement decisions and
+ordinary decisions are both evaluated natively; ordinary pairs whose owned or
+incoming family is not yet represented use the exact direct fallback.
 
 ## Verified foundation
 
@@ -78,12 +81,60 @@ Complete prototype records are compared against independent aggregation using
 the frozen preflight ROM. This establishes replacement and compatibility results,
 not an unimplemented ordinary native evaluator.
 
+## Ordinary orchestration (2026-09-07)
+
+- `fast_selector.asm` now evaluates ordinary decisions natively. The active
+  defender compiles up to four owned plans (choice moves, or the forced move
+  at original index 10), classifies the wait candidate (index 10 after the
+  reference's forced-wait conversions, or 11 in recharge mode), imports the
+  actor once, builds the standalone moments, initializes every record with
+  `M<<26 + (M<<8)*mu_own` (wait: `(M<<16)*1024`), then streams one compiled
+  reply per possible move ID. Each represented reply adds `w*mu_reply` to the
+  signed 32-bit shared sum and one correction per plan: native
+  `BossAI_FastNormalizedPair.CorrectionOnly` when both sides are represented,
+  otherwise `BossAI_FastFallbackPair.CorrectionOnly`. `512*B` is committed to
+  every plan and the unary candidate before the defender changes.
+- Bench switches (indices 4..9) reuse `BossAI_FastPrepareReplacementFacts`,
+  rebuild the actor/tables, apply entry hazards, record the entry delta, then
+  make the post-entry HP/Phi the actor's start state so reply standalone
+  moments are post-entry by construction. Records start at
+  `(M<<16)*(1024+entry_delta)`; entry KO leaves the reply gated and the mass
+  intact.
+- Unrepresented replies (opcode 0: defense boosts, Selfdestruct, multihit,
+  False Swipe, Super Fang, and anything the compiler rejects) use the new
+  `BossAI_FastUnaryFallback` for the wait/switch candidate: the direct
+  evaluator runs each positive original reply event with own event mass 256
+  and a single order, and the routine subtracts the exact baseline
+  `2*65536*(1024+entry_delta)` already assigned. Move plans paired with such a
+  reply take the whole-pair fallback, whose baseline subtraction uses the
+  reply's zero moment consistently with the shared sum that excluded it.
+- Order descriptors come from the compact records and imported actor facts:
+  priority first, then known speeds; unknown public order or Quick Claw at
+  equal speed keeps the reference's conservative reply-first order, and only a
+  genuine same-priority, same-known-speed pair without Quick Claw gets the
+  two-order descriptor. Unknown-speed uncertainty is a candidate-level flag
+  for move plans; Quick Claw's order flag is already a setup flag.
+- Bridges in `fast_producers.asm` (`BossAI_FastPrepareOwnedCandidate`,
+  `BossAI_FastPrepareActiveFacts`, `BossAI_FastPrepareReply`) keep every
+  cross-bank input in BC/DE or the context, and `BossAI_FastForcedAction` in
+  `fast_reference.asm` mirrors the reference's index-10 rules (including
+  `.ForcedCanExecute`) from the joint-policy bank.
+- The traversal flags still produce identical vectors: bit0 reverses the bench
+  and plan cursors, bit1 the reply sweep; bits 2..3 are absorbed by the exact
+  commutative accumulation.
+- Status byte: 0 native-only, 1 when any pair or unary fallback ran. Invalid
+  actor HP domains, a reply mass outside 1..282 or a stale reply header
+  discard native state and restart through the compatibility adapter.
+
 ## Validation and timing
 
 Current reference ROM SHA256:
-`65e403fb5e8b4e64b8f05d38820f7cf87ba239f9545986afa24a58413989ee75`.
-The replacement measurements below used
-`1c6ecae2e9940f0532a67d5c3b86a2038a27850be8c9b0a10eceafb73c21e787`.
+`83070fc20a59f278f82d9f7052510285aba956aab563a53cef4493b383048d01`
+(pair/fallback checkpoint before orchestration:
+`65e403fb5e8b4e64b8f05d38820f7cf87ba239f9545986afa24a58413989ee75`).
+The refreshed replacement profile below was measured on
+`e8628a6cfde19b508a6d6b75b9bf32bd3cb7a5a6fff319bb689a7e465feabfb0`, which
+differs from the current ROM only by the stale-reply-header guard.
 The original foundation tests/profile below were recorded on
 `01746b7e6b31fe8325ef19f264c4ca26ed3cb165b996254ac21f1cfe46fbf16d`;
 later batch results are listed separately.
@@ -108,8 +159,81 @@ python -m tools.boss_ai_fixtures.fast_reference
 python -m tools.boss_ai_fixtures.fast_reference --prototype
 python -m tools.boss_ai_fixtures.fast_reference --replacement-boundaries
 python -m tools.boss_ai_fixtures.fast_replacement_profile
+python -m tools.boss_ai_fixtures.fast_unary_fallback
+python -m tools.boss_ai_fixtures.fast_ordinary_profile
 python -m tools.boss_ai_fixtures --rom pokegold_ai_reference --suite all
 ```
+
+### Ordinary orchestration validation (2026-09-07)
+
+- `fast_reference.py --prototype`: all 26 joint fixtures (24 ordinary, 2
+  replacement) match the frozen oracle's complete T/M/score/uncertainty
+  vectors, best index, legal mask, BC/carry, DE/SP and bank in forward and
+  reverse traversal, plus 24 hidden-information reruns (private player item,
+  moves, PP and input poisoned): 76 vectors and 5 invalid entries. Backend
+  status: 19 decisions native-only, 7 with fallback (`joint_broad_prior_mass`,
+  `joint_speed_tie_transformed`, `joint_accuracy_mixed`,
+  `joint_accuracy_own_selfdestruct_miss`,
+  `joint_accuracy_reply_selfdestruct_miss`, `joint_accuracy_early_ko`,
+  `joint_defense_transitions`). Logs: `.local/ai-two-second/ordinary-prototype-run2.log`
+  (ROM `e8628a6c...`) and `ordinary-prototype-run3.log` (current ROM).
+- `fast_reference.py --replacement-boundaries`: 116 vectors, 58 native-only,
+  including both partial-native restart cases.
+- `fast_reference.py` (compatibility adapter): 52 vectors unchanged.
+- `fast_unary_fallback.py`: 88 wait/switch unary totals and flags against
+  direct reference event sums (eleven reply families including Explosion,
+  multihit, False Swipe, Super Fang, Harden, Pursuit; Helmet, Quick Claw,
+  Spikes 0..3, confusion, win-condition weight, entry KO bench at 3 HP) with
+  baseline subtraction, write footprints and four no-write rejections.
+- `fast_pair.py` (1,728) and `fast_pair_fallback.py` (1,248) still pass.
+- All 839 decision-path fixtures pass on the orchestration ROM
+  (`.local/ai-two-second/orchestration-fixtures.log`, ROM `e8628a6c...`;
+  `orchestration-fixtures-final.log` on the current ROM).
+- Not yet exercised by any fixture: an ordinary decision whose actor import
+  is rejected (max HP 0 / HP above max) and the reply-mass bound; both
+  routes are the same `.restart` path the replacement restart cases cover.
+
+### Ordinary timing (structural prototype, not the gate)
+
+[Ordinary profile](fast_ordinary_profile.json) measures the 24 ordinary joint
+fixtures in two scans, bank-qualified entry through the final `CloseSRAM`
+return, native prototype versus `BossAI_ComparePublicActionsWithTables` on the
+frozen oracle. Native cycles are split into disjoint phases by entry hooks.
+
+| Case | Native cycles | Oracle cycles | Status |
+| --- | ---: | ---: | --- |
+| `joint_broad_prior_mass` (4 moves, 5 bench, 254 replies) | 180,985,824 | 132,211,028 | 1 |
+| `joint_speed_tie_transformed` (open prior, unknown order) | 39,238,140 | 48,668,688 | 1 |
+| `joint_open_prior` | 6,722,952 | 5,437,608 | 0 |
+| `joint_defense_transitions` | 5,247,672 | 3,283,504 | 1 |
+| `joint_accuracy_own_selfdestruct_miss` | 2,491,928 | 813,352 | 1 |
+| smallest (`joint_recharge_wait`) | 898,704 | 567,536 | 0 |
+
+Broad-benchmark phase split (one scan): reply preparation 104.0M (57.5%,
+1,524 `PreparePublicReply`+compile calls, 7,059 `PublicDamageRange` calls
+because every compiled reply evaluates all four HP regimes eagerly), reply
+standalone 21.3M, native pairs 18.9M, whole-pair fallback 14.3M, unary
+fallback 13.1M, orchestration arithmetic 7.5M, owned preparation 1.1M, HP
+tables 0.56M, entry/inputs 0.11M, finalize 0.05M. The budget is 8,388,608.
+
+Conclusions the profile supports: (1) the existing amount producers cannot
+reach the target; the reply-preparation phase alone is twelve times the whole
+budget, so Milestone 4 native base/finishing arithmetic streamed by power
+group is mandatory, not optional; (2) an interim two-to-four-fold reduction of
+reply preparation is available without new arithmetic by compiling only the
+HP regimes a reply can actually reach (initial state plus each plan's hit
+successor), which the `FSR_VALID` mask was designed for; (3) the pair
+evaluator averages about 19k cycles per native pair against the contract's
+1,100-cycle scalar-unit target, so reply grouping and cheaper terminal
+execution are required as well; (4) fallback families cost 27M on the broad
+case and must become native before any timing claim. Small decisions (one
+reply set, one or two plans) already run at 0.9M-1.4M cycles, roughly 1.2-1.8
+times the oracle, because the four-regime compile dominates them too.
+
+The [replacement profile](fast_replacement_profile.json) was refreshed on the
+restructured bench loop: the largest native sample is 623,988 cycles
+(`replacement_hp65535_spikes2`, oracle 925,704); among maxima <=999 the largest
+is 507,436. Same limitations as before.
 
 - 2,080 divisions and 2,072 signed ring products passed, including signed and
   carry boundaries, stack/context preservation, and SRAM write footprints.
@@ -230,24 +354,51 @@ fast_reference.asm a257a1ccc353e604b371e580d08a9171d9f8fb19a792edc210344e377d314
 fast_selector.asm 24ebc0a9238f4d0233ea04b02fe4346eb8aeac03f3aff14775019aa21659b1e5
 ```
 
+Files changed by the 2026-09-07 orchestration work (current hashes; these
+have **not** received the independent Astra-low review, see below):
+
+```text
+fast_selector.asm 0b174edc9a349cc51f1df2ba21a10d942b159fcfdf5bfec57579cc9c2f2d0e5c
+fast_pair_fallback.asm 2348bf94cfbacbdb4a978f2a4ef4ba8d0f657bd67cd4633dc66a056dd5800ee1
+fast_producers.asm 9528a1c0d9db87d11da4e79f5797f7ff54004c22a9dec51e9738c98b6295e428
+fast_reference.asm 7022b6c18801153224fb42c5ab88b09fcb96927123b7cb0739621b6e19b0ef13
+```
+
+`fast_pair_fallback.asm`, `fast_producers.asm` and `fast_reference.asm` were
+only appended to (common-sum definitions and `BossAI_FastUnaryFallback`;
+three bridges; `BossAI_FastForcedAction`). `fast_selector.asm` was rewritten
+around the unchanged replacement logic. The review gap: the Astra-low
+reviewer configuration was not available in this session, so the orchestration
+was validated by the frozen-oracle comparison, the new unit fixture and the
+full fixture sweep, and self-reviewed only. It should receive the independent
+review before it is treated as approved.
+
 ## Remaining implementation
 
-Shared incoming accumulation/grouping, defense-change invalidation, native
-ordinary/switch/wait orchestration and unary fallback remain. The currently
-excluded owned families
-also need their required native coverage. The assembled selector must pass
-full-record comparisons against the frozen
-reference, traversal and hidden-information checks, native phase measurements,
-and the complete timing gate before production ABI/interrupt ownership work.
+Ordinary orchestration, switch/wait handling with an explicit post-entry
+baseline and the unary fallback are implemented and match the frozen reference
+on every existing joint fixture. Still remaining, in the order the profile
+suggests:
 
-Resume with selector orchestration: compile up to four owned plans once, initialize
-each total with `1024*D + (M<<8)*mu_own`, stream a reply once per defender, accumulate
-the signed incoming moment sum, and consume correction-only native or fallback
-results for each plan. Add `512*B` before changing defender scope. Actor order facts
-and candidate adapters still need implementation. Unary switch/wait handling needs
-an explicit post-entry standalone baseline and plan lifetime; do not reuse the
-current move-only fallback formula with a pre-entry reply moment. No orchestration
-or unary implementation was started before this pause.
+1. **Reply regime laziness** (cheap, no new arithmetic): compile only the HP
+   regimes a reply can reach for this defender and its live plans, mark them in
+   `FSR_VALID`, and have the executor reject an unmarked regime so the
+   selector falls back rather than reading a zero amount. Expected to cut the
+   dominant reply-preparation phase two-to-four-fold; not sufficient alone.
+2. **Milestone 4 native amount arithmetic** streamed by defender, category,
+   power group and reply (grouped incoming bases, five-power-step recurrence,
+   finishing in original order). This is the only route to the target: the
+   producer-backed reply preparation is twelve times the whole budget.
+3. **Native coverage of the fallback families** (defense boosts with variant
+   staging and invalidation, Selfdestruct, multihit, False Swipe, Super Fang)
+   and reply grouping by continuation with three-byte group masses. The broad
+   benchmark spends 27M cycles in fallbacks today and 19k cycles per native pair
+   against a 1,100-cycle target.
+4. Adversarial-domain fixtures (maximum candidates and replies, both sides
+   uncertain, Fire/Ice thresholds, complex after-effects), then the isolated
+   and integrated timing gates and the production ABI/interrupt ownership work.
 
 The [implementation contract](../selector_implementation_contract.md) remains
-the authority for those semantics, memory lifetimes and acceptance gates.
+the authority for semantics, memory lifetimes and acceptance gates; its
+"Implemented allocation" note records the control/common-sum bytes this
+orchestration uses.
