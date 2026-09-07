@@ -56,7 +56,12 @@ DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
 DEF FSN_CHART EQU $a494 ; 19 bytes
 DEF FSN_CHART_ENTRIES EQU TYPES_END - (UNUSED_TYPES_END - UNUSED_TYPES)
 DEF FSN_MAJESTY EQU FSN_CHART + FSN_CHART_ENTRIES
-ASSERT FSN_MAJESTY + 1 <= $a4a8 ; the regime cache follows
+ASSERT FSN_MAJESTY + 1 <= $a4a8 ; the regime cache follows ($a4a8..$a4b1)
+; Packed type contributions the passives read per amount (two bits each,
+; 0 none / 1 one of two types / 2 both): byte 0 own Dragon, Ground, Bug,
+; Water; byte 1 own Ice, player Normal, Fire, Ghost.
+DEF FSN_PASSIVES EQU $a4b2
+ASSERT FSN_PASSIVES + 2 <= FSB_PREFIX
 ASSERT FSN_PHYS_CACHE_LOW + 48 <= FSK_OWN
 ASSERT FSN_PHYS_CACHE_HIGH + 24 <= $a510
 ASSERT FSN_SPEC_CACHE + 102 <= AV_PREPARED_IN_DAMAGE
@@ -471,6 +476,46 @@ BossAI_FastPrepareReplyFacts::
 	cp TYPES_END
 	jr c, .chart_type
 	pop de
+; packed contributions for the passives
+	ld a, WATER
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld b, a
+	ld a, BUG
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, GROUND
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, DRAGON
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, b
+	ld [FSN_PASSIVES], a
+	ld a, GHOST
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld b, a
+	ld a, FIRE
+	ld hl, FSN_PLAYER_TYPES
+	call .PackContribution
+	ld a, NORMAL
+	ld hl, FSN_PLAYER_TYPES
+	call .PackContribution
+	ld a, ICE
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, b
+	ld [FSN_PASSIVES + 1], a
+	ret
+.PackContribution
+; B=packed so far; shifts B up two bits and adds the contribution of type A
+; in the type pair at HL.
+	call .Contribution
+	sla b
+	sla b
+	or b
+	ld b, a
 	ret
 .chart_rows
 ; L=index offset (0 ordinary rows, 2 Foresight-only rows). Appends the codes
@@ -844,6 +889,17 @@ BossAI_FastCompileReplyNative::
 	inc hl
 	ld a, [FSM_MASK]
 	ld [hl], a
+	ld a, [FSM_POWER]
+	ld c, a
+	ld b, $ff
+.divide_five
+	inc b
+	ld a, c
+	sub 5
+	ld c, a
+	jr nc, .divide_five
+	ld a, b ; power/5, the base cache index
+	ld [FSM_TEMP + 2], a
 	xor a
 	ld [FSM_REGIME], a
 	ld a, [FSM_MASK]
@@ -1051,6 +1107,13 @@ BossAI_FastCompileReplyNative::
 	bit AD_IDENTIFIED_F, a
 	jr nz, .bright_powder
 .apply_stages
+	ld a, [FSN_ACC_STAGE]
+	cp BASE_STAT_LEVEL
+	jr nz, .scale_stages
+	ld a, [FSN_EVA_STAGE]
+	cp BASE_STAT_LEVEL
+	jr z, .bright_powder ; both neutral: the stage ratios are identities
+.scale_stages
 	ld a, [FSM_ACCURACY]
 	ld c, a
 	ld b, 0
@@ -1540,17 +1603,6 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_HALVE]
 	and a
 	jp nz, .Formula
-	ld a, [FSM_POWER]
-	ld c, a
-	ld b, $ff
-.divide_five
-	inc b
-	ld a, c
-	sub 5
-	ld c, a
-	jr nc, .divide_five
-	ld a, b ; power/5
-	ld [FSM_TEMP + 2], a
 	ld a, [FSM_CATEGORY]
 	and a
 	jr nz, .special_slot
@@ -1763,16 +1815,18 @@ BossAI_FastCompileReplyNative::
 	ret
 
 .Passives
+; Type passives in the kernel's order, from the packed per-epoch
+; contributions (see FSN_PASSIVES).
 	ld a, b
 	or c
 	ret z
 	ld a, [FSM_TYPE]
 	cp NORMAL
 	jr nz, .fire
-	ld a, NORMAL
-	ld hl, FSN_PLAYER_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES + 1]
+	rrca
+	rrca
+	and %11
 	jr z, .fire
 	cp 2
 	ld a, 31
@@ -1789,10 +1843,12 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_FLAGS]
 	bit AD_ATTACKER_LOW_F, a
 	jr z, .ghost
-	ld a, FIRE
-	ld hl, FSN_PLAYER_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES + 1]
+	rrca
+	rrca
+	rrca
+	rrca
+	and %11
 	jr z, .ghost
 	cp 2
 	ld a, 11
@@ -1806,10 +1862,10 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_FLAGS]
 	bit AD_DEFENDER_STATUS_F, a
 	jr z, .dragon
-	ld a, GHOST
-	ld hl, FSN_PLAYER_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES + 1]
+	rlca
+	rlca
+	and %11
 	jr z, .dragon
 	cp 2
 	ld a, 21
@@ -1823,10 +1879,8 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_MATCHUP]
 	cp EFFECTIVE + 1
 	jr nc, .ground
-	ld a, DRAGON
-	ld hl, FSN_OWN_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES]
+	and %11
 	jr z, .category
 	cp 2
 	ld a, 2
@@ -1838,10 +1892,10 @@ BossAI_FastCompileReplyNative::
 	call .Scale
 	jr .category
 .ground
-	ld a, GROUND
-	ld hl, FSN_OWN_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES]
+	rrca
+	rrca
+	and %11
 	jr z, .category
 	cp 2
 	ld a, 19
@@ -1855,10 +1909,12 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_CATEGORY]
 	and a
 	jr nz, .water
-	ld a, BUG
-	ld hl, FSN_OWN_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES]
+	rrca
+	rrca
+	rrca
+	rrca
+	and %11
 	jr z, .ice
 	cp 2
 	ld a, 19
@@ -1868,10 +1924,10 @@ BossAI_FastCompileReplyNative::
 	ld h, 10
 	jr .category_scale
 .water
-	ld a, WATER
-	ld hl, FSN_OWN_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES]
+	rlca
+	rlca
+	and %11
 	jr z, .ice
 	cp 2
 	ld a, 39
@@ -1885,10 +1941,8 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_FLAGS]
 	bit AD_DEFENDER_HIGH_F, a
 	ret z
-	ld a, ICE
-	ld hl, FSN_OWN_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	and a
+	ld a, [FSN_PASSIVES + 1]
+	and %11
 	ret z
 	cp 2
 	ld a, 39
