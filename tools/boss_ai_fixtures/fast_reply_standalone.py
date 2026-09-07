@@ -94,7 +94,7 @@ def main():
                                 else:
                                     assert bytes(mem[0xca8f + 24:0xca8f + 43]) == bytes([0x77] * 19)
                                 after = bytes(mem[0xa000:0xa600])
-                                scalar_mutable = {*range(0x54c, 0x578), *range(0x5c0, 0x5e0)}
+                                scalar_mutable = {*range(0x4a8, 0x4b2), *range(0x54c, 0x578), *range(0x5c0, 0x5e0)}  # regime cache, pair scratch, gate caches
                                 assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in scalar_mutable)
                                 assert bytes(mem[0xc900:0xca8f]) == bytes([0x5a] * 399)
                                 assert bytes(mem[0xcabf:0xcad8]) == bytes([0x69] * 25)

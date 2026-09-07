@@ -112,7 +112,7 @@ def main():
                     own_move, reply, scenario, order, entry, int.from_bytes(bytes(mem[0xa578:0xa57d]), "big"), (expected_total - baseline) % (1 << 40))
                 assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, entry, mem[0xa54e], expected_flags)
                 after = bytes(mem[0xa000:0xa600])
-                mutable = {*range(0x448, 0x460), *range(0x510, 0x560), *range(0x56d, 0x570), *range(0x578, 0x57d)}  # FSK_ACC: the narrow multiply's accumulator
+                mutable = {*range(0x448, 0x460), *range(0x4a8, 0x4b2), *range(0x510, 0x560), *range(0x56d, 0x570), *range(0x578, 0x57d)}  # regime cache, FSK_ACC
                 assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable), (
                     own_move, reply, scenario, order, [hex(0xa000 + i) for i, (a, b) in enumerate(zip(before, after)) if a != b and i not in mutable])
                 # Scalar path: identical correction/flags whenever it accepts the pair.
@@ -125,7 +125,7 @@ def main():
                     assert int.from_bytes(bytes(mem[0xa578:0xa57d]), "big") == (expected_total - baseline) % (1 << 40), (own_move, reply, scenario, order, "scalar total")
                     assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, "scalar flags", mem[0xa54e], expected_flags)
                 after_scalar = bytes(mem[0xa000:0xa600])
-                scalar_mutable = {*range(0x510, 0x530), *range(0x54c, 0x578), *range(0x578, 0x57d), *range(0x5c0, 0x5d8)}
+                scalar_mutable = {*range(0x4a8, 0x4b2), *range(0x510, 0x530), *range(0x54c, 0x578), *range(0x578, 0x57d), *range(0x5c0, 0x5d8)}
                 assert all(a == b for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if i not in scalar_mutable), (
                     own_move, reply, scenario, order, [hex(0xa000 + i) for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if a != b and i not in scalar_mutable])
                 assert bytes(mem[0xc900:0xca8f]) == bytes([0xa5] * 399)

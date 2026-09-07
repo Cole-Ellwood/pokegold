@@ -30,6 +30,9 @@ DEF FSK_MOVE EQU 7
 DEF FSK_QUOTA EQU 8 ; two bytes
 DEF FSK_POWER EQU 10
 DEF FSK_CACHE_END EQU FSK_REPLY + 12
+; Last incoming regime: four state bytes, both maxima, regime and bit. Keyed
+; on everything the regime depends on, so it is exact in any call order.
+DEF FSN_REGIME_CACHE EQU $a4a8 ; ten bytes after the compact chart table
 ASSERT FSK_CACHE_END <= $a5e0
 DEF FSR_STANDALONE_HIT_FLAGS EQU 24 ; reply record bytes owned by these paths
 DEF FSR_STANDALONE_MISS_FLAGS EQU 25
@@ -150,27 +153,34 @@ BossAI_FastScalarPair::
 
 .OwnEligible
 ; Carry when the current owned plan is recovery or plain single-hit damage.
-	ld a, FSP_OPCODE
-	call BossAI_FastNormalizedPair.OwnAddress
+	ld a, [FPK_INDEX]
+	ld l, a
+	ld h, 0
+	rept 6
+	add hl, hl
+	endr
+	ld bc, FSP_BASE + FSP_OPCODE
+	add hl, bc
 	ld a, [hl]
 	cp FSP_RECOVERY
 	jr z, .eligible
 	cp FSP_DAMAGE
 	jr nz, .ineligible
-	ld a, FSP_DESCRIPTOR
-	call BossAI_FastNormalizedPair.OwnAddress
+	ld bc, FSP_DESCRIPTOR - FSP_OPCODE
+	add hl, bc
 	jr .PlainDescriptor
 .ReplyEligible
 ; Carry when the compact reply is recovery or plain damage.
-	ld a, FSR_OPCODE
-	call BossAI_FastNormalizedPair.ReplyAddress
+	call BossAI_FastNormalizedPair.Context
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
 	ld a, [hl]
 	cp FSR_RECOVERY
 	jr z, .eligible
 	cp FSR_DAMAGE
 	jr nz, .ineligible
-	ld a, FSR_DESCRIPTOR
-	call BossAI_FastNormalizedPair.ReplyAddress
+	ld bc, FSR_DESCRIPTOR - FSR_OPCODE
+	add hl, bc
 .PlainDescriptor
 ; HL=big-endian descriptor pointer field. Carry when effect and item tags are 0.
 	ld a, [hli]
@@ -431,7 +441,76 @@ BossAI_FastScalarPair::
 .IncomingRegime
 ; From FSK_STATE, the player's attack regime (attacker-low 3*player<max,
 ; defender-high 2*own>max) in the executor's wrapped 16-bit arithmetic.
-; Stores FSK_REGIME/FSK_BIT. AF/BC/DE/HL scratch.
+; Stores FSK_REGIME/FSK_BIT. AF/BC/DE/HL scratch. The start state's regime
+; comes from the per-defender cache.
+	ld hl, FSN_REGIME_CACHE
+	ld a, [FSK_STATE]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSK_STATE + 1]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSK_STATE + 2]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSK_STATE + 3]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSA_MAX_HP]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSA_MAX_HP + 1]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSA_PLAYER + 2]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [FSA_PLAYER + 3]
+	cp [hl]
+	jr nz, .regime_miss
+	inc hl
+	ld a, [hli]
+	ld [FSK_REGIME], a
+	ld a, [hl]
+	ld [FSK_BIT], a
+	ret
+.regime_miss
+	call .IncomingRegimeCompute
+	ld hl, FSK_STATE
+	ld de, FSN_REGIME_CACHE
+	ld b, 4
+.regime_store
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .regime_store
+	ld a, [FSA_MAX_HP]
+	ld [de], a
+	inc de
+	ld a, [FSA_MAX_HP + 1]
+	ld [de], a
+	inc de
+	ld a, [FSA_PLAYER + 2]
+	ld [de], a
+	inc de
+	ld a, [FSA_PLAYER + 3]
+	ld [de], a
+	inc de
+	ld a, [FSK_REGIME]
+	ld [de], a
+	inc de
+	ld a, [FSK_BIT]
+	ld [de], a
+	ret
+.IncomingRegimeCompute
 	ld hl, FSK_STATE + 2
 	ld a, [hli]
 	ld b, a

@@ -51,9 +51,12 @@ DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
 ; Per-defender chart rows by attacking type: two 2-bit codes in chart order
 ; (low field first; 1 double, 2 halve, 3 no effect), then whether the
 ; attacker carries Dragon (no-effect rows halve instead for ordinary effects).
-DEF FSN_CHART EQU $a494 ; TYPES_END bytes
-DEF FSN_MAJESTY EQU FSN_CHART + TYPES_END
-ASSERT FSN_MAJESTY < FSB_PREFIX
+; Compact index: types below UNUSED_TYPES keep their value, later types drop
+; the unused gap (CURSE_TYPE..DARK become 10..18).
+DEF FSN_CHART EQU $a494 ; 19 bytes
+DEF FSN_CHART_ENTRIES EQU TYPES_END - (UNUSED_TYPES_END - UNUSED_TYPES)
+DEF FSN_MAJESTY EQU FSN_CHART + FSN_CHART_ENTRIES
+ASSERT FSN_MAJESTY + 1 <= $a4a8 ; the regime cache follows
 ASSERT FSN_PHYS_CACHE_LOW + 48 <= FSK_OWN
 ASSERT FSN_PHYS_CACHE_HIGH + 24 <= $a510
 ASSERT FSN_SPEC_CACHE + 102 <= AV_PREPARED_IN_DAMAGE
@@ -460,6 +463,11 @@ BossAI_FastPrepareReplyFacts::
 	ld hl, FSM_TEMP
 	inc [hl]
 	ld a, [hl]
+	cp UNUSED_TYPES
+	jr nz, .chart_next_type
+	ld a, UNUSED_TYPES_END ; skip the gap: no move carries those types
+	ld [hl], a
+.chart_next_type
 	cp TYPES_END
 	jr c, .chart_type
 	pop de
@@ -599,12 +607,10 @@ BossAI_FastCompileReplyNative::
 	ld [FSM_MASK], a
 	ld hl, FSR_BASE
 	add hl, de
-	ld b, FSR_SIZE
 	xor a
-.clear
+	rept FSR_SIZE
 	ld [hli], a
-	dec b
-	jr nz, .clear
+	endr
 ; move facts from the mirror
 	ld a, [FSM_MOVE]
 	dec a
@@ -840,22 +846,21 @@ BossAI_FastCompileReplyNative::
 	ld [hl], a
 	xor a
 	ld [FSM_REGIME], a
-.regime
-	ld a, [FSM_REGIME]
-	ld c, a
-	ld b, 0
-	ld hl, .Bits
-	add hl, bc
 	ld a, [FSM_MASK]
-	and [hl]
-	jr z, .next_regime
+	ld [FSM_TEMP + 3], a
+.regime
+	ld hl, FSM_TEMP + 3
+	srl [hl]
+	jr nc, .next_regime
 	call .Amount
 .next_regime
+	ld a, [FSM_TEMP + 3]
+	and a
+	jr z, .regimes_done ; no masked regime remains
 	ld hl, FSM_REGIME
 	inc [hl]
-	ld a, [hl]
-	cp 4
-	jr c, .regime
+	jr .regime
+.regimes_done
 	ld a, [FSM_OPCODE]
 	jp .store_opcode
 .Bits
@@ -1702,6 +1707,10 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSM_TYPE]
 	cp TYPES_END
 	ret nc
+	cp UNUSED_TYPES_END
+	jr c, .chart_index
+	sub UNUSED_TYPES_END - UNUSED_TYPES
+.chart_index
 	push bc
 	ld c, a
 	ld b, 0
@@ -1900,6 +1909,23 @@ BossAI_FastCompileReplyNative::
 	pop af
 	cp h
 	ret z
+	ld l, h
+	dec l
+	jr z, .scale_multiply ; divisor 1: the product itself
+	inc l
+	inc l
+	cp l
+	jr z, .scale_plus_one ; A=H+1: n+floor(n/H)
+	dec l
+	dec l
+	cp l
+	jr z, .scale_minus_one ; A=H-1: n-ceil(n/H)
+	cp 217
+	jr nz, .scale_multiply
+	ld l, h
+	inc l
+	jr z, .scale_roll ; 217/255
+.scale_multiply
 	push hl
 	call .Mul16By8 ; A:HL=24-bit product
 	pop bc
@@ -1912,7 +1938,7 @@ BossAI_FastCompileReplyNative::
 	jr z, .scale_halve ; divisor 2
 	ld a, c
 	inc a
-	jr z, .scale_by_255 ; divisor 255 (the roll)
+	jr z, .scale_by_255 ; divisor 255
 	call .Div24By8 ; B:HL=quotient
 .scale_quotient
 	ld a, b
@@ -1932,6 +1958,87 @@ BossAI_FastCompileReplyNative::
 	rr h
 	rr l
 	jr .scale_quotient
+.scale_plus_one
+; floor(n*(H+1)/H) = n + floor(n/H); positive input stays positive
+	push bc
+	ld a, h
+	call .Div16By8
+	pop hl
+	add hl, bc
+	jr c, .scale_saturate
+	ld b, h
+	ld c, l
+	ret
+.scale_minus_one
+; floor(n*(H-1)/H) = n - ceil(n/H) = n - floor((n+H-1)/H)
+	push bc
+	ld a, h
+	dec a
+	add c
+	ld c, a
+	ld a, b
+	adc 0
+	ld b, a
+	jr c, .scale_minus_wide
+	ld a, h
+	call .Div16By8
+	pop hl
+	ld a, l
+	sub c
+	ld l, a
+	ld a, h
+	sbc b
+	ld h, a
+	ld b, h
+	ld c, l
+	jp .MinOne
+.scale_minus_wide
+	pop bc
+	ld a, h
+	dec a
+	jp .scale_multiply
+.scale_saturate
+	ld bc, $ffff
+	ret
+.scale_roll
+; floor(217*n/255): 217*n = 256*n - 39*n (39 = 100111b by Horner), then the
+; division by 255 through the shift identity below.
+	push de
+	ld h, b
+	ld l, c ; HL=n
+	ld d, 0 ; D:HL accumulates 39*n
+	add hl, hl
+	rl d
+	add hl, hl
+	rl d
+	add hl, hl
+	rl d ; 8n
+	add hl, bc
+	jr nc, .roll_9
+	inc d
+.roll_9
+	add hl, hl
+	rl d ; 18n
+	add hl, bc
+	jr nc, .roll_19
+	inc d
+.roll_19
+	add hl, hl
+	rl d ; 38n
+	add hl, bc
+	jr nc, .roll_39
+	inc d
+.roll_39
+	xor a
+	sub l
+	ld l, a
+	ld a, c
+	sbc h
+	ld h, a
+	ld a, b
+	sbc d
+	ld b, a ; B:HL = 256n - 39n
+	pop de
 .scale_by_255
 ; floor(n/255) for n=B:HL below 2^24 without a division: with n=256*q0+r0
 ; the quotient is q0+floor((q0+r0)/255), and for s=q0+r0=256*q1+r1 that inner
@@ -1986,7 +2093,7 @@ BossAI_FastCompileReplyNative::
 	pop de
 	ld b, h
 	ld c, l
-	jr .MinOne
+	jp .MinOne
 .scale_255_saturate
 	pop de
 	ld bc, $ffff
