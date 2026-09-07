@@ -15,6 +15,8 @@ DEF FS_UNARY_KIND EQU FS_CONTROL + 10
 DEF FS_PLAN_FLAGS EQU FS_CONTROL + 11 ; setup|open prior|unknown order, move plans
 DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate
 DEF FS_REPLY_REGIMES EQU FS_CONTROL + 13 ; HP regimes a reply can reach for this defender
+DEF FS_REPLY_IDENTITY EQU FS_CONTROL + 18 ; 1 when the current reply never changes HP
+DEF FS_ORDER EQU FS_CONTROL + 19 ; order descriptor of the pair being evaluated
 DEF FS_PLAN_INDEX EQU FS_CONTROL + 14 ; four original result indices, $ff unused
 DEF FSA_OWN_SPEED EQU FSA_OWN + 14
 DEF FSA_ITEM_CLASS EQU FSA_OWN + 32 ; 1=Quick Claw
@@ -816,10 +818,37 @@ BossAI_ComparePublicActionsFastPrototype::
 	ad_address FS_REPLY_ID
 	jr nz, .previous_reply
 	inc [hl]
-	jr .reply
+.skip_empty
+; Forward walks skip whole empty bytes of the possible set.
+	ld a, [hl]
+	and 7
+	jp nz, .reply
+	ld a, [hl]
+	rrca
+	rrca
+	rrca
+	and $1f
+	ld c, a
+	ld b, 0
+	ad_address FS_REPLIES + PR_POSSIBLE
+	add hl, bc
+	ld a, [hl]
+	and a
+	jp nz, .reply
+	ad_address FS_REPLY_LEFT
+	ld a, [hl]
+	cp 9
+	jp c, .reply ; fewer than eight IDs left: finish them one by one
+	sub 8
+	ld [hl], a
+	ad_address FS_REPLY_ID
+	ld a, [hl]
+	add 8
+	ld [hl], a
+	jr .skip_empty
 .previous_reply
 	dec [hl]
-	jr .reply
+	jp .reply
 .sweep_done
 	scf
 	ret
@@ -852,9 +881,9 @@ BossAI_ComparePublicActionsFastPrototype::
 .ReplyStandalone
 ; Standalone record for the compiled reply: the scalar path for plain
 ; families, otherwise the sequential builder whose continuation flags are
-; copied into the record. Carry=complete.
+; copied into the record. Carry=complete. Also classifies identity replies.
 	call BossAI_FastScalarReplyStandalone
-	ret c
+	jr c, .standalone_ready
 	call BossAI_FastBuildReplyStandalone
 	ret nc
 	ld a, [$a458] ; original-hit continuation flags
@@ -863,7 +892,59 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hli], a
 	ld a, [$a470] ; original-miss continuation flags
 	ld [hl], a
+.standalone_ready
+	call .ClassifyIdentity
 	scf
+	ret
+.ClassifyIdentity
+; FS_REPLY_IDENTITY=1 when the reply changes no HP from any state and its
+; flags do not depend on the state: a damage opcode whose compiled regimes
+; are all unsupported with zero power, or all supported with zero amounts and
+; no range bits, or a reply that cannot act.
+	xor a
+	ad_address FS_REPLY_IDENTITY
+	ld [hl], a
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_DAMAGE
+	ret nz
+	ld hl, FSR_BASE + FSR_CAN_ACT
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .identity
+	ld hl, FSR_BASE + FSR_VALID
+	add hl, de
+	ld a, [hli] ; mask
+	ld b, a
+	ld a, [hli] ; range
+	and b
+	ret nz
+	ld a, [hl] ; support
+	and b
+	jr nz, .supported_identity
+	ld hl, FSR_BASE + FSR_POWER
+	add hl, de
+	ld a, [hl]
+	and a
+	ret nz
+	jr .identity
+.supported_identity
+	cp b
+	ret nz ; mixed support across compiled regimes
+	ld hl, FSR_BASE + FSR_RAW_MAX
+	add hl, de
+	ld c, 8
+.identity_raw
+	ld a, [hli]
+	and a
+	ret nz
+	dec c
+	jr nz, .identity_raw
+.identity
+	ad_address FS_REPLY_IDENTITY
+	ld [hl], 1
 	ret
 
 .AccumulateIncoming
@@ -1016,6 +1097,17 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [hl]
 	and a
 	jr z, .pair_fallback
+	ad_address FS_REPLY_IDENTITY
+	ld a, [hl]
+	and a
+	jr z, .pair_native
+	pop af
+	call .IdentityPair
+	pop af
+	call .OrRecordFlags
+	scf
+	ret
+.pair_native
 	pop af
 	push af
 	push bc
@@ -1045,6 +1137,87 @@ BossAI_ComparePublicActionsFastPrototype::
 	ret nc
 	ld a, b
 	jp .AddPairTotal
+
+.IdentityPair
+; C=plan slot, A=order. The reply never changes HP, so the correction is zero
+; and only the reached flags matter: the plan's standalone flags for each
+; positive original event, plus the reply's standalone flags whenever some
+; order reaches it (reply first always; own first only when the plan's
+; successor for that event leaves both actors alive). B=flag union.
+	push af
+	ad_address FS_ORDER
+	pop af
+	ld [hl], a
+	ld b, 0
+	cp 2
+	jr nz, .identity_orders
+	ld b, 1 << AV_UNKNOWN_ORDER_F
+.identity_orders
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	push af
+	and a
+	jr z, .identity_own_miss ; no hit mass
+	ld a, FSP_STANDALONE_HIT_FLAGS
+	call .PlanAddress
+	ld a, [hl]
+	or b
+	ld b, a
+	ld a, FSP_HIT_HP
+	call .PlanAddress
+	call .IdentityReplyFlags
+.identity_own_miss
+	pop af
+	cp 255
+	ret z ; no miss mass
+	ld a, FSP_STANDALONE_MISS_FLAGS
+	call .PlanAddress
+	ld a, [hl]
+	or b
+	ld b, a
+	ld a, FSP_MISS_HP
+	call .PlanAddress
+	jr .IdentityReplyFlags
+.IdentityReplyFlags
+; HL=plan successor state for one positive own event. Adds the reply's
+; standalone flags to B when an order reaches the reply from that state.
+	push hl
+	ad_address FS_ORDER
+	ld a, [hl]
+	pop hl
+	and a
+	jr nz, .identity_reply_reached ; reply first or tie: the reply always acts
+	ld a, [hli]
+	or [hl]
+	ret z ; own KO'd itself before the reply
+	inc hl
+	ld a, [hli]
+	or [hl]
+	ret z ; own KO'd the player: no reply
+.identity_reply_reached
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .identity_reply_miss
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld a, [hl]
+	or b
+	ld b, a
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+.identity_reply_miss
+	cp 255
+	ret z
+	ld hl, FSR_BASE + FSR_STANDALONE_MISS_FLAGS
+	add hl, de
+	ld a, [hl]
+	or b
+	ld b, a
+	ret
 
 .OrderDescriptor
 ; C=plan slot. A=0 own first, 1 reply first, 2 genuine modeled tie. Priority

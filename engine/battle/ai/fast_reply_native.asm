@@ -94,6 +94,76 @@ PURGE BOSSAI_EMIT_LOCAL_ACCURACY
 DEF BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST EQU 1
 INCLUDE "data/types/type_matchups.asm"
 PURGE BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST
+; Effect classes: bit0 directly supported damage effect, bit1 HP-only script
+; family. Built from the same lists the producers scan (.DirectEffects and
+; .HPOnlyEffects in the public damage/action code).
+MACRO fast_effect_class
+	REDEF fast_effect_class_{d:\1} = fast_effect_class_{d:\1} | \2
+ENDM
+FOR fx, 256
+	DEF fast_effect_class_{d:fx} = 0
+ENDR
+	fast_effect_class EFFECT_NORMAL_HIT, 1
+	fast_effect_class EFFECT_POISON_HIT, 1
+	fast_effect_class EFFECT_LEECH_HIT, 1
+	fast_effect_class EFFECT_BURN_HIT, 1
+	fast_effect_class EFFECT_FREEZE_HIT, 1
+	fast_effect_class EFFECT_PARALYZE_HIT, 1
+	fast_effect_class EFFECT_SELFDESTRUCT, 1
+	fast_effect_class EFFECT_ALWAYS_HIT, 1
+	fast_effect_class EFFECT_RAMPAGE, 1
+	fast_effect_class EFFECT_FLINCH_HIT, 1
+	fast_effect_class EFFECT_PAY_DAY, 1
+	fast_effect_class EFFECT_TRI_ATTACK, 1
+	fast_effect_class EFFECT_SUPER_FANG, 1
+	fast_effect_class EFFECT_STATIC_DAMAGE, 1
+	fast_effect_class EFFECT_TRAP_TARGET, 1
+	fast_effect_class EFFECT_JUMP_KICK, 1
+	fast_effect_class EFFECT_RECOIL_HIT, 1
+	fast_effect_class EFFECT_ATTACK_DOWN_HIT, 1
+	fast_effect_class EFFECT_DEFENSE_DOWN_HIT, 1
+	fast_effect_class EFFECT_SPEED_DOWN_HIT, 1
+	fast_effect_class EFFECT_SP_ATK_DOWN_HIT, 1
+	fast_effect_class EFFECT_SP_DEF_DOWN_HIT, 1
+	fast_effect_class EFFECT_ACCURACY_DOWN_HIT, 1
+	fast_effect_class EFFECT_EVASION_DOWN_HIT, 1
+	fast_effect_class EFFECT_CONFUSE_HIT, 1
+	fast_effect_class EFFECT_HYPER_BEAM, 1
+	fast_effect_class EFFECT_RAGE, 1
+	fast_effect_class EFFECT_LEVEL_DAMAGE, 1
+	fast_effect_class EFFECT_DEFROST_OPPONENT, 1
+	fast_effect_class EFFECT_FALSE_SWIPE, 1
+	fast_effect_class EFFECT_PRIORITY_HIT, 1
+	fast_effect_class EFFECT_THIEF, 1
+	fast_effect_class EFFECT_FLAME_WHEEL, 1
+	fast_effect_class EFFECT_SACRED_FIRE, 1
+	fast_effect_class EFFECT_RAPID_SPIN, 1
+	fast_effect_class EFFECT_DEFENSE_UP_HIT, 1
+	fast_effect_class EFFECT_ATTACK_UP_HIT, 1
+	fast_effect_class EFFECT_ALL_UP_HIT, 1
+	fast_effect_class EFFECT_THUNDER, 1
+	fast_effect_class EFFECT_NORMAL_HIT, 2
+	fast_effect_class EFFECT_ALWAYS_HIT, 2
+	fast_effect_class EFFECT_STATIC_DAMAGE, 2
+	fast_effect_class EFFECT_LEVEL_DAMAGE, 2
+	fast_effect_class EFFECT_SUPER_FANG, 2
+	fast_effect_class EFFECT_FALSE_SWIPE, 2
+	fast_effect_class EFFECT_SELFDESTRUCT, 2
+	fast_effect_class EFFECT_RECOIL_HIT, 2
+	fast_effect_class EFFECT_LEECH_HIT, 2
+	fast_effect_class EFFECT_DREAM_EATER, 2
+	fast_effect_class EFFECT_MULTI_HIT, 2
+	fast_effect_class EFFECT_DOUBLE_HIT, 2
+	fast_effect_class EFFECT_EARTHQUAKE, 2
+	fast_effect_class EFFECT_GUST, 2
+	fast_effect_class EFFECT_PURSUIT, 2
+	fast_effect_class EFFECT_PAY_DAY, 2
+	fast_effect_class EFFECT_PRIORITY_HIT, 2
+BossAI_FastEffectClass:
+FOR fx, 256
+	db fast_effect_class_{d:fx}
+ENDR
+PURGE fast_effect_class
 BossAI_FastTypeMatchupIndex:
 	dw BossAI_FastTypeMatchups.NORMAL, BossAI_FastTypeMatchups.NORMAL_FORESIGHT
 	dw BossAI_FastTypeMatchups.FIGHTING, BossAI_FastTypeMatchups.FIGHTING_FORESIGHT
@@ -699,15 +769,13 @@ BossAI_FastCompileReplyNative::
 	jr z, .stomp
 	cp EFFECT_PURSUIT
 	jr z, .pursuit
-	ld b, a
-	ld hl, .DirectEffects
-.supported_loop
-	ld a, [hli]
-	cp -1
-	jr z, .unsupported
-	cp b
-	jr nz, .supported_loop
-	ret
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastEffectClass
+	add hl, bc
+	bit 0, [hl]
+	ret nz
+	jr .unsupported
 .double
 	ld a, 2
 	ld [FSM_MIN_HITS], a
@@ -763,22 +831,6 @@ BossAI_FastCompileReplyNative::
 	ld a, 1
 	ld [FSM_UNSUPPORTED], a
 	ret
-.DirectEffects
-	db EFFECT_NORMAL_HIT, EFFECT_POISON_HIT, EFFECT_LEECH_HIT
-	db EFFECT_BURN_HIT, EFFECT_FREEZE_HIT, EFFECT_PARALYZE_HIT
-	db EFFECT_SELFDESTRUCT, EFFECT_ALWAYS_HIT, EFFECT_RAMPAGE
-	db EFFECT_FLINCH_HIT, EFFECT_PAY_DAY, EFFECT_TRI_ATTACK
-	db EFFECT_SUPER_FANG, EFFECT_STATIC_DAMAGE, EFFECT_TRAP_TARGET
-	db EFFECT_JUMP_KICK, EFFECT_RECOIL_HIT
-	db EFFECT_ATTACK_DOWN_HIT, EFFECT_DEFENSE_DOWN_HIT, EFFECT_SPEED_DOWN_HIT
-	db EFFECT_SP_ATK_DOWN_HIT, EFFECT_SP_DEF_DOWN_HIT
-	db EFFECT_ACCURACY_DOWN_HIT, EFFECT_EVASION_DOWN_HIT
-	db EFFECT_CONFUSE_HIT, EFFECT_HYPER_BEAM, EFFECT_RAGE, EFFECT_LEVEL_DAMAGE
-	db EFFECT_DEFROST_OPPONENT, EFFECT_FALSE_SWIPE, EFFECT_PRIORITY_HIT
-	db EFFECT_THIEF, EFFECT_FLAME_WHEEL, EFFECT_SACRED_FIRE, EFFECT_RAPID_SPIN
-	db EFFECT_DEFENSE_UP_HIT, EFFECT_ATTACK_UP_HIT, EFFECT_ALL_UP_HIT
-	db EFFECT_THUNDER
-	db -1
 .MultiHitItemState
 ; A known Rocky Helmet on the defender makes a contact multi-hit unknown.
 	ld a, [FSM_MAX_HITS]
@@ -1012,14 +1064,12 @@ BossAI_FastCompileReplyNative::
 ; A=transition flag when the effect is not HP-only, or when a contact move
 ; meets a Poison defender.
 	ld a, [FSM_EFFECT]
-	ld b, a
-	ld hl, .HPOnlyEffects
-.effect_loop
-	ld a, [hli]
-	cp -1
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastEffectClass
+	add hl, bc
+	bit 1, [hl]
 	jr z, .transition
-	cp b
-	jr nz, .effect_loop
 	ld a, [FSN_POISON]
 	and a
 	jr z, .no_effect_flag
@@ -1032,13 +1082,6 @@ BossAI_FastCompileReplyNative::
 .transition
 	ld a, 1 << AV_UNKNOWN_TRANSITION_F
 	ret
-.HPOnlyEffects
-	db EFFECT_NORMAL_HIT, EFFECT_ALWAYS_HIT, EFFECT_STATIC_DAMAGE
-	db EFFECT_LEVEL_DAMAGE, EFFECT_SUPER_FANG, EFFECT_FALSE_SWIPE
-	db EFFECT_SELFDESTRUCT, EFFECT_RECOIL_HIT, EFFECT_LEECH_HIT, EFFECT_DREAM_EATER
-	db EFFECT_MULTI_HIT, EFFECT_DOUBLE_HIT, EFFECT_EARTHQUAKE, EFFECT_GUST
-	db EFFECT_PURSUIT, EFFECT_PAY_DAY, EFFECT_PRIORITY_HIT
-	db -1
 .HitUncertainty
 ; A=hit flag: any roll, or a certain hit that negation or a substitute can
 ; still deny.
@@ -1751,9 +1794,13 @@ BossAI_FastCompileReplyNative::
 	pop de
 	ret
 .Div24By8
-; B:HL / C -> B:HL, A=remainder. DE preserved.
+; B:HL / C -> B:HL, A=remainder. DE preserved. A zero high byte needs only
+; sixteen quotient trials.
 	push de
 	ld d, c
+	ld a, b
+	and a
+	jr z, .div_short
 	ld e, 24
 	xor a
 .div_bit
@@ -1769,6 +1816,22 @@ BossAI_FastCompileReplyNative::
 .div_next
 	dec e
 	jr nz, .div_bit
+	pop de
+	ret
+.div_short
+	ld e, 16
+.div_short_bit
+	add hl, hl
+	rla
+	jr c, .div_short_subtract
+	cp d
+	jr c, .div_short_next
+.div_short_subtract
+	sub d
+	inc l
+.div_short_next
+	dec e
+	jr nz, .div_short_bit
 	pop de
 	ret
 .Div16By8
