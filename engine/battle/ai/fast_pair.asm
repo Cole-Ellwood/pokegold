@@ -423,45 +423,31 @@ BossAI_FastNormalizedPair::
 	call .ReplyAddress
 	call .Moment512
 .correction_total
+; z_own*z_reply*K through two narrow multiplies (each z is 0..256; a zero
+; mass contributes nothing).
 	ld a, [FPK_K]
 	ld b, a
 	ld a, [FPK_K + 1]
 	ld c, a
 	or b
 	ret z
-	ld a, b
-	ld [FS_MULTIPLICAND + 3], a
-	ld a, c
-	ld [FS_MULTIPLICAND + 4], a
-	ld a, b
-	add a
-	sbc a
-	ld [FS_MULTIPLICAND], a
-	ld [FS_MULTIPLICAND + 1], a
-	ld [FS_MULTIPLICAND + 2], a
-	xor a
-	ld [FS_MULTIPLIER], a
-	ld a, [FPK_OWN_Z]
-	ld [FS_MULTIPLIER + 1], a
-	ld a, [FPK_OWN_Z + 1]
-	ld [FS_MULTIPLIER + 2], a
-	call BossAI_FastMultiply40By24
-	ld hl, FS_PRODUCT
-	ld de, FS_MULTIPLICAND
-	ld b, 5
-.product
+	ld hl, FPK_OWN_Z
 	ld a, [hli]
-	ld [de], a
-	inc de
-	dec b
-	jr nz, .product
-	xor a
-	ld [FS_MULTIPLIER], a
-	ld a, [FPK_REPLY_Z]
-	ld [FS_MULTIPLIER + 1], a
+	or [hl]
+	ret z
+	ld hl, FPK_REPLY_Z
+	ld a, [hli]
+	or [hl]
+	ret z
+	ld h, b
+	ld l, c
+	ld a, [FPK_OWN_Z + 1] ; 0 means 256
+	call BossAI_FastMulSigned16By8 ; A:HL=K*z_own
+	ld b, a
 	ld a, [FPK_REPLY_Z + 1]
-	ld [FS_MULTIPLIER + 2], a
-	call BossAI_FastMultiply40By24
+	ld c, a
+	ld a, b
+	call BossAI_FastMulSigned24By8 ; FS_PRODUCT=K*z_own*z_reply
 	ld hl, FS_PRODUCT + 4
 	jr .AddTotal
 .Moment512

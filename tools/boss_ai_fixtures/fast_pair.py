@@ -112,7 +112,7 @@ def main():
                     own_move, reply, scenario, order, entry, int.from_bytes(bytes(mem[0xa578:0xa57d]), "big"), (expected_total - baseline) % (1 << 40))
                 assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, entry, mem[0xa54e], expected_flags)
                 after = bytes(mem[0xa000:0xa600])
-                mutable = {*range(0x448, 0x460), *range(0x510, 0x560), *range(0x578, 0x57d)}
+                mutable = {*range(0x448, 0x460), *range(0x510, 0x560), *range(0x56d, 0x570), *range(0x578, 0x57d)}  # FSK_ACC: the narrow multiply's accumulator
                 assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable), (
                     own_move, reply, scenario, order, [hex(0xa000 + i) for i, (a, b) in enumerate(zip(before, after)) if a != b and i not in mutable])
                 # Scalar path: identical correction/flags whenever it accepts the pair.

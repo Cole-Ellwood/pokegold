@@ -992,6 +992,82 @@ BossAI_FastScalarReplyStandalone::
 	pop hl
 	ret
 
+BossAI_FastMulSigned24By8::
+; A:HL=signed 24-bit value, C=unsigned factor (0 means 256). FS_PRODUCT=the
+; sign-extended 40-bit product. AF/BC/HL scratch; DE preserved.
+	ld [FS_MULTIPLICAND + 2], a
+	ld a, h
+	ld [FS_MULTIPLICAND + 3], a
+	ld a, l
+	ld [FS_MULTIPLICAND + 4], a
+	ld a, [FS_MULTIPLICAND + 2]
+	add a
+	sbc a
+	ld [FS_MULTIPLICAND], a
+	ld [FS_MULTIPLICAND + 1], a
+	push de
+	ld a, c
+	and a
+	jr z, .by_256
+	ld hl, FS_PRODUCT
+	ld b, 5
+	xor a
+.clear
+	ld [hli], a
+	dec b
+	jr nz, .clear
+	ld b, 8
+.bit
+	srl c
+	jr nc, .shift
+	push bc
+	ld hl, FS_MULTIPLICAND + 4
+	ld de, FS_PRODUCT + 4
+	ld b, 5
+	and a
+.add
+	ld a, [de]
+	adc [hl]
+	ld [de], a
+	dec hl
+	dec de
+	dec b
+	jr nz, .add
+	pop bc
+.shift
+	ld a, c
+	and a
+	jr z, .done ; no factor bits remain
+	ld hl, FS_MULTIPLICAND + 4
+	sla [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec hl
+	rl [hl]
+	dec b
+	jr nz, .bit
+.done
+	pop de
+	ret
+.by_256
+	ld hl, FS_MULTIPLICAND + 1
+	ld de, FS_PRODUCT
+	ld b, 4
+.copy
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .copy
+	xor a
+	ld [de], a
+	pop de
+	ret
+
 BossAI_FastMulSigned16By8::
 ; HL=signed 16-bit value, A=unsigned factor (0 means 256). A:HL=signed
 ; 24-bit product (A high byte). BC and FSK_ACC scratch; DE preserved.

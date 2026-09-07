@@ -48,6 +48,12 @@ ASSERT FSN + 32 <= $a600
 DEF FSN_PHYS_CACHE_LOW EQU $a590 ; indices 0..23
 DEF FSN_PHYS_CACHE_HIGH EQU $a4f8 ; indices 24..35
 DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
+; Per-defender chart rows by attacking type: two 2-bit codes in chart order
+; (low field first; 1 double, 2 halve, 3 no effect), then whether the
+; attacker carries Dragon (no-effect rows halve instead for ordinary effects).
+DEF FSN_CHART EQU $a494 ; TYPES_END bytes
+DEF FSN_MAJESTY EQU FSN_CHART + TYPES_END
+ASSERT FSN_MAJESTY < FSB_PREFIX
 ASSERT FSN_PHYS_CACHE_LOW + 48 <= FSK_OWN
 ASSERT FSN_PHYS_CACHE_HIGH + 24 <= $a510
 ASSERT FSN_SPEC_CACHE + 102 <= AV_PREPARED_IN_DAMAGE
@@ -417,7 +423,7 @@ BossAI_FastPrepareReplyFacts::
 	ad_address FSN_SPEC_CACHE
 	ld b, 102
 	call .ClearBytes
-	ret
+	jr .BuildChart
 .ClearBytes
 	xor a
 .clear_byte
@@ -425,6 +431,95 @@ BossAI_FastPrepareReplyFacts::
 	dec b
 	jr nz, .clear_byte
 	ret
+.BuildChart
+; FSN_CHART and FSN_MAJESTY from the defender's types, its identified flag
+; and the attacker's types. Every chart multiplier is 0, 5 or 20.
+	ld a, DRAGON
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld [FSN_MAJESTY], a
+	push de
+	ld de, FSN_CHART
+	xor a
+	ld [FSM_TEMP], a
+.chart_type
+	xor a
+	ld [FSM_TEMP + 1], a
+	ld [FSM_TEMP + 2], a
+	ld l, 0
+	call .chart_rows
+	ld a, [FSN_FLAGS]
+	bit AD_IDENTIFIED_F, a
+	jr nz, .chart_store
+	ld l, 2
+	call .chart_rows
+.chart_store
+	ld a, [FSM_TEMP + 1]
+	ld [de], a
+	inc de
+	ld hl, FSM_TEMP
+	inc [hl]
+	ld a, [hl]
+	cp TYPES_END
+	jr c, .chart_type
+	pop de
+	ret
+.chart_rows
+; L=index offset (0 ordinary rows, 2 Foresight-only rows). Appends the codes
+; of the rows of FSM_TEMP's attacking type that match a defender type.
+	ld a, [FSM_TEMP]
+	add a
+	add a
+	add l
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastTypeMatchupIndex
+	add hl, bc
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+.chart_row
+	ld a, [hli]
+	cp -1
+	ret z
+	cp -2
+	ret z
+	ld b, a
+	ld a, [FSM_TEMP]
+	cp b
+	ret nz ; the next attacking type's rows
+	ld a, [hli]
+	ld b, a
+	ld a, [FSN_OWN_TYPES]
+	cp b
+	jr z, .chart_match
+	ld a, [FSN_OWN_TYPES + 1]
+	cp b
+	jr z, .chart_match
+	inc hl
+	jr .chart_row
+.chart_match
+	ld a, [hli]
+	ld c, 3
+	and a
+	jr z, .chart_code
+	ld c, 1
+	cp NOT_VERY_EFFECTIVE
+	jr nz, .chart_code
+	ld c, 2
+.chart_code
+	ld a, [FSM_TEMP + 2]
+	and a
+	jr z, .chart_first_row
+	sla c
+	sla c
+.chart_first_row
+	ld a, [FSM_TEMP + 1]
+	or c
+	ld [FSM_TEMP + 1], a
+	ld a, 2
+	ld [FSM_TEMP + 2], a
+	jr .chart_row
 .TruncateStats
 ; HL=attack word then defense word. B=attack byte, C=defense byte after the
 ; kernel's once-only quartering when either stat exceeds 255.
@@ -1594,102 +1689,68 @@ BossAI_FastCompileReplyNative::
 	jp .Scale
 
 .Chart
-; Apply each matching chart row in source order to BC. Foresight rows are
-; skipped for an identified defender.
+; Apply the defender's precomputed rows for FSM_TYPE to BC in chart order:
+; double (saturating), halve (minimum one), or no effect, which a Dragon
+; attacker turns into a halving except for fixed-amount effects. Struggle and
+; zero pass through, like the kernel's row scan.
 	ld a, [FSM_STRUGGLE]
 	and a
 	ret nz
-	xor a
-	call .chart_pointer
-	call .chart_loop
-	ld a, [FSN_FLAGS]
-	bit AD_IDENTIFIED_F, a
-	ret nz
-	ld a, 2
-	call .chart_pointer
-.chart_loop
-	ld a, [hli]
-	cp -1
+	ld a, b
+	or c
 	ret z
-	cp -2
-	ret z
-	push hl
-	ld l, a
-	ld a, [FSM_TYPE]
-	cp l
-	pop hl
-	ret nz
-	ld a, [hli]
-	push hl
-	ld l, a
-	ld a, [FSN_OWN_TYPES]
-	cp l
-	jr z, .chart_type_match
-	ld a, [FSN_OWN_TYPES + 1]
-	cp l
-.chart_type_match
-	pop hl
-	jr nz, .chart_next
-	ld a, [hli]
-	push hl
-	call .MajestyFactor
-	and a
-	jr z, .immune
-	ld h, 10
-	call .Scale
-	pop hl
-	jr .chart_loop
-.immune
-	pop hl
-	ld bc, 0
-	ret
-.chart_next
-	inc hl
-	jr .chart_loop
-.chart_pointer
-; A=0 ordinary rows or 2 Foresight-only rows; BC preserved.
-	push bc
-	ld c, a
 	ld a, [FSM_TYPE]
 	cp TYPES_END
-	jr nc, .chart_empty
-	add a
-	add a
-	add c
-	ld l, a
-	ld h, 0
-	ld bc, BossAI_FastTypeMatchupIndex
+	ret nc
+	push bc
+	ld c, a
+	ld b, 0
+	ld hl, FSN_CHART
 	add hl, bc
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
+	ld a, [hl]
 	pop bc
-	ret
-.chart_empty
-	pop bc
-	ld hl, BossAI_FastTypeMatchups.END
-	ret
-.MajestyFactor
+	ld [FSM_TEMP + 1], a
+	call .chart_apply
+	ret c
+	ld a, [FSM_TEMP + 1]
+	rrca
+	rrca
+.chart_apply
+; A bits 0..1 = row code, BC = amount. Carry when the amount became zero.
+	and 3
+	ret z
+	cp 3
+	jr z, .chart_no_effect
+	dec a
+	jr nz, .chart_halve
+	sla c
+	rl b
+	ret nc
+	ld bc, $ffff
 	and a
+	ret
+.chart_halve
+	srl b
+	rr c
+	ld a, b
+	or c
 	ret nz
+	inc c
+	ret
+.chart_no_effect
+	ld a, [FSN_MAJESTY]
+	and a
+	jr z, .chart_immune
 	ld a, [FSM_EFFECT]
 	cp EFFECT_STATIC_DAMAGE
-	jr z, .zero_factor
+	jr z, .chart_immune
 	cp EFFECT_LEVEL_DAMAGE
-	jr z, .zero_factor
+	jr z, .chart_immune
 	cp EFFECT_SUPER_FANG
-	jr z, .zero_factor
-	push hl
-	ld a, DRAGON
-	ld hl, FSN_PLAYER_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
-	pop hl
-	and a
-	ret z
-	ld a, NOT_VERY_EFFECTIVE
-	ret
-.zero_factor
-	xor a
+	jr nz, .chart_halve
+.chart_immune
+	ld bc, 0
+	scf
 	ret
 
 .Passives
@@ -1844,7 +1905,16 @@ BossAI_FastCompileReplyNative::
 	pop bc
 	ld c, b ; divisor
 	ld b, a
+	ld a, c
+	dec a
+	jr z, .scale_quotient ; divisor 1
+	dec a
+	jr z, .scale_halve ; divisor 2
+	ld a, c
+	inc a
+	jr z, .scale_by_255 ; divisor 255 (the roll)
 	call .Div24By8 ; B:HL=quotient
+.scale_quotient
 	ld a, b
 	and a
 	ld bc, $ffff
@@ -1856,6 +1926,70 @@ BossAI_FastCompileReplyNative::
 	or c
 	ret nz
 	inc c
+	ret
+.scale_halve
+	srl b
+	rr h
+	rr l
+	jr .scale_quotient
+.scale_by_255
+; floor(n/255) for n=B:HL below 2^24 without a division: with n=256*q0+r0
+; the quotient is q0+floor((q0+r0)/255), and for s=q0+r0=256*q1+r1 that inner
+; quotient is q1+floor((q1+r1)/255), where q1+r1 is at most 511.
+	push de
+	ld a, l ; r0
+	ld l, h
+	ld h, b ; HL=q0
+	add l
+	ld c, a ; r1
+	ld a, h
+	adc 0 ; q1, carry when q1=256
+	jr c, .scale_255_wide
+	ld d, a
+	add c ; t=q1+r1
+	ld e, 0
+	jr c, .scale_255_wrapped
+	cp 255
+	jr c, .scale_255_sum
+	inc e
+	jr .scale_255_sum
+.scale_255_wrapped
+	inc e
+	cp 254 ; t-256>=254 means t>=510
+	jr c, .scale_255_sum
+	inc e
+	jr .scale_255_sum
+.scale_255_wide
+	ld d, 0
+	inc h
+	jr z, .scale_255_saturate
+	ld e, 1
+	ld a, c
+	cp 254
+	jr c, .scale_255_sum
+	inc e
+.scale_255_sum
+	ld a, l
+	add d
+	ld l, a
+	ld a, h
+	adc 0
+	ld h, a
+	jr c, .scale_255_saturate
+	ld a, l
+	add e
+	ld l, a
+	ld a, h
+	adc 0
+	ld h, a
+	jr c, .scale_255_saturate
+	pop de
+	ld b, h
+	ld c, l
+	jr .MinOne
+.scale_255_saturate
+	pop de
+	ld bc, $ffff
 	ret
 .Mul16By8
 ; BC*A -> A:HL (24-bit, A high). DE preserved.

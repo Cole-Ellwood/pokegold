@@ -16,6 +16,15 @@ BossAI_FastMultiply40By24::
 ; sign-extend negative contributions to five bytes BEFORE multiplication.
 ; Unsigned multiplier, including 65536 and grouped mass 72192, stays 24-bit.
 	push de
+	ld hl, FS_MULTIPLIER
+	ld a, [hli]
+	and a
+	jr nz, .general
+	ld a, [hli]
+	dec a
+	or [hl]
+	jr z, .by_256 ; exactly 256: a byte shift
+.general
 	ld hl, FS_PRODUCT
 	ld b, 5
 	xor a
@@ -62,6 +71,20 @@ BossAI_FastMultiply40By24::
 	rl [hl]
 	jr .next
 .done
+	pop de
+	ret
+.by_256
+	ld hl, FS_MULTIPLICAND + 1
+	ld de, FS_PRODUCT
+	ld b, 4
+.copy_256
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .copy_256
+	xor a
+	ld [de], a
 	pop de
 	ret
 
