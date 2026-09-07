@@ -1,5 +1,5 @@
 {
-  "rom_sha256": "5cbd51a7ed1ef9006189b1a3947bbb31fef791c8dbd5f7b957aec72c42bda46c",
+  "rom_sha256": "4be6b2841f2a43713b12196c8a2d45aa806f5c4211be0a7adeef268f525340bf",
   "oracle_sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
   "unit": "DMG T-cycles, bank-qualified entry through the final CloseSRAM return; caller setup excluded",
   "reference_entry": "BossAI_ComparePublicActionsWithTables on the frozen oracle",
@@ -9,12 +9,12 @@
   "worst_native": {
     "case": "joint_broad_prior_mass",
     "scan": 0,
-    "native_cycles": 36867924,
+    "native_cycles": 35761500,
     "reference_cycles": 132211028,
     "status": 0,
     "phases": {
       "reply_compile_native": 13648644,
-      "orchestration": 6837132,
+      "orchestration": 5730708,
       "scalar_pair": 5277244,
       "scalar_standalone": 4608044,
       "reply_standalone": 2405700,
@@ -35,7 +35,7 @@
   },
   "phase_totals_all_rows": {
     "reply_compile_native": 34122416,
-    "orchestration": 32977624,
+    "orchestration": 30758188,
     "owned_prepare": 23186656,
     "scalar_pair": 22050712,
     "scalar_standalone": 11712800,
@@ -55,7 +55,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 338464,
-        "orchestration": 201680,
+        "orchestration": 202100,
         "reply_compile_native": 63852,
         "hp_tables": 56468,
         "reply_facts": 40128,
@@ -100,7 +100,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1168028,
-      "native_cycles": 863768
+      "native_cycles": 864188
     },
     {
       "case": "joint_fast_finish",
@@ -108,7 +108,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 338464,
-        "orchestration": 287072,
+        "orchestration": 287492,
         "reply_compile_native": 63852,
         "hp_tables": 56468,
         "reply_facts": 40128,
@@ -153,7 +153,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1170312,
-      "native_cycles": 948736
+      "native_cycles": 949156
     },
     {
       "case": "joint_broad_prior_mass",
@@ -161,7 +161,7 @@
       "status": 0,
       "phases": {
         "reply_compile_native": 13648644,
-        "orchestration": 6837132,
+        "orchestration": 5730708,
         "scalar_pair": 5277244,
         "scalar_standalone": 4608044,
         "reply_standalone": 2405700,
@@ -185,7 +185,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 1524,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 5,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 6096,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 1016,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 1524,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 1524,
         "BossAI_FastBuildOwnedStandalone": 4,
@@ -209,7 +209,7 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 132211028,
-      "native_cycles": 36867924
+      "native_cycles": 35761500
     },
     {
       "case": "joint_broad_prior_mass",
@@ -217,7 +217,7 @@
       "status": 0,
       "phases": {
         "reply_compile_native": 13648644,
-        "orchestration": 6759100,
+        "orchestration": 5688236,
         "scalar_pair": 5275228,
         "scalar_standalone": 4610060,
         "reply_standalone": 2405700,
@@ -241,7 +241,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 1524,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 5,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 6096,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 1016,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 1524,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 1524,
         "BossAI_FastBuildOwnedStandalone": 4,
@@ -265,7 +265,7 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 132230960,
-      "native_cycles": 36789912
+      "native_cycles": 35719048
     },
     {
       "case": "joint_equal_slots",
@@ -273,7 +273,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 580860,
-        "orchestration": 201712,
+        "orchestration": 202132,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
         "reply_facts": 39624,
@@ -318,7 +318,7 @@
         "BossAI_PublicDamageRange": 14
       },
       "reference_cycles": 1280680,
-      "native_cycles": 1112688
+      "native_cycles": 1113108
     },
     {
       "case": "joint_equal_slots",
@@ -326,7 +326,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 580860,
-        "orchestration": 287104,
+        "orchestration": 287524,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
         "reply_facts": 39624,
@@ -371,7 +371,7 @@
         "BossAI_PublicDamageRange": 14
       },
       "reference_cycles": 1282852,
-      "native_cycles": 1197656
+      "native_cycles": 1198076
     },
     {
       "case": "joint_cache_reinitialize",
@@ -379,7 +379,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 742256,
-        "orchestration": 255124,
+        "orchestration": 255544,
         "native_pair": 77104,
         "scalar_pair": 73032,
         "hp_tables": 63892,
@@ -424,7 +424,7 @@
         "BossAI_PublicDamageRange": 28
       },
       "reference_cycles": 2626624,
-      "native_cycles": 1439728
+      "native_cycles": 1440148
     },
     {
       "case": "joint_cache_reinitialize",
@@ -432,7 +432,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 742256,
-        "orchestration": 340516,
+        "orchestration": 340936,
         "native_pair": 77104,
         "scalar_pair": 73032,
         "hp_tables": 63892,
@@ -477,14 +477,14 @@
         "BossAI_PublicDamageRange": 28
       },
       "reference_cycles": 2631144,
-      "native_cycles": 1525120
+      "native_cycles": 1525540
     },
     {
       "case": "joint_open_prior",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 570472,
+        "orchestration": 547156,
         "owned_prepare": 520256,
         "reply_compile_native": 514128,
         "scalar_pair": 229800,
@@ -509,7 +509,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 58,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 232,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 116,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 332,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 58,
         "BossAI_FastBuildOwnedStandalone": 2,
@@ -533,14 +533,14 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 5437608,
-      "native_cycles": 2454292
+      "native_cycles": 2430976
     },
     {
       "case": "joint_open_prior",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 637464,
+        "orchestration": 614960,
         "owned_prepare": 520256,
         "reply_compile_native": 514128,
         "scalar_pair": 229800,
@@ -565,7 +565,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 58,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 232,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 116,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 508,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 58,
         "BossAI_FastBuildOwnedStandalone": 2,
@@ -589,14 +589,14 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 5441268,
-      "native_cycles": 2521288
+      "native_cycles": 2498784
     },
     {
       "case": "joint_recharge_wait",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 158520,
+        "orchestration": 154080,
         "owned_prepare": 76388,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -614,7 +614,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 54,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -631,14 +630,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 567536,
-      "native_cycles": 453012
+      "native_cycles": 448572
     },
     {
       "case": "joint_recharge_wait",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 243912,
+        "orchestration": 239612,
         "owned_prepare": 76388,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -656,7 +655,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 254,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -673,7 +671,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 568640,
-      "native_cycles": 537980
+      "native_cycles": 533680
     },
     {
       "case": "joint_exhausted_struggle",
@@ -681,7 +679,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 263928,
-        "orchestration": 176308,
+        "orchestration": 176728,
         "hp_tables": 63892,
         "native_pair": 62976,
         "reply_compile_native": 49204,
@@ -726,7 +724,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 648480,
-      "native_cycles": 738612
+      "native_cycles": 739032
     },
     {
       "case": "joint_exhausted_struggle",
@@ -734,7 +732,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 263928,
-        "orchestration": 261700,
+        "orchestration": 262120,
         "hp_tables": 63892,
         "native_pair": 62976,
         "reply_compile_native": 49204,
@@ -779,14 +777,14 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 649584,
-      "native_cycles": 824004
+      "native_cycles": 824424
     },
     {
       "case": "joint_encore_exhausted",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 159324,
+        "orchestration": 154884,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -804,7 +802,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 54,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -821,14 +818,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571536,
-      "native_cycles": 454696
+      "native_cycles": 450256
     },
     {
       "case": "joint_encore_exhausted",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 244716,
+        "orchestration": 240416,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -846,7 +843,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 254,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -863,14 +859,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572640,
-      "native_cycles": 540088
+      "native_cycles": 535788
     },
     {
       "case": "joint_encore_exhausted_confused",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 159324,
+        "orchestration": 154884,
         "owned_prepare": 77064,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -888,7 +884,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 54,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -905,14 +900,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571996,
-      "native_cycles": 454788
+      "native_cycles": 450348
     },
     {
       "case": "joint_encore_exhausted_confused",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 244716,
+        "orchestration": 240416,
         "owned_prepare": 77064,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -930,7 +925,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 254,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -947,14 +941,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 573100,
-      "native_cycles": 540180
+      "native_cycles": 535880
     },
     {
       "case": "joint_encore_disabled",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 159204,
+        "orchestration": 154764,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -972,7 +966,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 54,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -989,14 +982,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571416,
-      "native_cycles": 454576
+      "native_cycles": 450136
     },
     {
       "case": "joint_encore_disabled",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 244596,
+        "orchestration": 240296,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -1014,7 +1007,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 254,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -1031,7 +1023,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572520,
-      "native_cycles": 539968
+      "native_cycles": 535668
     },
     {
       "case": "joint_encore_disable_expires",
@@ -1039,7 +1031,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 253768,
-        "orchestration": 176524,
+        "orchestration": 176944,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
         "reply_facts": 39624,
@@ -1084,14 +1076,14 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 642740,
-      "native_cycles": 701336
+      "native_cycles": 701756
     },
     {
       "case": "joint_encore_disable_expires",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 261916,
+        "orchestration": 262336,
         "owned_prepare": 253768,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -1137,14 +1129,14 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 643844,
-      "native_cycles": 786728
+      "native_cycles": 787148
     },
     {
       "case": "joint_encore_zero_counter_disabled",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 159172,
+        "orchestration": 154732,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -1162,7 +1154,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 54,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -1179,14 +1170,14 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571384,
-      "native_cycles": 454544
+      "native_cycles": 450104
     },
     {
       "case": "joint_encore_zero_counter_disabled",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 244564,
+        "orchestration": 240264,
         "owned_prepare": 76972,
         "hp_tables": 63892,
         "reply_compile_native": 49204,
@@ -1204,7 +1195,6 @@
         "BossAI_ComparePublicActionsFastPrototype.InitUnaryRecord": 1,
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 5,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 254,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
@@ -1221,7 +1211,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572488,
-      "native_cycles": 539936
+      "native_cycles": 535636
     },
     {
       "case": "joint_speed_tie_mixed",
@@ -1229,7 +1219,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 850180,
-        "orchestration": 263160,
+        "orchestration": 263580,
         "scalar_pair": 141008,
         "hp_tables": 93476,
         "native_pair": 78764,
@@ -1274,7 +1264,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2712128,
-      "native_cycles": 1684996
+      "native_cycles": 1685416
     },
     {
       "case": "joint_speed_tie_mixed",
@@ -1282,7 +1272,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 850180,
-        "orchestration": 348552,
+        "orchestration": 348972,
         "scalar_pair": 141008,
         "hp_tables": 93476,
         "native_pair": 78764,
@@ -1327,7 +1317,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2716680,
-      "native_cycles": 1770388
+      "native_cycles": 1770808
     },
     {
       "case": "joint_speed_tie_quick_claw",
@@ -1335,7 +1325,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 893180,
-        "orchestration": 263160,
+        "orchestration": 263580,
         "scalar_pair": 124836,
         "hp_tables": 93476,
         "reply_compile_native": 63812,
@@ -1380,7 +1370,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2511772,
-      "native_cycles": 1690188
+      "native_cycles": 1690608
     },
     {
       "case": "joint_speed_tie_quick_claw",
@@ -1388,7 +1378,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 893180,
-        "orchestration": 348552,
+        "orchestration": 348972,
         "scalar_pair": 124836,
         "hp_tables": 93476,
         "reply_compile_native": 63812,
@@ -1433,7 +1423,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2516068,
-      "native_cycles": 1776020
+      "native_cycles": 1776440
     },
     {
       "case": "joint_speed_tie_transformed",
@@ -1441,7 +1431,7 @@
       "status": 0,
       "phases": {
         "scalar_pair": 4545444,
-        "orchestration": 3303992,
+        "orchestration": 3325328,
         "reply_compile_native": 1529892,
         "native_pair": 1310480,
         "scalar_standalone": 767540,
@@ -1486,7 +1476,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 48668688,
-      "native_cycles": 12637868
+      "native_cycles": 12659204
     },
     {
       "case": "joint_speed_tie_transformed",
@@ -1494,7 +1484,7 @@
       "status": 0,
       "phases": {
         "scalar_pair": 4547204,
-        "orchestration": 3290960,
+        "orchestration": 3312296,
         "reply_compile_native": 1529892,
         "native_pair": 1310480,
         "scalar_standalone": 765780,
@@ -1539,7 +1529,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 48677532,
-      "native_cycles": 12624836
+      "native_cycles": 12646172
     },
     {
       "case": "joint_speed_tie_speed_high_byte",
@@ -1547,7 +1537,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 850180,
-        "orchestration": 263160,
+        "orchestration": 263580,
         "scalar_pair": 126848,
         "hp_tables": 93476,
         "reply_compile_native": 63812,
@@ -1592,7 +1582,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2487228,
-      "native_cycles": 1648388
+      "native_cycles": 1648808
     },
     {
       "case": "joint_speed_tie_speed_high_byte",
@@ -1600,7 +1590,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 850180,
-        "orchestration": 348552,
+        "orchestration": 348972,
         "scalar_pair": 126848,
         "hp_tables": 93476,
         "reply_compile_native": 63812,
@@ -1645,7 +1635,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2491524,
-      "native_cycles": 1734220
+      "native_cycles": 1734640
     },
     {
       "case": "joint_speed_tie_round_once",
@@ -1653,7 +1643,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 958964,
-        "orchestration": 326452,
+        "orchestration": 322432,
         "hp_tables": 186952,
         "scalar_pair": 143896,
         "reply_compile_native": 115936,
@@ -1677,7 +1667,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 10,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 40,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 108,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 10,
         "BossAI_FastBuildOwnedStandalone": 4,
@@ -1701,7 +1691,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 3290540,
-      "native_cycles": 2083992
+      "native_cycles": 2079972
     },
     {
       "case": "joint_speed_tie_round_once",
@@ -1709,7 +1699,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 958964,
-        "orchestration": 497268,
+        "orchestration": 493388,
         "hp_tables": 186952,
         "scalar_pair": 143896,
         "reply_compile_native": 115936,
@@ -1733,7 +1723,7 @@
         "BossAI_ComparePublicActionsFastPrototype.PrepareReply": 10,
         "BossAI_ComparePublicActionsFastPrototype.ReplyMass": 1,
         "BossAI_ComparePublicActionsFastPrototype.SwitchDefender": 1,
-        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 40,
+        "BossAI_ComparePublicActionsFastPrototype.plan_skip": 20,
         "BossAI_ComparePublicActionsFastPrototype.reply_next": 508,
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 10,
         "BossAI_FastBuildOwnedStandalone": 4,
@@ -1757,7 +1747,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 3296172,
-      "native_cycles": 2254812
+      "native_cycles": 2250932
     },
     {
       "case": "joint_accuracy_mixed",
@@ -1765,7 +1755,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 842252,
-        "orchestration": 422232,
+        "orchestration": 422652,
         "native_pair": 403668,
         "reply_compile_native": 121192,
         "hp_tables": 93476,
@@ -1810,7 +1800,7 @@
         "BossAI_PublicDamageRange": 20
       },
       "reference_cycles": 4184084,
-      "native_cycles": 2172048
+      "native_cycles": 2172468
     },
     {
       "case": "joint_accuracy_mixed",
@@ -1818,7 +1808,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 842252,
-        "orchestration": 511284,
+        "orchestration": 511704,
         "native_pair": 403668,
         "reply_compile_native": 121192,
         "hp_tables": 93476,
@@ -1863,14 +1853,14 @@
         "BossAI_PublicDamageRange": 20
       },
       "reference_cycles": 4189032,
-      "native_cycles": 2261020
+      "native_cycles": 2261440
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
       "scan": 0,
       "status": 0,
       "phases": {
-        "orchestration": 397316,
+        "orchestration": 397736,
         "owned_prepare": 280716,
         "reply_compile_native": 121148,
         "hp_tables": 92900,
@@ -1912,14 +1902,14 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 813352,
-      "native_cycles": 1054820
+      "native_cycles": 1055240
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 486368,
+        "orchestration": 486788,
         "owned_prepare": 280716,
         "reply_compile_native": 121148,
         "hp_tables": 92900,
@@ -1961,7 +1951,7 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 814456,
-      "native_cycles": 1143448
+      "native_cycles": 1143868
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -1969,7 +1959,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 427016,
-        "orchestration": 271948,
+        "orchestration": 272368,
         "native_pair": 105400,
         "hp_tables": 92900,
         "reply_compile_native": 89716,
@@ -2014,7 +2004,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1667800,
-      "native_cycles": 1225316
+      "native_cycles": 1225736
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -2022,7 +2012,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 427016,
-        "orchestration": 361000,
+        "orchestration": 361420,
         "native_pair": 105400,
         "hp_tables": 92900,
         "reply_compile_native": 89716,
@@ -2067,7 +2057,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1669836,
-      "native_cycles": 1313944
+      "native_cycles": 1314364
     },
     {
       "case": "joint_accuracy_early_ko",
@@ -2075,7 +2065,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 245480,
-        "orchestration": 194332,
+        "orchestration": 194752,
         "hp_tables": 92324,
         "reply_compile_native": 73108,
         "reply_standalone": 42756,
@@ -2120,14 +2110,14 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 688856,
-      "native_cycles": 809780
+      "native_cycles": 810200
     },
     {
       "case": "joint_accuracy_early_ko",
       "scan": 15,
       "status": 0,
       "phases": {
-        "orchestration": 283384,
+        "orchestration": 283804,
         "owned_prepare": 245480,
         "hp_tables": 92324,
         "reply_compile_native": 73108,
@@ -2173,7 +2163,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 689960,
-      "native_cycles": 898408
+      "native_cycles": 898828
     },
     {
       "case": "joint_accuracy_impossible_hits",
@@ -2181,7 +2171,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 322908,
-        "orchestration": 166472,
+        "orchestration": 166892,
         "hp_tables": 93476,
         "reply_compile_native": 44192,
         "reply_facts": 39540,
@@ -2226,7 +2216,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 725972,
-      "native_cycles": 757300
+      "native_cycles": 757720
     },
     {
       "case": "joint_accuracy_impossible_hits",
@@ -2234,7 +2224,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 322908,
-        "orchestration": 259184,
+        "orchestration": 259604,
         "hp_tables": 93476,
         "reply_compile_native": 44192,
         "reply_facts": 39540,
@@ -2279,7 +2269,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 727236,
-      "native_cycles": 850012
+      "native_cycles": 850432
     },
     {
       "case": "joint_accuracy_focus_band",
@@ -2287,7 +2277,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 348956,
-        "orchestration": 179168,
+        "orchestration": 179588,
         "hp_tables": 93476,
         "scalar_pair": 60708,
         "reply_compile_native": 54312,
@@ -2332,7 +2322,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 821056,
-      "native_cycles": 911432
+      "native_cycles": 911852
     },
     {
       "case": "joint_accuracy_focus_band",
@@ -2340,7 +2330,7 @@
       "status": 0,
       "phases": {
         "owned_prepare": 348956,
-        "orchestration": 264560,
+        "orchestration": 264980,
         "hp_tables": 93476,
         "scalar_pair": 60708,
         "reply_compile_native": 54312,
@@ -2385,7 +2375,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 822320,
-      "native_cycles": 996904
+      "native_cycles": 997324
     },
     {
       "case": "joint_defense_transitions",
@@ -2394,7 +2384,7 @@
       "phases": {
         "fallback_pair": 2334276,
         "owned_prepare": 706204,
-        "orchestration": 284652,
+        "orchestration": 285072,
         "hp_tables": 93476,
         "native_pair": 71496,
         "scalar_pair": 62256,
@@ -2441,7 +2431,7 @@
         "BossAI_ValuePublicExchange": 20
       },
       "reference_cycles": 3283504,
-      "native_cycles": 3758784
+      "native_cycles": 3759204
     },
     {
       "case": "joint_defense_transitions",
@@ -2450,7 +2440,7 @@
       "phases": {
         "fallback_pair": 2334276,
         "owned_prepare": 706204,
-        "orchestration": 370044,
+        "orchestration": 370464,
         "hp_tables": 93476,
         "native_pair": 71496,
         "scalar_pair": 62256,
@@ -2497,7 +2487,7 @@
         "BossAI_ValuePublicExchange": 20
       },
       "reference_cycles": 3288392,
-      "native_cycles": 3844176
+      "native_cycles": 3844596
     }
   ]
 }

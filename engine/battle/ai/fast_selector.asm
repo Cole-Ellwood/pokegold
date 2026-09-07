@@ -1300,6 +1300,17 @@ BossAI_ComparePublicActionsFastPrototype::
 
 .Plans
 ; Each live plan consumes one correction for the current reply. Carry=complete.
+; A bench defender has no plans: skip the slot walk.
+	ad_address FS_PLAN_INDEX
+	ld a, [hli]
+	and [hl]
+	inc hl
+	and [hl]
+	inc hl
+	and [hl]
+	inc a
+	scf
+	ret z
 	ad_address FS_SCAN
 	bit 0, [hl]
 	ld a, 0
