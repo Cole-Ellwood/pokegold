@@ -42,6 +42,10 @@ DEF FSP_MAX_POSTROLL EQU 63
 DEF FSP_FALLBACK EQU 0
 DEF FSP_DAMAGE EQU 1
 DEF FSP_RECOVERY EQU 2
+DEF FSP_MULTI EQU 3 ; multi-hit damage: per-hit endpoints, HP advanced hit by hit
+DEF FSP_FANG EQU 4 ; Super Fang: half the target's current HP at execution
+DEF FSP_FALSE_SWIPE EQU 5 ; single hit capped at target HP-1 at execution
+DEF FSP_SELFDESTRUCT EQU 6 ; user faints before its hit/miss check; halved defense
 ASSERT FSP_BASE + 4 * FSP_SIZE == FSA_OWN
 
 ; Compiler scratch is in the existing producer bridge, after entry loss.
@@ -50,7 +54,10 @@ DEF FSB_PLAN_INDEX EQU $a48b
 DEF FSB_PLAN_FLAGS EQU $a48c
 DEF FSB_PLAN_POSTROLL EQU $a48d
 DEF FSB_PLAN_REGIME EQU $a48e
-ASSERT FSB_PLAN_REGIME < FSB_PREFIX
+DEF FSB_PLAN_OPCODE EQU $a491 ; family opcode chosen before the regime sweep
+DEF FSB_PLAN_PATCH EQU $a492 ; 0 none, 1 AD_EFFECT patched, 2 AD hits patched
+DEF FSB_PLAN_DELTAS EQU $a493 ; reply compile: store per-regime max-min deltas
+ASSERT FSB_PLAN_DELTAS < FSB_PREFIX
 
 MACRO fsp_store
 	push af
@@ -143,21 +150,54 @@ BossAI_FastCompileOwnedPlan::
 	scf
 	ret
 .damage
+; Family opcode. Multi-hit and False Swipe compile per-hit / uncapped
+; endpoints by patching the producer inputs for the regime sweep; the
+; executors advance HP per hit and re-apply the HP-1 cap at the real state.
+	ld a, FSP_DAMAGE
+	ld [FSB_PLAN_OPCODE], a
+	xor a
+	ld [FSB_PLAN_PATCH], a
 	ad_address AD_EFFECT
 	ld a, [hl]
 	cp EFFECT_SELFDESTRUCT
-	jp z, .invalid
-	cp EFFECT_FALSE_SWIPE
-	jp z, .invalid
+	jr nz, .not_selfdestruct
+	ld a, FSP_SELFDESTRUCT
+	ld [FSB_PLAN_OPCODE], a
+	jr .family_ready
+.not_selfdestruct
 	cp EFFECT_SUPER_FANG
-	jp z, .invalid
+	jr nz, .not_fang
+	ld a, FSP_FANG
+	ld [FSB_PLAN_OPCODE], a
+	jr .family_ready
+.not_fang
+	cp EFFECT_FALSE_SWIPE
+	jr nz, .not_false_swipe
+	ld a, FSP_FALSE_SWIPE
+	ld [FSB_PLAN_OPCODE], a
+	ld a, 1
+	ld [FSB_PLAN_PATCH], a
+	ad_address AD_EFFECT
+	ld [hl], EFFECT_NORMAL_HIT
+	jr .family_ready
+.not_false_swipe
 	ad_address AD_MIN_HITS
 	ld a, [hli]
-	cp 1
-	jp nz, .invalid
+	dec a
+	jr nz, .multi
 	ld a, [hl]
-	cp 1
-	jp nz, .invalid
+	dec a
+	jr z, .family_ready
+.multi
+	ld a, FSP_MULTI
+	ld [FSB_PLAN_OPCODE], a
+	ld a, 2
+	ld [FSB_PLAN_PATCH], a
+	ad_address AD_MIN_HITS
+	ld [hl], 1
+	inc hl
+	ld [hl], 1
+.family_ready
 	ld a, STEEL
 	call BossAI_DamageKernel.AttackerContribution
 	fsp_store FSP_STEEL
@@ -240,13 +280,33 @@ BossAI_FastCompileOwnedPlan::
 	ld a, [FSB_PLAN_POSTROLL]
 	ad_address AD_MAX_POSTROLL
 	ld [hl], a
+	call .RestorePatch
 	ld a, 3
 	fsp_store FSP_HP_DEPEND
 	ld a, 15
 	fsp_store FSP_VALID
-	ld a, FSP_DAMAGE
+	ld a, [FSB_PLAN_OPCODE]
 	fsp_store FSP_OPCODE
 	scf
+	ret
+.RestorePatch
+; Undo the family patch on the producer context.
+	ld a, [FSB_PLAN_PATCH]
+	and a
+	ret z
+	dec a
+	jr nz, .restore_hits
+	ad_address AD_EFFECT
+	ld [hl], EFFECT_FALSE_SWIPE
+	ret
+.restore_hits
+	ld a, FSP_MIN_HITS
+	call .PlanAddress
+	ld a, [hli]
+	ld b, [hl]
+	ad_address AD_MIN_HITS
+	ld [hli], a
+	ld [hl], b
 	ret
 .invalid
 	and a

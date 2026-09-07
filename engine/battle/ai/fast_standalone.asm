@@ -24,11 +24,10 @@ BossAI_FastBuildOwnedStandalone::
 	ld hl, FSP_BASE + FSP_OPCODE
 	add hl, bc
 	ld a, [hl]
-	cp FSP_DAMAGE
-	jr z, .accepted
-	cp FSP_RECOVERY
-	jp nz, .reject_pop
-.accepted
+	and a
+	jp z, .reject_pop
+	cp FSP_SELFDESTRUCT + 1
+	jp nc, .reject_pop
 	pop bc
 	ld a, c
 	ld [FSO_INDEX], a

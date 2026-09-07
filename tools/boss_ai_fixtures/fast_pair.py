@@ -10,7 +10,8 @@ from tools.boss_ai_fixtures.fast_standalone import phi
 def main():
     count = scalar = 0
     rng = random.Random(20260907)
-    moves = ("TACKLE", "FIRE_BLAST", "LEECH_LIFE", "DOUBLE_EDGE", "RECOVER", "REST", "SPLASH", "DREAM_EATER")
+    moves = ("TACKLE", "FIRE_BLAST", "LEECH_LIFE", "DOUBLE_EDGE", "RECOVER", "REST", "SPLASH", "DREAM_EATER",
+             "FURY_SWIPES", "SUPER_FANG", "FALSE_SWIPE", "EXPLOSION")
     with open_harness("pokegold_ai_reference") as h:
         h.seed_battle(Mon.of("CHARIZARD", 50), Mon.of("DEWGONG", 50))
         mem, rf = h.pb.memory, h.pb.register_file
@@ -90,20 +91,30 @@ def main():
                         expected_flags |= flags
                 mem[0xc900:0xca8f] = [0xa5] * 399
                 before = bytes(mem[0xa000:0xa600])
-                assert h.invoke("BossAI_FastNormalizedPair", {**regs, "C": slot, "A": order})
-                assert h.outcome()["carry"]
-                actual = int.from_bytes(bytes(mem[0xa578:0xa57d]), "big"), mem[0xa54e]
-                assert actual == (expected_total, expected_flags), (own_move, reply, scenario, order, actual,
-                    (expected_total, expected_flags), bytes(mem[0xa550:0xa55e]).hex())
                 own_moment = int.from_bytes(plans[64 * slot + 44:64 * slot + 47], "big", signed=True)
                 reply_moment = int.from_bytes(reply_plan[40:43], "big", signed=True)
                 baseline = 2 * 65536 * 1024 + 512 * (own_moment + reply_moment)
-                assert h.invoke("BossAI_FastNormalizedPair.CorrectionOnly", {**regs, "C": slot, "A": order}) and h.outcome()["carry"]
-                assert int.from_bytes(bytes(mem[0xa578:0xa57d]), "big") == (expected_total - baseline) % (1 << 40)
-                assert mem[0xa54e] == expected_flags
+                if "EXPLOSION" in (own_move, reply):
+                    # A Selfdestruct miss is not identity: the factored pair rejects
+                    # and the native whole pair runs every event pair.
+                    assert h.invoke("BossAI_FastNormalizedPair", {**regs, "C": slot, "A": order}) and not h.outcome()["carry"]
+                    assert bytes(mem[0xa000:0xa600]) == before
+                    entry = "BossAI_FastFallbackPair.Native"
+                else:
+                    assert h.invoke("BossAI_FastNormalizedPair", {**regs, "C": slot, "A": order})
+                    assert h.outcome()["carry"]
+                    actual = int.from_bytes(bytes(mem[0xa578:0xa57d]), "big"), mem[0xa54e]
+                    assert actual == (expected_total, expected_flags), (own_move, reply, scenario, order, actual,
+                        (expected_total, expected_flags), bytes(mem[0xa550:0xa55e]).hex())
+                    entry = "BossAI_FastNormalizedPair.CorrectionOnly"
+                assert h.invoke(entry, {**regs, "C": slot, "A": order}) and h.outcome()["carry"]
+                assert int.from_bytes(bytes(mem[0xa578:0xa57d]), "big") == (expected_total - baseline) % (1 << 40), (
+                    own_move, reply, scenario, order, entry, int.from_bytes(bytes(mem[0xa578:0xa57d]), "big"), (expected_total - baseline) % (1 << 40))
+                assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, entry, mem[0xa54e], expected_flags)
                 after = bytes(mem[0xa000:0xa600])
                 mutable = {*range(0x448, 0x460), *range(0x510, 0x560), *range(0x578, 0x57d)}
-                assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable)
+                assert all(a == b for i, (a, b) in enumerate(zip(before, after)) if i not in mutable), (
+                    own_move, reply, scenario, order, [hex(0xa000 + i) for i, (a, b) in enumerate(zip(before, after)) if a != b and i not in mutable])
                 # Scalar path: identical correction/flags whenever it accepts the pair.
                 mem[0xa578:0xa57d] = [0x77] * 5
                 mem[0xa54e] = 0x77
@@ -114,22 +125,28 @@ def main():
                     assert int.from_bytes(bytes(mem[0xa578:0xa57d]), "big") == (expected_total - baseline) % (1 << 40), (own_move, reply, scenario, order, "scalar total")
                     assert mem[0xa54e] == expected_flags, (own_move, reply, scenario, order, "scalar flags", mem[0xa54e], expected_flags)
                 after_scalar = bytes(mem[0xa000:0xa600])
-                scalar_mutable = {*range(0x510, 0x530), *range(0x54c, 0x578), *range(0x578, 0x57d)}
-                assert all(a == b for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if i not in scalar_mutable)
+                scalar_mutable = {*range(0x510, 0x530), *range(0x54c, 0x578), *range(0x578, 0x57d), *range(0x5c0, 0x5d8)}
+                assert all(a == b for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if i not in scalar_mutable), (
+                    own_move, reply, scenario, order, [hex(0xa000 + i) for i, (a, b) in enumerate(zip(before_scalar, after_scalar)) if a != b and i not in scalar_mutable])
                 assert bytes(mem[0xc900:0xca8f]) == bytes([0xa5] * 399)
                 assert bytes(mem[0xca8f:0xcabf]) == reply_plan
                 assert bytes(mem[0xcabf:0xcad8]) == bytes([0x69] * 25)
                 assert bytes(mem[0xa2f8:0xa3f8]) == plans
                 assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
                 count += 1
-        for slot, order, own_opcode, reply_opcode in ((4, 0, 1, 1), (255, 2, 1, 1), (0, 3, 1, 1),
-                                                     (0, 255, 1, 1), (0, 0, 0, 1), (0, 0, 1, 0), (0, 0, 1, 5)):
+        for slot, order, own_opcode, reply_opcode in ((4, 0, 1, 1), (255, 2, 1, 1), (0, 3, 1, 1), (0, 255, 1, 1),
+                                                     (0, 0, 0, 1), (0, 0, 1, 0), (0, 0, 1, 9), (0, 0, 6, 1), (0, 0, 1, 8)):
             mem[0xa2fc], mem[0xca90] = own_opcode, reply_opcode
             before, wram = bytes(mem[0xa000:0xa600]), bytes(mem[0xc900:0xcad8])
             assert h.invoke("BossAI_FastNormalizedPair", {**regs, "C": slot, "A": order}) and not h.outcome()["carry"]
             assert bytes(mem[0xa000:0xa600]) == before and bytes(mem[0xc900:0xcad8]) == wram
+        for slot, order, own_opcode, reply_opcode in ((4, 0, 1, 1), (0, 3, 1, 1), (0, 0, 0, 1), (0, 0, 1, 0), (0, 0, 7, 1), (0, 0, 1, 9)):
+            mem[0xa2fc], mem[0xca90] = own_opcode, reply_opcode
+            before, wram = bytes(mem[0xa000:0xa600]), bytes(mem[0xc900:0xcad8])
+            assert h.invoke("BossAI_FastFallbackPair.Native", {**regs, "C": slot, "A": order}) and not h.outcome()["carry"]
+            assert bytes(mem[0xa000:0xa600]) == before and bytes(mem[0xc900:0xcad8]) == wram
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {count} factored native pair numerators/flags ({scalar} also through the scalar path), producer poisoning, record guards and 7 no-write rejections")
+    print(f"PASS: {count} native pair numerators/flags ({scalar} also through the scalar path), producer poisoning, record guards and 15 no-write rejections")
 
 
 if __name__ == "__main__":

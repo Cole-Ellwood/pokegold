@@ -14,7 +14,8 @@ def main():
         for move_name in ("TACKLE", "FIRE_BLAST", "GIGA_DRAIN", "DOUBLE_EDGE",
                           "STRUGGLE", "SEISMIC_TOSS", "DRAGON_RAGE", "RECOVER",
                           "REST", "SYNTHESIS", "PURSUIT", "SPLASH", "SNORE",
-                          "DREAM_EATER"):
+                          "DREAM_EATER", "FURY_SWIPES", "BONEMERANG", "SUPER_FANG",
+                          "FALSE_SWIPE", "EXPLOSION"):
             for item in (0, ITEMS["LIFE_ORB"], ITEMS["SHELL_BELL"]):
                 h.wr("wEnemyMonItem", item)
                 for maximum in (9, 999, 65535):

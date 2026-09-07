@@ -36,8 +36,10 @@ incoming family is not yet represented use the exact direct fallback.
   quota. These are stage metadata; their consumers enforce reachability.
 - `fast_plans.asm` compiles owned single-hit/recovery amount plans in the fixed
   64-byte layout. Four raw HP regimes retain support and range masks separately.
-  Defense boosts, Selfdestruct, multihit, False Swipe and Super Fang currently
-  receive explicit fallback opcodes. Amounts require fixed non-HP context inputs.
+  Defense boosts receive the explicit fallback opcode; multihit, Super Fang,
+  False Swipe and Selfdestruct became native families on 2026-09-07 (see
+  "Performance work and native families"). Amounts require fixed non-HP
+  context inputs.
 - `fast_plan_executor.asm` executes one represented owned action, including
   both-living/can-act gates, original hit/miss semantics, conditional uncertainty,
   finite-width HP regimes and the known item/drain/recoil script. It reads compact
@@ -100,8 +102,9 @@ not an unimplemented ordinary native evaluator.
   moments are post-entry by construction. Records start at
   `(M<<16)*(1024+entry_delta)`; entry KO leaves the reply gated and the mass
   intact.
-- Unrepresented replies (opcode 0: defense boosts, Selfdestruct, multihit,
-  False Swipe, Super Fang, and anything the compiler rejects) use the new
+- Unrepresented replies (opcode 0: defense boosts, multihit or False Swipe
+  replies whose roll range is wider than a byte, and anything the compiler
+  rejects) use the new
   `BossAI_FastUnaryFallback` for the wait/switch candidate: the direct
   evaluator runs each positive original reply event with own event mass 256
   and a single order, and the routine subtracts the exact baseline
@@ -126,11 +129,104 @@ not an unimplemented ordinary native evaluator.
   actor HP domains, a reply mass outside 1..282 or a stale reply header
   discard native state and restart through the compatibility adapter.
 
+## Performance work and native families (2026-09-07)
+
+Five commits after the orchestration landed reduce the broad benchmark
+(`joint_broad_prior_mass`, one scan) from 180,985,824 to 59,106,740 DMG
+T-cycles while every frozen-oracle vector stays exact. None of them changes a
+result; each replaces a producer-backed or executor-backed computation with an
+equivalent that reads compact records.
+
+- **Lazy reply regimes** (`9b822b7f`). `.ReplyRegimes` in `fast_selector.asm`
+  marks the incoming HP regimes a reply can reach for the current defender: the
+  start state plus every live plan's original-event successors (bit0 the
+  player's attacker-low predicate, bit1 the own defender-high predicate, both
+  in the executor's wrapped 16-bit arithmetic). The compile receives the mask in
+  C (`BossAI_FastCompileReplyPlan.Masked`, `BossAI_FastCompileReplyNative`) and
+  records it in `FSR_VALID`; only masked regimes get amounts/range/support bits.
+  If an incoming plan ever executes at an unmarked regime the executor latches
+  `FSC_FAULT` ($a58f) and the selector restarts through the reference adapter
+  instead of reading a zero amount. The reply bridge also stopped calling the
+  prepared-range producer and copying the template.
+- **Scalar pair** (`9b822b7f`, `a04741df`). `fast_scalar_pair.asm`:
+  `BossAI_FastScalarPair` evaluates a plain damage/recovery pair (effect and
+  item tags both zero on both sides) with at most two potential lookups per
+  order instead of executing both actions; gate fields are cached once per
+  record in `FSK_OWN`/`FSK_REPLY` ($a5c0..$a5d7). The selector tries it first
+  and falls back to `BossAI_FastNormalizedPair.CorrectionOnly`.
+- **Scalar standalone** (`a04741df`). `BossAI_FastScalarReplyStandalone` builds
+  the plain-reply standalone record (bytes 28..42 plus the standalone flags at
+  24/25) from the actor start potentials with one lookup per changed HP word
+  and a signed 16x8 multiply (`BossAI_FastMulSigned16By8`).
+- **Native reply compiler** (`0ed1b6c3`, `a03213eb`). `fast_reply_native.asm`:
+  `BossAI_FastPrepareReplyFacts` derives per-defender facts (`FSN`,
+  $a5e0..$a5ff: level, types, weather, template flags, guards, stages,
+  Bright Powder, Focus Band, Helmet quota, Outrage category, truncated formula
+  stats, Steel/Psychic/Poison typing, switch flag) once per epoch, and
+  `BossAI_FastCompileReplyNative` compiles the 48-byte reply record from
+  in-bank mirrors of the move table, contact flags, effect priorities, accuracy
+  multipliers and the type chart (the data files gained `BOSSAI_EMIT_LOCAL_*`
+  include guards so the reference build emits second copies; the game ROM's
+  bytes are unchanged). It mirrors the producer's Category, EffectSupport,
+  copyguards, SurvivalFacts, accuracy modifiers, PlayerCanAct, effect/hit
+  uncertainty, RecoveryQuota, descriptor and the single-hit kernel (chart,
+  weather, STAB, passives, variation 217/255, postroll). A generated 256-byte
+  effect-class table replaces list scans; the formula base is cached per
+  category and power (physical $a590..$a5bf and $a4f8..$a50f, special in the
+  dead template bytes at context 89..190). `fast_reply_native.py` compares the
+  native record with the producer path byte for byte.
+- **Identity replies** (`a03213eb`). `.ClassifyIdentity` marks a damage reply
+  that can never change HP from any state (unsupported with zero power, or all
+  compiled regimes supported with zero amounts and no range bits, or unable to
+  act). Pairs with such a reply take `.IdentityPair`: zero correction, flags
+  from the standalone records with the reference's reachability rules.
+- **Native families** (this checkpoint). Multihit, Super Fang, False Swipe and
+  Selfdestruct are represented opcodes on both sides: owned plans
+  `FSP_MULTI`=3, `FSP_FANG`=4, `FSP_FALSE_SWIPE`=5, `FSP_SELFDESTRUCT`=6; reply
+  records `FSR_MULTI`=5, `FSR_FANG`=6, `FSR_FALSE_SWIPE`=7,
+  `FSR_SELFDESTRUCT`=8. Only defense boosts remain fallback replies.
+  - Compilers keep the per-regime sweep unchanged and patch the producer input
+    for the sweep: multihit compiles per-hit endpoints with `AD_MIN/MAX_HITS`
+    forced to 1/1 (all four regimes, since hits cross regimes inside one
+    action), False Swipe compiles uncapped endpoints with `AD_EFFECT` set to
+    `EFFECT_NORMAL_HIT`; `.RestorePatch` undoes the patch before the epilogue.
+    Reply records store only maxima, so these two families also store the
+    per-regime maximum-minus-minimum in the otherwise unused bytes 7, 8, 23 and
+    26 (`FSR_MIN_DELTA0..3`); a delta wider than a byte makes the compile
+    return opcode 0 with carry clear (header written, fallback follows). The
+    native compiler halves the truncated defense for Selfdestruct without
+    caching that base, and computes Super Fang's template amount as half the
+    template HP (minimum one).
+  - Executors finish the families at the real continuation state. Multihit
+    walks the hits one at a time from the target's current HP, recomputing the
+    defender-high predicate per hit, stopping at a KO and saturating the total
+    like the kernel (the final hit's overkill stays in the total); the range
+    flag compares the minimum-hit/minimum-amount path with the maximum-hit/
+    maximum-amount path, and the selected total (own minimum, reply maximum)
+    runs through the ordinary single-hit script so items and drain use it as
+    raw. Super Fang halves the target's current HP (minimum one; a compiled
+    zero is chart immunity). False Swipe caps both endpoints at target HP minus
+    one and flags a range only when the capped amounts differ. Selfdestruct
+    faints the user after the amount regime is read and before the event and
+    accuracy checks, so it faints on a miss too; the damage script then skips
+    the dead user's item, as the reference does.
+  - Pairs: a Selfdestruct miss is not identity, so the factored
+    `BossAI_FastNormalizedPair` rejects it. The selector routes those pairs to
+    `BossAI_FastFallbackPair.Native`, a third mode of the whole-pair evaluator
+    that takes both terminals from the compact executors in every modeled
+    order (own first for order 0, reply first for order 1, both for a tie) and
+    subtracts the standalone baseline. Identity replies still take
+    `.IdentityPair` even against a Selfdestruct plan (its successor rules
+    already handle the self-KO). The standalone builders and the factored pair
+    accept the other families unchanged because their executors do the work.
+
 ## Validation and timing
 
 Current reference ROM SHA256:
-`83070fc20a59f278f82d9f7052510285aba956aab563a53cef4493b383048d01`
-(pair/fallback checkpoint before orchestration:
+`40a209cf3a1e4298897bb97ac213cc842ceb1336c7c48efd80fac600a8e65e58`
+(orchestration checkpoint:
+`83070fc20a59f278f82d9f7052510285aba956aab563a53cef4493b383048d01`;
+pair/fallback checkpoint before orchestration:
 `65e403fb5e8b4e64b8f05d38820f7cf87ba239f9545986afa24a58413989ee75`).
 The refreshed replacement profile below was measured on
 `e8628a6cfde19b508a6d6b75b9bf32bd3cb7a5a6fff319bb689a7e465feabfb0`, which
@@ -161,6 +257,7 @@ python -m tools.boss_ai_fixtures.fast_reference --replacement-boundaries
 python -m tools.boss_ai_fixtures.fast_replacement_profile
 python -m tools.boss_ai_fixtures.fast_unary_fallback
 python -m tools.boss_ai_fixtures.fast_ordinary_profile
+python -m tools.boss_ai_fixtures.fast_reply_native
 python -m tools.boss_ai_fixtures --rom pokegold_ai_reference --suite all
 ```
 
@@ -192,6 +289,54 @@ python -m tools.boss_ai_fixtures --rom pokegold_ai_reference --suite all
 - Not yet exercised by any fixture: an ordinary decision whose actor import
   is rejected (max HP 0 / HP above max) and the reply-mass bound; both
   routes are the same `.restart` path the replacement restart cases cover.
+
+
+### Native families validation (2026-09-07)
+
+Reference ROM SHA256
+`40a209cf3a1e4298897bb97ac213cc842ceb1336c7c48efd80fac600a8e65e58`; game ROM
+rebuilt, SHA1 unchanged (`85a2fe838a28f23b198845e63876a637580e91a9`).
+
+- `fast_reply.py`: 26,880 incoming action/reference comparisons over 1,680
+  compiled plans (adds Fury Swipes, Bonemerang, Twineedle, Super Fang, False
+  Swipe, Explosion to the move list, with the expectation patching the context
+  the same way the compiler does and checking the delta bytes), plus a
+  wide-roll-range case (Pin Missile, level 100, attack 999 into defense 1,
+  4x chart) that must compile to opcode 0 and be rejected by the executor.
+- `fast_reply_native.py`: 5,588 native compiles identical to the producer path,
+  now including a level-5 Grass/Psychic defender against a level-100 Bug
+  attacker so both compilers take the wide-delta exit.
+- `fast_plans.py`: 240 owned plans (all family moves represented; Super Fang's
+  template amount is HP-dependent by design and excluded from the
+  HP-independence check). `fast_plan_executor.py`: 8,208 owned action
+  comparisons including Fury Swipes, Bonemerang, Super Fang, False Swipe and
+  Explosion at eight HP states, both events, three items and three maxima.
+- `fast_standalone.py` 2,160 and `fast_reply_standalone.py` 3,000 (1,500
+  scalar) unchanged; rejection opcodes moved past the new range.
+- `fast_pair.py`: 3,744 pair numerators/flags (390 scalar) over twelve moves
+  including Fury Swipes, Super Fang, False Swipe and Explosion; Explosion pairs
+  assert that the factored pair rejects and that `BossAI_FastFallbackPair.Native`
+  matches the reference event sum minus the baseline; 15 no-write rejections.
+  Two defects found and fixed by this fixture before the whole-selector run:
+  the native mode lacked the modeled-tie flag, and it started single orders
+  from the wrong side (the direct evaluator resolves order itself, the native
+  mode must execute the actual one).
+- `fast_pair_fallback.py` 1,248 and `fast_unary_fallback.py` 88 unchanged.
+- `fast_reference.py --prototype`: 76 vectors exact; backend status 23
+  native-only, 3 with fallback (`joint_broad_prior_mass`,
+  `joint_defense_transitions`, `joint_speed_tie_transformed`, all because of
+  defense-boost replies). `--replacement-boundaries` 116 vectors and the
+  restart adapter 52 vectors unchanged.
+- `tools/audit/check_boss_ai_decision_paths.py` on the rebuilt game ROM: 473
+  production fixtures pass; the 839-fixture reference suite passes
+  (`.local/ai-two-second/families-fixtures.log`) and
+  `check_release_smoke.py` passes on the final build.
+
+The `.local/ai-two-second/debug_joint_pairs.py` script records every
+`.AddPairTotal` contribution of one joint case twice, once natively and once
+with every pair forced through the direct fallback, and prints the pairs whose
+totals differ. It localized the order-start defect in one run and is the
+fastest way to find which reply a future whole-selector mismatch comes from.
 
 ### Ordinary timing (structural prototype, not the gate)
 
@@ -229,6 +374,45 @@ execution are required as well; (4) fallback families cost 27M on the broad
 case and must become native before any timing claim. Small decisions (one
 reply set, one or two plans) already run at 0.9M-1.4M cycles, roughly 1.2-1.8
 times the oracle, because the four-regime compile dominates them too.
+
+
+#### After the 2026-09-07 performance work
+
+Same method, same 24 fixtures, current ROM
+(`40a209cf3a1e4298897bb97ac213cc842ceb1336c7c48efd80fac600a8e65e58`).
+
+| Case | Native cycles | Oracle cycles | Status |
+| --- | ---: | ---: | --- |
+| `joint_broad_prior_mass` | 59,106,740 | 132,211,028 | 1 |
+| `joint_speed_tie_transformed` | 19,372,692 | 48,668,688 | 1 |
+| `joint_defense_transitions` | 4,815,120 | 3,283,504 | 1 |
+| `joint_open_prior` | 3,006,988 | 5,437,608 | 0 |
+| `joint_accuracy_reply_selfdestruct_miss` | 1,210,904 | 1,667,800 | 0 |
+| `joint_accuracy_own_selfdestruct_miss` | 1,123,828 | 813,352 | 0 |
+| smallest (`joint_recharge_wait`) | 475,072 | 567,536 | 0 |
+
+Progression of the broad benchmark: 181.0M (orchestration) -> 122M (lazy
+regimes, scalar pair) -> 106M (scalar standalone) -> 82M (native compiler)
+-> 75M (effect-class table, identity pairs) -> 59.1M (native families).
+
+Broad-benchmark phase split now (one scan): native reply compile 20.9M
+(1,524 compiles, about 13.7k cycles each), scalar standalone 11.2M (1,494
+calls), scalar pair 8.1M (636 calls), orchestration arithmetic 7.7M, executor
+reply standalone 2.8M (149 calls), whole-pair fallback 2.5M (20 calls, all
+defense boosts), factored native pairs 2.1M (88 calls), unary fallback 1.8M
+(25 calls), owned preparation 1.1M, HP tables 0.55M. `PublicDamageRange` runs
+22 times and `ValuePublicExchange` 45 times, all for defense-boost replies.
+
+What the target still needs (8,388,608 cycles): the per-reply compile has to
+come down roughly four-fold (grouped base arithmetic by category and power
+group across the reply set, so the formula runs once per group instead of once
+per reply, with per-reply finishing), the scalar standalone and pair paths
+need per-reply costs in the low thousands of cycles (they are 7.5k and 12.7k
+today; both recompute plan addresses and gate reads that a per-defender cache
+could hold), and the orchestration arithmetic (7.7M) needs the five-byte
+record accumulation moved off SRAM temporaries. Defense-boost replies must
+also become native before any timing claim: they are the only remaining
+fallback and the only remaining producer calls.
 
 The [replacement profile](fast_replacement_profile.json) was refreshed on the
 restructured bench loop: the largest native sample is 623,988 cycles
@@ -373,27 +557,51 @@ was validated by the frozen-oracle comparison, the new unit fixture and the
 full fixture sweep, and self-reviewed only. It should receive the independent
 review before it is treated as approved.
 
+Files changed by the later 2026-09-07 performance and native-family work
+(current hashes; same review gap, validated by the fixtures listed above):
+
+```text
+fast_plans.asm 672876ee78e43d14f3a40dbf52b17cca35e8108b0293f0965e2c597535e69163
+fast_reply_plans.asm bda0f5afaf9c130540d69aeca5ea7bc300429a0a9d7029f7900cc1a5ddc33e87
+fast_reply_native.asm 198e56766aa81c15445a42f2a5f645a2aec0ed9130a5538dea3f746a763f3085
+fast_scalar_pair.asm (new, see git)
+fast_plan_executor.asm 63a299dea21cc72733f26d34b1a38e6b592b223a66bc41dd6667289c2da5513d
+fast_reply_executor.asm 73a62a5b980c13b200976346247b08ab9a3667108e9f82d11e5d9ee853749427
+fast_standalone.asm 4fb3ed3cd29761eaa72a5956284a7c9fbade0d4b760eb51d6d6e4061795fd898
+fast_reply_standalone.asm 1d8cefb427bee2a15a8ad0fe5927b1d3e8d48578286f267f6889137ef502218d
+fast_pair.asm 995d0cad6fef7c718587212be1166de8bdf652fcc46c85d19c821979c274b034
+fast_pair_fallback.asm 897b6b7e62e34789a1f5e243888f8c1d0aa68e1ae8e7b1122a8933be57e7af39
+fast_selector.asm 7631bf01eea887f3e3379b7c58f72d28c6c289cb34fa117bf279a9d195733084
+```
+
+The "Boss AI Fast Prototype" section is at $3fbd of its $4000 bank after this
+checkpoint (67 bytes free). The next native family or any grouping code needs
+either a second reference-only section (cross-file `call`s inside the fast
+files assume one bank) or the executor-tail deduplication noted in
+`cleanup_notes.md`.
+
 ## Remaining implementation
 
 Ordinary orchestration, switch/wait handling with an explicit post-entry
-baseline and the unary fallback are implemented and match the frozen reference
-on every existing joint fixture. Still remaining, in the order the profile
+baseline, the unary fallback, lazy reply regimes, the scalar pair/standalone
+paths, the native reply compiler and the native multihit/Super Fang/False
+Swipe/Selfdestruct families are implemented and match the frozen reference on
+every existing joint fixture. Still remaining, in the order the profile
 suggests:
 
-1. **Reply regime laziness** (cheap, no new arithmetic): compile only the HP
-   regimes a reply can reach for this defender and its live plans, mark them in
-   `FSR_VALID`, and have the executor reject an unmarked regime so the
-   selector falls back rather than reading a zero amount. Expected to cut the
-   dominant reply-preparation phase two-to-four-fold; not sufficient alone.
-2. **Milestone 4 native amount arithmetic** streamed by defender, category,
-   power group and reply (grouped incoming bases, five-power-step recurrence,
-   finishing in original order). This is the only route to the target: the
-   producer-backed reply preparation is twelve times the whole budget.
-3. **Native coverage of the fallback families** (defense boosts with variant
-   staging and invalidation, Selfdestruct, multihit, False Swipe, Super Fang)
-   and reply grouping by continuation with three-byte group masses. The broad
-   benchmark spends 27M cycles in fallbacks today and 19k cycles per native pair
-   against a 1,100-cycle target.
+1. **Defense-boost replies** (the last fallback family): compile the boost as
+   a stage change with the variant staging and invalidation the contract
+   describes, so `joint_broad_prior_mass`, `joint_defense_transitions` and
+   `joint_speed_tie_transformed` finish native-only and the last 45
+   `ValuePublicExchange` calls disappear.
+2. **Grouped base arithmetic** (Milestone 4): the native compile is 20.9M of
+   the 59.1M broad benchmark at 13.7k cycles per reply. Stream the formula base
+   by defender, category and power group once per group and finish per reply
+   (chart, STAB, passives, variation) so the compile approaches the contract's
+   per-reply scalar budget.
+3. **Cheaper per-reply scalar work**: cache the plan base pointers and gate
+   fields per defender instead of per pair, skip the miss execution when the
+   miss mass is zero, and move the five-byte accumulations off `FSC_TEMP`.
 4. Adversarial-domain fixtures (maximum candidates and replies, both sides
    uncertain, Fire/Ice thresholds, complex after-effects), then the isolated
    and integrated timing gates and the production ABI/interrupt ownership work.

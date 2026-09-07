@@ -26,6 +26,8 @@ def scenarios():
         "wEnemyMonItem": ITEMS["FOCUS_BAND"], "wBattleMonStatus": 1 << 4, "wEnemyMonStatus": 1 << 6, "wPlayerAccLevel": 6}
     yield "quick_claw_poison_defender", Mon.of("MUK", 50, ["SLUDGE"]), Mon.of("MACHAMP", 50, ["CROSS_CHOP"]), {
         "wEnemyMonItem": ITEMS["QUICK_CLAW"], "wPlayerSubStatus3": 1 << 6, "wEnemySubStatus4": 1 << 5}
+    # Per-hit roll ranges wider than a byte (4x Bug multi-hit into a level 5 defender).
+    yield "wide_roll_range", Mon.of("EXEGGCUTE", 5, ["BARRAGE"]), Mon.of("PINSIR", 100, ["PIN_MISSILE"]), {}
 
 
 def compile_pair(h, mem, regs, base, move, mask):

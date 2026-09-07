@@ -279,3 +279,75 @@ Two checkpoint commits were made on `master` (not pushed): the first captures
 the Codex checkpoint exactly as handed over (all previously uncommitted work,
 original versions of the four appended/rewritten sources), the second is this
 session's orchestration work. `git show --stat HEAD` lists the second.
+
+---
+
+# Continuation 2026-09-07 (Claude Fable, later): performance work and native families
+
+## What changed since the orchestration commit
+
+Six commits on `master` (not pushed), each validated by the frozen-oracle
+comparison (76 vectors exact) before it was made:
+
+| Commit | Change | Broad benchmark |
+| --- | --- | ---: |
+| `9b822b7f` | Lazy reply regimes (`FS_REPLY_REGIMES`, `FSR_VALID`, `FSC_FAULT` latch and restart), `BossAI_FastScalarPair` | 181.0M -> 122M |
+| `a04741df` | `BossAI_FastScalarReplyStandalone`, cached scalar pair gates | 122M -> 106M |
+| `0ed1b6c3` | `fast_reply_native.asm`: native reply compiler with in-bank data mirrors and include guards in `data/` | 106M -> 82M |
+| `a03213eb` | Effect-class table, short divisions, empty-byte reply scan, identity pairs | 82M -> 75M |
+| this checkpoint | Native multihit / Super Fang / False Swipe / Selfdestruct on both sides, `BossAI_FastFallbackPair.Native` | 75M -> 59.1M |
+
+`status.md` sections "Performance work and native families (2026-09-07)",
+"Native families validation" and "After the 2026-09-07 performance work" have
+the details, fixture counts and the phase split. The target (8,388,608) is not
+met; what remains is listed in "Remaining implementation" there.
+
+## Files touched by the native-families checkpoint
+
+| File | Change |
+| --- | --- |
+| `engine/battle/ai/fast_plans.asm` | Family opcodes 3..6, `FSB_PLAN_OPCODE/PATCH/DELTAS` ($a491..$a493), producer-input patch for the sweep and `.RestorePatch`. |
+| `engine/battle/ai/fast_reply_plans.asm` | Family opcodes 5..8, `FSR_MIN_DELTA0..3` (bytes 7, 8, 23, 26), forced full mask for multihit, wide-delta exit to opcode 0 / carry clear. |
+| `engine/battle/ai/fast_reply_native.asm` | Same family classification and deltas as the producer path; Selfdestruct halved defense (uncached); Super Fang template amount; `.store_opcode` returns carry clear for opcode 0. |
+| `engine/battle/ai/fast_plan_executor.asm`, `fast_reply_executor.asm` | `FSE_OPCODE` ($a53f), family scratch `FSX_*` aliasing the damage-script inputs ($a530..$a53c), `.multi`/`.MultiPath`, `.fang`, `.false_swipe`, `.CapWord`, Selfdestruct self-faint, `.Script` entry for the shared single-hit tail; reply side adds `.MinDeltaFor`. |
+| `engine/battle/ai/fast_standalone.asm`, `fast_reply_standalone.asm` | Accept opcodes through the new range. |
+| `engine/battle/ai/fast_pair.asm` | Factored pair accepts the families but rejects Selfdestruct on either side; reply mass zero only for Pursuit/absent. |
+| `engine/battle/ai/fast_pair_fallback.asm` | `BossAI_FastFallbackPair.Native` mode (executor terminals, order start fixed for single orders, tie flag), `.OwnAction`/`.ReplyAction`. |
+| `engine/battle/ai/fast_selector.asm` | `.PlanPair` routes identity replies first, then Selfdestruct on either side to the native whole pair, else scalar/factored. |
+| `tools/boss_ai_fixtures/fast_reply.py`, `fast_plans.py`, `fast_plan_executor.py`, `fast_pair.py`, `fast_reply_standalone.py`, `fast_reply_native.py` | Family moves, patched-context expectations, delta bytes, wide-range case, native whole-pair checks, rejection opcodes moved. |
+| `audit/.../status.md`, `cleanup_notes.md`, `fast_ordinary_profile.json`, `selector_implementation_contract.md` | Documentation and profile refresh; allocation note extended. |
+| `.local/ai-two-second/debug_joint_pairs.py` | Scratch: per-pair native-versus-forced-fallback diff for one joint case. |
+
+## Evidence (ROM `40a209cf3a1e4298897bb97ac213cc842ceb1336c7c48efd80fac600a8e65e58`)
+
+- `fast_reference.py --prototype` PASS 76 vectors, 23 native-only, 3 with
+  fallback (defense boosts only); `--replacement-boundaries` PASS 116;
+  restart adapter PASS 52.
+- `fast_reply_native.py` 5,588; `fast_reply.py` 26,880 / 1,680 plans;
+  `fast_plans.py` 240; `fast_plan_executor.py` 8,208; `fast_standalone.py`
+  2,160; `fast_reply_standalone.py` 3,000; `fast_pair.py` 3,744 + 15
+  rejections; `fast_pair_fallback.py` 1,248; `fast_unary_fallback.py` 88.
+- `check_boss_ai_decision_paths.py` on the rebuilt game ROM (SHA1 unchanged
+  `85a2fe838a28f23b198845e63876a637580e91a9`): PASS 473.
+- 839-fixture reference suite: PASS (`.local/ai-two-second/families-fixtures.log`).
+  `tools/audit/check_release_smoke.py`: ALL RELEASE SMOKE CHECKS PASSED on the
+  final build.
+- Timing: broad benchmark 59,106,740 cycles versus 8,388,608 budget. Not met.
+
+## Review gap
+
+Unchanged from the previous continuation: no independent Astra-low review was
+available. Everything since `6dd6c0e6` is self-reviewed plus fixture-validated.
+The pair fixture caught two real defects in the native whole pair before the
+whole-selector run (missing tie flag; wrong first order), which is the kind of
+thing the reviewer should look for in the rest.
+
+## Next steps
+
+1. Defense-boost replies native (last fallback family; the only remaining
+   producer calls).
+2. Grouped base arithmetic for the reply compile (20.9M of 59.1M).
+3. Cheaper scalar standalone/pair and orchestration arithmetic.
+4. Bank space: 67 bytes left in the fast-prototype section. Deduplicate the
+   two executor tails or open a second reference-only section before adding
+   code.

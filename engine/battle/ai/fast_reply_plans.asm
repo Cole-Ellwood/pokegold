@@ -33,6 +33,17 @@ DEF FSR_DAMAGE EQU 1
 DEF FSR_RECOVERY EQU 2
 DEF FSR_PURSUIT EQU 3
 DEF FSR_ABSENT EQU 4
+DEF FSR_MULTI EQU 5 ; multi-hit damage: per-hit maxima, HP advanced hit by hit
+DEF FSR_FANG EQU 6 ; Super Fang: half the target's current HP at execution
+DEF FSR_FALSE_SWIPE EQU 7 ; single hit capped at target HP-1 at execution
+DEF FSR_SELFDESTRUCT EQU 8 ; user faints before its hit/miss check; halved defense
+; Multi-hit and False Swipe keep the per-regime maximum minus minimum in
+; four otherwise unused header/payload bytes so executors can rebuild the
+; minimum endpoint for the range flag at the real state.
+DEF FSR_MIN_DELTA0 EQU 7
+DEF FSR_MIN_DELTA1 EQU 8
+DEF FSR_MIN_DELTA2 EQU 23
+DEF FSR_MIN_DELTA3 EQU 26
 ASSERT FSR_BASE + FSR_SIZE == 447
 
 MACRO fsr_store
@@ -147,19 +158,58 @@ BossAI_FastCompileReplyPlan::
 .damage
 	ad_address AD_EFFECT
 	ld a, [hl]
+	ld b, a
+	ld a, FSR_DAMAGE
+	ld [FSB_PLAN_OPCODE], a
+	xor a
+	ld [FSB_PLAN_PATCH], a
+	ld [FSB_PLAN_DELTAS], a
+	ld a, b
 	cp EFFECT_SELFDESTRUCT
-	jp z, .invalid
-	cp EFFECT_FALSE_SWIPE
-	jp z, .invalid
+	jr nz, .not_selfdestruct
+	ld a, FSR_SELFDESTRUCT
+	ld [FSB_PLAN_OPCODE], a
+	jr .family_ready
+.not_selfdestruct
 	cp EFFECT_SUPER_FANG
-	jp z, .invalid
+	jr nz, .not_fang
+	ld a, FSR_FANG
+	ld [FSB_PLAN_OPCODE], a
+	jr .family_ready
+.not_fang
+	cp EFFECT_FALSE_SWIPE
+	jr nz, .not_false_swipe
+	ld a, FSR_FALSE_SWIPE
+	ld [FSB_PLAN_OPCODE], a
+	ld a, 1
+	ld [FSB_PLAN_PATCH], a
+	ld [FSB_PLAN_DELTAS], a
+	ad_address AD_EFFECT
+	ld [hl], EFFECT_NORMAL_HIT
+	jr .family_ready
+.not_false_swipe
 	ad_address AD_MIN_HITS
 	ld a, [hli]
-	cp 1
-	jp nz, .invalid
+	dec a
+	jr nz, .multi
 	ld a, [hl]
-	cp 1
-	jp nz, .invalid
+	dec a
+	jr z, .family_ready
+.multi
+; hits cross HP regimes inside one action: compile every regime
+	ld a, FSR_MULTI
+	ld [FSB_PLAN_OPCODE], a
+	ld a, 2
+	ld [FSB_PLAN_PATCH], a
+	ld a, 1
+	ld [FSB_PLAN_DELTAS], a
+	ld a, 15
+	ld [FSB_REPLY_REGIMES], a
+	ad_address AD_MIN_HITS
+	ld [hl], 1
+	inc hl
+	ld [hl], 1
+.family_ready
 	ld a, STEEL
 	call BossAI_DamageKernel.AttackerContribution
 	fsr_store FSR_STEEL
@@ -204,6 +254,29 @@ BossAI_FastCompileReplyPlan::
 	ld [hli], a
 	ld a, [FSB_RAW_MAX + 1]
 	ld [hl], a
+	ld a, [FSB_PLAN_DELTAS]
+	and a
+	jr z, .no_delta
+	ld a, [FSB_PLAN_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .MinDeltaOffsets
+	add hl, bc
+	ld a, [hl]
+	call .PlanAddress
+	ld a, [FSB_RAW_MIN + 1]
+	ld c, a
+	ld a, [FSB_RAW_MAX + 1]
+	sub c
+	ld [hl], a
+	ld a, [FSB_RAW_MIN]
+	ld c, a
+	ld a, [FSB_RAW_MAX]
+	sbc c
+	jr z, .no_delta
+	xor a
+	ld [FSB_PLAN_OPCODE], a ; a delta wider than a byte leaves the reply to the fallback
+.no_delta
 	ld a, [FSB_PLAN_REGIME]
 	ld c, a
 	ld b, 0
@@ -244,14 +317,41 @@ BossAI_FastCompileReplyPlan::
 	ld a, [FSB_PLAN_POSTROLL]
 	ad_address AD_MAX_POSTROLL
 	ld [hl], a
+	call .RestorePatch
+	ld a, [FSB_PLAN_DELTAS]
+	and a
+	jr nz, .hp_depend_ready ; byte 8 carries the regime-1 delta instead
 	ld a, 3
 	fsr_store FSR_HP_DEPEND
+.hp_depend_ready
 	ld a, [FSB_REPLY_REGIMES]
 	fsr_store FSR_VALID
-	ld a, FSR_DAMAGE
+	ld a, [FSB_PLAN_OPCODE]
 	fsr_store FSR_OPCODE
+	and a
+	ret z ; unrepresented after all: header written, fallback follows
 	scf
 	ret
+.RestorePatch
+	ld a, [FSB_PLAN_PATCH]
+	and a
+	ret z
+	dec a
+	jr nz, .restore_hits
+	ad_address AD_EFFECT
+	ld [hl], EFFECT_FALSE_SWIPE
+	ret
+.restore_hits
+	ld a, FSR_MIN_HITS
+	call .PlanAddress
+	ld a, [hli]
+	ld b, [hl]
+	ad_address AD_MIN_HITS
+	ld [hli], a
+	ld [hl], b
+	ret
+.MinDeltaOffsets
+	db FSR_MIN_DELTA0, FSR_MIN_DELTA1, FSR_MIN_DELTA2, FSR_MIN_DELTA3
 .invalid
 	and a
 	ret

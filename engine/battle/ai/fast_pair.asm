@@ -46,19 +46,20 @@ BossAI_FastNormalizedPair::
 	sla c
 	rl b
 	endr
+; The factoring needs a miss to be identity: Selfdestruct pairs use
+; BossAI_FastFullNativePair instead.
 	ld hl, FSP_BASE + FSP_OPCODE
 	add hl, bc
 	ld a, [hl]
-	cp FSP_DAMAGE
-	jr z, .own_ok
-	cp FSP_RECOVERY
-	jp nz, .reject_bc
-.own_ok
+	and a
+	jp z, .reject_bc
+	cp FSP_SELFDESTRUCT
+	jp nc, .reject_bc
 	ad_address FSR_BASE + FSR_OPCODE
 	ld a, [hl]
 	and a
 	jp z, .reject_bc
-	cp FSR_ABSENT + 1
+	cp FSR_SELFDESTRUCT
 	jp nc, .reject_bc
 	pop bc
 	pop af
@@ -98,8 +99,10 @@ BossAI_FastNormalizedPair::
 	cp FSR_RECOVERY
 	jr z, .reply_mass
 	ld bc, 0
-	cp FSR_DAMAGE
-	jr nz, .reply_mass
+	cp FSR_PURSUIT
+	jr z, .reply_mass
+	cp FSR_ABSENT
+	jr z, .reply_mass
 	ld a, FSR_ACCURACY
 	call .ReplyAddress
 	ld a, [hl]

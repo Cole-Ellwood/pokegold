@@ -1100,7 +1100,23 @@ BossAI_ComparePublicActionsFastPrototype::
 	ad_address FS_REPLY_IDENTITY
 	ld a, [hl]
 	and a
-	jr z, .pair_native
+	jr nz, .pair_identity
+	ld hl, FSR_BASE + FSR_OPCODE
+	add hl, de
+	ld a, [hl]
+	cp FSR_SELFDESTRUCT
+	jr z, .pair_full
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	cp FSP_SELFDESTRUCT
+	jr nz, .pair_native
+.pair_full
+; a miss that is not identity: every event pair through the executors
+	pop af
+	call BossAI_FastFallbackPair.Native
+	jr .pair_total
+.pair_identity
 	pop af
 	call .IdentityPair
 	pop af

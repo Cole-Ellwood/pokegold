@@ -1,5 +1,7 @@
-; Complete unweighted direct-reference pair fallback. Only the old producer
-; prefix is mutable; no legacy JC or SRAM HP-table lifetime is entered.
+; Complete unweighted pair over every positive original-event pair and every
+; modeled order. Terminals come from the direct reference (only the old
+; producer prefix is mutable; no legacy JC or SRAM HP-table lifetime is
+; entered) or, in the native mode, from the compact executors.
 BossAI_FastFallbackPair::
 ; C=compiled owned plan0..3 (including opcode0), DE=current reply/context,
 ; A=actual order descriptor0own first/1reply first/2modeled tie.
@@ -14,6 +16,14 @@ BossAI_FastFallbackPair::
 ; Return N minus the exact standalone baseline already assigned by the caller.
 ; Opcode0 moments are zero; never subtract a made-up rounded utility.
 	ld b, 1
+	jr .validate
+.Native
+; Correction only, with both actions executed from their compact plans in
+; every order (a Selfdestruct miss is not identity, so all four terminals
+; interact). Both standalone records, actors and HP tables must be live;
+; both opcodes must be represented. FPK_FLAGS holds action flags plus the
+; modeled-tie flag, like BossAI_FastNormalizedPair.
+	ld b, 3
 .validate
 	cp 3
 	jp nc, .reject
@@ -33,6 +43,23 @@ BossAI_FastFallbackPair::
 	and a
 	jp nz, .reject_bc
 	pop bc
+	bit 1, b
+	jr z, .modes_ok
+	inc hl
+	inc hl
+	inc hl ; FSP_OPCODE
+	ld a, [hl]
+	and a
+	jp z, .reject_af
+	cp FSP_SELFDESTRUCT + 1
+	jp nc, .reject_af
+	ad_address FSR_BASE + FSR_OPCODE
+	ld a, [hl]
+	and a
+	jp z, .reject_af
+	cp FSR_SELFDESTRUCT + 1
+	jp nc, .reject_af
+.modes_ok
 	pop af
 	ld [FPK_ORDER], a
 	ld a, b
@@ -53,6 +80,14 @@ BossAI_FastFallbackPair::
 	ld [hli], a
 	dec b
 	jr nz, .clear
+	ld a, [FPK_MODE]
+	bit 1, a
+	jr z, .own_event
+	ld a, [FPK_ORDER]
+	cp 2
+	jr nz, .own_event
+	ld a, 1 << AV_UNKNOWN_ORDER_F ; the direct evaluator raises this itself
+	ld [FPK_FLAGS], a
 .own_event
 	xor a
 	call BossAI_FastNormalizedPair.Accuracy
@@ -77,18 +112,48 @@ BossAI_FastFallbackPair::
 	ld [FPK_REPLY_Z + 1], a
 	or b
 	jp z, .next_reply
-	xor a
-	ld [FPK_CURRENT], a
 	ld a, [FPK_ORDER]
+	ld b, 1
 	cp 2
-	ld a, 1
-	jr nz, .order_count
-	inc a
-.order_count
+	jr nz, .first_order
+	xor a
+	inc b
+.first_order
+	ld [FPK_CURRENT], a ; a single order starts as the actual one (native mode executes it)
+	ld a, b
 	ld [FPK_LEFT], a
 .order
+	ld a, [FPK_MODE]
+	bit 1, a
+	jr nz, .native_terminal
 	call .EventContext
 	farcall BossAI_ValuePublicExchangeFromContext
+	ad_address AV_UNCERTAIN
+	ld a, [hl]
+	jr .accumulate
+.native_terminal
+	call BossAI_FastNormalizedPair.InitialContinuation
+	ld a, [FPK_CURRENT]
+	and a
+	jr nz, .reply_first
+	call .OwnAction
+	call .ReplyAction
+	jr .terminal
+.reply_first
+	call .ReplyAction
+	call .OwnAction
+.terminal
+	call BossAI_FastBuildOwnedStandalone.Delta
+	ld hl, 1024
+	add hl, bc ; U=1024+V(final)-V(initial), positive
+	ld b, h
+	ld c, l
+	ld a, [$a458]
+.accumulate
+; A=reached flags, BC=U
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
 	ld a, b
 	ld [FS_MULTIPLICAND + 3], a
 	ld a, c
@@ -98,11 +163,6 @@ BossAI_FastFallbackPair::
 	ld [FS_MULTIPLICAND + 1], a
 	ld [FS_MULTIPLICAND + 2], a
 	ld [FS_MULTIPLIER], a
-	ad_address AV_UNCERTAIN
-	ld a, [hl]
-	ld hl, FPK_FLAGS
-	or [hl]
-	ld [hl], a
 	ld a, [FPK_OWN_Z]
 	ld [FS_MULTIPLIER + 1], a
 	ld a, [FPK_OWN_Z + 1]
@@ -171,6 +231,18 @@ BossAI_FastFallbackPair::
 .reject
 	and a
 	ret
+.OwnAction
+	call BossAI_FastNormalizedPair.Context
+	ld hl, $a448
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, [FPK_FIRST_EVENT]
+	jp BossAI_FastExecuteOwnedPlan
+.ReplyAction
+	call BossAI_FastNormalizedPair.Context
+	ld hl, $a448
+	ld a, [FPK_SECOND_EVENT]
+	jp BossAI_FastExecuteReplyPlan
 .EventContext
 ; All FarCall inputs live in the producer prefix, not A/HL. The direct entry
 ; rebuilds AD and initializes HP/defense/uncertainty on every original event.

@@ -1,7 +1,7 @@
 ; Standalone incoming successors, deltas and signed probability moment.
 BossAI_FastBuildReplyStandalone::
 ; DE=context with compiled reply399..446. Imported actors/HP tables live,
-; SRAM0 open. DE/SP preserved. Reject opcode0 or >4 without writes.
+; SRAM0 open. DE/SP preserved. Reject opcode0 or >8 without writes.
 ; Writes only reply28..42, both continuations, executor/arithmetic scratch.
 ; Original event flags remain in their continuations, not in a plan union.
 ; Fixed public-context preconditions match the incoming plan executor.
@@ -9,7 +9,7 @@ BossAI_FastBuildReplyStandalone::
 	ld a, [hl]
 	and a
 	jp z, .reject
-	cp FSR_ABSENT + 1
+	cp FSR_SELFDESTRUCT + 1
 	jp nc, .reject
 	push de
 	xor a

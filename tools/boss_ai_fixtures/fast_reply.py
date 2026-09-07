@@ -31,7 +31,24 @@ def expected_plan(h, context, regs):
         out[1] = 2
         out[12:14] = (max(1, maximum // denominator) if maximum else 0).to_bytes(2, "big")
     else:
-        out[1], out[8], out[9] = 1, 3, 15
+        # Multi-hit and False Swipe compile per-hit / uncapped endpoints from a
+        # patched producer context and keep max-min deltas in bytes 7, 8, 23, 26.
+        patched = bytearray(context)
+        effect, hits = context[2], bytes(context[29:31])
+        if effect == EFFECTS["EFFECT_SELFDESTRUCT"]:
+            family = 8
+        elif effect == EFFECTS["EFFECT_SUPER_FANG"]:
+            family = 6
+        elif effect == EFFECTS["EFFECT_FALSE_SWIPE"]:
+            family = 7
+            patched[2] = EFFECTS["EFFECT_NORMAL_HIT"]
+        elif hits != bytes((1, 1)):
+            family = 5
+            patched[29:31] = bytes((1, 1))
+        else:
+            family = 1
+        deltas = family in (5, 7)
+        out[1], out[8], out[9] = family, 0 if deltas else 3, 15
         out[22], out[45] = context[1], 1  # forced Fire/Steel user
         contact = h.syms["MoveContactFlags"]
         assert h.invoke("GetFarByte", {"A": contact.bank, "HL": contact.address + context[28] - 1})
@@ -46,7 +63,7 @@ def expected_plan(h, context, regs):
         descriptor = h.syms["BossAI_FastOwnCommandDescriptors"].address + 2 * (effect * 3 + int(helmet))
         out[46:48] = descriptor.to_bytes(2, "big")
         for regime in range(4):
-            mem[0xc900:0xca44] = list(context)
+            mem[0xc900:0xca44] = list(patched)
             mem[0xc90f] = context[15] & ~6 | regime << 1
             assert h.invoke("BossAI_ValuePublicExchange.MoveReplyPursuit", regs)
             assert h.invoke("BossAI_PublicDamageRange", regs)
@@ -56,6 +73,11 @@ def expected_plan(h, context, regs):
             out[12 + 2 * regime:14 + 2 * regime] = raw_max
             if raw_min != raw_max:
                 out[10] |= 1 << regime
+            if deltas:
+                delta = int.from_bytes(raw_max, "big") - int.from_bytes(raw_min, "big")
+                out[(7, 8, 23, 26)[regime]] = delta & 255
+                if delta >= 256:
+                    out[1] = 0  # wider than a byte: the reply stays with the fallback
     return out
 
 
@@ -89,7 +111,7 @@ def edge_cases(h, regs):
         before_sram = bytes(mem[0xa000:0xa600])
         assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": event, "HL": 0xa448})
         assert not h.outcome()["carry"] and bytes(mem[0xa000:0xa600]) == before_sram
-    for move in ("EXPLOSION", "FALSE_SWIPE", "SUPER_FANG", "HARDEN", "AMNESIA", "FURY_SWIPES"):
+    for move in ("HARDEN", "AMNESIA"):
         mem[0xc900:0xcad8] = [0] * 472
         assert h.invoke("BossAI_BuildOwnedDamageContext", {**regs, "A": 0xff, "B": 0, "C": MOVES[move]})
         mem[0xc936] = MOVES[move]
@@ -100,6 +122,19 @@ def edge_cases(h, regs):
         before = bytes(mem[0xa448:0xa478])
         assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": 0, "HL": 0xa448})
         assert not h.outcome()["carry"] and bytes(mem[0xa448:0xa478]) == before
+    # A per-hit roll range wider than a byte leaves the family to the fallback:
+    # the header is written, the opcode stays 0 and the executor rejects.
+    mem[0xc900:0xcad8] = [0] * 472
+    assert h.invoke("BossAI_BuildOwnedDamageContext", {**regs, "A": 0xff, "B": 0, "C": MOVES["PIN_MISSILE"]})
+    mem[0xc900] = 100
+    mem[0xc905:0xc909] = [3, 0xe7, 0, 1]  # attack 999, defense 1
+    mem[0xc909:0xc90d] = [TYPES["BUG"], TYPES["BUG"], TYPES["GRASS"], TYPES["PSYCHIC_TYPE"]]
+    mem[0xc936] = MOVES["PIN_MISSILE"]
+    assert h.invoke("BossAI_FastCompileReplyPlan", regs) and not h.outcome()["carry"]
+    assert mem[0xca8f] == MOVES["PIN_MISSILE"] and mem[0xca90] == 0, mem[0xca90]
+    before = bytes(mem[0xa448:0xa478])
+    assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": 0, "HL": 0xa448})
+    assert not h.outcome()["carry"] and bytes(mem[0xa448:0xa478]) == before
     assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
 
 
@@ -113,7 +148,8 @@ def main():
         assert h.invoke("OpenSRAM", {"A": 0})
         for move in ("TACKLE", "FIRE_BLAST", "GIGA_DRAIN", "DOUBLE_EDGE",
                      "STRUGGLE", "SEISMIC_TOSS", "DRAGON_RAGE", "RECOVER",
-                     "REST", "SYNTHESIS", "PURSUIT", "SPLASH", "SNORE", "DREAM_EATER", "LEECH_LIFE"):
+                     "REST", "SYNTHESIS", "PURSUIT", "SPLASH", "SNORE", "DREAM_EATER", "LEECH_LIFE",
+                     "FURY_SWIPES", "BONEMERANG", "TWINEEDLE", "SUPER_FANG", "FALSE_SWIPE", "EXPLOSION"):
             for item in (0, ITEMS["ROCKY_HELMET"]):
                 h.wr("wEnemyMonItem", item)
                 for maximum, player_max in ((9, 17), (999, 703), (65535, 65535), (50000, 65535)):
@@ -202,7 +238,7 @@ def main():
                                 count += 1
         edge_cases(h, regs)
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {count} incoming action/reference comparisons, {count // 16} full plans, producer poisoning, record guards and 13 absent/rejected cases")
+    print(f"PASS: {count} incoming action/reference comparisons, {count // 16} full plans, producer poisoning, record guards, absent/rejected cases and the wide-range fallback")
 
 
 if __name__ == "__main__":

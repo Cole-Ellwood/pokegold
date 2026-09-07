@@ -60,3 +60,31 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
 - The unary fallback and the pair fallback both rebuild the whole producer
   prefix per event through `ValuePublicExchangeFromContext`; on the broad case
   that is 189 direct evaluations (27M cycles).
+
+## Native families (Claude-authored, 2026-09-07)
+
+- The `.multi`/`.MultiPath`/`.fang`/`.false_swipe`/`.CapWord` tails are
+  generated from one template into both executors with only the target offset,
+  the maximum-HP source, the amount lookup and the endpoint selection
+  substituted (see `.local/ai-two-second/patch_families2.py`). Together with
+  the pre-existing duplication this makes the executor pair the obvious place
+  to recover bank space: one body parameterised by a direction byte would save
+  roughly 600 bytes.
+- `BossAI_FastFallbackPair` now has three entries (full, correction only,
+  native correction only) selected by a mode byte with bit tests inside the
+  loop. Clearer would be two routines sharing the event loop through a
+  terminal callback, but the SM83 has no cheap indirect call and the mode
+  byte costs less than the duplication it replaced.
+- The multihit/False Swipe min-delta bytes live in four scattered reply-record
+  bytes (7, 8, 23, 26) because the 48-byte record has no room for four more
+  words. A record layout pass that drops the unused hit-flags byte and packs
+  the item quota would free a contiguous run.
+- `FSX_*` family scratch aliases the damage script's `FST_*` inputs; correct
+  because every family loads its result into BC before jumping to `.Script`,
+  but a reader has to know that. Eight more free bytes anywhere in the
+  executor area would remove the aliasing.
+- The fixtures for the families patch the producer context the same way the
+  compilers do (hits 1/1, effect NORMAL_HIT) to compute expectations; that is
+  the right independent check for the compile but it means the fixture
+  encodes the same idea twice. The executor comparisons against
+  `ValuePublicExchange` are the real independent evidence.

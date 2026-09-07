@@ -157,9 +157,21 @@ provisional control-field list above where they differ):
   public order). Bench defenders overwrite own start HP/Phi with the
   post-entry values after the entry delta is recorded.
 - Producer bridge: $a48f Quick Claw class exported by
-  `BossAI_FastPrepareActiveFacts`.
-- The 64 bytes at $a5c0..$a5ff, the group-mass area, the variant area and the
-  base-state area remain unassigned.
+  `BossAI_FastPrepareActiveFacts`; $a490 regime mask compiled for the current
+  reply; $a491 family opcode, $a492 producer-input patch kind, $a493 delta
+  store flag (compile-time only).
+- Later 2026-09-07 additions: control byte 460 reply regime mask, 465 reply
+  identity, 466 order descriptor of the pair being evaluated; $a58f incoming
+  regime fault latch; $a53f executor opcode; $a530..$a53c family scratch
+  aliasing the damage-script inputs (consumed before the script runs);
+  $a5c0..$a5d7 scalar pair gate caches; $a5d8..$a5df native compile
+  temporaries (bytes 5..7: family opcode, delta flag, halved defense);
+  $a5e0..$a5ff per-defender reply facts; $a590..$a5bf and $a4f8..$a50f
+  physical formula-base cache; special base cache in the dead outgoing
+  template bytes at context 89..190. Reply record bytes 7, 8, 23 and 26 hold
+  per-regime maximum-minus-minimum deltas for multihit and False Swipe
+  replies. The group-mass area, the variant area and the base-state area
+  remain unassigned.
 
 Lifetime sequence:
 

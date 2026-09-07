@@ -76,6 +76,9 @@ DEF FSM_CHECK_FLAGS EQU $a576
 DEF FSM_CAN_ACT EQU $a577
 ASSERT FSM_CAN_ACT < $a578
 DEF FSM_TEMP EQU $a5d8 ; eight bytes
+DEF FSM_OPCODE EQU FSM_TEMP + 5
+DEF FSM_DELTAS EQU FSM_TEMP + 6 ; store per-regime max-min deltas
+DEF FSM_HALVE EQU FSM_TEMP + 7 ; Selfdestruct: halved truncated defense
 ASSERT FSM_TEMP + 8 <= FSN
 
 ; In-bank mirrors. Bytes are the authoritative data files' bytes.
@@ -680,25 +683,56 @@ BossAI_FastCompileReplyNative::
 	ld hl, FSR_BASE + FSR_OPCODE
 	add hl, de
 	ld [hl], a
+	and a
+	ret z ; unrepresented after all: header written, fallback follows
 	scf
 	ret
 .fallback
 	and a
 	ret
 .damage
+	ld a, FSR_DAMAGE
+	ld [FSM_OPCODE], a
+	xor a
+	ld [FSM_DELTAS], a
+	ld [FSM_HALVE], a
 	ld a, [FSM_EFFECT]
 	cp EFFECT_SELFDESTRUCT
-	jr z, .fallback
-	cp EFFECT_FALSE_SWIPE
-	jr z, .fallback
+	jr nz, .not_selfdestruct
+	ld a, FSR_SELFDESTRUCT
+	ld [FSM_OPCODE], a
+	ld a, 1
+	ld [FSM_HALVE], a
+	jr .family_ready
+.not_selfdestruct
 	cp EFFECT_SUPER_FANG
-	jr z, .fallback
+	jr nz, .not_fang
+	ld a, FSR_FANG
+	ld [FSM_OPCODE], a
+	jr .family_ready
+.not_fang
+	cp EFFECT_FALSE_SWIPE
+	jr nz, .not_false_swipe
+	ld a, FSR_FALSE_SWIPE
+	ld [FSM_OPCODE], a
+	ld a, 1
+	ld [FSM_DELTAS], a
+	jr .family_ready
+.not_false_swipe
 	ld a, [FSM_MIN_HITS]
 	dec a
-	jr nz, .fallback
+	jr nz, .multi_family
 	ld a, [FSM_MAX_HITS]
 	dec a
-	jr nz, .fallback
+	jr z, .family_ready
+.multi_family
+	ld a, FSR_MULTI
+	ld [FSM_OPCODE], a
+	ld a, 1
+	ld [FSM_DELTAS], a
+	ld a, 15
+	ld [FSM_MASK], a
+.family_ready
 	ld hl, FSR_BASE + FSR_STEEL
 	add hl, de
 	ld a, [FSN_STEEL]
@@ -710,7 +744,11 @@ BossAI_FastCompileReplyNative::
 	call .Descriptor
 	ld hl, FSR_BASE + FSR_HP_DEPEND
 	add hl, de
+	ld a, [FSM_DELTAS]
+	and a
+	jr nz, .hp_depend_ready ; byte 8 carries the regime-1 delta instead
 	ld [hl], 3
+.hp_depend_ready
 	inc hl
 	ld a, [FSM_MASK]
 	ld [hl], a
@@ -732,10 +770,12 @@ BossAI_FastCompileReplyNative::
 	ld a, [hl]
 	cp 4
 	jr c, .regime
-	ld a, FSR_DAMAGE
-	jr .store_opcode
+	ld a, [FSM_OPCODE]
+	jp .store_opcode
 .Bits
 	db 1, 2, 4, 8
+.MinDeltaOffsets
+	db FSR_MIN_DELTA0, FSR_MIN_DELTA1, FSR_MIN_DELTA2, FSR_MIN_DELTA3
 
 .EffectSupport
 ; BuildPublicDamageContext.EffectSupport for the incoming direction.
@@ -1251,7 +1291,7 @@ BossAI_FastCompileReplyNative::
 	ld [FSM_MATCHUP], a
 	ld a, b
 	or c
-	jr z, .fixed ; immune: supported zero
+	jp z, .fixed ; immune: supported zero
 	ld a, [FSN_FLAGS]
 	bit AD_BALLOON_F, a
 	jr z, .check_fixed
@@ -1259,13 +1299,15 @@ BossAI_FastCompileReplyNative::
 	cp GROUND
 	jr nz, .check_fixed
 	ld bc, 0
-	jr .fixed
+	jp .fixed
 .check_fixed
 	ld a, [FSM_EFFECT]
 	cp EFFECT_STATIC_DAMAGE
 	jr z, .static
 	cp EFFECT_LEVEL_DAMAGE
 	jr z, .level
+	cp EFFECT_SUPER_FANG
+	jr z, .fang
 	call .Base
 	ld a, [FSM_STRUGGLE]
 	and a
@@ -1315,6 +1357,17 @@ BossAI_FastCompileReplyNative::
 .fixed_byte
 	ld c, a
 	ld b, 0
+	jr .fixed
+.fang
+; the kernel halves the template's defender HP (minimum one); the executor
+; recomputes from the real HP and treats a zero here as immunity
+	ad_address AV_PREPARED_ACTOR + AD_DEFENDER_HP
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	srl b
+	rr c
+	call .MinOne
 .fixed
 	ld a, b
 	ld [FSM_MIN], a
@@ -1347,6 +1400,36 @@ BossAI_FastCompileReplyNative::
 	add hl, de
 	or [hl]
 	ld [hl], a
+	ld a, [FSM_DELTAS]
+	and a
+	jr z, .no_delta
+	push bc
+	ld a, [FSM_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .MinDeltaOffsets
+	add hl, bc
+	ld c, [hl]
+	ld hl, FSR_BASE
+	add hl, bc
+	add hl, de
+	pop bc
+	push bc
+	push hl
+	ld hl, FSM_MIN + 1
+	ld a, c
+	sub [hl]
+	dec hl
+	ld c, a
+	ld a, b
+	sbc [hl]
+	pop hl
+	ld [hl], c
+	pop bc
+	jr z, .no_delta
+	xor a
+	ld [FSM_OPCODE], a ; a delta wider than a byte leaves the reply to the fallback
+.no_delta
 	ld a, [FSM_MIN]
 	cp b
 	jr nz, .range
@@ -1362,7 +1445,10 @@ BossAI_FastCompileReplyNative::
 	ret
 .Base
 ; BC=capped formula base plus two for this category and power, from the
-; cache when present.
+; cache when present. Selfdestruct's halved defense is never cached.
+	ld a, [FSM_HALVE]
+	and a
+	jp nz, .Formula
 	ld a, [FSM_POWER]
 	ld c, a
 	ld b, $ff
@@ -1456,6 +1542,13 @@ BossAI_FastCompileReplyNative::
 	ld a, [FSN_SPEC_DEFENSE]
 .defense_ready
 	ld c, a
+	ld a, [FSM_HALVE]
+	and a
+	jr z, .divide_defense
+	srl c
+	jr nz, .divide_defense
+	inc c ; the kernel's defense-zero guard after halving
+.divide_defense
 	call .Div24By8
 	ld c, 50
 	call .Div24By8

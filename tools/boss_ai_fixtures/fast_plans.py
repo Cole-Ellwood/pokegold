@@ -57,9 +57,7 @@ def main():
                     expected[62:64] = context[33:35]
                     mem[0xc948] = context[72]
                     recovery = move_name in ("RECOVER", "REST", "SYNTHESIS")
-                    represented = recovery or (move_name not in (
-                        "EXPLOSION", "FALSE_SWIPE", "SUPER_FANG", "HARDEN", "AMNESIA")
-                        and context[29:31] == bytes((1, 1)))
+                    represented = recovery or move_name not in ("HARDEN", "AMNESIA")
                     maximum = int.from_bytes(context[49:51], "big")
                     if recovery:
                         denominator = 1 if move_name == "REST" else 2
@@ -72,7 +70,21 @@ def main():
                         expected[4] = 2
                         expected[53:55] = quota.to_bytes(2, "big")
                     elif represented:
-                        expected[4] = 1
+                        # Families: endpoints come from a patched producer context
+                        # (per hit, uncapped); the executors finish them at the real HP.
+                        patched = bytearray(context)
+                        if context[2] == EFFECTS["EFFECT_SELFDESTRUCT"]:
+                            expected[4] = 6
+                        elif context[2] == EFFECTS["EFFECT_SUPER_FANG"]:
+                            expected[4] = 4
+                        elif context[2] == EFFECTS["EFFECT_FALSE_SWIPE"]:
+                            expected[4] = 5
+                            patched[2] = EFFECTS["EFFECT_NORMAL_HIT"]
+                        elif context[29:31] != bytes((1, 1)):
+                            expected[4] = 3
+                            patched[29:31] = bytes((1, 1))
+                        else:
+                            expected[4] = 1
                         expected[12:14] = bytes((3, 15))
                         expected[57] = 1  # forced Fire/Steel above
                         effect = (1 if context[2] in (EFFECTS["EFFECT_LEECH_HIT"],
@@ -83,7 +95,7 @@ def main():
                         if item_tag == 1:
                             expected[55:57] = (max(1, maximum // 10) if maximum else 0).to_bytes(2, "big")
                         for regime in range(4):
-                            mem[0xc900:0xca44] = list(context)
+                            mem[0xc900:0xca44] = list(patched)
                             mem[0xc90f] = (context[15] & ~6) | regime << 1
                             assert h.invoke("BossAI_ValuePublicExchange.MoveReplyPursuit", regs)
                             assert h.invoke("BossAI_PublicDamageRange", regs)
@@ -97,9 +109,10 @@ def main():
                             if raw_min != raw_max:
                                 expected[14] |= 1 << regime
                             # Raw amounts are independent of the actual HP
-                            # values once the two flags and other facts are fixed.
-                            for hp in (1, 65535):
-                                mem[0xc900:0xca44] = list(context)
+                            # values once the two flags and other facts are fixed
+                            # (Super Fang's template amount is half the template HP).
+                            for hp in ((1, 65535) if expected[4] != 4 else ()):
+                                mem[0xc900:0xca44] = list(patched)
                                 mem[0xc90f] = (context[15] & ~6) | regime << 1
                                 mem[0xc90d:0xc90f] = list(hp.to_bytes(2, "big"))
                                 mem[0xc92f:0xc931] = list(hp.to_bytes(2, "big"))
