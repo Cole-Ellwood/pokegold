@@ -516,17 +516,8 @@ BossAI_FastCompileReplyNative::
 	ld l, a
 	ld h, 0
 	add hl, hl
-	add hl, hl
-	add hl, hl
-	ld c, a
-	ld b, 0
-	ld a, l
-	sub c
-	ld l, a
-	ld a, h
-	sbc b
-	ld h, a ; 7*(move-1)
-	ld bc, BossAI_FastMoves + MOVE_EFFECT
+	add hl, hl ; 4*(move-1): the mirror keeps effect, power, type, accuracy
+	ld bc, BossAI_FastMoves
 	add hl, bc
 	ld a, [hli]
 	ld [FSM_EFFECT], a

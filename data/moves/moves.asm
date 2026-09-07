@@ -1,5 +1,20 @@
 ; Characteristics of each move.
 
+IF DEF(BOSSAI_EMIT_LOCAL_MOVES)
+; In-bank mirror for the offline AI reference: only the four bytes its
+; compiler reads (effect, power, type, accuracy), four per move.
+IF DEF(move)
+PURGE move
+ENDC
+MACRO move
+	db \2 ; effect
+	db \3 ; power
+	db \4 ; type
+	db \5 percent ; accuracy
+ENDM
+BossAI_FastMoves:
+	table_width 4
+ELSE
 IF !DEF(move)
 MACRO move
 	db \1 ; animation
@@ -12,14 +27,10 @@ MACRO move
 	assert \6 <= 40, "PP must be 40 or less"
 ENDM
 ENDC
-
-IF DEF(BOSSAI_EMIT_LOCAL_MOVES)
-BossAI_FastMoves: ; in-bank mirror for the offline AI reference
-ELSE
 Moves:
+	table_width MOVE_LENGTH
 ENDC
 ; entries correspond to move ids (see constants/move_constants.asm)
-	table_width MOVE_LENGTH
 	move IRON_HEAD    , EFFECT_FLINCH_HIT       ,  80, STEEL       , 100, 25,  20
 	move KARATE_CHOP,  EFFECT_NORMAL_HIT,         80, FIGHTING,     100, 25,   0
 	move DOUBLESLAP,   EFFECT_MULTI_HIT,          25, NORMAL,       100, 10,   0
@@ -275,3 +286,6 @@ ENDC
 	move CALM_MIND,    EFFECT_CALM_MIND,           0, PSYCHIC_TYPE, 100, 20,   0
 	move QUIVER_DANCE, EFFECT_QUIVER_DANCE,        0, BUG,          100, 20,   0
 	assert_table_length NUM_ATTACKS
+IF DEF(BOSSAI_EMIT_LOCAL_MOVES)
+PURGE move ; the game table defines the full row macro itself
+ENDC
