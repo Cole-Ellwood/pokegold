@@ -499,6 +499,92 @@ record; (4) defense-boost replies native; (5) grouping identical records for
 the active defender's pairs. The two-second target is not met and no timing
 claim is made.
 
+#### Native own defense-boost plans and two more cold sections (2026-09-07, night)
+
+- Bank space first. `fast_results.asm` (input preparation, result clearing,
+  finalization: once per decision) and the HP table construction in
+  `fast_hp.asm` (`BossAI_FastBuildHPTable` and its five kernels: once per
+  defender) moved into their own sections, "Boss AI Fast Results" and the
+  page-aligned "Boss AI Fast HP Tables" (which carries the event mask table
+  the rank kernels index), behind far entries: `BossAI_FastPreparePublicInputsFar`
+  (C=kind, since farcall clobbers A) and `BossAI_FastBuildOwnHPTableFar` /
+  `BossAI_FastBuildPlayerHPTableFar` (the mode mirrored through C). Both the
+  finalizer and the builder reach `BossAI_FastDivide24By16` through farcall
+  (memory operands; BC and carry survive the far return). The fast-prototype
+  section went from $3f76 to $3d25 of $4000 with the boost code included
+  (731 bytes free).
+- The first build of that move hung on every decision: the finalizer still
+  reached the divide with a plain `call`, and `check_cross_bank_call.py` had
+  not flagged it because it read only `pokegold.sym`, where the
+  reference-only sections do not exist. The audit now checks
+  `pokegold_ai_reference.sym` as well, each sym on its own since a label's
+  bank can differ between the builds; the reintroduced call fails it.
+- Own boost plans compile to `FSP_BOOST`=7 with stages and axis at
+  `FSP_DEFENSE_STAGE`/`FSP_DEFENSE_AXIS` and zero damage flags. The owned
+  executor and the standalone builder accept the opcode as check flags only
+  (the reference's `.OwnMove` returns right after `.DefenseBoost`), so the
+  standalone record is the identity with zero moment.
+- Reply amounts at the raised own defense. `BossAI_FastProjectOwnDefense`
+  (producer bank) reproduces `ValuePublicExchange.DefenseBoost` for the boss
+  (`.DefenseInputs`, `BossAI_ProjectRaisedDefense`), then the own screen and
+  the known own item exactly as `.ProjectedDefense` applies a recorded own
+  boost to a reply. It stages a representative boost move in the live AD for
+  the duration because `.DefenseInputs` re-derives the axis from `AD_MOVE`:
+  the first version read Special Defense for a Defense boost, so Barrier
+  variants came out at 246 instead of 156, which `debug_joint_pairs.py`
+  localized to exactly the two physical replies of `joint_defense_transitions`.
+  The selector's `.OwnVariants` runs the bridge once per distinct boost of
+  the active defender (slots Defense+1, Defense+2, Special Defense+2),
+  quarters the result with the player's prepared attack through
+  `BossAI_FastPrepareReplyFacts.TruncateStats`, and keeps the operand bytes at
+  `FSA_OWN+16..21` with the slot mask at `FSA_OWN+22`; `.ReplyRegimes` stores
+  the start regime index at `FSA_OWN+23`. After each native reply compile,
+  `BossAI_FastCompileReplyVariants` runs `.Amount` once more per matching slot
+  at the start regime with `FSM_VARIANT` selecting the operands (uncached,
+  like Selfdestruct's halved defense) and stores the raw maximum plus a valid
+  and a range bit per slot in the plain damage record's free bytes (7..8 and
+  26..27 for the words, 23 for the bits: `FSR_VARIANT_A/B/FLAGS`).
+- `.OwnBoostPair`: mass 256 for the boost, the reply's mass from its
+  accuracy. Own first (or the own-first half of a tie) with a plan that can
+  act and a valid variant runs the reply from the start state through
+  `BossAI_FastExecuteReplyPlan` with `FSV_OVERRIDE` armed (the reply executor
+  now honours the override for its raw maximum and range bit) and takes
+  V(terminal)-V(start) minus the reply's hit delta, doubled for a single
+  order; reply first is the standalone transition. Flags: the reply's
+  standalone flags per positive event, the own check flags when an order
+  reaches the boss (own first always; reply first when the reply's successor
+  leaves both alive), and on the variant path the reply's flags at the
+  variant instead of its standalone hit flags. An own boost against a
+  multihit, False Swipe or Selfdestruct reply keeps the exact direct fallback
+  (`.PlanPair` routes it before the native paths); against a boost or
+  identity reply the existing pairs apply unchanged.
+- Fixtures: `fast_plans.py` 252 (Barrier added; boosts expect opcode 7 with
+  the axis/stage bytes), `fast_plan_executor.py` 9,072 (Harden, Amnesia),
+  `fast_standalone.py` 2,430 (Harden). Four joint cases cover both single
+  orders, two equivalent boosts on one plan set, both screens, Eviolite and
+  the fallback route: `joint_own_harden_first`,
+  `joint_own_barrier_screens_first`, `joint_own_boosts_eviolite_slow`,
+  `joint_own_harden_multihit` (Assault Vest was tried first; it makes the
+  boost itself illegal, so it tested nothing).
+- Evidence on the final ROM: frozen oracle `--prototype` 88 vectors exact
+  with 29 of 30 ordinary decisions native-only (`joint_own_harden_multihit`
+  keeps the fallback by design), `--replacement-boundaries` 116, restart 60;
+  per-pair native corrections equal the forced-fallback ones on all six
+  boost cases (`debug_joint_pairs.py`); `fast_reply_native` 5,588,
+  `fast_reply` 30,720, `fast_pair` 3,744, `fast_standalone` 2,430,
+  `fast_reply_standalone` 3,000, `fast_plan_executor` 9,072, `fast_plans`
+  252, `fast_pair_fallback` 1,248, `fast_unary_fallback` 88, `fast_results`
+  1,011, `fast_hp` 1,614, `fast_math` 2,080/2,072, `fast_transitions` 4,722,
+  `fast_producers` 1,000; the 843-fixture suite; `check_release_smoke.py`
+  PASS; game ROM SHA1 unchanged `85a2fe838a28f23b198845e63876a637580e91a9`.
+- Timing (`fast_ordinary_profile.py`, refreshed): `joint_defense_transitions`
+  3.76M -> 1.54M cycles (its 2.33M of direct fallback is gone); the broad
+  benchmark 35.76M -> 36.19M (+0.4M: the per-reply variant check, 1,524 calls
+  at 104 cycles, plus far-entry overhead on the once-per-defender HP builds);
+  `joint_speed_tie_transformed` 12.66M -> 12.83M. Every ordinary decision is
+  now native except the designed multihit fallback; no producer runs during
+  a native decision. Target 8,388,608, not met.
+
 The [replacement profile](fast_replacement_profile.json) was refreshed on the
 restructured bench loop: the largest native sample is 623,988 cycles
 (`replacement_hp65535_spikes2`, oracle 925,704); among maxima <=999 the largest
@@ -659,35 +745,63 @@ fast_pair_fallback.asm 897b6b7e62e34789a1f5e243888f8c1d0aa68e1ae8e7b1122a8933be5
 fast_selector.asm 7631bf01eea887f3e3379b7c58f72d28c6c289cb34fa117bf279a9d195733084
 ```
 
-The "Boss AI Fast Prototype" section is at $3fbd of its $4000 bank after this
-checkpoint (67 bytes free). The next native family or any grouping code needs
-either a second reference-only section (cross-file `call`s inside the fast
-files assume one bank) or the executor-tail deduplication noted in
-`cleanup_notes.md`.
+Files changed by the 2026-09-07 night work (own boosts native, results and HP
+construction in their own sections; same review gap, validated as listed in
+that section):
+
+```text
+fast_plans.asm fb77a16f9522d1767709dae48d0c9df8cd3137a990a47d8eb7d4ce471d50848a
+fast_plan_executor.asm 82b2a5e7887f1a961590aefd40397ce9ee307c1348e399adb9257bc8e0ab0ebd
+fast_standalone.asm a0484b2ec88cfa543886d3b884f5adc995cc3133b9130c9bbcd06b2a0cd7a8f2
+fast_reply_plans.asm 3177ae0f15f0f7ca6124027621d507b9688f44ce9c75d1b506e52d972f8de35d
+fast_reply_executor.asm b4aed9efccb89e9ccec7bbf7b5a34344900868ea197024b744ce9014b20e6329
+fast_producers.asm b655f6dae2b1cef632b359bca04bae7fc2f9897b63c39ef3ac2b263bbcc2bdf2
+fast_reply_native.asm 194eb86e26c8a2f7a710e9976979a81e96a80df75c5c57a112cf1607a827e35c
+fast_selector.asm 0d35b8ffa6f255cd1e8d520eb95f7a7b273bf31fd3441ddad7b220b3e7f6c5b9
+fast_results.asm 170e6f24b2c067ca919ebe2868d934a0003529574add7894682b0f434d22a65a
+fast_hp.asm 8e65ce76c55834fdd7569d81a670b60a2355546f8a070f73f911eaaca1eb9cf8
+fast_hp_masks.asm cc2d1b2040b68c6d05b8c311eed94a7f765a3bb85774ba0173b0016deaac2e41
+fast_actors.asm 28630ab2adc96ab95e463c9c6106a6cf505c0d129c806fa09b14b13985633ef5
+```
+
+The "Boss AI Fast Prototype" section is at $3d25 of its $4000 bank after this
+checkpoint (731 bytes free), with the results/finalizer code in "Boss AI Fast
+Results", the HP construction and its mask table in "Boss AI Fast HP Tables"
+and the fallback evaluators in "Boss AI Fast Fallback", all behind far
+entries. Cross-file `call`s inside the remaining fast files still assume the
+one hot bank; `check_cross_bank_call.py` now audits the reference build too.
 
 ## Remaining implementation
 
 Ordinary orchestration, switch/wait handling with an explicit post-entry
 baseline, the unary fallback, lazy reply regimes, the scalar pair/standalone
-paths, the native reply compiler and the native multihit/Super Fang/False
-Swipe/Selfdestruct families are implemented and match the frozen reference on
-every existing joint fixture. Still remaining, in the order the profile
-suggests:
+paths, the native reply compiler, the native multihit/Super Fang/False
+Swipe/Selfdestruct families and both defense-boost directions are implemented
+and match the frozen reference on every joint fixture; the only remaining
+fallback route is an own boost against a multihit, False Swipe or Selfdestruct
+reply. Still remaining, in the order the profile suggests (broad benchmark
+36.19M against 8,388,608; every remaining item is per (defender, reply) work,
+about 24k cycles each today against a budget of about 5k):
 
-1. **Defense-boost replies** (the last fallback family): compile the boost as
-   a stage change with the variant staging and invalidation the contract
-   describes, so `joint_broad_prior_mass`, `joint_defense_transitions` and
-   `joint_speed_tie_transformed` finish native-only and the last 45
-   `ValuePublicExchange` calls disappear.
-2. **Grouped base arithmetic** (Milestone 4): the native compile is 20.9M of
-   the 59.1M broad benchmark at 13.7k cycles per reply. Stream the formula base
-   by defender, category and power group once per group and finish per reply
-   (chart, STAB, passives, variation) so the compile approaches the contract's
-   per-reply scalar budget.
-3. **Cheaper per-reply scalar work**: cache the plan base pointers and gate
-   fields per defender instead of per pair, skip the miss execution when the
-   miss mass is zero, and move the five-byte accumulations off `FSC_TEMP`.
-4. Adversarial-domain fixtures (maximum candidates and replies, both sides
+1. **Per-reply defender-independent compile facts** cached in WRAMX bank 2 for
+   the five bench defenders (effect support, accuracy before evasion and
+   Bright Powder, can-act, priority, recovery quota, uncertainty flags, hits:
+   about 14 bytes per reply), so bench compiles do only the amount, item and
+   typing-dependent parts. The compile is 13.9M of 36.2M at 8.4k per reply.
+2. **A lighter bench standalone** (moment and flags without the record) and
+   grouping identical records for the active defender's pairs (249 replies
+   collapse to about 140 distinct records).
+3. **Owned preparation**: `BossAI_FastPrepareOwnedCandidate` runs
+   `PreparePublicAction` once per plan at 110k-130k cycles each, four times
+   per decision. On small decisions it is now the largest phase
+   (`joint_defense_transitions`: 725k of 1.54M). One preparation per defender
+   plus a cheaper per-move outgoing build is the fix noted in
+   `cleanup_notes.md`.
+4. **Cheaper per-reply scalar work**: the scalar pair (8.3k per pair) and
+   standalone (5.0k per reply) still recompute plan addresses and gate reads a
+   per-defender cache could hold; move the five-byte accumulations off
+   `FSC_TEMP`; hoist the own-variant mask test out of the per-reply call.
+5. Adversarial-domain fixtures (maximum candidates and replies, both sides
    uncertain, Fire/Ice thresholds, complex after-effects), then the isolated
    and integrated timing gates and the production ABI/interrupt ownership work.
 

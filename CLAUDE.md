@@ -85,7 +85,9 @@ For non-trivial changes, run relevant scripts in `tools/audit/` before
 reporting work done. The verification floor, not optional. The most useful:
 - `check_release_smoke.py` — broad release sanity
 - `check_cross_bank_call.py` — plain `call` to a label in a different bank
-  (the May 2026 type-immunity softlock class). 39 hits in the boss-AI policy
+  (the May 2026 type-immunity softlock class). Since 2026-09-07 it also reads
+  `pokegold_ai_reference.sym`: the reference-only fast selector was invisible
+  to it, and a missed `call` there hung every native decision. 39 hits in the boss-AI policy
   code were thunked through 7 hl-preserving wrappers (`AIxxx_HL`) in
   `engine/battle/ai/boss_thunks.asm` that route via `farcall` to the
   scoring helpers (commit `f2e18554`). Now part of the release-smoke

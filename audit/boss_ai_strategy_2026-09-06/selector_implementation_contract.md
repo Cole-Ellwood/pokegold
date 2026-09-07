@@ -176,6 +176,16 @@ provisional control-field list above where they differ):
   override the boost pair hands the owned executor (flag exactly 1 while
   live), and the fallback evaluators live in a separate bank behind far
   entries. The group-mass area and the base-state area remain unassigned.
+- Night of 2026-09-07: own actor view bytes 16..23 hold the boss's own boost
+  variants (three (attack, defense) truncated operand pairs for Defense+1,
+  Defense+2 and Special Defense+2, a slot mask, and the start-state incoming
+  regime index); a plain damage reply record keeps its raw maxima against
+  those boosts in bytes 7..8 (Defense+1 or Special Defense+2) and 26..27
+  (Defense+2) with a valid and a range bit per slot in byte 23 (the family
+  delta bytes, which a plain reply never carries). Code sections "Boss AI
+  Fast Results" (input preparation, clearing, finalization) and "Boss AI Fast
+  HP Tables" (construction plus the event mask table) sit outside the hot
+  bank behind far entries; `FSV_OVERRIDE` is honoured by both executors.
 
 Lifetime sequence:
 

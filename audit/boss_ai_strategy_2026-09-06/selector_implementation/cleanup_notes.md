@@ -114,3 +114,29 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
 - The three profile scripts under `.local/ai-two-second/` are scratch; the
   label-list profiler is worth promoting into `tools/boss_ai_fixtures/` as a
   proper tool since every performance step relied on it.
+
+## Own boosts and cold sections (Claude-authored, 2026-09-07, night)
+
+- `BossAI_FastCompileReplyVariants` is called for every compiled reply and
+  returns on the own-variant mask; hoisting that test into `.ReplySweep`
+  saves about 150k cycles on the broad benchmark (1,524 calls at 104 cycles)
+  for a two-line change. Left for the next performance pass so this checkpoint
+  stayed a single validated change.
+- `.IdentityPair`, `.BoostPair` and `.OwnBoostPair` are three hand-written
+  variants of "which action's flags are reached in which order"; a shared
+  reached-flags helper taking the two successors and the order would remove
+  the duplication and the per-routine reasoning about miss masses.
+- `BossAI_FastProjectPlayerDefense` and `BossAI_FastProjectOwnDefense` are
+  the two directions of one operation and could share the raise/screen/item
+  tail; the own side reuses `.DefenseInputs` and needs the staged `AD_MOVE`,
+  the player side re-implements the reads. Pick one shape.
+- `FSA_OWN+16..23` was chosen for the own variant table because the actor
+  import zeroes the whole 80-byte view (so bench defenders inherit an empty
+  mask for free); the contract's allocation table should list the actor-view
+  extras in one place instead of the current scatter across notes.
+- The static audits other than `check_cross_bank_call.py` still read only
+  `pokegold.sym`; the reference-only sections are invisible to them. Worth a
+  shared sym loader in `tools/audit/asm_scan.py`.
+- `.OwnVariants` and `BossAI_FastCompileReplyVariants` use `FSM_TEMP+3/+4` as
+  scratch outside a compile; that is safe today only because no compile is in
+  flight at either point. A dedicated byte would make the lifetime explicit.

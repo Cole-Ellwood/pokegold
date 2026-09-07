@@ -404,3 +404,44 @@ Own boost plans (the boss's Harden etc.) are the one remaining fallback
 family: they need the reply amounts at the raised own defense, i.e. the
 native reply compiler run with an overridden defense fact for the affected
 category, which is a small extension of the same variant idea.
+
+---
+
+# Continuation 2026-09-07 (Claude Fable, night): own boosts native, two cold sections
+
+One code commit and one docs commit on `master` (not pushed). See
+`status.md` "Native own defense-boost plans and two more cold sections" for
+the mechanism, the fixture counts and the timing; `cleanup_notes.md` for the
+code-quality follow-ups it left.
+
+Facts a successor needs:
+
+- Bank space: the fast-prototype section is at $3d25 of $4000 (731 bytes
+  free). Results/finalizer code lives in "Boss AI Fast Results", HP table
+  construction plus its event mask table in the page-aligned "Boss AI Fast HP
+  Tables"; both behind far entries (`BossAI_FastPreparePublicInputsFar` takes
+  C=kind; the HP builders return the mode through C). Moving a routine out of
+  the hot bank means every `call` it makes into the hot bank becomes a
+  farcall: the finalizer's divide was missed the first time and hung every
+  decision.
+- `check_cross_bank_call.py` reads `pokegold_ai_reference.sym` too now. The
+  other static audits (`check_farcall_hl_clobber.py`,
+  `check_farcall_a_clobber.py`) may still see only the game sym; check before
+  relying on them for reference-only code.
+- `ValuePublicExchange.DefenseInputs` derives the axis from the live AD's
+  `AD_MOVE` halfway through. Any bridge that reuses it must stage a boost move
+  with the wanted axis/stages in the AD (`BossAI_FastProjectOwnDefense` does).
+- New scratch: own actor view bytes 16..23 (`FSA_OWN_VARIANTS`,
+  `FSA_OWN_VARIANT_MASK`, `FSA_START_REGIME`); plain damage reply record bytes
+  7..8, 26..27 and 23 (`FSR_VARIANT_A/B/FLAGS`); `FSM_VARIANT` = `FSM_TEMP+4`
+  during an amount. `FSV_OVERRIDE` is now honoured by both executors.
+- Assault Vest makes status moves illegal for the boss, so it cannot be used
+  to test own boosts with an item; Eviolite can (`joint_own_boosts_eviolite_slow`).
+- The scratch tools that found the two defects: `.local/ai-two-second/
+  debug_joint_pairs.py <case>` (per-pair native versus forced fallback) and
+  `debug_own_boost.py <case> <own move> <reply>` (variant table, record bytes,
+  and the reference's recorded own defense and boosted damage side by side);
+  `trace_entry.py <case> <labels> [frames]` reports where a hung entry
+  stopped. Background runs did finish this session when given no timeout and
+  a log file; the harness reopens the ROM per case, so never rebuild while a
+  run is in flight.
