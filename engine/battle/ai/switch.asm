@@ -623,17 +623,21 @@ FindEnemyMonsWithAtLeastQuarterMaxHP:
 	inc hl
 ; hl = MaxHP + 1
 ; bc = [CurHP] * 4
-	srl c
+	sla c
 	rl b
-	srl c
+	sla c
 	rl b
-; if bc >= [hl], encourage
-	ld a, [hld]
-	cp c
-	ld a, [hl]
-	sbc b
+; Include equality: current HP at exactly one quarter meets the threshold.
+	dec hl
+	ld a, b
+	cp [hl]
+	jr nz, .compared
+	inc hl
+	ld a, c
+	cp [hl]
+.compared
 	pop bc
-	jr nc, .next
+	jr c, .next
 
 	ld a, b
 	or c

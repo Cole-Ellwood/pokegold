@@ -1,0 +1,1544 @@
+{
+  "comparisons": 11520,
+  "failures": [],
+  "cycles": [
+    {
+      "index": 0,
+      "linear": 24,
+      "selected": 48,
+      "binary_with_dispatch": 96
+    },
+    {
+      "index": 1,
+      "linear": 48,
+      "selected": 72,
+      "binary_with_dispatch": 100
+    },
+    {
+      "index": 2,
+      "linear": 72,
+      "selected": 96,
+      "binary_with_dispatch": 156
+    },
+    {
+      "index": 3,
+      "linear": 96,
+      "selected": 120,
+      "binary_with_dispatch": 160
+    },
+    {
+      "index": 4,
+      "linear": 120,
+      "selected": 144,
+      "binary_with_dispatch": 212
+    },
+    {
+      "index": 5,
+      "linear": 144,
+      "selected": 168,
+      "binary_with_dispatch": 216
+    },
+    {
+      "index": 6,
+      "linear": 168,
+      "selected": 192,
+      "binary_with_dispatch": 216
+    },
+    {
+      "index": 7,
+      "linear": 192,
+      "selected": 216,
+      "binary_with_dispatch": 220
+    },
+    {
+      "index": 8,
+      "linear": 216,
+      "selected": 240,
+      "binary_with_dispatch": 268
+    },
+    {
+      "index": 9,
+      "linear": 240,
+      "selected": 264,
+      "binary_with_dispatch": 272
+    },
+    {
+      "index": 10,
+      "linear": 264,
+      "selected": 272,
+      "binary_with_dispatch": 272
+    },
+    {
+      "index": 11,
+      "linear": 288,
+      "selected": 276,
+      "binary_with_dispatch": 276
+    },
+    {
+      "index": 12,
+      "linear": 312,
+      "selected": 272,
+      "binary_with_dispatch": 272
+    },
+    {
+      "index": 13,
+      "linear": 336,
+      "selected": 276,
+      "binary_with_dispatch": 276
+    },
+    {
+      "index": 14,
+      "linear": 360,
+      "selected": 276,
+      "binary_with_dispatch": 276
+    },
+    {
+      "index": 15,
+      "linear": 384,
+      "selected": 280,
+      "binary_with_dispatch": 280
+    },
+    {
+      "index": 16,
+      "linear": 408,
+      "selected": 324,
+      "binary_with_dispatch": 324
+    },
+    {
+      "index": 17,
+      "linear": 432,
+      "selected": 328,
+      "binary_with_dispatch": 328
+    },
+    {
+      "index": 18,
+      "linear": 456,
+      "selected": 328,
+      "binary_with_dispatch": 328
+    },
+    {
+      "index": 19,
+      "linear": 480,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 20,
+      "linear": 504,
+      "selected": 328,
+      "binary_with_dispatch": 328
+    },
+    {
+      "index": 21,
+      "linear": 528,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 22,
+      "linear": 552,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 23,
+      "linear": 576,
+      "selected": 336,
+      "binary_with_dispatch": 336
+    },
+    {
+      "index": 24,
+      "linear": 600,
+      "selected": 328,
+      "binary_with_dispatch": 328
+    },
+    {
+      "index": 25,
+      "linear": 624,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 26,
+      "linear": 648,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 27,
+      "linear": 672,
+      "selected": 336,
+      "binary_with_dispatch": 336
+    },
+    {
+      "index": 28,
+      "linear": 696,
+      "selected": 332,
+      "binary_with_dispatch": 332
+    },
+    {
+      "index": 29,
+      "linear": 720,
+      "selected": 336,
+      "binary_with_dispatch": 336
+    },
+    {
+      "index": 30,
+      "linear": 744,
+      "selected": 336,
+      "binary_with_dispatch": 336
+    },
+    {
+      "index": 31,
+      "linear": 768,
+      "selected": 340,
+      "binary_with_dispatch": 340
+    },
+    {
+      "index": 32,
+      "linear": 792,
+      "selected": 380,
+      "binary_with_dispatch": 380
+    },
+    {
+      "index": 33,
+      "linear": 816,
+      "selected": 384,
+      "binary_with_dispatch": 384
+    },
+    {
+      "index": 34,
+      "linear": 840,
+      "selected": 384,
+      "binary_with_dispatch": 384
+    },
+    {
+      "index": 35,
+      "linear": 864,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 36,
+      "linear": 888,
+      "selected": 384,
+      "binary_with_dispatch": 384
+    },
+    {
+      "index": 37,
+      "linear": 912,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 38,
+      "linear": 936,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 39,
+      "linear": 960,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 40,
+      "linear": 984,
+      "selected": 384,
+      "binary_with_dispatch": 384
+    },
+    {
+      "index": 41,
+      "linear": 1008,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 42,
+      "linear": 1032,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 43,
+      "linear": 1056,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 44,
+      "linear": 1080,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 45,
+      "linear": 1104,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 46,
+      "linear": 1128,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 47,
+      "linear": 1152,
+      "selected": 396,
+      "binary_with_dispatch": 396
+    },
+    {
+      "index": 48,
+      "linear": 1176,
+      "selected": 384,
+      "binary_with_dispatch": 384
+    },
+    {
+      "index": 49,
+      "linear": 1200,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 50,
+      "linear": 1224,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 51,
+      "linear": 1248,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 52,
+      "linear": 1272,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 53,
+      "linear": 1296,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 54,
+      "linear": 1320,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 55,
+      "linear": 1344,
+      "selected": 396,
+      "binary_with_dispatch": 396
+    },
+    {
+      "index": 56,
+      "linear": 1368,
+      "selected": 388,
+      "binary_with_dispatch": 388
+    },
+    {
+      "index": 57,
+      "linear": 1392,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 58,
+      "linear": 1416,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 59,
+      "linear": 1440,
+      "selected": 396,
+      "binary_with_dispatch": 396
+    },
+    {
+      "index": 60,
+      "linear": 1464,
+      "selected": 392,
+      "binary_with_dispatch": 392
+    },
+    {
+      "index": 61,
+      "linear": 1488,
+      "selected": 396,
+      "binary_with_dispatch": 396
+    },
+    {
+      "index": 62,
+      "linear": 1512,
+      "selected": 396,
+      "binary_with_dispatch": 396
+    },
+    {
+      "index": 63,
+      "linear": 1536,
+      "selected": 400,
+      "binary_with_dispatch": 400
+    },
+    {
+      "index": 64,
+      "linear": 1560,
+      "selected": 436,
+      "binary_with_dispatch": 436
+    },
+    {
+      "index": 65,
+      "linear": 1584,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 66,
+      "linear": 1608,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 67,
+      "linear": 1632,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 68,
+      "linear": 1656,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 69,
+      "linear": 1680,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 70,
+      "linear": 1704,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 71,
+      "linear": 1728,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 72,
+      "linear": 1752,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 73,
+      "linear": 1776,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 74,
+      "linear": 1800,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 75,
+      "linear": 1824,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 76,
+      "linear": 1848,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 77,
+      "linear": 1872,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 78,
+      "linear": 1896,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 79,
+      "linear": 1920,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 80,
+      "linear": 1944,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 81,
+      "linear": 1968,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 82,
+      "linear": 1992,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 83,
+      "linear": 2016,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 84,
+      "linear": 2040,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 85,
+      "linear": 2064,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 86,
+      "linear": 2088,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 87,
+      "linear": 2112,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 88,
+      "linear": 2136,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 89,
+      "linear": 2160,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 90,
+      "linear": 2184,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 91,
+      "linear": 2208,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 92,
+      "linear": 2232,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 93,
+      "linear": 2256,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 94,
+      "linear": 2280,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 95,
+      "linear": 2304,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 96,
+      "linear": 2328,
+      "selected": 440,
+      "binary_with_dispatch": 440
+    },
+    {
+      "index": 97,
+      "linear": 2352,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 98,
+      "linear": 2376,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 99,
+      "linear": 2400,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 100,
+      "linear": 2424,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 101,
+      "linear": 2448,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 102,
+      "linear": 2472,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 103,
+      "linear": 2496,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 104,
+      "linear": 2520,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 105,
+      "linear": 2544,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 106,
+      "linear": 2568,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 107,
+      "linear": 2592,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 108,
+      "linear": 2616,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 109,
+      "linear": 2640,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 110,
+      "linear": 2664,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 111,
+      "linear": 2688,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 112,
+      "linear": 2712,
+      "selected": 444,
+      "binary_with_dispatch": 444
+    },
+    {
+      "index": 113,
+      "linear": 2736,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 114,
+      "linear": 2760,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 115,
+      "linear": 2784,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 116,
+      "linear": 2808,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 117,
+      "linear": 2832,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 118,
+      "linear": 2856,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 119,
+      "linear": 2880,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 120,
+      "linear": 2904,
+      "selected": 448,
+      "binary_with_dispatch": 448
+    },
+    {
+      "index": 121,
+      "linear": 2928,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 122,
+      "linear": 2952,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 123,
+      "linear": 2976,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 124,
+      "linear": 3000,
+      "selected": 452,
+      "binary_with_dispatch": 452
+    },
+    {
+      "index": 125,
+      "linear": 3024,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 126,
+      "linear": 3048,
+      "selected": 456,
+      "binary_with_dispatch": 456
+    },
+    {
+      "index": 127,
+      "linear": 3072,
+      "selected": 460,
+      "binary_with_dispatch": 460
+    },
+    {
+      "index": 128,
+      "linear": 3096,
+      "selected": 492,
+      "binary_with_dispatch": 492
+    },
+    {
+      "index": 129,
+      "linear": 3120,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 130,
+      "linear": 3144,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 131,
+      "linear": 3168,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 132,
+      "linear": 3192,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 133,
+      "linear": 3216,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 134,
+      "linear": 3240,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 135,
+      "linear": 3264,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 136,
+      "linear": 3288,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 137,
+      "linear": 3312,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 138,
+      "linear": 3336,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 139,
+      "linear": 3360,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 140,
+      "linear": 3384,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 141,
+      "linear": 3408,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 142,
+      "linear": 3432,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 143,
+      "linear": 3456,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 144,
+      "linear": 3480,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 145,
+      "linear": 3504,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 146,
+      "linear": 3528,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 147,
+      "linear": 3552,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 148,
+      "linear": 3576,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 149,
+      "linear": 3600,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 150,
+      "linear": 3624,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 151,
+      "linear": 3648,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 152,
+      "linear": 3672,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 153,
+      "linear": 3696,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 154,
+      "linear": 3720,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 155,
+      "linear": 3744,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 156,
+      "linear": 3768,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 157,
+      "linear": 3792,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 158,
+      "linear": 3816,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 159,
+      "linear": 3840,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 160,
+      "linear": 3864,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 161,
+      "linear": 3888,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 162,
+      "linear": 3912,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 163,
+      "linear": 3936,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 164,
+      "linear": 3960,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 165,
+      "linear": 3984,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 166,
+      "linear": 4008,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 167,
+      "linear": 4032,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 168,
+      "linear": 4056,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 169,
+      "linear": 4080,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 170,
+      "linear": 4104,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 171,
+      "linear": 4128,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 172,
+      "linear": 4152,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 173,
+      "linear": 4176,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 174,
+      "linear": 4200,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 175,
+      "linear": 4224,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 176,
+      "linear": 4248,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 177,
+      "linear": 4272,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 178,
+      "linear": 4296,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 179,
+      "linear": 4320,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 180,
+      "linear": 4344,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 181,
+      "linear": 4368,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 182,
+      "linear": 4392,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 183,
+      "linear": 4416,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 184,
+      "linear": 4440,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 185,
+      "linear": 4464,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 186,
+      "linear": 4488,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 187,
+      "linear": 4512,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 188,
+      "linear": 4536,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 189,
+      "linear": 4560,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 190,
+      "linear": 4584,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 191,
+      "linear": 4608,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 192,
+      "linear": 4632,
+      "selected": 496,
+      "binary_with_dispatch": 496
+    },
+    {
+      "index": 193,
+      "linear": 4656,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 194,
+      "linear": 4680,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 195,
+      "linear": 4704,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 196,
+      "linear": 4728,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 197,
+      "linear": 4752,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 198,
+      "linear": 4776,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 199,
+      "linear": 4800,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 200,
+      "linear": 4824,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 201,
+      "linear": 4848,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 202,
+      "linear": 4872,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 203,
+      "linear": 4896,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 204,
+      "linear": 4920,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 205,
+      "linear": 4944,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 206,
+      "linear": 4968,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 207,
+      "linear": 4992,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 208,
+      "linear": 5016,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 209,
+      "linear": 5040,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 210,
+      "linear": 5064,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 211,
+      "linear": 5088,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 212,
+      "linear": 5112,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 213,
+      "linear": 5136,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 214,
+      "linear": 5160,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 215,
+      "linear": 5184,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 216,
+      "linear": 5208,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 217,
+      "linear": 5232,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 218,
+      "linear": 5256,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 219,
+      "linear": 5280,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 220,
+      "linear": 5304,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 221,
+      "linear": 5328,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 222,
+      "linear": 5352,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 223,
+      "linear": 5376,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 224,
+      "linear": 5400,
+      "selected": 500,
+      "binary_with_dispatch": 500
+    },
+    {
+      "index": 225,
+      "linear": 5424,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 226,
+      "linear": 5448,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 227,
+      "linear": 5472,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 228,
+      "linear": 5496,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 229,
+      "linear": 5520,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 230,
+      "linear": 5544,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 231,
+      "linear": 5568,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 232,
+      "linear": 5592,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 233,
+      "linear": 5616,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 234,
+      "linear": 5640,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 235,
+      "linear": 5664,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 236,
+      "linear": 5688,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 237,
+      "linear": 5712,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 238,
+      "linear": 5736,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 239,
+      "linear": 5760,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 240,
+      "linear": 5784,
+      "selected": 504,
+      "binary_with_dispatch": 504
+    },
+    {
+      "index": 241,
+      "linear": 5808,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 242,
+      "linear": 5832,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 243,
+      "linear": 5856,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 244,
+      "linear": 5880,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 245,
+      "linear": 5904,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 246,
+      "linear": 5928,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 247,
+      "linear": 5952,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 248,
+      "linear": 5976,
+      "selected": 508,
+      "binary_with_dispatch": 508
+    },
+    {
+      "index": 249,
+      "linear": 6000,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 250,
+      "linear": 6024,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 251,
+      "linear": 6048,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 252,
+      "linear": 6072,
+      "selected": 512,
+      "binary_with_dispatch": 512
+    },
+    {
+      "index": 253,
+      "linear": 6096,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 254,
+      "linear": 6120,
+      "selected": 516,
+      "binary_with_dispatch": 516
+    },
+    {
+      "index": 255,
+      "linear": 6144,
+      "selected": 520,
+      "binary_with_dispatch": 520
+    }
+  ],
+  "contract": "HL modulo 65536, A=0, BC/DE/SP preserved; flags are not an output",
+  "measurement": "Entry through fixed return epilogue; no frame-padding cost. Binary column includes 20-cycle dispatch."
+}

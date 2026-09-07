@@ -1,0 +1,2170 @@
+{
+  "rom": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle",
+  "limits": "Read-only derived snapshots, not new fixture source. Default no-table reference entry. Timings include under two frames return padding. Complex global maxima not certified.",
+  "cases": [
+    {
+      "id": "preflight_broad_equal_speed_mixed",
+      "base_fixture": "joint_broad_prior_mass",
+      "boss": {
+        "species": 143,
+        "type1": 0,
+        "type2": 0,
+        "level": 50,
+        "max_hp": 228,
+        "hp": 76,
+        "atk": 123,
+        "deff": 78,
+        "spe": 123,
+        "spa": 78,
+        "spd": 123,
+        "moves": [
+          126,
+          202,
+          38,
+          105
+        ],
+        "status": 0,
+        "pp": 30
+      },
+      "extra": {
+        "wEnemyAccLevel": 1,
+        "wPlayerEvaLevel": 13,
+        "wPlayerAccLevel": 1,
+        "wEnemyEvaLevel": 13,
+        "wEnemyMonItem": 70
+      },
+      "move_names": [
+        "FIRE_BLAST",
+        "GIGA_DRAIN",
+        "DOUBLE_EDGE",
+        "RECOVER"
+      ],
+      "check_accuracy": true,
+      "scores": [
+        [
+          1025,
+          63
+        ],
+        [
+          1024,
+          63
+        ],
+        [
+          1029,
+          63
+        ],
+        [
+          1085,
+          63
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1013,
+          59
+        ],
+        [
+          1011,
+          59
+        ],
+        [
+          1012,
+          59
+        ],
+        [
+          1009,
+          59
+        ],
+        [
+          1012,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 3,
+      "tied_pairs": 968,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 1,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 1,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 1,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 1,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 2,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 2,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 2,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 2,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 3,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 3,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 3,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 3,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 4,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 4,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 4,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 4,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 4,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 5,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 5,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 5,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 5,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 5,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 6,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 6,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 6,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 6,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 6,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 7,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 7,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 7,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 7,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 7,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 8,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 8,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 8,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 8,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 8,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 8,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 8,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 8,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 9,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 9,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 9,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 9,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 9,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 9,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 9,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 9,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 10,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 10,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 10,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 10,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 10,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 10,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 10,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 10,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 11,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 11,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 11,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 11,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 11,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 11,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 11,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 11,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 12,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 12,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 12,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 12,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 12,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 12,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 12,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 12,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 13,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 13,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 13,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 13,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 13,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 13,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 13,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 13,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 14,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 14,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 14,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 14,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 14,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 14,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 14,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 14,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 15,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 15,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 15,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 15,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 15,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 15,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 15,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 15,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 35068333286,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 35217245801,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 37128238080,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 34639888896,
+          "mass": 522
+        }
+      ],
+      "timings": [
+        {
+          "scan": 0,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 1,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 2,
+          "cycles_upper_bound": 458562712
+        },
+        {
+          "scan": 3,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 4,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 5,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 6,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 7,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 8,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 9,
+          "cycles_upper_bound": 458562712
+        },
+        {
+          "scan": 10,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 11,
+          "cycles_upper_bound": 458562724
+        },
+        {
+          "scan": 12,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 13,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 14,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 15,
+          "cycles_upper_bound": 458703168
+        },
+        {
+          "scan": 0,
+          "cycles_upper_bound": 458562712
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "preflight_broad_equal_speed_drain",
+      "base_fixture": "joint_broad_prior_mass",
+      "boss": {
+        "species": 143,
+        "type1": 0,
+        "type2": 0,
+        "level": 50,
+        "max_hp": 228,
+        "hp": 76,
+        "atk": 123,
+        "deff": 78,
+        "spe": 123,
+        "spa": 78,
+        "spd": 123,
+        "moves": [
+          202,
+          202,
+          202,
+          202
+        ],
+        "status": 0,
+        "pp": 30
+      },
+      "extra": {
+        "wEnemyAccLevel": 1,
+        "wPlayerEvaLevel": 13,
+        "wPlayerAccLevel": 1,
+        "wEnemyEvaLevel": 13,
+        "wEnemyMonItem": 70
+      },
+      "move_names": [
+        "GIGA_DRAIN",
+        "GIGA_DRAIN",
+        "GIGA_DRAIN",
+        "GIGA_DRAIN"
+      ],
+      "check_accuracy": true,
+      "scores": [
+        [
+          1024,
+          63
+        ],
+        [
+          1024,
+          63
+        ],
+        [
+          1024,
+          63
+        ],
+        [
+          1024,
+          63
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1013,
+          59
+        ],
+        [
+          1011,
+          59
+        ],
+        [
+          1012,
+          59
+        ],
+        [
+          1009,
+          59
+        ],
+        [
+          1012,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "tied_pairs": 968,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 1,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 1,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 1,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 1,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 2,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 2,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 2,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 2,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 3,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 3,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 3,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 3,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 4,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 4,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 4,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 4,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 4,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 5,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 5,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 5,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 5,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 5,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 6,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 6,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 6,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 6,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 6,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 7,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 7,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 7,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 7,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 7,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 8,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 8,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 8,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 8,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 8,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 8,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 8,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 8,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 9,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 9,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 9,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 9,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 9,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 9,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 9,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 9,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 10,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 10,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 10,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 10,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 10,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 10,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 10,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 10,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 11,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 11,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 11,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 11,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 11,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 11,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 11,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 11,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 12,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 12,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 12,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 12,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 12,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 12,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 12,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 12,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 13,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 13,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 13,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 13,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 13,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 13,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 13,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 13,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 14,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 14,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 14,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 14,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 14,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 14,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 14,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 14,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 15,
+          "numerator": 34639888896,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 15,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 15,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 15,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 15,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 15,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 15,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 15,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 35041775393,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 34680721920,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 34618920448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 34648091136,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 34544922624,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 34639888896,
+          "mass": 522
+        }
+      ],
+      "timings": [
+        {
+          "scan": 0,
+          "cycles_upper_bound": 457860472
+        },
+        {
+          "scan": 1,
+          "cycles_upper_bound": 457860480
+        },
+        {
+          "scan": 2,
+          "cycles_upper_bound": 457860484
+        },
+        {
+          "scan": 3,
+          "cycles_upper_bound": 457860480
+        },
+        {
+          "scan": 4,
+          "cycles_upper_bound": 458000928
+        },
+        {
+          "scan": 5,
+          "cycles_upper_bound": 458000924
+        },
+        {
+          "scan": 6,
+          "cycles_upper_bound": 458000928
+        },
+        {
+          "scan": 7,
+          "cycles_upper_bound": 458000936
+        },
+        {
+          "scan": 8,
+          "cycles_upper_bound": 457860472
+        },
+        {
+          "scan": 9,
+          "cycles_upper_bound": 457860480
+        },
+        {
+          "scan": 10,
+          "cycles_upper_bound": 457860484
+        },
+        {
+          "scan": 11,
+          "cycles_upper_bound": 457860480
+        },
+        {
+          "scan": 12,
+          "cycles_upper_bound": 458000928
+        },
+        {
+          "scan": 13,
+          "cycles_upper_bound": 458000924
+        },
+        {
+          "scan": 14,
+          "cycles_upper_bound": 458000928
+        },
+        {
+          "scan": 15,
+          "cycles_upper_bound": 458000936
+        },
+        {
+          "scan": 0,
+          "cycles_upper_bound": 457860472
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

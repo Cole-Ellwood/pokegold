@@ -1,0 +1,687 @@
+{
+  "rom_sha256": "e8628a6cfde19b508a6d6b75b9bf32bd3cb7a5a6fff319bb689a7e465feabfb0",
+  "oracle_sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
+  "unit": "DMG T-cycles, bank-qualified entry through return; caller setup excluded",
+  "scope": "112 five-bench replacement decisions, 56 HP/hazard/item/weight fixtures in two scans",
+  "limitation": "Representative replacement decisions only; ordinary decisions still restart and whole-domain two-second target is unverified",
+  "worst_native": {
+    "case": "replacement_hp65535_spikes2",
+    "scan": 0,
+    "reference_cycles": 925704,
+    "native_cycles": 623988
+  },
+  "rows": [
+    {
+      "case": "replacement_hp1_spikes0",
+      "scan": 0,
+      "reference_cycles": 939828,
+      "native_cycles": 260808
+    },
+    {
+      "case": "replacement_hp1_spikes0",
+      "scan": 15,
+      "reference_cycles": 939964,
+      "native_cycles": 260772
+    },
+    {
+      "case": "replacement_hp1_spikes1",
+      "scan": 0,
+      "reference_cycles": 834244,
+      "native_cycles": 260456
+    },
+    {
+      "case": "replacement_hp1_spikes1",
+      "scan": 15,
+      "reference_cycles": 834548,
+      "native_cycles": 260420
+    },
+    {
+      "case": "replacement_hp1_spikes2",
+      "scan": 0,
+      "reference_cycles": 826672,
+      "native_cycles": 268972
+    },
+    {
+      "case": "replacement_hp1_spikes2",
+      "scan": 15,
+      "reference_cycles": 826868,
+      "native_cycles": 268936
+    },
+    {
+      "case": "replacement_hp1_spikes3",
+      "scan": 0,
+      "reference_cycles": 818312,
+      "native_cycles": 260628
+    },
+    {
+      "case": "replacement_hp1_spikes3",
+      "scan": 15,
+      "reference_cycles": 818508,
+      "native_cycles": 260592
+    },
+    {
+      "case": "replacement_hp2_spikes0",
+      "scan": 0,
+      "reference_cycles": 939708,
+      "native_cycles": 261104
+    },
+    {
+      "case": "replacement_hp2_spikes0",
+      "scan": 15,
+      "reference_cycles": 939844,
+      "native_cycles": 261068
+    },
+    {
+      "case": "replacement_hp2_spikes1",
+      "scan": 0,
+      "reference_cycles": 877004,
+      "native_cycles": 261156
+    },
+    {
+      "case": "replacement_hp2_spikes1",
+      "scan": 15,
+      "reference_cycles": 877092,
+      "native_cycles": 261120
+    },
+    {
+      "case": "replacement_hp2_spikes2",
+      "scan": 0,
+      "reference_cycles": 872120,
+      "native_cycles": 269584
+    },
+    {
+      "case": "replacement_hp2_spikes2",
+      "scan": 15,
+      "reference_cycles": 872208,
+      "native_cycles": 269548
+    },
+    {
+      "case": "replacement_hp2_spikes3",
+      "scan": 0,
+      "reference_cycles": 863760,
+      "native_cycles": 261240
+    },
+    {
+      "case": "replacement_hp2_spikes3",
+      "scan": 15,
+      "reference_cycles": 863848,
+      "native_cycles": 261204
+    },
+    {
+      "case": "replacement_hp127_spikes0",
+      "scan": 0,
+      "reference_cycles": 939772,
+      "native_cycles": 300640
+    },
+    {
+      "case": "replacement_hp127_spikes0",
+      "scan": 15,
+      "reference_cycles": 939908,
+      "native_cycles": 300604
+    },
+    {
+      "case": "replacement_hp127_spikes1",
+      "scan": 0,
+      "reference_cycles": 917712,
+      "native_cycles": 301828
+    },
+    {
+      "case": "replacement_hp127_spikes1",
+      "scan": 15,
+      "reference_cycles": 917948,
+      "native_cycles": 301792
+    },
+    {
+      "case": "replacement_hp127_spikes2",
+      "scan": 0,
+      "reference_cycles": 924464,
+      "native_cycles": 310208
+    },
+    {
+      "case": "replacement_hp127_spikes2",
+      "scan": 15,
+      "reference_cycles": 924576,
+      "native_cycles": 310172
+    },
+    {
+      "case": "replacement_hp127_spikes3",
+      "scan": 0,
+      "reference_cycles": 904384,
+      "native_cycles": 301872
+    },
+    {
+      "case": "replacement_hp127_spikes3",
+      "scan": 15,
+      "reference_cycles": 904620,
+      "native_cycles": 301836
+    },
+    {
+      "case": "replacement_hp128_spikes0",
+      "scan": 0,
+      "reference_cycles": 939724,
+      "native_cycles": 404792
+    },
+    {
+      "case": "replacement_hp128_spikes0",
+      "scan": 15,
+      "reference_cycles": 939860,
+      "native_cycles": 404756
+    },
+    {
+      "case": "replacement_hp128_spikes1",
+      "scan": 0,
+      "reference_cycles": 917216,
+      "native_cycles": 405440
+    },
+    {
+      "case": "replacement_hp128_spikes1",
+      "scan": 15,
+      "reference_cycles": 917412,
+      "native_cycles": 405404
+    },
+    {
+      "case": "replacement_hp128_spikes2",
+      "scan": 0,
+      "reference_cycles": 924148,
+      "native_cycles": 414052
+    },
+    {
+      "case": "replacement_hp128_spikes2",
+      "scan": 15,
+      "reference_cycles": 924260,
+      "native_cycles": 414016
+    },
+    {
+      "case": "replacement_hp128_spikes3",
+      "scan": 0,
+      "reference_cycles": 903840,
+      "native_cycles": 405612
+    },
+    {
+      "case": "replacement_hp128_spikes3",
+      "scan": 15,
+      "reference_cycles": 904036,
+      "native_cycles": 405576
+    },
+    {
+      "case": "replacement_hp129_spikes0",
+      "scan": 0,
+      "reference_cycles": 939724,
+      "native_cycles": 404864
+    },
+    {
+      "case": "replacement_hp129_spikes0",
+      "scan": 15,
+      "reference_cycles": 939860,
+      "native_cycles": 404828
+    },
+    {
+      "case": "replacement_hp129_spikes1",
+      "scan": 0,
+      "reference_cycles": 917648,
+      "native_cycles": 404896
+    },
+    {
+      "case": "replacement_hp129_spikes1",
+      "scan": 15,
+      "reference_cycles": 917868,
+      "native_cycles": 404860
+    },
+    {
+      "case": "replacement_hp129_spikes2",
+      "scan": 0,
+      "reference_cycles": 924488,
+      "native_cycles": 413552
+    },
+    {
+      "case": "replacement_hp129_spikes2",
+      "scan": 15,
+      "reference_cycles": 924624,
+      "native_cycles": 413516
+    },
+    {
+      "case": "replacement_hp129_spikes3",
+      "scan": 0,
+      "reference_cycles": 904276,
+      "native_cycles": 405376
+    },
+    {
+      "case": "replacement_hp129_spikes3",
+      "scan": 15,
+      "reference_cycles": 904472,
+      "native_cycles": 405340
+    },
+    {
+      "case": "replacement_hp192_spikes0",
+      "scan": 0,
+      "reference_cycles": 939724,
+      "native_cycles": 456344
+    },
+    {
+      "case": "replacement_hp192_spikes0",
+      "scan": 15,
+      "reference_cycles": 939860,
+      "native_cycles": 456308
+    },
+    {
+      "case": "replacement_hp192_spikes1",
+      "scan": 0,
+      "reference_cycles": 917344,
+      "native_cycles": 456424
+    },
+    {
+      "case": "replacement_hp192_spikes1",
+      "scan": 15,
+      "reference_cycles": 917564,
+      "native_cycles": 456388
+    },
+    {
+      "case": "replacement_hp192_spikes2",
+      "scan": 0,
+      "reference_cycles": 924004,
+      "native_cycles": 464848
+    },
+    {
+      "case": "replacement_hp192_spikes2",
+      "scan": 15,
+      "reference_cycles": 924140,
+      "native_cycles": 464812
+    },
+    {
+      "case": "replacement_hp192_spikes3",
+      "scan": 0,
+      "reference_cycles": 903928,
+      "native_cycles": 456728
+    },
+    {
+      "case": "replacement_hp192_spikes3",
+      "scan": 15,
+      "reference_cycles": 904124,
+      "native_cycles": 456692
+    },
+    {
+      "case": "replacement_hp193_spikes0",
+      "scan": 0,
+      "reference_cycles": 939724,
+      "native_cycles": 456360
+    },
+    {
+      "case": "replacement_hp193_spikes0",
+      "scan": 15,
+      "reference_cycles": 939860,
+      "native_cycles": 456324
+    },
+    {
+      "case": "replacement_hp193_spikes1",
+      "scan": 0,
+      "reference_cycles": 917696,
+      "native_cycles": 456440
+    },
+    {
+      "case": "replacement_hp193_spikes1",
+      "scan": 15,
+      "reference_cycles": 917916,
+      "native_cycles": 456404
+    },
+    {
+      "case": "replacement_hp193_spikes2",
+      "scan": 0,
+      "reference_cycles": 924400,
+      "native_cycles": 464864
+    },
+    {
+      "case": "replacement_hp193_spikes2",
+      "scan": 15,
+      "reference_cycles": 924536,
+      "native_cycles": 464828
+    },
+    {
+      "case": "replacement_hp193_spikes3",
+      "scan": 0,
+      "reference_cycles": 904364,
+      "native_cycles": 456480
+    },
+    {
+      "case": "replacement_hp193_spikes3",
+      "scan": 15,
+      "reference_cycles": 904560,
+      "native_cycles": 456444
+    },
+    {
+      "case": "replacement_hp255_spikes0",
+      "scan": 0,
+      "reference_cycles": 939724,
+      "native_cycles": 455468
+    },
+    {
+      "case": "replacement_hp255_spikes0",
+      "scan": 15,
+      "reference_cycles": 939860,
+      "native_cycles": 455432
+    },
+    {
+      "case": "replacement_hp255_spikes1",
+      "scan": 0,
+      "reference_cycles": 917792,
+      "native_cycles": 455736
+    },
+    {
+      "case": "replacement_hp255_spikes1",
+      "scan": 15,
+      "reference_cycles": 918052,
+      "native_cycles": 455700
+    },
+    {
+      "case": "replacement_hp255_spikes2",
+      "scan": 0,
+      "reference_cycles": 924360,
+      "native_cycles": 464112
+    },
+    {
+      "case": "replacement_hp255_spikes2",
+      "scan": 15,
+      "reference_cycles": 924496,
+      "native_cycles": 464076
+    },
+    {
+      "case": "replacement_hp255_spikes3",
+      "scan": 0,
+      "reference_cycles": 904464,
+      "native_cycles": 455824
+    },
+    {
+      "case": "replacement_hp255_spikes3",
+      "scan": 15,
+      "reference_cycles": 904700,
+      "native_cycles": 455788
+    },
+    {
+      "case": "replacement_hp256_spikes0",
+      "scan": 0,
+      "reference_cycles": 939684,
+      "native_cycles": 455312
+    },
+    {
+      "case": "replacement_hp256_spikes0",
+      "scan": 15,
+      "reference_cycles": 939820,
+      "native_cycles": 455276
+    },
+    {
+      "case": "replacement_hp256_spikes1",
+      "scan": 0,
+      "reference_cycles": 918400,
+      "native_cycles": 456672
+    },
+    {
+      "case": "replacement_hp256_spikes1",
+      "scan": 15,
+      "reference_cycles": 918620,
+      "native_cycles": 456636
+    },
+    {
+      "case": "replacement_hp256_spikes2",
+      "scan": 0,
+      "reference_cycles": 925332,
+      "native_cycles": 465284
+    },
+    {
+      "case": "replacement_hp256_spikes2",
+      "scan": 15,
+      "reference_cycles": 925468,
+      "native_cycles": 465248
+    },
+    {
+      "case": "replacement_hp256_spikes3",
+      "scan": 0,
+      "reference_cycles": 905024,
+      "native_cycles": 456712
+    },
+    {
+      "case": "replacement_hp256_spikes3",
+      "scan": 15,
+      "reference_cycles": 905220,
+      "native_cycles": 456676
+    },
+    {
+      "case": "replacement_hp999_spikes0",
+      "scan": 0,
+      "reference_cycles": 939684,
+      "native_cycles": 497416
+    },
+    {
+      "case": "replacement_hp999_spikes0",
+      "scan": 15,
+      "reference_cycles": 939820,
+      "native_cycles": 497380
+    },
+    {
+      "case": "replacement_hp999_spikes1",
+      "scan": 0,
+      "reference_cycles": 918936,
+      "native_cycles": 499012
+    },
+    {
+      "case": "replacement_hp999_spikes1",
+      "scan": 15,
+      "reference_cycles": 919196,
+      "native_cycles": 498976
+    },
+    {
+      "case": "replacement_hp999_spikes2",
+      "scan": 0,
+      "reference_cycles": 925552,
+      "native_cycles": 507436
+    },
+    {
+      "case": "replacement_hp999_spikes2",
+      "scan": 15,
+      "reference_cycles": 925688,
+      "native_cycles": 507400
+    },
+    {
+      "case": "replacement_hp999_spikes3",
+      "scan": 0,
+      "reference_cycles": 905552,
+      "native_cycles": 499100
+    },
+    {
+      "case": "replacement_hp999_spikes3",
+      "scan": 15,
+      "reference_cycles": 905788,
+      "native_cycles": 499064
+    },
+    {
+      "case": "replacement_hp1023_spikes0",
+      "scan": 0,
+      "reference_cycles": 939684,
+      "native_cycles": 466012
+    },
+    {
+      "case": "replacement_hp1023_spikes0",
+      "scan": 15,
+      "reference_cycles": 939820,
+      "native_cycles": 465976
+    },
+    {
+      "case": "replacement_hp1023_spikes1",
+      "scan": 0,
+      "reference_cycles": 919032,
+      "native_cycles": 467704
+    },
+    {
+      "case": "replacement_hp1023_spikes1",
+      "scan": 15,
+      "reference_cycles": 919292,
+      "native_cycles": 467668
+    },
+    {
+      "case": "replacement_hp1023_spikes2",
+      "scan": 0,
+      "reference_cycles": 925552,
+      "native_cycles": 476032
+    },
+    {
+      "case": "replacement_hp1023_spikes2",
+      "scan": 15,
+      "reference_cycles": 925688,
+      "native_cycles": 475996
+    },
+    {
+      "case": "replacement_hp1023_spikes3",
+      "scan": 0,
+      "reference_cycles": 905704,
+      "native_cycles": 467792
+    },
+    {
+      "case": "replacement_hp1023_spikes3",
+      "scan": 15,
+      "reference_cycles": 905940,
+      "native_cycles": 467756
+    },
+    {
+      "case": "replacement_hp1535_spikes0",
+      "scan": 0,
+      "reference_cycles": 939684,
+      "native_cycles": 502640
+    },
+    {
+      "case": "replacement_hp1535_spikes0",
+      "scan": 15,
+      "reference_cycles": 939820,
+      "native_cycles": 502604
+    },
+    {
+      "case": "replacement_hp1535_spikes1",
+      "scan": 0,
+      "reference_cycles": 919032,
+      "native_cycles": 504332
+    },
+    {
+      "case": "replacement_hp1535_spikes1",
+      "scan": 15,
+      "reference_cycles": 919292,
+      "native_cycles": 504296
+    },
+    {
+      "case": "replacement_hp1535_spikes2",
+      "scan": 0,
+      "reference_cycles": 925744,
+      "native_cycles": 512852
+    },
+    {
+      "case": "replacement_hp1535_spikes2",
+      "scan": 15,
+      "reference_cycles": 925880,
+      "native_cycles": 512816
+    },
+    {
+      "case": "replacement_hp1535_spikes3",
+      "scan": 0,
+      "reference_cycles": 905648,
+      "native_cycles": 504420
+    },
+    {
+      "case": "replacement_hp1535_spikes3",
+      "scan": 15,
+      "reference_cycles": 905884,
+      "native_cycles": 504384
+    },
+    {
+      "case": "replacement_hp1536_spikes0",
+      "scan": 0,
+      "reference_cycles": 939684,
+      "native_cycles": 601344
+    },
+    {
+      "case": "replacement_hp1536_spikes0",
+      "scan": 15,
+      "reference_cycles": 939820,
+      "native_cycles": 601308
+    },
+    {
+      "case": "replacement_hp1536_spikes1",
+      "scan": 0,
+      "reference_cycles": 918432,
+      "native_cycles": 600292
+    },
+    {
+      "case": "replacement_hp1536_spikes1",
+      "scan": 15,
+      "reference_cycles": 918652,
+      "native_cycles": 600256
+    },
+    {
+      "case": "replacement_hp1536_spikes2",
+      "scan": 0,
+      "reference_cycles": 925092,
+      "native_cycles": 608884
+    },
+    {
+      "case": "replacement_hp1536_spikes2",
+      "scan": 15,
+      "reference_cycles": 925228,
+      "native_cycles": 608848
+    },
+    {
+      "case": "replacement_hp1536_spikes3",
+      "scan": 0,
+      "reference_cycles": 905056,
+      "native_cycles": 600388
+    },
+    {
+      "case": "replacement_hp1536_spikes3",
+      "scan": 15,
+      "reference_cycles": 905252,
+      "native_cycles": 600352
+    },
+    {
+      "case": "replacement_hp65535_spikes0",
+      "scan": 0,
+      "reference_cycles": 939748,
+      "native_cycles": 615768
+    },
+    {
+      "case": "replacement_hp65535_spikes0",
+      "scan": 15,
+      "reference_cycles": 939884,
+      "native_cycles": 615732
+    },
+    {
+      "case": "replacement_hp65535_spikes1",
+      "scan": 0,
+      "reference_cycles": 919328,
+      "native_cycles": 615512
+    },
+    {
+      "case": "replacement_hp65535_spikes1",
+      "scan": 15,
+      "reference_cycles": 919588,
+      "native_cycles": 615476
+    },
+    {
+      "case": "replacement_hp65535_spikes2",
+      "scan": 0,
+      "reference_cycles": 925704,
+      "native_cycles": 623988
+    },
+    {
+      "case": "replacement_hp65535_spikes2",
+      "scan": 15,
+      "reference_cycles": 925840,
+      "native_cycles": 623952
+    },
+    {
+      "case": "replacement_hp65535_spikes3",
+      "scan": 0,
+      "reference_cycles": 906000,
+      "native_cycles": 615600
+    },
+    {
+      "case": "replacement_hp65535_spikes3",
+      "scan": 15,
+      "reference_cycles": 906236,
+      "native_cycles": 615564
+    }
+  ]
+}

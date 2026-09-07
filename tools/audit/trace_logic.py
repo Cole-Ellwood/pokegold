@@ -46,8 +46,11 @@ def audit_switch_loop(boss: str) -> None:
             "call BossAI_ComputePlayerPlausibleTypeMask",
             "call BossAI_OracleHakiRead",
             "ret nz",
-            "call BossAI_EnemyPerishEscapeUrgent",
-            "jr c, .check_switch",
+            "call BossAI_EnemyPerishEscapeForced",
+            "jr nc, .ordinary_switch",
+            "call BossAI_PickPerishEscape",
+            "ret nc",
+            "jp .commit_switch",
             "call BossAI_HasAnyKOMove",
         ],
         "perish escape can override KO stay gate",
@@ -87,25 +90,23 @@ def audit_switch_loop(boss: str) -> None:
         require_contains(block, call, "switch loop emergency exceptions")
 
     dispatch = top_block(boss, "BossAI_TrySwitch")
-    require_order(
-        dispatch,
-        [
-            "call BossAI_RefineSwitchCandidateForPlausibleRisk",
-            "call BossAI_GetPrimaryThreatType",
-            "jr nc, .candidate_answers_threat",
-            "call BossAI_SwitchInBeatsStaying",
-            "jr c, .candidate_answers_threat",
-            "xor a",
-            "ld [wEnemySwitchMonParam], a",
-            "ret",
-            ".candidate_answers_threat",
-            "ld a, [wEnemySwitchMonParam]",
-            "and a",
-            "ret z",
-            "call BossAI_ComputeSwitchConfidence",
-        ],
-        "switch target must improve over active worst likely threat before confidence roll",
-    )
+    require_order(dispatch, [
+        "call BossAI_RefineSwitchCandidateForPlausibleRisk",
+        "ld a, [wEnemySwitchMonParam]", "and a", "ret z",
+        "call BossAI_ComputeSwitchConfidence",
+    ], "only a viable ranked switch reaches the confidence roll")
+    refine = top_block(boss, "BossAI_RefineSwitchCandidateForPlausibleRisk")
+    require_order(refine, [
+        "call BossAI_EnemyPerishEscapeForced", "jr c, .score",
+        "call BossAI_SwitchCandidateLowHPBlock", "jr c, .next",
+        "call BossAI_GetPrimaryThreatType", "jr nc, .score",
+        "call BossAI_SwitchInBeatsStaying", "jr nc, .next",
+        ".score", "call BossAI_ComputeSwitchCandidateRisk",
+    ], "screen candidates before risk ranking; last-turn Perish bypasses voluntary gates")
+    forced = top_block(boss, "BossAI_EnemyPerishEscapeForced")
+    require_order(forced, ["call BossAI_EnemyPerishEscapeUrgent", "ret nc",
+                          "ld a, [wEnemyPerishCount]", "cp 1", "ret nz", "scf"],
+                  "force Perish exit only at the final safe action")
 
     answer = top_block(boss, "BossAI_SwitchInBeatsStaying")
     require_order(
@@ -953,8 +954,10 @@ def audit_poison_contact_risk(boss: str) -> None:
 
 def audit_immunity_tiebreak(boss: str) -> None:
     refine = top_block(boss, "BossAI_RefineSwitchCandidateForPlausibleRisk")
-    done = local_block(refine, ".done", "ld a, [wEnemySwitchMonParam]")
-    replacement_margin = first_add_value(done, "switch candidate replacement margin")
+    require_order(refine, ["ld a, [wBossAITemp2]", "cp c", "jr c, .next",
+                           "jr z, .next", "ld a, c", "ld [wBossAITemp2], a"],
+                  "strict minimum replaces nominated-candidate tolerance")
+    replacement_margin = 0
 
     compute = top_block(boss, "BossAI_ComputeSwitchCandidateRisk")
     require_contains(
@@ -1082,7 +1085,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
     require_contains(speed, "HELD_CHOICE_SCARF", "Choice Scarf public speed model")
     require_contains(
         speed,
-        "call BossAI_GetEnemyHeldEffect",
+        "callfar GetItemHeldEffect",
         "Choice Scarf public speed model uses held effect",
     )
 
@@ -1119,7 +1122,7 @@ def audit_item_and_passive_reasoning(boss: str) -> None:
             # only checks the currently-scored move's KO pressure — DB has
             # MOVE_POWER = 0 so .HasKOLine always reports "no KO".
             "call BossAI_HasAnyKOMove",
-            "call BossAI_PlayerHasPublicThreatVsEnemy",
+            "call .HasDestinyBondRetaliation",
             "call BossAI_PublicEnemyFaster",
             "call .EncourageByTierWeight",
             "jp BossAI_EncourageScoreHL",

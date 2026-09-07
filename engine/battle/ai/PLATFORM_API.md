@@ -40,6 +40,8 @@ count.
 - `BossAI_GetActiveSpeciesUsedMovesPointer`
 - `BossAI_GetMoveAttr`
 - `BossAI_GetMoveByte`
+- `BossAI_MoveIsAvailable` (A = owned move id; carry = usable; preserves BC/DE/HL)
+- `BossAI_MoveIsAvailableFromC` (farcall-safe input; consume carry only)
 - `BossAI_AddRevealedMoveToSpeciesMask`
 - `BossAI_CheckTypeMatchupNoItem`
 - `BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem`
@@ -73,6 +75,20 @@ These functions are policy decisions, not platform:
 - `BossAI_SelectPlanIfNeeded`
 - `BossAI_ApplyLookaheadToTopMoveCandidates`
 - `BossAI_EvaluateActionLookahead`
+- `BossAI_PublicDamageKO` (B=1 owned outgoing minimum, B=0 revealed incoming
+  maximum; C=move ID; carry=conditional KO premise; BC/DE/HL preserved).
+  Impossible public hits and fainted HP are excluded. Single hits stop at
+  Substitute; unknown incoming multi-hit damage remains a possible threat.
+- `BossAI_EstimatePublicDamage` (B direction, C move; BC=min and DE=max
+  noncritical HP loss; carry=supported; HL preserved). Unsupported results are
+  explicitly unknown; zero registers on that path do not establish harmlessness.
+- `BossAI_BuildPublicDamageContext` (B direction, C move, DE points to
+  `AD_CONTEXT_SIZE` caller-owned bytes; DE preserved) and `BossAI_PublicDamageRange` (DE
+  context; BC=min, DE=max HP loss; repeat queries preserve input multipliers).
+  Accuracy/priority, Psychic negation and known own Focus Band thresholds are
+  separate context fields. Context size/offsets live in `damage_kernel.asm`.
+  These helpers preserve live battle/AI state, but clobber AF and ordinary
+  math/banking scratch. The root adapters allocate their context on the stack.
 - `BossAI_PredictPlayerSwitch`
 - `BossAI_RefineSwitchCandidateForPlausibleRisk`
 - `BossAI_ApplyPlanMoveBias`
@@ -87,6 +103,8 @@ python tools\audit\check_boss_ai_gating.py
 python tools\audit\check_boss_ai_trace_invariants.py
 python tools\audit\check_boss_ai_memory_budget.py
 python tools\audit\check_boss_ai_index_lines.py
+python -m tools.boss_ai_fixtures
+python tools\audit\check_lookahead_futility_bound.py
 ```
 
 ## Trace Surface

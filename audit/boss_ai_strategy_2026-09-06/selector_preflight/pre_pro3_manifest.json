@@ -1,0 +1,243 @@
+{
+  "created_utc": "2026-09-07T04:03:36.961338+00:00",
+  "scope": "Preimplementation documentation and existing-code verification. No new selector implementation or fixture source edits.",
+  "git_head": "34d8f9b449eb6201676c66e515d689347ec2c844",
+  "build": {
+    "command": "bash -lc 'cd \"/mnt/c/Users/lolno/Downloads/pokemon gold hack\" && make -B -j4 PYTHON=python3 RGBASM=rgbds-1.0.1/rgbasm.exe RGBLINK=rgbds-1.0.1/rgblink.exe RGBFIX=rgbds-1.0.1/rgbfix.exe RGBGFX=rgbds-1.0.1/rgbgfx.exe pokegold_ai_reference.gbc'",
+    "exit_code": 0,
+    "target": "pokegold_ai_reference.gbc",
+    "freshness": "Forced -B build before freezing ROM/symbols/map; full build stdout not archived.",
+    "variant": "Gold BOSS_AI_REFERENCE, repository RGBDS1.0.1, WSL make/python3"
+  },
+  "oracle": [
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle.gbc",
+      "sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
+      "bytes": 2097152
+    },
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle.sym",
+      "sha256": "4ae54dcda8e1eb308ea04eb0d8592e43fea53fe326ccf31b49120f8b625a8f6a",
+      "bytes": 1450438
+    },
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle.map",
+      "sha256": "9e81300851b4e2d6cfb226708f0d5630d6206564e774cfbf0f763e4a0963cf53",
+      "bytes": 1906358
+    }
+  ],
+  "source_snapshot": [
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/review_source.zip",
+      "sha256": "544f36546856d1bcddd458f4209c4577e11bd2f13655444228cc9b16586dc7d4",
+      "bytes": 577979
+    },
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/source_manifest.json",
+      "sha256": "051135c434d486de8dacbf9f133d89015bbf584d37331f7238b200548addf78e",
+      "bytes": 73799
+    }
+  ],
+  "source_snapshot_scope": "433 relevant source/test files, not a complete standalone build checkout",
+  "source_hashes_rechecked": 433,
+  "changed_snapshot_sources": [],
+  "verification": {
+    "full_fixtures": {
+      "passed": 839,
+      "command": "python -m tools.boss_ai_fixtures --rom .local/ai-two-second/preflight-2026-09-06-pro2/oracle --suite all"
+    },
+    "actor_contexts": {
+      "passed": 49152,
+      "command": "PYTHONPATH=<repository>; BOSS_AI_TEST_ROM=.local/ai-two-second/preflight-2026-09-06-pro2/oracle; python .local/ai-two-second/check_actor.py"
+    },
+    "accuracy_contexts": {
+      "passed": 18432,
+      "command": "Same environment; python .local/ai-two-second/check_accuracy_cache.py"
+    },
+    "first_states": {
+      "passed": 41984,
+      "cases": 113,
+      "command": "PYTHONPATH=<repository>; python .local/ai-two-second/check_first_states.py",
+      "rom_note": "Script names root pokegold_ai_reference; its hash matched frozen oracle and no concurrent rebuild occurred"
+    },
+    "arithmetic": {
+      "HP": 4200496,
+      "transition_accumulation": 100000,
+      "base": 520000,
+      "command": "python audit/boss_ai_strategy_2026-09-06/selector_preflight/verify_selector_redesign.py",
+      "limits": "Python identities; no ROM timing or opcode classification proof"
+    },
+    "vectors": {
+      "cases": 26,
+      "mean_entry_captures": 585,
+      "method": "Read-only host hook at BossAI_ComparePublicActions.Mean before normalization; existing run_case/check validates scores; current fixture API does not independently assert full numerators"
+    },
+    "adversaries": {
+      "cases": 2,
+      "traversal_variants_each": 16,
+      "extra_hidden_state_run_each": 1,
+      "tied_pairs_each": 968,
+      "extra_mean_entry_captures": 306,
+      "method": "Existing broad fixture replaced in memory with recorded boss/extra fields; existing runner unchanged"
+    },
+    "captured_totals_checked_against_scores": 891,
+    "static_audits": {
+      "no_cheat": "passed",
+      "farcall_hl": "passed"
+    },
+    "supplementary_chart": {
+      "passed": 189056,
+      "command": "PYTHONPATH=<repository>; python tools/audit/check_boss_ai_chart_index.py",
+      "target": {
+        "path": "pokegold.gbc",
+        "sha256": "ce0f6e3428c60c9f4577367a29a870e5b6d7216ae5b732f73860796fed93743c",
+        "bytes": 2097152
+      },
+      "limits": "Default production target; NOT freshly built here, NOT frozen-reference certification"
+    }
+  },
+  "profile": {
+    "command": "PYTHONPATH=<repository>; python audit/boss_ai_strategy_2026-09-06/profile_joint.py --rom .local/ai-two-second/preflight-2026-09-06-pro2/oracle --tables --output audit/boss_ai_strategy_2026-09-06/selector_preflight/broad_profile.json",
+    "cycles_upper_bound": 132302024,
+    "limits": "Table-enabled historical architecture; masked interrupts; under two frames return-trap padding; inclusive routine times overlap"
+  },
+  "documents": [
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/two_second_roadmap.md",
+      "sha256": "9006394eaf4bc1a957ab3bd0a4837757ad8b571ebde434986b312d087416aa7c",
+      "bytes": 19629
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_implementation_contract.md",
+      "sha256": "147df5687334a407234d6e9eee36630839cc6da6412051f0d709fa49a52a38ce",
+      "bytes": 18261
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_readiness.md",
+      "sha256": "7e7559e74da08326701d687dc3b26f15ef4ede7e3cc026d97769019da54d27df",
+      "bytes": 15009
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/next_stage_plan.md",
+      "sha256": "9f8af3b36b9b7d1dd5151db1aeea0f8f98df349e18e12ff663a589552ea21251",
+      "bytes": 4131
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/accuracy.log",
+      "sha256": "946d02fa74131f3320011ba6dcdb500c34a983ee4d23d9cece6b10200495f786",
+      "bytes": 119
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/actor.log",
+      "sha256": "e2761683321713c8e771dadbe2774abce956bb74bbcf799710f1837b6d618762",
+      "bytes": 53
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/adversarial.log",
+      "sha256": "84fb6b1658cb935a5a9bf7c94cc096c8e7375e0e8e9e25526074f1838ba5405f",
+      "bytes": 154
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/adversarial_vectors.json",
+      "sha256": "6e6900e9c29c88ed8c0859514e2e091b60c72ec3f59a0eceee5fef49eb608ed1",
+      "bytes": 45871
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/arithmetic.log",
+      "sha256": "07ae6f145fdedff794ac23f2ae55f0bce74c5d8877c8621814a14c456129e9aa",
+      "bytes": 190
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/broad_profile.json",
+      "sha256": "cbe1f5bf11b5f483ca412d4c53ac8285befee15589c293cc3e9fa53576823421",
+      "bytes": 1381
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/catalog_and_fixtures.json",
+      "sha256": "a778be6459b6f8a62fef172ae4423e1435473d77c51d812ca1b93095c2791225",
+      "bytes": 30027
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/chart.log",
+      "sha256": "bea739b52d075c331a194e585ab9bc768edb89b71ea8ba5b202df1a0092efff3",
+      "bytes": 72
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/farcall.log",
+      "sha256": "d6b4710dc9eaff61ae7ca5f95604165f48ee9407f6276beee83e43ab8792882e",
+      "bytes": 325
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/first_states.log",
+      "sha256": "42aa88e2e755a8ed2353cd01aa9b85d6987cab4b185fe019406517331c74a6c4",
+      "bytes": 78
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/fixtures.log",
+      "sha256": "4b61b2af6ab8df33a6d662229994550647df5e7ce1c9daf630eff3842a5376c0",
+      "bytes": 117809
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/memory.json",
+      "sha256": "5972ce0541a33bca3a0bada4c1742429cb4009491b1a89ad6d7283f308c22823",
+      "bytes": 1206
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/no_cheat.log",
+      "sha256": "8f87009784596e8eb6c9f4ee5422b50d2c7130426a16016f500e080c3c510910",
+      "bytes": 1610
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/oracle_vectors.json",
+      "sha256": "cd18ee2fbf956d6b14198e3b715a4efa0ed63dd5843410327a8272d65cd75f18",
+      "bytes": 95760
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/pro_second_review.md",
+      "sha256": "b0d7d14ff915ad7f91356d30de6c1216041ed080168e48ad0515c6494d7d4aca",
+      "bytes": 53498
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/profile.log",
+      "sha256": "f48063277cd27f0ddcc29733a8ca53b85c38082534f49d2e477709256a6bf391",
+      "bytes": 1036
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/vectors.log",
+      "sha256": "bf33f68cee877339ce420a707a98b9a312d98236dad2ffd425896d4d95b19e10",
+      "bytes": 50
+    },
+    {
+      "path": "audit/boss_ai_strategy_2026-09-06/selector_preflight/verify_selector_redesign.py",
+      "sha256": "26ed1c780cac4062932f19566181801cb69b15f6432d40bed6095c9d1cf0a2a0",
+      "bytes": 5702
+    }
+  ],
+  "review_evidence": "audit/boss_ai_strategy_2026-09-06/selector_preflight/review.md",
+  "hash_exclusions": "Manifest and review evidence excluded to avoid self/circular hashes. Review binds substantive docs and manifest separately.",
+  "remaining_future_gates": [
+    "new-entry implementation assertions and exact-numerator adapter",
+    "certified complex finishing/multihit counts and compatible maxima",
+    "native phase measurements and complete in-domain families",
+    "production call-site/interrupt/graphics/banking/domain integration"
+  ],
+  "focused_test_script_snapshots": [
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/check_actor.py",
+      "sha256": "d1e75ea292acdc730c92bf67709a22394182a82303580a6d5face6725cb9dec2",
+      "bytes": 3016
+    },
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/check_accuracy_cache.py",
+      "sha256": "b12ce6bdc1c7301de95e921e165f7ea29f1285bbbd19cd9a17c4480e7adf0f70",
+      "bytes": 2625
+    },
+    {
+      "path": ".local/ai-two-second/preflight-2026-09-06-pro2/check_first_states.py",
+      "sha256": "e1d26fa172aeb1bdbee3f9abf1a4462203f65d30ff0377b4892833e02b25a411",
+      "bytes": 2631
+    }
+  ]
+}

@@ -60,7 +60,9 @@ CALLER_LOOKAHEAD = 30  # lines after farcall to scan for hl read/write/exit
 # indicate the caller is reconstructing hl rather than relying on the
 # pre-farcall value. `hlcoord` is the canonical screen-coord setter macro
 # (expands to `ld hl, _CoordsBase + …`), so it's an hl write at the source
-# level. Anchored to start of stripped code so operands like `ld a, h`
+# level. `ad_address` rebuilds HL as an immediate context offset plus DE
+# (engine/battle/ai/damage_kernel.asm), so it also discards the prior HL.
+# Anchored to start of stripped code so operands like `ld a, h`
 # (which READ h, not write it) don't match.
 HL_RESET_RE = re.compile(
     r"^(?:"
@@ -70,6 +72,7 @@ HL_RESET_RE = re.compile(
     r"|ld\s+l\s*,"
     r"|hlcoord\b"
     r"|hlbgcoord\b"
+    r"|ad_address\b"
     r")",
     re.IGNORECASE,
 )

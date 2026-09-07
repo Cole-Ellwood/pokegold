@@ -11,6 +11,12 @@ sDecompressScratch::
 NEXTU
 	ds $188
 sDecompressBuffer:: ds 7 * 7 tiles
+NEXTU
+; Temporary decision tables; share the decompressor's synchronous scratch.
+sBossAIOwnHPValues:: ds 704
+sBossAIPlayerHPValues:: ds 704
+sBossAIHPValuesEnd::
+ASSERT sBossAIHPValuesEnd - sScratch <= $60 tiles
 ENDU
 
 

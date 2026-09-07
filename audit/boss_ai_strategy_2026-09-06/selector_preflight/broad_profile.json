@@ -1,0 +1,46 @@
+{
+  "case": "joint_broad_prior_mass",
+  "rom": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle",
+  "rom_sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
+  "errors": [],
+  "profiles": [
+    {
+      "scan": 0,
+      "cycles_upper_bound": 132302024,
+      "calls": {
+        "table_offset": 3835,
+        "owned_context": 18,
+        "binary_table_offset": 3709,
+        "player_stat": 135,
+        "local_multiply": 7248,
+        "local_divide": 8765,
+        "hit_facts": 18,
+        "speed_facts": 9,
+        "damage_range": 3297,
+        "chart": 3210,
+        "prepare_reply": 2286,
+        "exchange": 2835,
+        "multiply": 3933,
+        "mean": 9,
+        "mean_end": 9
+      },
+      "inclusive_loop_cycles": {
+        "table_offset": 374208,
+        "binary_table_offset": 1645392,
+        "local_multiply": 5189256,
+        "local_divide": 7863276,
+        "player_stat": 491724,
+        "hit_facts": 116936,
+        "owned_context": 418592,
+        "speed_facts": 52548,
+        "chart": 10242512,
+        "damage_range": 29644260,
+        "prepare_reply": 48375580,
+        "exchange": 57474356,
+        "multiply": 8915616,
+        "mean": 750732
+      }
+    }
+  ],
+  "limits": "Whole-call cycles include under two frames of return-trap padding; loop times exclude return epilogues."
+}

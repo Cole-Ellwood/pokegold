@@ -13,9 +13,32 @@ class Skip(Exception):
     """Environment cannot run ROM-backed fixtures."""
 
 
+class FixtureError(Exception):
+    """Selected tests do not match the supplied build or required symbols."""
+
+
 def run_case(harness, case: Case) -> dict:
+    harness.invoke("BossAI_ResetTurnCaches")
     harness.seed_battle(case.boss, case.player, tier=case.tier,
                         scores=case.scores, extra=case.extra)
+    if case.damage_check is not None:
+        from tools.boss_ai_fixtures.damage import run_damage_check
+        return run_damage_check(harness, case)
+    if case.action_check is not None:
+        from tools.boss_ai_fixtures.action import run_action_check
+        return run_action_check(harness, case)
+    if case.exchange_check is not None:
+        from tools.boss_ai_fixtures.action import run_exchange_check
+        return run_exchange_check(harness, case)
+    if case.candidate_check is not None:
+        from tools.boss_ai_fixtures.action import run_candidate_check
+        return run_candidate_check(harness, case)
+    if case.reply_check is not None:
+        from tools.boss_ai_fixtures.replies import run_reply_check
+        return run_reply_check(harness, case)
+    if case.joint_check is not None:
+        from tools.boss_ai_fixtures.joint import run_joint_check
+        return run_joint_check(harness, case)
     if case.prescore:
         # Stand in for the ordinary AIChooseMove pass having already scored this
         # matchup, so the fixture isolates the entry point under test.
@@ -28,11 +51,52 @@ def run_case(harness, case: Case) -> dict:
                 harness.wr(key, val)
 
     returned = True
-    for sym in case.entry:
-        returned = harness.invoke(sym) and returned
+    reference = None
+    if case.expect.get("exhaustive_lookahead"):
+        # Evaluate each move independently from the same initial scores.
+        # Compare with the production driver, including unattractive late slots.
+        reference = list(case.scores)
+        for slot, move in enumerate(case.boss.moves):
+            if reference[slot] >= 80:
+                continue
+            harness.invoke("BossAI_ResetTurnCaches")
+            harness.seed_battle(case.boss, case.player, tier=case.tier,
+                                scores=case.scores, extra=case.extra)
+            harness.invoke("BossAI_EvaluateActionLookahead", {"A": move})
+            delta = harness.outcome()["a"]
+            delta = delta - 256 if delta >= 128 else delta
+            reference[slot] = max(1, min(79, reference[slot] + delta))
+        harness.invoke("BossAI_ResetTurnCaches")
+        harness.seed_battle(case.boss, case.player, tier=case.tier,
+                            scores=case.scores, extra=case.extra)
+    decisions = []
+    random_calls = []
+    random_sym = harness.syms.get("Random")
+    if "random_calls" in case.expect:
+        harness.pb.hook_register(random_sym.bank, random_sym.address,
+                                 lambda _: random_calls.append(1), None)
+    try:
+        registers = {
+            key: harness.syms[value[0]].address + value[1]
+            if isinstance(value, tuple) else value
+            for key, value in case.registers.items()
+        }
+        for sym in case.entry:
+            returned = harness.invoke(sym, registers) and returned
+            decisions.append(harness.outcome()["carry"])
+    finally:
+        if "random_calls" in case.expect:
+            harness.pb.hook_deregister(random_sym.bank, random_sym.address)
 
     out = harness.outcome()
     out["returned"] = returned
+    out["reference_scores"] = reference
+    out["decisions"] = decisions
+    out["random_calls"] = len(random_calls)
+    out["memory"] = {
+        key: harness.rd(key[0], key[1]) if isinstance(key, tuple) else harness.rd(key)
+        for key in case.expect.get("memory", {})
+    }
     out["haki_spent"] = bool(
         harness.rd("wBossAIRevealedMovesBitmapSpare", 1) & (1 << HAKI_SPENT_F)
     )
@@ -42,12 +106,26 @@ def run_case(harness, case: Case) -> dict:
 def check(case: Case, out: dict) -> list[str]:
     """Return a list of human-readable failures for one case."""
     fails: list[str] = []
+    fails.extend(out.get("damage_errors", []))
     if not out["returned"]:
         fails.append("routine never returned (budget exhausted)")
         return fails
 
     exp = case.expect
     chosen = out["chosen_move"]
+    if exp.get("exhaustive_lookahead") and out["scores"] != out["reference_scores"]:
+        fails.append(f"scores {out['scores']} != independent evaluation {out['reference_scores']}")
+
+    if "a" in exp and out["a"] != exp["a"]:
+        fails.append(f"A={out['a']}, expected {exp['a']}")
+    for key in ("bc", "random_calls"):
+        if key in exp and out[key] != exp[key]:
+            fails.append(f"{key}={out[key]}, expected {exp[key]}")
+    if exp.get("consistent_decisions") and len(set(out["decisions"])) != 1:
+        fails.append(f"inconsistent decisions: {out['decisions']}")
+    for key, want in exp.get("memory", {}).items():
+        if out["memory"][key] != want:
+            fails.append(f"{key}={out['memory'][key]}, expected {want}")
 
     if "chosen_move" in exp:
         want = MOVES[exp["chosen_move"]]
@@ -93,16 +171,26 @@ def check(case: Case, out: dict) -> list[str]:
 
 
 def run_all(rom: str = "pokegold", only: str | None = None,
-            verbose: bool = False) -> tuple[list[tuple[Case, dict, list[str]]], int]:
+            verbose: bool = False, suite: str = "all") -> tuple[list[tuple[Case, dict, list[str]]], int]:
     """Run every case (optionally filtered by id/path substring)."""
+    if suite not in ("all", "production", "reference"):
+        raise ValueError(f"unknown fixture suite {suite!r}")
     selected = [c for c in CASES
-                if only is None or only in c.id or only in c.path]
+                if (only is None or only in c.id or only in c.path)
+                and (suite == "all" or c.requires_reference == (suite == "reference"))]
     if not selected:
-        raise Skip(f"no fixtures matched {only!r}")
+        raise FixtureError(f"no {suite} fixtures matched {only!r}")
 
     results: list[tuple[Case, dict, list[str]]] = []
     try:
-        ctx = open_harness(rom)
+        with open_harness(rom) as harness:
+            if any(c.requires_reference for c in selected) and not harness.has("BossAI_ComparePublicActions"):
+                raise FixtureError(
+                    f"{rom} does not contain the offline AI reference evaluator. "
+                    "Use --suite production for game-build tests, or build "
+                    "gold_ai_reference/silver_ai_reference and select that ROM with --rom.")
+    except FixtureError:
+        raise
     except Exception as exc:  # pragma: no cover - environment guard
         raise Skip(f"debugger harness unavailable: {exc}") from exc
 
@@ -118,7 +206,7 @@ def run_all(rom: str = "pokegold", only: str | None = None,
             try:
                 out = run_case(harness, case)
             except KeyError as exc:
-                raise Skip(f"symbol missing from pokegold.sym: {exc}") from exc
+                raise FixtureError(f"{case.id}: required symbol missing from {rom}.sym: {exc}") from exc
             fails = check(case, out)
         results.append((case, out, fails))
     return results, len(selected)

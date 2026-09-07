@@ -1,0 +1,105 @@
+{
+  "scope": "AI source basis; see report coverage table for inspection depth",
+  "files": [
+    {
+      "path": "engine/battle/ai/boss_platform.asm",
+      "sha256": "b6bfa2d59c59d286527b59d4c8b65a768d08c08d6e8d3e3c59f42f31e789c437"
+    },
+    {
+      "path": "engine/battle/ai/boss_policy_move.asm",
+      "sha256": "f182c98dbba9bd38e7bae99e5f673b076e17314c348dd2ef27e5761db66094e2"
+    },
+    {
+      "path": "engine/battle/ai/boss_policy_switch.asm",
+      "sha256": "01a2c33258559ff33e550228822c591782f41b6428ac75464401785e25829c4f"
+    },
+    {
+      "path": "engine/battle/ai/boss_thunks.asm",
+      "sha256": "c451657ec77b45318a7350a2d170cb7e579c656af9f30ffefab293ad34fa2e25"
+    },
+    {
+      "path": "engine/battle/ai/boss_trace_topmoves.asm",
+      "sha256": "d0602661ce9a2beaac199790154b31c08dd6d7373965f9aa515f512c2a5ce7e4"
+    },
+    {
+      "path": "engine/battle/ai/haki_taunt_queue.asm",
+      "sha256": "2719d30a8cebbdc504bdf0803fffc2955610e46b36440ee0af3e856167305e8c"
+    },
+    {
+      "path": "engine/battle/ai/items.asm",
+      "sha256": "d525e3645636f225ea8d9c707c6f6c3eaff1396574271e31d1670ff74b03a1e3"
+    },
+    {
+      "path": "engine/battle/ai/ko_band_oracle.asm",
+      "sha256": "909e5a17264e7b8bd5517acbb36e76c2a2914c9ecca24f4cf17736834ecd1ec7"
+    },
+    {
+      "path": "engine/battle/ai/move.asm",
+      "sha256": "c3bdf4dc93605f466e03cbe34cbe873608635047fe97468acf2fcfdffeb646e0"
+    },
+    {
+      "path": "engine/battle/ai/observation_log.asm",
+      "sha256": "c9be5b867296d2ce625a567e6b83e9ff7dd5867a173ea63af70fac0d73d01f2e"
+    },
+    {
+      "path": "engine/battle/ai/PLATFORM_API.md",
+      "sha256": "910a899171a1016c670b32454e334c362b1158b9246f7ef85aa3c23e02548bdb"
+    },
+    {
+      "path": "engine/battle/ai/POLICY_DESIGN.md",
+      "sha256": "aa4f7d766a9345a3709426543cde632505e85c5a80e1e1776e4dc10b32a1b783"
+    },
+    {
+      "path": "engine/battle/ai/redundant.asm",
+      "sha256": "2ffe97a46cd050669e987a22fb4bea1552c6f94c317b9abcfed69a6c71dcc5aa"
+    },
+    {
+      "path": "engine/battle/ai/scoring.asm",
+      "sha256": "5975dc18e3ba26e8703bcc43e7bd3443352939c1e77257a01b5a3e0d32b6534c"
+    },
+    {
+      "path": "engine/battle/ai/switch.asm",
+      "sha256": "9fe1a50e65acdd71f9737c19a4403b2782e4cc62734e09f49d15a007f1eb7d20"
+    },
+    {
+      "path": "engine/battle/core.asm",
+      "sha256": "0743d7ef5c8da424fe14c846bab48e7ca8b6e2400e3af52bfe546c8aa1c1b0be"
+    },
+    {
+      "path": "engine/battle/read_trainer_attributes.asm",
+      "sha256": "d535911e21707f2282ac6827c0957a9dd687958415149613f9f59008806c7a70"
+    },
+    {
+      "path": "engine/battle/move_effects/protect.asm",
+      "sha256": "721744853be8567210e79ed489b1f54f6253b6be5c98e6cd70237ccc36c2de66"
+    },
+    {
+      "path": "data/trainers/ai_tiers.asm",
+      "sha256": "24cbcd75d6fdf29d37bef3378f39f965d85a5c3c81889b611f58255e38e4671f"
+    },
+    {
+      "path": "data/trainers/ai_haki_excluded.asm",
+      "sha256": "b5fa6a9029c656fb634d6ad1312fda4d2f7febb196daa4c7c781753885037230"
+    },
+    {
+      "path": "data/boss_ai/coach_plan_templates.asm",
+      "sha256": "81e685e53a01d6282aa8ff4b71fed8c69169096af50ac9aac5b0ff35a280da59"
+    },
+    {
+      "path": "data/boss_ai/revealed_effect_matrix.asm",
+      "sha256": "d7bb25a2f0156727a4284c6446bff471243b8ddb4c946b0be44580e9b42d4099"
+    },
+    {
+      "path": "data/boss_ai/tendency_counter_weights.asm",
+      "sha256": "eced6017d187f5248a3b4ae89436cfbfe2123b6ebc7085ae9de0cdbcee3bff56"
+    },
+    {
+      "path": "data/boss_ai/role_package_classifier.asm",
+      "sha256": "d240d82e49bf244cdfc42358bf1c6a80aa3bb471e63927fc5de42ab2ff264cbe"
+    },
+    {
+      "path": "constants/battle_constants.asm",
+      "sha256": "bf8e227d5154840494a4f0c427c1b04b5fdb8ab9acd912613ff9988e734154e1"
+    }
+  ]
+}

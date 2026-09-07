@@ -1,0 +1,46 @@
+{
+  "case": "joint_broad_prior_mass",
+  "rom": "pokegold_ai_reference",
+  "rom_sha256": "315cfdf4c7db01ab82d882928ce112d3b69cf879530f9bf37b6d82bc82ac11f2",
+  "errors": [],
+  "profiles": [
+    {
+      "scan": 0,
+      "cycles_upper_bound": 149998464,
+      "calls": {
+        "table_offset": 6065,
+        "owned_context": 18,
+        "binary_table_offset": 10612,
+        "player_stat": 126,
+        "local_multiply": 7239,
+        "local_divide": 8756,
+        "hit_facts": 2304,
+        "speed_facts": 9,
+        "damage_range": 3297,
+        "chart": 3210,
+        "prepare_reply": 2286,
+        "exchange": 2835,
+        "multiply": 3933,
+        "mean": 9,
+        "mean_end": 9
+      },
+      "inclusive_loop_cycles": {
+        "table_offset": 598008,
+        "binary_table_offset": 4683792,
+        "local_multiply": 5182812,
+        "local_divide": 7853844,
+        "player_stat": 455940,
+        "hit_facts": 15365384,
+        "owned_context": 463196,
+        "speed_facts": 52548,
+        "chart": 10242512,
+        "damage_range": 29644260,
+        "prepare_reply": 66167148,
+        "exchange": 57474356,
+        "multiply": 8915616,
+        "mean": 750732
+      }
+    }
+  ],
+  "limits": "Whole-call cycles include under two frames of return-trap padding; loop times exclude return epilogues."
+}

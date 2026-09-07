@@ -4011,7 +4011,8 @@ BattleCommand_EvasionUp2:
 	jr BattleCommand_StatUp
 
 BattleCommand_BestAttackUp:
-; Boost ATTACK if user's current Atk >= SpA, else boost SP_ATTACK.
+; Boost ATTACK if user's unmodified computed Atk >= SpA, else SP_ATTACK.
+; Uses wPlayer/EnemyStats before stages, burn and damage-stat item boosts.
 ; Mirrors the Atk-vs-SpA category swap in TypePassive_GetEffectiveMoveCategory_Far
 ; (used to make Outrage physical for high-Atk Dragons). Ties go to ATTACK.
 ; Stat fields are big-endian 2-byte computed (macros/ram.asm:35).

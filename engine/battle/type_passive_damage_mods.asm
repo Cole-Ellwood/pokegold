@@ -479,8 +479,9 @@ TypePassive_GetEffectiveMoveCategory_Far::
 ; convention: boss.asm, effect_commands.asm, late_gen_held_items.asm, and
 ; the bug-defender / water-defender passive checks in this file.
 ;
-; Dragon-only exception: Outrage is physical if the user's current Attack
-; is greater than its current Special Attack. Ties remain special. The swap
+; Dragon-only exception: Outrage is physical if the user's unmodified computed
+; Attack exceeds its unmodified computed Special Attack (wPlayer/EnemyStats,
+; before stages, burn and damage-stat item boosts). Ties remain special. The swap
 ; is implemented by returning NORMAL (a physical-tier type constant) instead
 ; of the actual move type when the condition fires; callers only read the
 ; physical-vs-special bucket, never the type identity, so this is safe.

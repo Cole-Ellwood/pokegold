@@ -88,6 +88,8 @@ New/activated held effects:
 
 Core enforcement behavior:
 - Player choice lock and Assault Vest legality are enforced in move selection and "has usable moves" checks.
+- Enemy Assault Vest fallback preserves its move-slot and scan state across the
+  legality check, including when Encore needs a usable damaging replacement.
 - Enemy choice/vest restrictions are enforced at action parse time.
 - Choice/metronome state is reset on battle start and on switch/new active mon.
 
@@ -118,7 +120,7 @@ Damage multipliers/passives:
   - Full reduction: `1/2`
 - Dragon-only Outrage category exception:
   - `DRAGONBREATH` stays special because Dragon is a special type.
-  - `OUTRAGE` stays Dragon-type, but for Dragon users it uses the physical damage category when current Attack is greater than current Special Attack.
+  - `OUTRAGE` stays Dragon-type, but for Dragon users it uses the physical damage category when unmodified computed Attack is greater than unmodified computed Special Attack. `TypePassive_GetEffectiveMoveCategory_Far.UserAttackGreaterThanSpAtk` reads `wPlayerAttack`/`wPlayerSpAtk` or `wEnemyAttack`/`wEnemySpAtk`, before stat stages, burn and damage-stat item boosts. This is not a comparison of the adjusted active-mon stats.
   - Ties and non-Dragon users keep `OUTRAGE` special.
   - The same category decision is used for damage stats, Reflect/Light Screen, critical stat checks, Choice Band/Specs, Muscle Band/Wise Glasses, Bug/Water passive reductions, Counter, and Mirror Coat.
 - Ground defender on super-effective hit taken:

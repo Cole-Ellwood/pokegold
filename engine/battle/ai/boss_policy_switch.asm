@@ -26,8 +26,12 @@ BossAI_TrySwitch:
 	call BossAI_HakiReserveAceAction
 	ret nz
 
-	call BossAI_EnemyPerishEscapeUrgent
-	jr c, .check_switch
+	call BossAI_EnemyPerishEscapeForced
+	jr nc, .ordinary_switch
+	call BossAI_PickPerishEscape
+	ret nc
+	jp .commit_switch
+.ordinary_switch
 	call BossAI_HasAnyKOMove
 	jr nc, .check_switch
 	call BossAI_IsImminentKOPrevention
@@ -45,23 +49,8 @@ BossAI_TrySwitch:
 	ld a, [wEnemySwitchMonParam]
 	and a
 	ret z
-	call BossAI_GetPrimaryThreatType
-	jr nc, .candidate_answers_threat
-	; A threat exists, so a voluntary type-flee must actually improve the
-	; matchup. The old check here greenlit the switch whenever the bench mon was
-	; immune/resistant to the SINGLE primary-threat type, blind to a worse
-	; weakness against the player's other likely public threats.
-	call BossAI_SwitchInBeatsStaying
-	jr c, .candidate_answers_threat
-	xor a
-	ld [wEnemySwitchMonParam], a
-	ret
 
 .candidate_answers_threat
-
-	ld a, [wEnemySwitchMonParam]
-	and a
-	ret z
 	; LATE-tier categorical sack: dying low-speed non-wincon non-asleep mons
 	; stay in to use their last turn instead of letting the player get a free
 	; hit on the next mon. Soft +8 to threshold doesn't move the needle when
@@ -72,16 +61,6 @@ BossAI_TrySwitch:
 	ld [wEnemySwitchMonParam], a
 	ret
 .no_hard_sack
-	; Bug B fix: block switching INTO a low-HP candidate unless it's an
-	; immunity pivot. Without this, an AI seeing a "best-matchup" bench mon
-	; switches into it even when it has 12/60 HP and will die before
-	; contributing. The candidate's HP is otherwise never read.
-	call BossAI_SwitchCandidateLowHPBlock
-	jr nc, .no_low_hp_block
-	xor a
-	ld [wEnemySwitchMonParam], a
-	ret
-.no_low_hp_block
 	call BossAI_ComputeSwitchConfidence
 	ld [wBossAISwitchConfidence], a
 IF DEF(BOSS_AI_TRACE)
@@ -144,6 +123,7 @@ ENDC
 	; wEnemySwitchMonIndex = 1 = party slot 0 = the active mon: the boss
 	; "switched" into itself every turn (shared_switch_loop). wEnemySwitchMonParam
 	; is stable from BossAI_RefineSwitchCandidateForPlausibleRisk to here.
+.commit_switch
 	ld a, [wEnemySwitchMonParam]
 	and $f
 	inc a
@@ -152,6 +132,20 @@ ENDC
 	jp AI_TrySwitch
 
 .stay
+	ret
+
+BossAI_PickPerishEscape:
+; An inferred KO is not proof of immediate victory against an unknown party.
+; Preserve a legal escape; the outer entrypoint still enforces trapping/locks.
+	call BossAI_FindFirstAliveSwitchCandidate
+	ret nc
+	ld a, $30
+	ld [wEnemySwitchMonParam], a
+	call BossAI_RefineSwitchCandidateForPlausibleRisk
+	ld a, [wEnemySwitchMonParam]
+	and a
+	ret z
+	scf
 	ret
 
 ; ai-layer: POLICY
@@ -779,6 +773,16 @@ BossAI_EnemyPerishEscapeUrgent:
 	and a
 	ret
 
+BossAI_EnemyPerishEscapeForced:
+; Count 2 still permits one useful action; count 1 is the last safe exit.
+	call BossAI_EnemyPerishEscapeUrgent
+	ret nc
+	ld a, [wEnemyPerishCount]
+	cp 1
+	ret nz
+	scf
+	ret
+
 ; ai-layer: POLICY
 BossAI_ShouldRespectPotentialPlayerRevenge:
 ; Carry if the player is likely to threaten a fast revenge KO line.
@@ -1078,38 +1082,27 @@ if DEF(BOSSAI_EMIT_SWITCH_CANDIDATE_RISK_REFINEMENT)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_RefineSwitchCandidateForPlausibleRisk:
+; Screen all living bench slots before ranking. Temp2 = best risk,
+; Temp3 = best zero-based slot. Preserve plan target state.
 	ld a, [wEnemySwitchMonParam]
-	and $f
-	inc a
-	ld [wBossAITemp], a
-	call BossAI_ComputeSwitchCandidateRisk
-	ld [wBossAITemp2], a
-	ld [wBossAITemp4], a
-	ld a, [wBossAITemp]
-	ld [wBossAITemp3], a
-
-	; wBossAITargetMonIdx is plan state (written by plan selection in
-	; boss_policy_move.asm); this scan borrows it as a loop counter, so save
-	; it and restore at .done.
+	and $f0
+	push af
 	ld a, [wBossAITargetMonIdx]
 	push af
 	xor a
 	ld [wBossAITargetMonIdx], a
-	ld [wBossAITemp5], a
+	ld a, $ff
+	ld [wBossAITemp2], a
+	ld [wBossAITemp3], a
 .scan_loop
 	ld a, [wBossAITargetMonIdx]
 	ld c, a
 	ld a, [wOTPartyCount]
 	cp c
 	jr z, .done
-	jr c, .done
-	ld a, [wBossAITemp5]
-	cp BOSS_AI_SWITCH_CANDIDATE_CAP
-	jr nc, .done
 	ld a, [wCurOTMon]
 	cp c
 	jr z, .next
-
 	ld hl, wOTPartyMon1HP
 	ld a, c
 	ld bc, PARTYMON_STRUCT_LENGTH
@@ -1117,52 +1110,45 @@ BossAI_RefineSwitchCandidateForPlausibleRisk:
 	ld a, [hli]
 	or [hl]
 	jr z, .next
-
-	ld a, [wBossAITemp5]
-	inc a
-	ld [wBossAITemp5], a
-
+	ld a, [wBossAITargetMonIdx]
+	ld [wEnemySwitchMonParam], a
+	call BossAI_EnemyPerishEscapeForced
+	jr c, .score
+	call BossAI_SwitchCandidateLowHPBlock
+	jr c, .next
+	call BossAI_GetPrimaryThreatType
+	jr nc, .score
+	call BossAI_SwitchInBeatsStaying
+	jr nc, .next
+.score
 	ld a, [wBossAITargetMonIdx]
 	inc a
 	call BossAI_ComputeSwitchCandidateRisk
 	ld c, a
-	ld a, [wBossAITemp4]
+	ld a, [wBossAITemp2]
 	cp c
 	jr c, .next
 	jr z, .next
 	ld a, c
-	ld [wBossAITemp4], a
+	ld [wBossAITemp2], a
 	ld a, [wBossAITargetMonIdx]
-	inc a
 	ld [wBossAITemp3], a
-
 .next
-	ld a, [wBossAITargetMonIdx]
-	inc a
-	ld [wBossAITargetMonIdx], a
+	ld hl, wBossAITargetMonIdx
+	inc [hl]
 	jr .scan_loop
-
 .done
 	pop af
 	ld [wBossAITargetMonIdx], a
+	pop bc ; B = original confidence nibble
 	ld a, [wBossAITemp3]
-	ld b, a
-	ld a, [wBossAITemp]
-	cp b
-	ret z
-	ld a, [wBossAITemp4]
-	add 2
-	ld b, a
-	ld a, [wBossAITemp2]
-	cp b
-	ret c
-	ret z
-	ld a, [wEnemySwitchMonParam]
-	and $f0
-	ld b, a
-	ld a, [wBossAITemp3]
-	dec a
+	cp $ff
+	jr z, .none
 	or b
+	ld [wEnemySwitchMonParam], a
+	ret
+.none
+	xor a
 	ld [wEnemySwitchMonParam], a
 	ret
 
@@ -1209,8 +1195,10 @@ BossAI_ComputeSwitchCandidateRisk:
 	jr z, .possible_mask_risk
 	ld c, a
 	push hl
+	push de ; D holds the tier weight, not the bit-test scratch mask
 	ld a, c
 	call BossAI_TestLikelyMaskBit
+	pop de
 	pop hl
 	jr nc, .likely_mask_loop
 	ld a, c
@@ -1227,13 +1215,17 @@ BossAI_ComputeSwitchCandidateRisk:
 	jr z, .hp_risk
 	ld c, a
 	push hl
+	push de
 	ld a, c
 	call BossAI_TestPlausibleMaskBit
+	pop de
 	pop hl
 	jr nc, .possible_mask_loop
 	push hl
+	push de
 	ld a, c
 	call BossAI_TestLikelyMaskBit
+	pop de
 	pop hl
 	jr c, .possible_mask_loop
 	ld a, c
@@ -1277,10 +1269,8 @@ BossAI_ComputeSwitchCandidateRisk:
 	ld e, a
 	jr .hp_loop
 .hp_done
-	ld a, b
-	add e
-	ld b, a
-	ret
+	ld a, e
+	jp .AccumulateRisk
 
 .immunity_tiebreak
 	call .ApplyPrimaryThreatImmunityTieBreak
@@ -1413,9 +1403,14 @@ BossAI_ComputeSwitchCandidateRisk:
 
 .AddTypeRisk
 	call .GetTypeRiskPoints
-	ld e, a
-	ld a, b
-	add e
+.AccumulateRisk
+	add b
+	jr c, .risk_cap
+	cp 100
+	jr c, .risk_store
+.risk_cap
+	ld a, 99
+.risk_store
 	ld b, a
 	ret
 

@@ -1,0 +1,1166 @@
+[
+  {
+    "path": "probability",
+    "raw": 0,
+    "side": "Own",
+    "miss": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 0,
+    "side": "Own",
+    "miss": 1,
+    "expected": 256,
+    "observed": 256,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 0,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 0,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 256,
+    "observed": 256,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 1,
+    "side": "Own",
+    "miss": 0,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 1,
+    "side": "Own",
+    "miss": 1,
+    "expected": 255,
+    "observed": 255,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 1,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 1,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 255,
+    "observed": 255,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 2,
+    "side": "Own",
+    "miss": 0,
+    "expected": 2,
+    "observed": 2,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 2,
+    "side": "Own",
+    "miss": 1,
+    "expected": 254,
+    "observed": 254,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 2,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 2,
+    "observed": 2,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 2,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 254,
+    "observed": 254,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 127,
+    "side": "Own",
+    "miss": 0,
+    "expected": 127,
+    "observed": 127,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 127,
+    "side": "Own",
+    "miss": 1,
+    "expected": 129,
+    "observed": 129,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 127,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 127,
+    "observed": 127,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 127,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 129,
+    "observed": 129,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 128,
+    "side": "Own",
+    "miss": 0,
+    "expected": 128,
+    "observed": 128,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 128,
+    "side": "Own",
+    "miss": 1,
+    "expected": 128,
+    "observed": 128,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 128,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 128,
+    "observed": 128,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 128,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 128,
+    "observed": 128,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 254,
+    "side": "Own",
+    "miss": 0,
+    "expected": 254,
+    "observed": 254,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 254,
+    "side": "Own",
+    "miss": 1,
+    "expected": 2,
+    "observed": 2,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 254,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 254,
+    "observed": 254,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 254,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 2,
+    "observed": 2,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 255,
+    "side": "Own",
+    "miss": 0,
+    "expected": 256,
+    "observed": 256,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 255,
+    "side": "Own",
+    "miss": 1,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 255,
+    "side": "Reply",
+    "miss": 0,
+    "expected": 256,
+    "observed": 256,
+    "passed": true
+  },
+  {
+    "path": "probability",
+    "raw": 255,
+    "side": "Reply",
+    "miss": 1,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 1,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 2,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 128,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 254,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 255,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 0,
+    "probability": 256,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 1,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 2,
+    "expected": 2,
+    "observed": 2,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 128,
+    "expected": 128,
+    "observed": 128,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 254,
+    "expected": 254,
+    "observed": 254,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 255,
+    "expected": 255,
+    "observed": 255,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 1,
+    "probability": 256,
+    "expected": 256,
+    "observed": 256,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 1,
+    "expected": 255,
+    "observed": 255,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 2,
+    "expected": 510,
+    "observed": 510,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 128,
+    "expected": 32640,
+    "observed": 32640,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 254,
+    "expected": 64770,
+    "observed": 64770,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 255,
+    "expected": 65025,
+    "observed": 65025,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 255,
+    "probability": 256,
+    "expected": 65280,
+    "observed": 65280,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 1,
+    "expected": 32767,
+    "observed": 32767,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 2,
+    "expected": 65534,
+    "observed": 65534,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 128,
+    "expected": 4194176,
+    "observed": 4194176,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 254,
+    "expected": 8322818,
+    "observed": 8322818,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 255,
+    "expected": 8355585,
+    "observed": 8355585,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 32767,
+    "probability": 256,
+    "expected": 8388352,
+    "observed": 8388352,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 1,
+    "expected": 8388607,
+    "observed": 8388607,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 2,
+    "expected": 16777214,
+    "observed": 16777214,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 128,
+    "expected": 1073741696,
+    "observed": 1073741696,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 254,
+    "expected": 2130706178,
+    "observed": 2130706178,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 255,
+    "expected": 2139094785,
+    "observed": 2139094785,
+    "passed": true
+  },
+  {
+    "path": "product",
+    "value": 8388607,
+    "probability": 256,
+    "expected": 2147483392,
+    "observed": 2147483392,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 0,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 1,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 65535,
+    "mass": 1,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 65536,
+    "mass": 1,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 65537,
+    "mass": 1,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 131071,
+    "mass": 1,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 67108863,
+    "mass": 1,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 67108864,
+    "mass": 1,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 67108865,
+    "mass": 1,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 67174399,
+    "mass": 1,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 129957887,
+    "mass": 1,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 129957888,
+    "mass": 1,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 129957889,
+    "mass": 1,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 130023423,
+    "mass": 1,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 2,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 131071,
+    "mass": 2,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 131072,
+    "mass": 2,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 131073,
+    "mass": 2,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 262143,
+    "mass": 2,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 134217727,
+    "mass": 2,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 134217728,
+    "mass": 2,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 134217729,
+    "mass": 2,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 134348799,
+    "mass": 2,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 259915775,
+    "mass": 2,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 259915776,
+    "mass": 2,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 259915777,
+    "mass": 2,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 260046847,
+    "mass": 2,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 16,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1048575,
+    "mass": 16,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1048576,
+    "mass": 16,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1048577,
+    "mass": 16,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 2097151,
+    "mass": 16,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1073741823,
+    "mass": 16,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1073741824,
+    "mass": 16,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1073741825,
+    "mass": 16,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 1074790399,
+    "mass": 16,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 2079326207,
+    "mass": 16,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 2079326208,
+    "mass": 16,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 2079326209,
+    "mass": 16,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 2080374783,
+    "mass": 16,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 65,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4259839,
+    "mass": 65,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4259840,
+    "mass": 65,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4259841,
+    "mass": 65,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 8519679,
+    "mass": 65,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4362076159,
+    "mass": 65,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4362076160,
+    "mass": 65,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4362076161,
+    "mass": 65,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 4366335999,
+    "mass": 65,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 8447262719,
+    "mass": 65,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 8447262720,
+    "mass": 65,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 8447262721,
+    "mass": 65,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 8451522559,
+    "mass": 65,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 282,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18481151,
+    "mass": 282,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18481152,
+    "mass": 282,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18481153,
+    "mass": 282,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 36962303,
+    "mass": 282,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18924699647,
+    "mass": 282,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18924699648,
+    "mass": 282,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18924699649,
+    "mass": 282,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 18943180799,
+    "mass": 282,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 36648124415,
+    "mass": 282,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 36648124416,
+    "mass": 282,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 36648124417,
+    "mass": 282,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 36666605567,
+    "mass": 282,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 0,
+    "mass": 4064,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 266338303,
+    "mass": 4064,
+    "expected": 0,
+    "observed": 0,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 266338304,
+    "mass": 4064,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 266338305,
+    "mass": 4064,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 532676607,
+    "mass": 4064,
+    "expected": 1,
+    "observed": 1,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 272730423295,
+    "mass": 4064,
+    "expected": 1023,
+    "observed": 1023,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 272730423296,
+    "mass": 4064,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 272730423297,
+    "mass": 4064,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 272996761599,
+    "mass": 4064,
+    "expected": 1024,
+    "observed": 1024,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 528148856831,
+    "mass": 4064,
+    "expected": 1982,
+    "observed": 1982,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 528148856832,
+    "mass": 4064,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 528148856833,
+    "mass": 4064,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  },
+  {
+    "path": "mean",
+    "total": 528415195135,
+    "mass": 4064,
+    "expected": 1983,
+    "observed": 1983,
+    "passed": true
+  }
+]

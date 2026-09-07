@@ -1,0 +1,37 @@
+{
+  "case": "joint_defense_transitions",
+  "errors": [],
+  "profiles": [
+    {
+      "scan": 0,
+      "cycles_upper_bound": 8848220,
+      "calls": {
+        "table_offset": 360,
+        "owned_context": 44,
+        "player_stat": 80,
+        "multiply": 356,
+        "divide": 248,
+        "hit_facts": 44,
+        "speed_facts": 4,
+        "damage_range": 30,
+        "hp_fraction": 96,
+        "hp_fraction_end": 96,
+        "mean": 4,
+        "mean_end": 4
+      },
+      "inclusive_loop_cycles": {
+        "table_offset": 907296,
+        "multiply": 838360,
+        "divide": 2301264,
+        "player_stat": 1333152,
+        "hit_facts": 284696,
+        "owned_context": 1856592,
+        "speed_facts": 70928,
+        "damage_range": 2451952,
+        "hp_fraction": 1186368,
+        "mean": 344336
+      }
+    }
+  ],
+  "limits": "Whole-call cycles include under two frames of return-trap padding; loop times exclude return epilogues."
+}

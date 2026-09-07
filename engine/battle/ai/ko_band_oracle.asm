@@ -231,6 +231,13 @@ BossAI_ApplyDamageDominanceBias::
 	ld a, [wBossAITemp3]
 	cp c
 	jr z, .next
+	ld a, c
+	push hl
+	push bc
+	farcall BossAI_MoveIsAvailableFromC
+	pop bc
+	pop hl
+	jr nc, .next
 	call .MoveIdMatchupSTABRank
 	ld d, a
 	; Tier-aware dominance. The +32 rank buffer is tolerance between moves of
@@ -402,6 +409,12 @@ BossAI_ApplyDamageDominanceBias::
 .resisted
 	ld a, b
 	srl a
+	ld b, a
+	ld a, [wTypeMatchup]
+	cp EFFECTIVE / 2
+	ld a, b
+	jr nc, .store_type
+	srl a ; quarter resistance is distinct from half resistance
 	jr .store_type
 
 .after_type

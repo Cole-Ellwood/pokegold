@@ -1,0 +1,5462 @@
+[
+  {
+    "raw": 1,
+    "stage": 1,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      2,
+      1
+    ],
+    "combat": [
+      2,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 1,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      3,
+      1
+    ],
+    "combat": [
+      3,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 2,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      3,
+      1
+    ],
+    "combat": [
+      3,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 2,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      4,
+      1
+    ],
+    "combat": [
+      4,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 3,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      4,
+      1
+    ],
+    "combat": [
+      4,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 3,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      5,
+      1
+    ],
+    "combat": [
+      5,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 4,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      5,
+      1
+    ],
+    "combat": [
+      5,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 4,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      6,
+      1
+    ],
+    "combat": [
+      6,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 5,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      6,
+      1
+    ],
+    "combat": [
+      6,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 5,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      7,
+      1
+    ],
+    "combat": [
+      7,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 6,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      7,
+      1
+    ],
+    "combat": [
+      7,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 6,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      8,
+      1
+    ],
+    "combat": [
+      8,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 7,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      8,
+      1
+    ],
+    "combat": [
+      8,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 7,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      9,
+      2
+    ],
+    "combat": [
+      9,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 8,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      9,
+      2
+    ],
+    "combat": [
+      9,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 8,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      10,
+      2
+    ],
+    "combat": [
+      10,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 9,
+    "steps": 1,
+    "current": 2,
+    "projected": [
+      10,
+      2
+    ],
+    "combat": [
+      10,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 9,
+    "steps": 2,
+    "current": 2,
+    "projected": [
+      11,
+      3
+    ],
+    "combat": [
+      11,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 10,
+    "steps": 1,
+    "current": 2,
+    "projected": [
+      11,
+      3
+    ],
+    "combat": [
+      11,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 10,
+    "steps": 2,
+    "current": 2,
+    "projected": [
+      12,
+      3
+    ],
+    "combat": [
+      12,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 11,
+    "steps": 1,
+    "current": 3,
+    "projected": [
+      12,
+      3
+    ],
+    "combat": [
+      12,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 11,
+    "steps": 2,
+    "current": 3,
+    "projected": [
+      13,
+      4
+    ],
+    "combat": [
+      13,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 12,
+    "steps": 1,
+    "current": 3,
+    "projected": [
+      13,
+      4
+    ],
+    "combat": [
+      13,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 12,
+    "steps": 2,
+    "current": 3,
+    "projected": [
+      13,
+      4
+    ],
+    "combat": [
+      13,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 13,
+    "steps": 1,
+    "current": 4,
+    "projected": [
+      13,
+      4
+    ],
+    "combat": [
+      13,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 13,
+    "steps": 2,
+    "current": 4,
+    "projected": [
+      13,
+      4
+    ],
+    "combat": [
+      13,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 1,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 1,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      2,
+      1
+    ],
+    "combat": [
+      2,
+      1
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 1,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      3,
+      2
+    ],
+    "combat": [
+      3,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 2,
+    "steps": 1,
+    "current": 1,
+    "projected": [
+      3,
+      2
+    ],
+    "combat": [
+      3,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 2,
+    "steps": 2,
+    "current": 1,
+    "projected": [
+      4,
+      2
+    ],
+    "combat": [
+      4,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 3,
+    "steps": 1,
+    "current": 2,
+    "projected": [
+      4,
+      2
+    ],
+    "combat": [
+      4,
+      2
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 3,
+    "steps": 2,
+    "current": 2,
+    "projected": [
+      5,
+      3
+    ],
+    "combat": [
+      5,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 4,
+    "steps": 1,
+    "current": 2,
+    "projected": [
+      5,
+      3
+    ],
+    "combat": [
+      5,
+      3
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 4,
+    "steps": 2,
+    "current": 2,
+    "projected": [
+      6,
+      4
+    ],
+    "combat": [
+      6,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 5,
+    "steps": 1,
+    "current": 3,
+    "projected": [
+      6,
+      4
+    ],
+    "combat": [
+      6,
+      4
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 5,
+    "steps": 2,
+    "current": 3,
+    "projected": [
+      7,
+      7
+    ],
+    "combat": [
+      7,
+      7
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 6,
+    "steps": 1,
+    "current": 4,
+    "projected": [
+      7,
+      7
+    ],
+    "combat": [
+      7,
+      7
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 6,
+    "steps": 2,
+    "current": 4,
+    "projected": [
+      8,
+      10
+    ],
+    "combat": [
+      8,
+      10
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 7,
+    "steps": 1,
+    "current": 7,
+    "projected": [
+      8,
+      10
+    ],
+    "combat": [
+      8,
+      10
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 7,
+    "steps": 2,
+    "current": 7,
+    "projected": [
+      9,
+      14
+    ],
+    "combat": [
+      9,
+      14
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 8,
+    "steps": 1,
+    "current": 10,
+    "projected": [
+      9,
+      14
+    ],
+    "combat": [
+      9,
+      14
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 8,
+    "steps": 2,
+    "current": 10,
+    "projected": [
+      10,
+      17
+    ],
+    "combat": [
+      10,
+      17
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 9,
+    "steps": 1,
+    "current": 14,
+    "projected": [
+      10,
+      17
+    ],
+    "combat": [
+      10,
+      17
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 9,
+    "steps": 2,
+    "current": 14,
+    "projected": [
+      11,
+      21
+    ],
+    "combat": [
+      11,
+      21
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 10,
+    "steps": 1,
+    "current": 17,
+    "projected": [
+      11,
+      21
+    ],
+    "combat": [
+      11,
+      21
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 10,
+    "steps": 2,
+    "current": 17,
+    "projected": [
+      12,
+      24
+    ],
+    "combat": [
+      12,
+      24
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 11,
+    "steps": 1,
+    "current": 21,
+    "projected": [
+      12,
+      24
+    ],
+    "combat": [
+      12,
+      24
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 11,
+    "steps": 2,
+    "current": 21,
+    "projected": [
+      13,
+      28
+    ],
+    "combat": [
+      13,
+      28
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 12,
+    "steps": 1,
+    "current": 24,
+    "projected": [
+      13,
+      28
+    ],
+    "combat": [
+      13,
+      28
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 12,
+    "steps": 2,
+    "current": 24,
+    "projected": [
+      13,
+      28
+    ],
+    "combat": [
+      13,
+      28
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 13,
+    "steps": 1,
+    "current": 28,
+    "projected": [
+      13,
+      28
+    ],
+    "combat": [
+      13,
+      28
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 13,
+    "steps": 2,
+    "current": 28,
+    "projected": [
+      13,
+      28
+    ],
+    "combat": [
+      13,
+      28
+    ],
+    "passed": true
+  },
+  {
+    "raw": 7,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 1,
+    "steps": 1,
+    "current": 15,
+    "projected": [
+      2,
+      17
+    ],
+    "combat": [
+      2,
+      17
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 1,
+    "steps": 2,
+    "current": 15,
+    "projected": [
+      3,
+      20
+    ],
+    "combat": [
+      3,
+      20
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 2,
+    "steps": 1,
+    "current": 17,
+    "projected": [
+      3,
+      20
+    ],
+    "combat": [
+      3,
+      20
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 2,
+    "steps": 2,
+    "current": 17,
+    "projected": [
+      4,
+      25
+    ],
+    "combat": [
+      4,
+      25
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 3,
+    "steps": 1,
+    "current": 20,
+    "projected": [
+      4,
+      25
+    ],
+    "combat": [
+      4,
+      25
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 3,
+    "steps": 2,
+    "current": 20,
+    "projected": [
+      5,
+      31
+    ],
+    "combat": [
+      5,
+      31
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 4,
+    "steps": 1,
+    "current": 25,
+    "projected": [
+      5,
+      31
+    ],
+    "combat": [
+      5,
+      31
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 4,
+    "steps": 2,
+    "current": 25,
+    "projected": [
+      6,
+      41
+    ],
+    "combat": [
+      6,
+      41
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 5,
+    "steps": 1,
+    "current": 31,
+    "projected": [
+      6,
+      41
+    ],
+    "combat": [
+      6,
+      41
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 5,
+    "steps": 2,
+    "current": 31,
+    "projected": [
+      7,
+      63
+    ],
+    "combat": [
+      7,
+      63
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 6,
+    "steps": 1,
+    "current": 41,
+    "projected": [
+      7,
+      63
+    ],
+    "combat": [
+      7,
+      63
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 6,
+    "steps": 2,
+    "current": 41,
+    "projected": [
+      8,
+      94
+    ],
+    "combat": [
+      8,
+      94
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 7,
+    "steps": 1,
+    "current": 63,
+    "projected": [
+      8,
+      94
+    ],
+    "combat": [
+      8,
+      94
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 7,
+    "steps": 2,
+    "current": 63,
+    "projected": [
+      9,
+      126
+    ],
+    "combat": [
+      9,
+      126
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 8,
+    "steps": 1,
+    "current": 94,
+    "projected": [
+      9,
+      126
+    ],
+    "combat": [
+      9,
+      126
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 8,
+    "steps": 2,
+    "current": 94,
+    "projected": [
+      10,
+      157
+    ],
+    "combat": [
+      10,
+      157
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 9,
+    "steps": 1,
+    "current": 126,
+    "projected": [
+      10,
+      157
+    ],
+    "combat": [
+      10,
+      157
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 9,
+    "steps": 2,
+    "current": 126,
+    "projected": [
+      11,
+      189
+    ],
+    "combat": [
+      11,
+      189
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 10,
+    "steps": 1,
+    "current": 157,
+    "projected": [
+      11,
+      189
+    ],
+    "combat": [
+      11,
+      189
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 10,
+    "steps": 2,
+    "current": 157,
+    "projected": [
+      12,
+      220
+    ],
+    "combat": [
+      12,
+      220
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 11,
+    "steps": 1,
+    "current": 189,
+    "projected": [
+      12,
+      220
+    ],
+    "combat": [
+      12,
+      220
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 11,
+    "steps": 2,
+    "current": 189,
+    "projected": [
+      13,
+      252
+    ],
+    "combat": [
+      13,
+      252
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 12,
+    "steps": 1,
+    "current": 220,
+    "projected": [
+      13,
+      252
+    ],
+    "combat": [
+      13,
+      252
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 12,
+    "steps": 2,
+    "current": 220,
+    "projected": [
+      13,
+      252
+    ],
+    "combat": [
+      13,
+      252
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 13,
+    "steps": 1,
+    "current": 252,
+    "projected": [
+      13,
+      252
+    ],
+    "combat": [
+      13,
+      252
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 13,
+    "steps": 2,
+    "current": 252,
+    "projected": [
+      13,
+      252
+    ],
+    "combat": [
+      13,
+      252
+    ],
+    "passed": true
+  },
+  {
+    "raw": 63,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 1,
+    "steps": 1,
+    "current": 63,
+    "projected": [
+      2,
+      71
+    ],
+    "combat": [
+      2,
+      71
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 1,
+    "steps": 2,
+    "current": 63,
+    "projected": [
+      3,
+      84
+    ],
+    "combat": [
+      3,
+      84
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 2,
+    "steps": 1,
+    "current": 71,
+    "projected": [
+      3,
+      84
+    ],
+    "combat": [
+      3,
+      84
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 2,
+    "steps": 2,
+    "current": 71,
+    "projected": [
+      4,
+      102
+    ],
+    "combat": [
+      4,
+      102
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 3,
+    "steps": 1,
+    "current": 84,
+    "projected": [
+      4,
+      102
+    ],
+    "combat": [
+      4,
+      102
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 3,
+    "steps": 2,
+    "current": 84,
+    "projected": [
+      5,
+      127
+    ],
+    "combat": [
+      5,
+      127
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 4,
+    "steps": 1,
+    "current": 102,
+    "projected": [
+      5,
+      127
+    ],
+    "combat": [
+      5,
+      127
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 4,
+    "steps": 2,
+    "current": 102,
+    "projected": [
+      6,
+      168
+    ],
+    "combat": [
+      6,
+      168
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 5,
+    "steps": 1,
+    "current": 127,
+    "projected": [
+      6,
+      168
+    ],
+    "combat": [
+      6,
+      168
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 5,
+    "steps": 2,
+    "current": 127,
+    "projected": [
+      7,
+      255
+    ],
+    "combat": [
+      7,
+      255
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 6,
+    "steps": 1,
+    "current": 168,
+    "projected": [
+      7,
+      255
+    ],
+    "combat": [
+      7,
+      255
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 6,
+    "steps": 2,
+    "current": 168,
+    "projected": [
+      8,
+      382
+    ],
+    "combat": [
+      8,
+      382
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 7,
+    "steps": 1,
+    "current": 255,
+    "projected": [
+      8,
+      382
+    ],
+    "combat": [
+      8,
+      382
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 7,
+    "steps": 2,
+    "current": 255,
+    "projected": [
+      9,
+      510
+    ],
+    "combat": [
+      9,
+      510
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 8,
+    "steps": 1,
+    "current": 382,
+    "projected": [
+      9,
+      510
+    ],
+    "combat": [
+      9,
+      510
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 8,
+    "steps": 2,
+    "current": 382,
+    "projected": [
+      10,
+      637
+    ],
+    "combat": [
+      10,
+      637
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 9,
+    "steps": 1,
+    "current": 510,
+    "projected": [
+      10,
+      637
+    ],
+    "combat": [
+      10,
+      637
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 9,
+    "steps": 2,
+    "current": 510,
+    "projected": [
+      11,
+      765
+    ],
+    "combat": [
+      11,
+      765
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 10,
+    "steps": 1,
+    "current": 637,
+    "projected": [
+      11,
+      765
+    ],
+    "combat": [
+      11,
+      765
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 10,
+    "steps": 2,
+    "current": 637,
+    "projected": [
+      12,
+      892
+    ],
+    "combat": [
+      12,
+      892
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 11,
+    "steps": 1,
+    "current": 765,
+    "projected": [
+      12,
+      892
+    ],
+    "combat": [
+      12,
+      892
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 11,
+    "steps": 2,
+    "current": 765,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 12,
+    "steps": 1,
+    "current": 892,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 12,
+    "steps": 2,
+    "current": 892,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 255,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 1,
+    "steps": 1,
+    "current": 83,
+    "projected": [
+      2,
+      93
+    ],
+    "combat": [
+      2,
+      93
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 1,
+    "steps": 2,
+    "current": 83,
+    "projected": [
+      3,
+      109
+    ],
+    "combat": [
+      3,
+      109
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 2,
+    "steps": 1,
+    "current": 93,
+    "projected": [
+      3,
+      109
+    ],
+    "combat": [
+      3,
+      109
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 2,
+    "steps": 2,
+    "current": 93,
+    "projected": [
+      4,
+      133
+    ],
+    "combat": [
+      4,
+      133
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 3,
+    "steps": 1,
+    "current": 109,
+    "projected": [
+      4,
+      133
+    ],
+    "combat": [
+      4,
+      133
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 3,
+    "steps": 2,
+    "current": 109,
+    "projected": [
+      5,
+      166
+    ],
+    "combat": [
+      5,
+      166
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 4,
+    "steps": 1,
+    "current": 133,
+    "projected": [
+      5,
+      166
+    ],
+    "combat": [
+      5,
+      166
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 4,
+    "steps": 2,
+    "current": 133,
+    "projected": [
+      6,
+      219
+    ],
+    "combat": [
+      6,
+      219
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 5,
+    "steps": 1,
+    "current": 166,
+    "projected": [
+      6,
+      219
+    ],
+    "combat": [
+      6,
+      219
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 5,
+    "steps": 2,
+    "current": 166,
+    "projected": [
+      7,
+      333
+    ],
+    "combat": [
+      7,
+      333
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 6,
+    "steps": 1,
+    "current": 219,
+    "projected": [
+      7,
+      333
+    ],
+    "combat": [
+      7,
+      333
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 6,
+    "steps": 2,
+    "current": 219,
+    "projected": [
+      8,
+      499
+    ],
+    "combat": [
+      8,
+      499
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 7,
+    "steps": 1,
+    "current": 333,
+    "projected": [
+      8,
+      499
+    ],
+    "combat": [
+      8,
+      499
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 7,
+    "steps": 2,
+    "current": 333,
+    "projected": [
+      9,
+      666
+    ],
+    "combat": [
+      9,
+      666
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 8,
+    "steps": 1,
+    "current": 499,
+    "projected": [
+      9,
+      666
+    ],
+    "combat": [
+      9,
+      666
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 8,
+    "steps": 2,
+    "current": 499,
+    "projected": [
+      10,
+      832
+    ],
+    "combat": [
+      10,
+      832
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 9,
+    "steps": 1,
+    "current": 666,
+    "projected": [
+      10,
+      832
+    ],
+    "combat": [
+      10,
+      832
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 9,
+    "steps": 2,
+    "current": 666,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 10,
+    "steps": 1,
+    "current": 832,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 10,
+    "steps": 2,
+    "current": 832,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 333,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 1,
+    "steps": 1,
+    "current": 125,
+    "projected": [
+      2,
+      140
+    ],
+    "combat": [
+      2,
+      140
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 1,
+    "steps": 2,
+    "current": 125,
+    "projected": [
+      3,
+      165
+    ],
+    "combat": [
+      3,
+      165
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 2,
+    "steps": 1,
+    "current": 140,
+    "projected": [
+      3,
+      165
+    ],
+    "combat": [
+      3,
+      165
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 2,
+    "steps": 2,
+    "current": 140,
+    "projected": [
+      4,
+      200
+    ],
+    "combat": [
+      4,
+      200
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 3,
+    "steps": 1,
+    "current": 165,
+    "projected": [
+      4,
+      200
+    ],
+    "combat": [
+      4,
+      200
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 3,
+    "steps": 2,
+    "current": 165,
+    "projected": [
+      5,
+      250
+    ],
+    "combat": [
+      5,
+      250
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 4,
+    "steps": 1,
+    "current": 200,
+    "projected": [
+      5,
+      250
+    ],
+    "combat": [
+      5,
+      250
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 4,
+    "steps": 2,
+    "current": 200,
+    "projected": [
+      6,
+      330
+    ],
+    "combat": [
+      6,
+      330
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 5,
+    "steps": 1,
+    "current": 250,
+    "projected": [
+      6,
+      330
+    ],
+    "combat": [
+      6,
+      330
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 5,
+    "steps": 2,
+    "current": 250,
+    "projected": [
+      7,
+      500
+    ],
+    "combat": [
+      7,
+      500
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 6,
+    "steps": 1,
+    "current": 330,
+    "projected": [
+      7,
+      500
+    ],
+    "combat": [
+      7,
+      500
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 6,
+    "steps": 2,
+    "current": 330,
+    "projected": [
+      8,
+      750
+    ],
+    "combat": [
+      8,
+      750
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 7,
+    "steps": 1,
+    "current": 500,
+    "projected": [
+      8,
+      750
+    ],
+    "combat": [
+      8,
+      750
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 7,
+    "steps": 2,
+    "current": 500,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 8,
+    "steps": 1,
+    "current": 750,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 8,
+    "steps": 2,
+    "current": 750,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 500,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 1,
+    "steps": 1,
+    "current": 249,
+    "projected": [
+      2,
+      279
+    ],
+    "combat": [
+      2,
+      279
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 1,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      1,
+      999
+    ],
+    "combat": [
+      1,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 1,
+    "steps": 2,
+    "current": 249,
+    "projected": [
+      3,
+      329
+    ],
+    "combat": [
+      3,
+      329
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 1,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 2,
+    "steps": 1,
+    "current": 279,
+    "projected": [
+      3,
+      329
+    ],
+    "combat": [
+      3,
+      329
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 2,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      2,
+      999
+    ],
+    "combat": [
+      2,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 2,
+    "steps": 2,
+    "current": 279,
+    "projected": [
+      4,
+      399
+    ],
+    "combat": [
+      4,
+      399
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 2,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 3,
+    "steps": 1,
+    "current": 329,
+    "projected": [
+      4,
+      399
+    ],
+    "combat": [
+      4,
+      399
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 3,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      3,
+      999
+    ],
+    "combat": [
+      3,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 3,
+    "steps": 2,
+    "current": 329,
+    "projected": [
+      5,
+      499
+    ],
+    "combat": [
+      5,
+      499
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 3,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 4,
+    "steps": 1,
+    "current": 399,
+    "projected": [
+      5,
+      499
+    ],
+    "combat": [
+      5,
+      499
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 4,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      4,
+      999
+    ],
+    "combat": [
+      4,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 4,
+    "steps": 2,
+    "current": 399,
+    "projected": [
+      6,
+      659
+    ],
+    "combat": [
+      6,
+      659
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 4,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 5,
+    "steps": 1,
+    "current": 499,
+    "projected": [
+      6,
+      659
+    ],
+    "combat": [
+      6,
+      659
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 5,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      5,
+      999
+    ],
+    "combat": [
+      5,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 5,
+    "steps": 2,
+    "current": 499,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 5,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 6,
+    "steps": 1,
+    "current": 659,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 6,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      6,
+      999
+    ],
+    "combat": [
+      6,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 6,
+    "steps": 2,
+    "current": 659,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 6,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 7,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      7,
+      999
+    ],
+    "combat": [
+      7,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 7,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 8,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      8,
+      999
+    ],
+    "combat": [
+      8,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 8,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 9,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      9,
+      999
+    ],
+    "combat": [
+      9,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 9,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 10,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      10,
+      999
+    ],
+    "combat": [
+      10,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 10,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 11,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      11,
+      999
+    ],
+    "combat": [
+      11,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 11,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 12,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 12,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      12,
+      999
+    ],
+    "combat": [
+      12,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 13,
+    "steps": 1,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  },
+  {
+    "raw": 999,
+    "stage": 13,
+    "steps": 2,
+    "current": 999,
+    "projected": [
+      13,
+      999
+    ],
+    "combat": [
+      13,
+      999
+    ],
+    "passed": true
+  }
+]

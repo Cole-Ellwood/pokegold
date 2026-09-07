@@ -782,7 +782,11 @@ EnforceEnemyHeldMoveRestrictions_Far:
 	and PP_MASK
 	jr z, .find_next
 	ld a, b
+	push bc
+	push hl
 	call IsMoveBlockedByAssaultVest_Far
+	pop hl
+	pop bc
 	jr c, .find_next
 	ld a, b
 	ld [wCurEnemyMove], a

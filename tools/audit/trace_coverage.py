@@ -51,10 +51,10 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
     require_order(
         compute_mask,
         [
-            "call BossAI_AddPublicSTABThreatsToMask",
             "call BossAI_AddRevealedDamagingTypesToMask",
             "call BossAI_PlayerActiveFourMoveSaturated",
             "jr c, .done",
+            "call BossAI_AddPublicSTABThreatsToMask",
             "call BossAI_AddSpeciesAndPreEvolutionMovesToMask",
         ],
         "four-revealed-move saturation hook",
@@ -130,8 +130,10 @@ def audit_revealed_coverage(boss: str, wram: str) -> None:
         compute_plausible,
         [
             "call BossAI_ClearPlausibleMask",
-            "call BossAI_AddPublicSTABThreatsToMask",
             "call BossAI_AddRevealedDamagingTypesToMask",
+            "call BossAI_PlayerActiveFourMoveSaturated",
+            "jr c, .done",
+            "call BossAI_AddPublicSTABThreatsToMask",
             "call BossAI_AddSpeciesAndPreEvolutionMovesToMask",
         ],
         "public threat mask source ordering",
@@ -289,6 +291,8 @@ def audit_public_threat_keeps_species_fallback(boss: str) -> None:
             "scf",
             "ret",
             ".public_type_fallback",
+            "call BossAI_PlayerActiveFourMoveSaturated",
+            "jr c, .no",
             "ld a, [wBattleMonType1]",
             "call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy",
             "ld a, [wBattleMonType2]",
@@ -561,18 +565,17 @@ def audit_revealed_priority_pressure(boss: str) -> None:
             "ld hl, Moves + MOVE_EFFECT",
             "call BossAI_GetMoveAttr",
             "cp EFFECT_PRIORITY_HIT",
-            "ld hl, Moves + MOVE_POWER",
-            "call BossAI_GetMoveAttr",
-            "ld hl, Moves + MOVE_TYPE",
-            "call BossAI_GetMoveAttr",
-            "call BossAI_PlayerThreatTypeHitsEnemy",
-            "call AICheckEnemyQuarterHP",
-            "call AICheckEnemyHalfHP",
-            "cp 80",
-            "cp EFFECTIVE + 1",
+            "ld c, b",
+            "ld b, 0",
+            "farcall BossAI_PublicDamageKO",
+            "jr c, .yes_pop",
         ],
-        "revealed priority threat uses only public used moves and coarse HP bands",
+        "revealed priority threat uses revealed moves and the shared incoming damage maximum",
     )
+    current_ko = top_block(boss, "BossAI_CurrentEnemyMoveHasKOPressure")
+    require_order(current_ko, ["push bc", "push hl", "ld c, a", "ld b, 1",
+                             "farcall BossAI_PublicDamageKO", "pop hl", "pop bc"],
+                  "outgoing KO and incoming priority migrate together with preserved cursor")
 
     pressure = local_block(boss, ".EnemyUnderPressure", ".HasKOLine")
     require_order(

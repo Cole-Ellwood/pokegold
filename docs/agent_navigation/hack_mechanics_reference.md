@@ -38,10 +38,11 @@ come from source instead of memory.
 - This hack keeps the Gen 2 type-based category split. Do not use modern
   per-move physical/special memory.
 - Outrage is the special Dragon exception: Dragon-typed users run Outrage
-  physically only when current Attack is greater than current Special
-  Attack. Ties and non-Dragon users keep it special.
+  physically only when unmodified computed Attack exceeds unmodified
+  computed Special Attack, before stages, burn and damage-stat item boosts.
+  Ties and non-Dragon users keep it special.
 - Dragon Dance is not plain +Atk here. Its script uses `bestattackup`, which
-  raises the user's current higher offensive stat, then raises Speed.
+  raises the user's higher unmodified computed offensive stat, then Speed.
   Ties raise Attack.
 - Stat stages multiply the already-calculated battle stat, not the base
   stat. A base 100 Attack Pokemon at +2 is stronger than a base 200 Attack
@@ -176,7 +177,7 @@ Source: `engine/battle/type_passive_damage_mods.asm`,
 
 - `DragonDance` script: `bestattackup`, then Speed up. Source:
   `data/moves/effects.asm`.
-- `BattleCommand_BestAttackUp`: compares current Attack and Special Attack;
+- `BattleCommand_BestAttackUp`: compares unmodified computed Attack and Special Attack;
   if SpA is greater it raises SpA, otherwise Attack. Source:
   `engine/battle/effect_commands.asm`.
 - `CalmMind`: Special Attack +1 and Special Defense +1.

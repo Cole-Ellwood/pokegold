@@ -1,0 +1,35 @@
+{
+  "rom_sha256": "01746b7e6b31fe8325ef19f264c4ca26ed3cb165b996254ac21f1cfe46fbf16d",
+  "domain": "HP maxima 1..999, every maximum for each actor/weight class",
+  "cycles": "DMG T-cycles, bank-qualified entry to return; excludes caller argument loading",
+  "construction": [
+    {
+      "table": "0xa000",
+      "weight": 128,
+      "worst_cycles": 51600,
+      "maximum": 994
+    },
+    {
+      "table": "0xa000",
+      "weight": 192,
+      "worst_cycles": 77112,
+      "maximum": 922
+    },
+    {
+      "table": "0xa180",
+      "weight": 128,
+      "worst_cycles": 53640,
+      "maximum": 994
+    }
+  ],
+  "seven_tables_with_calls": 388920,
+  "rank_lookup_body": [
+    208,
+    208
+  ],
+  "rank_lookup_with_call": [
+    232,
+    232
+  ],
+  "limitation": "Helper phase only; complete selector and integration timing remain unmeasured"
+}

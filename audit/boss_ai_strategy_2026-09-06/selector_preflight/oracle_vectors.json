@@ -1,0 +1,4997 @@
+{
+  "rom": ".local/ai-two-second/preflight-2026-09-06-pro2/oracle",
+  "method": "Read-only host hook at original Mean entry; full totals retained before destructive division; score fixtures checked against existing exhaustive aggregation. These captured totals are not independently asserted by the current fixture API.",
+  "cases": [
+    {
+      "case": "joint_fast_finish",
+      "scores": [
+        [
+          1407,
+          2
+        ],
+        [
+          1023,
+          27
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 6089080832,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4428791808,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4428791808,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 6089080832,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 6089080832,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4428791808,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4428791808,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 6089080832,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 6089080832,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4428791808,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_broad_prior_mass",
+      "scores": [
+        [
+          1006,
+          59
+        ],
+        [
+          989,
+          59
+        ],
+        [
+          1018,
+          59
+        ],
+        [
+          989,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          987,
+          59
+        ],
+        [
+          981,
+          59
+        ],
+        [
+          984,
+          59
+        ],
+        [
+          975,
+          59
+        ],
+        [
+          983,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 2,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 34429033472,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 34840483840,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 33766848000,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 33579815424,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 33678123008,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 33359976448,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 33641056768,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 1,
+          "numerator": 33641056768,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 1,
+          "numerator": 33359976448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 1,
+          "numerator": 33678123008,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 1,
+          "numerator": 33579815424,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 33766848000,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 34840483840,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 34429033472,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 34429033472,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 34840483840,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 33766848000,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 2,
+          "numerator": 33579815424,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 2,
+          "numerator": 33678123008,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 2,
+          "numerator": 33359976448,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 2,
+          "numerator": 33641056768,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 3,
+          "numerator": 33641056768,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 3,
+          "numerator": 33359976448,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 3,
+          "numerator": 33678123008,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 3,
+          "numerator": 33579815424,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 33766848000,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 34840483840,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 34429033472,
+          "mass": 522
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 34429033472,
+          "mass": 522
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 34840483840,
+          "mass": 522
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 33864151040,
+          "mass": 522
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 33766848000,
+          "mass": 522
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 33579815424,
+          "mass": 522
+        },
+        {
+          "index": 7,
+          "scan": 0,
+          "numerator": 33678123008,
+          "mass": 522
+        },
+        {
+          "index": 8,
+          "scan": 0,
+          "numerator": 33359976448,
+          "mass": 522
+        },
+        {
+          "index": 9,
+          "scan": 0,
+          "numerator": 33641056768,
+          "mass": 522
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_equal_slots",
+      "scores": [
+        [
+          1079,
+          25
+        ],
+        [
+          1079,
+          25
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_cache_reinitialize",
+      "scores": [
+        [
+          1079,
+          25
+        ],
+        [
+          1017,
+          27
+        ],
+        [
+          1072,
+          25
+        ],
+        [
+          1017,
+          25
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4669308928,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_open_prior",
+      "scores": [
+        [
+          1041,
+          59
+        ],
+        [
+          1042,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          979,
+          59
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4912183296,
+          "mass": 72
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4920571904,
+          "mass": 72
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 4622543872,
+          "mass": 72
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 4622543872,
+          "mass": 72
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4920571904,
+          "mass": 72
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4912183296,
+          "mass": 72
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4912183296,
+          "mass": 72
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4920571904,
+          "mass": 72
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 4622543872,
+          "mass": 72
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 4622543872,
+          "mass": 72
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4920571904,
+          "mass": 72
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4912183296,
+          "mass": 72
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4912183296,
+          "mass": 72
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4920571904,
+          "mass": 72
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 4622543872,
+          "mass": 72
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_replacement_hazards",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          768,
+          0
+        ],
+        [
+          1024,
+          0
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 6,
+      "totals": [
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 1,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 2,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 3,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 4,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 4,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 5,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 5,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 6,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 6,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 7,
+          "numerator": 134217728,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 7,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 100663296,
+          "mass": 2
+        },
+        {
+          "index": 6,
+          "scan": 0,
+          "numerator": 134217728,
+          "mass": 2
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_empty_replacement",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 255,
+      "totals": [],
+      "errors": []
+    },
+    {
+      "case": "joint_recharge_wait",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1017,
+          25
+        ]
+      ],
+      "best_index": 11,
+      "totals": [
+        {
+          "index": 11,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 4,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 5,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 6,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 7,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 11,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_exhausted_struggle",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1060,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4585029632,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4585029632,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4585029632,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4585029632,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4585029632,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_encore_exhausted",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1017,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_encore_exhausted_confused",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1017,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_encore_disabled",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1017,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_encore_disable_expires",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1072,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4638900224,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4638900224,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_encore_zero_counter_disabled",
+      "scores": [
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          1017,
+          25
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 10,
+      "totals": [
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 1,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 2,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 3,
+          "numerator": 4401135616,
+          "mass": 66
+        },
+        {
+          "index": 10,
+          "scan": 0,
+          "numerator": 4401135616,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_speed_tie_mixed",
+      "scores": [
+        [
+          1052,
+          20
+        ],
+        [
+          1227,
+          20
+        ],
+        [
+          882,
+          20
+        ],
+        [
+          929,
+          20
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 4020895744,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4551147520,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5307367424,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3815899136,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4020895744,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_speed_tie_quick_claw",
+      "scores": [
+        [
+          942,
+          20
+        ],
+        [
+          1162,
+          20
+        ],
+        [
+          817,
+          20
+        ],
+        [
+          888,
+          20
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 3841064960,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4075945984,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3534880768,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 3841064960,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_speed_tie_transformed",
+      "scores": [
+        [
+          982,
+          47
+        ],
+        [
+          863,
+          47
+        ],
+        [
+          863,
+          47
+        ],
+        [
+          890,
+          47
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 32900054528,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 36307428864,
+          "mass": 564
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 31935397376,
+          "mass": 564
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 32900054528,
+          "mass": 564
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_speed_tie_speed_high_byte",
+      "scores": [
+        [
+          1162,
+          16
+        ],
+        [
+          1292,
+          16
+        ],
+        [
+          947,
+          16
+        ],
+        [
+          971,
+          16
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 4200726528,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 5026349056,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5588385792,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4096917504,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4200726528,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_speed_tie_round_once",
+      "scores": [
+        [
+          1049,
+          20
+        ],
+        [
+          1221,
+          20
+        ],
+        [
+          882,
+          20
+        ],
+        [
+          929,
+          20
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          980,
+          16
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 1,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 2,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 3,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 4,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 5,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 6,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 7,
+          "numerator": 4242538496,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4537647104,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 5281284096,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 3814981632,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4022534144,
+          "mass": 66
+        },
+        {
+          "index": 5,
+          "scan": 0,
+          "numerator": 4242538496,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_mixed",
+      "scores": [
+        [
+          1020,
+          30
+        ],
+        [
+          1056,
+          30
+        ],
+        [
+          1267,
+          30
+        ],
+        [
+          1019,
+          30
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 2,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 8,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 8,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 8,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 9,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 9,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 9,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 10,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 10,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 10,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 11,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 11,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 11,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 12,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 12,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 12,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 13,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 13,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 13,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 14,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 14,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 14,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 15,
+          "numerator": 4410933248,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 15,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 15,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4412194816,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4569268224,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 5483708416,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4410933248,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_own_selfdestruct_miss",
+      "scores": [
+        [
+          770,
+          18
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 3332702208,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 3332702208,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_reply_selfdestruct_miss",
+      "scores": [
+        [
+          1085,
+          26
+        ],
+        [
+          1096,
+          26
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 1,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 8,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 9,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 10,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 11,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 12,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 13,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 14,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 15,
+          "numerator": 4743730688,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4695221760,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4743730688,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_early_ko",
+      "scores": [
+        [
+          1283,
+          18
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 5552603136,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 5552603136,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_impossible_hits",
+      "scores": [
+        [
+          1024,
+          12
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 4429185024,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4429185024,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_accuracy_focus_band",
+      "scores": [
+        [
+          1020,
+          22
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 0,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 4412145664,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4412145664,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    },
+    {
+      "case": "joint_defense_transitions",
+      "scores": [
+        [
+          1015,
+          20
+        ],
+        [
+          1014,
+          20
+        ],
+        [
+          1034,
+          20
+        ],
+        [
+          1025,
+          20
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ],
+        [
+          65535,
+          255
+        ]
+      ],
+      "best_index": 2,
+      "totals": [
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 1,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 1,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 1,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 1,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 2,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 2,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 2,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 2,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 3,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 3,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 3,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 3,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 4,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 4,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 4,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 4,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 5,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 5,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 5,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 5,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 6,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 6,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 6,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 6,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 7,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 7,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 7,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 7,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 8,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 8,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 8,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 8,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 9,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 9,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 9,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 9,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 10,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 10,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 10,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 10,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 11,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 11,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 11,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 11,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 12,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 12,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 12,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 12,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 13,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 13,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 13,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 13,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 14,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 14,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 14,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 14,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 15,
+          "numerator": 4436131840,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 15,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 15,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 15,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 0,
+          "scan": 0,
+          "numerator": 4390453248,
+          "mass": 66
+        },
+        {
+          "index": 1,
+          "scan": 0,
+          "numerator": 4386848768,
+          "mass": 66
+        },
+        {
+          "index": 2,
+          "scan": 0,
+          "numerator": 4472438784,
+          "mass": 66
+        },
+        {
+          "index": 3,
+          "scan": 0,
+          "numerator": 4436131840,
+          "mass": 66
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -338,6 +338,46 @@ SECTION "AI Scoring", ROMX
 INCLUDE "engine/battle/ai/scoring.asm"
 
 
+SECTION "Boss AI Speed Estimate", ROMX
+DEF BOSSAI_EMIT_MOVE_PUBLIC_SPEED_ESTIMATE EQU 1
+INCLUDE "engine/battle/ai/boss_policy_move.asm"
+PURGE BOSSAI_EMIT_MOVE_PUBLIC_SPEED_ESTIMATE
+
+SECTION "Boss AI Damage Kernel", ROMX
+INCLUDE "engine/battle/ai/damage_kernel.asm"
+INCLUDE "engine/battle/ai/public_damage.asm"
+
+; Exhaustive successor/matrix routines are an offline validation oracle.
+; Normal game builds cannot call them; an accidental reference fails to link.
+IF DEF(BOSS_AI_REFERENCE)
+INCLUDE "engine/battle/ai/action_facts.asm"
+INCLUDE "engine/battle/ai/action_value.asm"
+INCLUDE "engine/battle/ai/fast_producers.asm"
+INCLUDE "engine/battle/ai/fast_plans.asm"
+INCLUDE "engine/battle/ai/fast_reply_plans.asm"
+
+SECTION "Boss AI Joint Policy", ROMX
+INCLUDE "engine/battle/ai/action_candidates.asm"
+INCLUDE "engine/battle/ai/public_replies.asm"
+INCLUDE "engine/battle/ai/joint_action.asm"
+INCLUDE "engine/battle/ai/fast_reference.asm"
+
+SECTION "Boss AI Fast Prototype", ROMX
+INCLUDE "engine/battle/ai/fast_math.asm"
+INCLUDE "engine/battle/ai/fast_hp.asm"
+INCLUDE "engine/battle/ai/fast_results.asm"
+INCLUDE "engine/battle/ai/fast_transitions.asm"
+INCLUDE "engine/battle/ai/fast_plan_executor.asm"
+INCLUDE "engine/battle/ai/fast_reply_executor.asm"
+INCLUDE "engine/battle/ai/fast_actors.asm"
+INCLUDE "engine/battle/ai/fast_standalone.asm"
+INCLUDE "engine/battle/ai/fast_reply_standalone.asm"
+INCLUDE "engine/battle/ai/fast_pair.asm"
+INCLUDE "engine/battle/ai/fast_pair_fallback.asm"
+INCLUDE "engine/battle/ai/fast_selector.asm"
+ENDC
+
+
 SECTION "Boss AI Trace", ROMX
 
 INCLUDE "engine/battle/ai/boss_trace_topmoves.asm"

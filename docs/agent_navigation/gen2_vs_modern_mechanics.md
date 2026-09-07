@@ -58,8 +58,11 @@ load-bearing; reordering types silently misclassifies every move.
 gap between physical and special and is also unused.)
 
 **Hack-specific exception (Outrage only).** Outrage stays Dragon-typed
-but is dispatched as physical when the user's current Attack > current
-Special Attack. Implemented inside the same
+but is dispatched as physical when the Dragon user's unmodified computed Attack
+is greater than its unmodified computed Special Attack. The comparison reads
+`wPlayerAttack`/`wPlayerSpAtk` or `wEnemyAttack`/`wEnemySpAtk`, before stat stages,
+burn, and damage-stat held-item boosts; it does not compare the adjusted
+`wBattleMon`/`wEnemyMon` stats. Implemented inside the same
 `TypePassive_GetEffectiveMoveCategory_Far` by returning `NORMAL` (any
 physical-bucket type) instead of DRAGON when the condition fires. Ties
 and non-Dragon users keep Outrage special. See
@@ -210,6 +213,15 @@ contribution. A base 100 Attack Pokemon at +2 is stronger than a base
 200 Attack Pokemon at +0 because +2 doubles the computed stat after the
 full formula. See [CLAUDE.md](../../CLAUDE.md) "Stat math" section for
 the worked example.
+
+`BattleCommand_StatUp` also has a distinct effective-stat cap check. If the
+selected stat is already exactly 999, it reports failure and rolls back **one**
+stage after applying the requested increase. A two-stage move at neutral can
+therefore leave the stored stage at +1 while the effective stat stays 999.
+At +6 the earlier stage-limit check fails without changing either value.
+Successful recalculation uses the raw stat and the new stage, rounds down,
+enforces a minimum of one, and caps the effective stat at 999. Screens and
+defender held-item bonuses apply later during damage calculation.
 
 ## 4. Critical hits
 
@@ -399,7 +411,10 @@ identity.
   via the `HELD_TYPE_BOOST` parameter bump (`docs/mechanics_changes_from_base.md`
   § 1.7). Dragon Fang and Dragon Scale both now boost Dragon
   damage (Dragon Fang was bugged in vanilla).
-- **Focus Band**: 1/16 chance to survive at 1 HP (vanilla rule).
+- **Focus Band**: `30/256` chance per hit to apply the HP-minus-one limit.
+  `data/items/attributes.asm` stores parameter 30; `BattleCommand_ApplyDamage`
+  compares `BattleRandom` with it. This is not a 1/16 threshold. Psychic's
+  separate damage-negation roll follows the survival check.
 - **Berserk Gene**: +2 Attack but inflicts confusion on activation
   (vanilla Gen 2 mechanic; verify exact behavior at use site if
   designing around it).
@@ -497,8 +512,10 @@ reach for and be wrong:
 
 ### Moves that DO exist in this hack but are post-Gen 2 in vanilla
 
-- **Dragon Dance** (`DRAGON_DANCE`, ID `fc`): +1 to the user's current
-  higher offensive stat via `bestattackup`, then +1 Spe. Ties raise Atk.
+- **Dragon Dance** (`DRAGON_DANCE`, ID `fc`): +1 to the user's higher
+  unmodified computed offensive stat via `bestattackup`, then +1 Spe. Ties raise
+  Atk. `BattleCommand_BestAttackUp` compares the same pre-stage stat copies used
+  by Outrage; existing boosts or burn do not change which offensive stat it picks.
 - **Calm Mind** (`CALM_MIND`, ID `fd`): +1 SpA / +1 SpD.
 - **Quiver Dance** (`QUIVER_DANCE`, ID `fe`): +1 SpA / +1 SpD / +1 Spe.
   Gen 5 in vanilla.
@@ -525,7 +542,7 @@ For any move-presence question, the authoritative file is
   composite). Type is computed from `(Atk DV & 3) << 2 | (Def DV & 3)`,
   with Normal and Bird and unused types skipped. Modern Hidden Power is
   fixed BP 60/70; this hack uses the Gen 2 variable BP.
-- **Pursuit**: doubles BP on switching target.
+- **Pursuit**: doubles the computed damage after variation on a switching target (not the move's base power).
   `engine/battle/move_effects/pursuit.asm` — checks
   `wEnemyIsSwitching` / `wPlayerIsSwitching` and `sla` the damage word.
 - **Encore**: locks target into last move for `(BattleRandom & 3) + 3`
@@ -536,13 +553,12 @@ For any move-presence question, the authoritative file is
   before quoting BP. Outrage rampage is 2-3 turns then confuse, vanilla
   mechanic.
 
-- **Earthquake / Magnitude / Fissure** all hit Dig users
-  (`engine/battle/effect_commands.asm:1735-1740, 1789-1798`). Gust and
-  Twister and Whirlwind and Thunder hit Fly users
-  (`engine/battle/effect_commands.asm:1780-1787`). EQ damage doubles
-  vs Dig users `(verify the damage doubling — confirmed only that
-  EQ/Magnitude/Fissure connect; spot-check the 2x multiplier in the
-  Dig effect handler if designing around it)`.
+- **Earthquake / Magnitude / Fissure** hit Dig users. Gust, Twister,
+  Whirlwind and Thunder hit Fly users (`BattleCommand_CheckHit`). Earthquake
+  and Magnitude double damage against Dig via `BattleCommand_DoubleUndergroundDamage`;
+  Gust and Twister double it against Fly via `BattleCommand_DoubleFlyingDamage`.
+  These are damage-word multipliers after variation, not base-power edits.
+  Fissure uses its OHKO script. Source: `engine/battle/effect_commands.asm`.
 - **Recovery moves**:
   - **Recover / Soft-Boiled / Milk Drink / Slack Off**: 50% maxHP via
     `BattleCommand_Heal` (`engine/battle/effect_commands.asm:5897`).
@@ -569,54 +585,53 @@ For any move-presence question, the authoritative file is
 
 ## 10. Damage formula
 
-Damage step in this hack matches vanilla Gen 2 with the late-gen item
-multiplier strip layered in. `BattleCommand_DamageCalc` is at
-`engine/battle/effect_commands.asm:2786`; the multi-stage pipeline runs
-through `ApplyLateGenDamageMultipliers_Far` for held items and the
-type-passive system, then `.CriticalMultiplier`, then
-`BattleCommand_DamageVariation`.
+The actual command order matters: integer floors and the 8-bit stat truncation
+make a single product of all modifiers inaccurate. Source: `EnemyAttackDamage`,
+`PlayerAttackDamage`, `TruncateHL_BC`, `BattleCommand_DamageCalc`,
+`BattleCommand_Stab` and `BattleCommand_DamageVariation` in
+`engine/battle/effect_commands.asm`; late item and passive calls use their
+corresponding `engine/battle/` modules.
 
-Conceptual formula (Gen 2 style):
+For an ordinary noncritical hit:
 
-```
-Damage = (((2 * Level / 5 + 2) * BP * Atk / Def) / 50) + 2
-       * STAB   (×1.5 if attacker shares the move's type)
-       * TypeEffectiveness  (×0, ×0.5, ×1, ×2; multi-type stacks by
-                             chained matchup db entries)
-       * RandomFactor       (×0.85..×1.00, see below)
-       * ItemBoosts         (Group A & B held items; see § 7)
-       * TypePassives       (this hack; see § 14)
-       * Crit               (×2 if crit, see § 4)
-```
+1. Select physical/special stats (including the public raw-stat Outrage rule in
+   section 1), apply screens and applicable stat items. If either stat exceeds 255,
+   divide **both** by four once, floor each positive stat to at least one, then
+   use each low byte. This is not repeated division until both fit. Selfdestruct
+   and Explosion then halve the resulting Defense byte, with a minimum of one.
+2. Compute `floor(floor((floor(2*level/5)+2)*power*attack/defense)/50)`.
+   Apply the known type-boost item percentage and late damage-item multipliers
+   here. The critical multiplier also occurs here for critical hits, whose stat
+   selection has separate bypass rules (section 4).
+3. Cap this intermediate at 997, then add two. **999 is an intermediate cap**;
+   later modifiers can exceed it. Likewise the added two is not a universal
+   minimum final damage: a successful reduced hit can deal one.
+4. Apply weather, the player badge type boost (`DoBadgeTypeBoosts`), STAB,
+   the ordered type-chart rows and deterministic type
+   passives, preserving each integer floor. Dragon's Majesty affects ordinary
+   chart handling; constant-damage scripts follow a different path.
+5. Apply the random endpoint fraction `217..255 / 255` with a minimum of one
+   for positive damage. Zero remains zero. The byte rotation/rejection selects
+   the accepted multiplier range; do not infer a bias toward high damage from
+   the rejected bytes. Integer division can group several rolls into one amount.
+6. Apply script-specific effects after variation: Fly/Dig and Minimize damage
+   doubling, Pursuit's switching-target multiplier, and False Swipe's HP-minus-one
+   limit. Consult each effect script; they do not all use the ordinary sequence.
 
-- **STAB**: ×1.5. (Gen 6+ added Adaptability ×2; absent here, no
-  abilities.)
-- **Type effectiveness**: 0× / 0.5× / 1× / 2×. NOT ×0.625 for "not very
-  effective" or anything modern. Multi-type targets stack matchups
-  multiplicatively by repeated table entries.
-- **Random factor**: `~0.85 .. ~1.00` (`BattleCommand_DamageVariation`
-  at `engine/battle/effect_commands.asm:1550`). The implementation
-  rejects random bytes < `85 percent + 1` after `rrca`, then divides by
-  `100 percent`. This is the vanilla Gen 2 distribution — biased toward
-  the high end (lowest values rejected by the loop). The 217..255/255
-  range commonly cited for Gen 2 corresponds to this 85%..100%
-  distribution.
-- **Damage cap**: `999` per hit (`MAX_DAMAGE EQU 999`,
-  `engine/battle/effect_commands.asm:2927`).
-- **Min damage**: `2` (`MIN_DAMAGE EQU 2`,
-  `engine/battle/effect_commands.asm:2928`).
+Multi-hit moves run their damage path per hit. Later hits see the changed HP,
+including Ice's above-half-HP reduction. Actual aggregate HP loss is bounded by
+starting HP; adding overkill from a final hit can give a misleading damage range.
 
-Late-gen item / type-passive insertion points relative to vanilla Gen 2:
+Static damage, level damage and Super Fang use `BattleCommand_ConstantDamage`
+and `BattleCommand_ResetTypeMatchup`: true chart immunities still apply, while
+ordinary STAB, weather, damage items, variation and deterministic damage-passive
+multipliers do not. Foresight removes the chart's identified-target immunities.
+Super Fang floors half current HP, with a minimum of one.
 
-- Item multipliers via `ApplyLateGenDamageMultipliers_Far`
-  (`engine/battle/effect_commands.asm:2920`) — runs after STAB+type
-  steps and before crit.
-- Type passives (Outrage category swap, Bug/Water/Ground/Rock defender
-  reductions, Fire-attacker-low-HP boost, Ghost-vs-statused, etc.) live
-  alongside that step in
-  `engine/battle/type_passive_damage_mods.asm`.
-- See `docs/mechanics_changes_from_base.md` § 1.3 for the full table of
-  passive multipliers.
+Accuracy, action order, Psychic's random damage negation, Substitute, Endure and
+Focus Band are separate from an amount conditional on a successful unblocked
+hit. The boss AI's public estimate assumes DV8 and no unknown player item/badge
+boost; that estimate is not a claim to know the player's actual stats.
 
 ## 11. Weather
 
@@ -632,8 +647,10 @@ Source: `engine/battle/move_effects/rain_dance.asm`,
 - **Rain:** Water ×1.5, Fire ×0.5, Thunder bypasses accuracy check
   (`engine/battle/effect_commands.asm:1800-1809` `.ThunderRain`),
   Synthesis-family heal halved.
-- **Sandstorm:** chip damage to non-Rock/Ground/Steel; Rock SpD ×1.5
-  `(verify exact multipliers in HandleWeather)`.
+- **Sandstorm:** chip damage to non-Rock/Ground/Steel; Dig users also avoid
+  this chip (`HandleWeather.SandstormDamage`). The damage-stat path has no
+  modern Rock Sp. Def weather boost. Rock's hack passive instead reduces
+  damage from critical hits (section 14).
 - **Duration (HACK CHANGE):** weather is **permanent** within a battle
   (Gen 3–5 ability style). It persists until a setup move overwrites it
   or a clearing move removes it; `HandleWeather`
@@ -695,15 +712,16 @@ turn-order resolution).
 
   `BASE_PRIORITY = 1` and `EFFECT_PRIORITY_HIT = 2`, so all three share
   the same +1 priority tier. Protect and Endure are higher at priority 3.
-- **Priority below 0** (Counter / Mirror Coat / Roar / Whirlwind):
-  vanilla Gen 2 doesn't formalize these as numeric priorities; they
-  are special-cased in turn-order code. Don't claim "priority -6 like
-  modern Roar".
+- **Lower-priority moves** use rank 0 below the ordinary rank 1 in this hack:
+  Counter, Mirror Coat, Roar/Whirlwind and Focus Punch are listed in
+  `MoveEffectPriorities`. `GetMovePriority` in `engine/battle/core.asm` also
+  special-cases Vital Throw to rank 0 even though it shares the always-hit
+  effect with other moves. Do not import modern priority numbers such as -6.
 
 ### Speed-affecting moves in this hack
 
 - `AGILITY` (+2 Spe) is the ONLY single-stat +Speed move in this hack.
-- `DRAGON_DANCE` = +1 current higher offensive stat, +1 Spe combo.
+- `DRAGON_DANCE` = +1 higher unmodified computed offensive stat, +1 Spe combo.
 - `QUIVER_DANCE` = +1 SpA, +1 SpD, +1 Spe combo.
 - A "no Agility" rule is equivalent to "no single-stat +Speed move"
   here.

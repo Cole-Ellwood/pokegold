@@ -923,17 +923,6 @@ BossAI_HasAnyKOMove:
 ; ai-layer: PLATFORM
 BossAI_HasAnyKOMoveUncached:
 	call BossAI_SaveEnemyMoveStruct
-	call BossAI_EnemyChoiceLockedMove
-	jr nc, .scan_all_moves
-	call AIGetEnemyMove_HL
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	jr z, .no
-	call BossAI_CurrentEnemyMoveHasKOPressure
-	jr nc, .no
-	call BossAI_RestoreEnemyMoveStruct
-	scf
-	ret
 .scan_all_moves
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
@@ -943,6 +932,8 @@ BossAI_HasAnyKOMoveUncached:
 	jr z, .no
 	push bc
 	push de
+	call BossAI_MoveIsAvailable
+	jr nc, .next
 	call AIGetEnemyMove_HL
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
@@ -974,6 +965,73 @@ if DEF(BOSSAI_EMIT_PLATFORM_HELD_ITEM_HELPERS)
 ; Layer: PLATFORM
 ; Original lines: 57
 ; ============================================================
+; ai-layer: PLATFORM
+BossAI_MoveIsAvailableFromC:
+; Farcall-safe entry. Only carry is consumed across the bank boundary.
+	ld a, c
+	jp BossAI_MoveIsAvailable
+
+BossAI_MoveIsAvailable:
+; A = move id. Carry if a matching slot has PP and is allowed by Disable,
+; Choice and Assault Vest. Return the move id in A; preserve BC/DE/HL.
+; Do not read mutable preference scores: later slots may not be scored yet.
+	push bc
+	push de
+	push hl
+	ld b, a
+	and a
+	jr z, .no
+	cp $ff
+	jr z, .no
+	ld a, [wEnemyDisabledMove]
+	cp b
+	jr z, .no
+	ld hl, wEnemyMonMoves
+	ld de, wEnemyMonPP
+	ld c, NUM_MOVES
+.slot
+	ld a, [hli]
+	cp b
+	jr nz, .next
+	ld a, [de]
+	and PP_MASK
+	jr nz, .held
+.next
+	inc de
+	dec c
+	jr nz, .slot
+	jr .no
+.held
+	push bc
+	call BossAI_EnemyChoiceLockedMove
+	pop bc
+	jr nc, .vest
+	cp b
+	jr nz, .no
+.vest
+	call BossAI_GetEnemyHeldEffect
+	cp HELD_ASSAULT_VEST
+	jr nz, .yes
+	ld e, b
+	push bc
+	farcall IsMoveBlockedByAssaultVestFromE_Far
+	pop bc
+	jr c, .no
+.yes
+	ld a, b
+	pop hl
+	pop de
+	pop bc
+	scf
+	ret
+.no
+	ld a, b
+	pop hl
+	pop de
+	pop bc
+	and a
+	ret
+
 ; ai-layer: PLATFORM
 BossAI_GetEnemyHeldEffect:
 	push bc
@@ -1276,6 +1334,8 @@ BossAI_EncourageScoreHL:
 	ld e, a
 .enc_loop
 	ld a, [hl]
+	cp 80
+	ret nc ; hard blocks are never preferences
 	cp 1
 	ret z
 	dec [hl]

@@ -178,7 +178,7 @@ def load_base_stats(name: str) -> BaseStats:
 
 def computed(base: int, level: int, iv: int = 8, is_hp: bool = False) -> int:
     """Gen 2 computed stat. Stat exp removed in this hack, so EV term is 0."""
-    core = (2 * base + iv) * level // 100
+    core = 2 * (base + iv) * level // 100
     return core + level + 10 if is_hp else core + 5
 
 
@@ -297,8 +297,14 @@ class BossAIHarness:
         self.wr("wBossAITier", tier)
         self.seed_mon("wEnemyMon", boss)
         self.seed_mon("wBattleMon", player)
+        for side in ("wEnemyStatLevels", "wPlayerStatLevels"):
+            for i in range(7):
+                self.wr(side, 7, i)
         self.wr("wEnemyDisabledMove", 0)
         self.wr("hBattleTurn", battle_turn)
+        score_address = self.syms["wEnemyAIMoveScores"].address
+        self.wr("wBossAIScorePtr", score_address >> 8)
+        self.wr("wBossAIScorePtr", score_address & 255, 1)
         for i in range(4):
             self.wr("wEnemyAIMoveScores", 20 if scores is None else scores[i], i)
         for key, val in (extra or {}).items():
@@ -308,7 +314,7 @@ class BossAIHarness:
                 self.wr(key, val)
 
     # --- invocation ---
-    def invoke(self, func: str, regs: dict | None = None) -> bool:
+    def invoke(self, func: str, regs: dict | None = None, *, frame_budget: int = RUN_BUDGET) -> bool:
         """Run `func` until it returns into the HRAM trap. False on no-return."""
         s = self.syms.get(func)
         if s is None:
@@ -328,7 +334,7 @@ class BossAIHarness:
         pb.memory[0x2000] = s.bank
         rf.PC = s.address
         ticked = 0
-        while ticked < RUN_BUDGET:
+        while ticked < frame_budget:
             pb.tick(2, False, False)
             ticked += 2
             if int(rf.PC) in (SENTINEL_ADDR, SENTINEL_ADDR + 2):
@@ -351,6 +357,7 @@ class BossAIHarness:
             # does not touch flags.
             "carry": bool((int(rf.F) >> 4) & 1),
             "a": int(rf.A),
+            "bc": (int(rf.B) << 8) | int(rf.C),
         }
         if self.has("wCurEnemyMoveNum"):
             out["chosen_slot"] = self.rd("wCurEnemyMoveNum")

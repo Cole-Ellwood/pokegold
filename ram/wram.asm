@@ -2451,16 +2451,12 @@ wBossAIRevealedPriorityCache:: db   ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else type id
 wBossAIPublicEnemyFasterCache:: db  ; $ff = uncomputed, 0 = not faster, 1 = enemy faster
 wBossAILookaheadDepthCache:: db     ; $ff = uncomputed, else projection depth (0 / mid-1 / late-1)
-wBossAILookaheadRunningBest:: db    ; $ff = uncomputed, else dynamic minimum non-saturated score seen
-                                    ; so far by BossAI_ApplyLookaheadToTopMoveCandidates this turn.
-                                    ; Used by the futility cutoff to skip candidates that cannot
-                                    ; improve on the running best even with maximum upside
-                                    ; (signed delta clamped to [-CAP, +CAP], saturating at score 1).
+wBossAILookaheadRunningBest:: db    ; reserved: retired pruning scratch; keep WRAM layout stable
 wBossAILastMatchupType:: db         ; $ff = uncomputed, else last MOVE_TYPE queried via
                                     ; BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
 wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMatchupType
-wBossAIShouldScoutPrereqCache:: db  ; $ff = uncomputed, 0 = prereqs failed (always nc),
-                                    ; 1 = prereqs passed (roll random against threshold)
+wBossAIShouldScoutPrereqCache:: db  ; $ff = uncomputed, 0 = do not scout,
+                                    ; 1 = scout; includes the one random roll for this tick
 wBossAIShouldScoutThresholdCache:: db  ; cached GetScoutRollThreshold result (valid iff prereq=1)
 wBossAIShouldScoutMatchupValue:: db ; wTypeMatchup value captured at end of ShouldScout prereqs;
                                     ; restored to wTypeMatchup on cache hit so the side-effect

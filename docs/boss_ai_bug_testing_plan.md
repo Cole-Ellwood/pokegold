@@ -563,6 +563,20 @@ Acceptance criteria:
 
 ## Bug Triage Rules
 
+Changes to `data/types/type_matchups.asm`, the damage kernel's indexed chart,
+or type constants require a fresh ROM build followed by this additional check:
+
+```powershell
+python -m tools.audit.check_boss_ai_chart_index --rom pokegold
+```
+
+It verifies every index entry against combat's emitted rows, preserves their
+order on dual types, and compares ROM arithmetic across Foresight, Majesty,
+fixed damage and saturation cases. During reference-evaluator development,
+`--rom pokegold_ai_reference` selects the optional reference build; both builds
+contain the shared damage kernel. This check complements the combat damage
+fixtures and does not establish evaluator latency or playing strength.
+
 Fix only concrete bugs found by these tests.
 
 Preferred fixes:

@@ -1,0 +1,26 @@
+Boss AI no-cheat audit passed.
+Scanned files:
+  - engine\battle\ai\boss_platform.asm
+  - engine\battle\ai\boss_policy_move.asm
+  - engine\battle\ai\damage_kernel.asm
+  - engine\battle\ai\public_damage.asm
+  - engine\battle\ai\action_facts.asm
+  - engine\battle\ai\action_value.asm
+  - engine\battle\ai\action_candidates.asm
+  - engine\battle\ai\public_replies.asm
+  - engine\battle\ai\joint_action.asm
+  - engine\battle\ai\boss_policy_switch.asm
+  - engine\battle\ai\observation_log.asm
+  - data\boss_ai\role_package_classifier.asm
+  - data\boss_ai\coach_plan_templates.asm
+  - engine\battle\ai\boss_thunks.asm
+  - engine\battle\ai\move.asm
+  - engine\battle\ai\items.asm
+Approved exact-helper exceptions:
+Approved forbidden-symbol exceptions:
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiRead may read player input read (uniform Haki oracle exception)
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiRead may read player input action read (uniform Haki oracle exception)
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiAfterPlayerAction may read player input action read (uniform Haki oracle exception)
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiAfterPlayerAction may read player input read (uniform Haki oracle exception)
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_HakiReserveAceAction may read player input action read (uniform Haki oracle action-reservation helper)
+  - engine/battle/ai/boss_policy_switch.asm:BossAI_HakiFindImmunitySwitch may read player input read (uniform Haki oracle defensive-pivot helper)

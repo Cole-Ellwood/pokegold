@@ -1,0 +1,77 @@
+{
+  "checks": [
+    {
+      "command": "python tools/audit/check_boss_ai_no_cheat.py",
+      "exit_code": 0,
+      "stdout": "Boss AI no-cheat audit passed.\nScanned files:\n  - engine\\battle\\ai\\boss_platform.asm\n  - engine\\battle\\ai\\boss_policy_move.asm\n  - engine\\battle\\ai\\damage_kernel.asm\n  - engine\\battle\\ai\\public_damage.asm\n  - engine\\battle\\ai\\boss_policy_switch.asm\n  - engine\\battle\\ai\\observation_log.asm\n  - data\\boss_ai\\role_package_classifier.asm\n  - data\\boss_ai\\coach_plan_templates.asm\n  - engine\\battle\\ai\\boss_thunks.asm\n  - engine\\battle\\ai\\move.asm\n  - engine\\battle\\ai\\items.asm\nApproved exact-helper exceptions:\nApproved forbidden-symbol exceptions:\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiRead may read player input read (uniform Haki oracle exception)\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiRead may read player input action read (uniform Haki oracle exception)\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiAfterPlayerAction may read player input action read (uniform Haki oracle exception)\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_OracleHakiAfterPlayerAction may read player input read (uniform Haki oracle exception)\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_HakiReserveAceAction may read player input action read (uniform Haki oracle action-reservation helper)\n  - engine/battle/ai/boss_policy_switch.asm:BossAI_HakiFindImmunitySwitch may read player input read (uniform Haki oracle defensive-pivot helper)\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_gating.py",
+      "exit_code": 0,
+      "stdout": "Boss AI gating audit passed.\nGuarded entrypoints:\n  - BossAI_ApplyMoveModel\n  - BossAI_ComputePlayerPlausibleTypeMask\n  - BossAI_EvaluateActionLookahead\n  - BossAI_FlushPendingHakiTaunt\n  - BossAI_IncrementTurnsElapsed\n  - BossAI_LoadPlayerUsedMovesForActiveSpecies\n  - BossAI_OnSwitchExecuted\n  - BossAI_OracleHakiAfterPlayerAction\n  - BossAI_PickFaintReplacement\n  - BossAI_RecordPlayerFaint\n  - BossAI_RecordPlayerSpecies\n  - BossAI_RecordPlayerSwitch\n  - BossAI_RecordRevealedPlayerMove\n  - BossAI_SelectMove\n  - BossAI_SelectPlanIfNeeded\n  - BossAI_TrySwitch\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_trace_invariants.py",
+      "exit_code": 0,
+      "stdout": "Boss AI trace invariant audit passed.\nChecked invariants:\n  - per-species revealed coverage\n  - four-revealed-move saturation guards\n  - public threat fallback after revealed-move scan\n  - source-weighted plausible threat confidence\n  - plausible threat source and seen-bench restoration\n  - public perish-count escape switching\n  - A->B->A loop penalty target check\n  - Uniform Haki oracle quarantine\n  - public seen-species revenge denial\n  - revealed priority pressure\n  - revealed Protect commitment risk\n  - revealed recovery denial bias\n  - revealed fast Encore avoidance\n  - last-move Encore trap bias\n  - revealed Selfdestruct Protect bias\n  - capped Spikes hard block\n  - first-turn Spikes pressure gate\n  - public Rapid Spin risk before extra Spikes\n  - Ghost/Foresight spinblock adjustment\n  - bench revealed Rapid Spin public-memory risk\n  - active species Rapid Spin level-up prior\n  - public status fail gates\n  - public utility fail gates\n  - Disable/Encore public lock fail gates\n  - Mean Look public already-trapped fail gate\n  - Dream Eater public Substitute fail gate\n  - Nightmare public fail gates\n  - Ghost Curse self-KO hard gate\n  - Pain Split public value hard gate\n  - Imperial Scales pressure discount\n  - public +2 setup denial\n  - revealed anti-setup avoidance\n  - shared weather setup planning\n  - current non-Ghost Curse setup planning\n  - Spikes/setup projection overread floor\n  - Poison contact retaliation risk\n  - Spikes plus phazing pressure response\n  - per-class role bias removed\n  - primary-threat immunity pivot tie-break\n  - switch candidate base-data restoration\n  - Destiny Bond public trade-window bias\n  - revealed Destiny Bond KO avoidance\n  - Counter/Mirror Coat public trade-window bias\n  - revealed Counter/Mirror Coat avoidance\n  - Choice first-lock public counterplay risk\n  - Reversal/Flail public HP-band pressure\n  - known item and passive tactical reasoning\n  - Baton Pass living-bench gate\n  - trace top-move pointer preservation\n  - move-model trace score snapshots\n  - lookahead trace score-cursor preservation\n  - Boss AI bank-safe move attr reads\n  - AIGetEnemyMove_HL move-id preservation\n  - lookahead evaluator candidate move-id preservation\n  - public threat scan source pointer preservation\n  - type-matchup scan table cursor preservation\n  - type-threat severity list cursor preservation\n  - primary-threat fallback register preservation\n  - legacy switch base-data restoration\n  - no Battle Core BossAI labels\n  - predetermined enemy switch index guard\n  - tier-only switch threshold\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_memory_budget.py",
+      "exit_code": 0,
+      "stdout": "Save offset map matches SAVE_FORMAT_VERSION=3 (1450 fields).\nBoss AI memory budget audit passed.\nEnemy Trainers: normal=0e:4000-7efe, trace=0e:4000-7f9b\nBoss AI WRAM: normal_used=112, normal_free=28, trace_used=140, trace_free=0\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_index_lines.py",
+      "exit_code": 0,
+      "stdout": "PASS: docs/agent_navigation/subsystems/boss_ai_logic.md matches scripts/generate_boss_ai_index.py\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_policy_contract.py",
+      "exit_code": 0,
+      "stdout": "Boss AI policy contract audit passed.\nAccepted architecture: unified public-info scorer + fixture-backed debugger.\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_boss_ai_preference_regression.py",
+      "exit_code": 0,
+      "stdout": "Boss AI preference regression: 45 / 45 strict pairwise labels agree (100.0%)\n  PASS threshold: 0.80\n  Skipped 9 non-strict labels (both_good=3 needs_context=2 other_better=4)\n\nDisagreements: none\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_cross_bank_call.py",
+      "exit_code": 0,
+      "stdout": "PASS: no cross-bank `call` / `jp` to non-HOME labels\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_farcall_a_clobber.py",
+      "exit_code": 0,
+      "stdout": "Farcall a-clobber audit passed.\nScanned 1881 ASM files; analyzed 16581 top-level functions for a/c mirror safety (return direction) and staged input-a clobbers (input direction).\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_farcall_hl_clobber.py",
+      "exit_code": 0,
+      "stdout": "Farcall hl-clobber audit passed.\nFunctions known to read hl as input: ['ApplyLateGenDamageStatsItemMods_Far', 'SpeciesItemBoost_Far']\nFunctions known to return hl as output: 7 (['FindFirstEmptyObjectStruct', 'GetBattleVarAddr', 'GetEnemyMonDVs', 'GetOpponentItem', 'GetUserItem', 'PrintHour']\ufffd)\nScanned 1881 ASM files.\n",
+      "stderr": ""
+    },
+    {
+      "command": "python tools/audit/check_lookahead_futility_bound.py",
+      "exit_code": 0,
+      "stdout": "fixture                    path                           chose         status\n------------------------------------------------------------------------------------\nlookahead_all_20_20_20_20  strategy/exhaustive-lookahead  (none)        OK\nlookahead_all_1_40_79_60   strategy/exhaustive-lookahead  (none)        OK\nlookahead_all_80_20_80_60  strategy/exhaustive-lookahead  (none)        OK\n\nPASS: all 3 boss-AI decision-path fixtures hold\n      paths covered: strategy/exhaustive-lookahead\n",
+      "stderr": ""
+    },
+    {
+      "command": "python scripts/generate_boss_ai_index.py --check",
+      "exit_code": 0,
+      "stdout": "PASS: docs/agent_navigation/subsystems/boss_ai_logic.md matches generator output\n",
+      "stderr": ""
+    }
+  ],
+  "failed": 0
+}

@@ -31,6 +31,13 @@ pokegold_obj          := $(rom_obj:.o=_gold.o) $(gold_excl_obj)
 pokesilver_obj        := $(rom_obj:.o=_silver.o) $(silver_excl_obj)
 pokegold_debug_obj    := $(rom_obj:.o=_gold_debug.o) $(gold_debug_excl_obj)
 
+# Optional offline AI oracle. Only main.asm contains reference-only code;
+# all other objects are exactly the corresponding normal game objects.
+ai_reference_roms := pokegold_ai_reference.gbc pokesilver_ai_reference.gbc
+ai_reference_main_obj := main_gold_ai_reference.o main_silver_ai_reference.o
+pokegold_ai_reference_obj := $(subst main_gold.o,main_gold_ai_reference.o,$(pokegold_obj))
+pokesilver_ai_reference_obj := $(subst main_silver.o,main_silver_ai_reference.o,$(pokesilver_obj))
+
 
 ### Build tools
 
@@ -61,6 +68,8 @@ DEFINES      ?=
 	gold \
 	silver \
 	gold_debug \
+	gold_ai_reference \
+	silver_ai_reference \
 	clean \
 	tidy \
 	compare \
@@ -71,6 +80,8 @@ all: $(roms)
 gold:         pokegold.gbc
 silver:       pokesilver.gbc
 gold_debug:   pokegold_debug.gbc
+gold_ai_reference: pokegold_ai_reference.gbc
+silver_ai_reference: pokesilver_ai_reference.gbc
 
 clean: tidy
 	find gfx \
@@ -83,6 +94,11 @@ clean: tidy
 
 tidy:
 	$(RMFILES) $(roms) \
+	           $(ai_reference_roms) \
+	           $(ai_reference_roms:.gbc=.sym) \
+	           $(ai_reference_roms:.gbc=.bgb.sym) \
+	           $(ai_reference_roms:.gbc=.map) \
+	           $(ai_reference_main_obj) \
 	           $(roms:.gbc=.sym) \
 	           $(roms:.gbc=.bgb.sym) \
 	           $(roms:.gbc=.map) \
@@ -124,11 +140,13 @@ $(rgbasm_config_file): FORCE
 	@printf '%s\n' '$(subst ','"'"',$(rgbasm_config))' > $@.tmp
 	@cmp -s $@.tmp $@ && rm -f $@.tmp || mv -f $@.tmp $@
 
-$(pokegold_obj) $(pokesilver_obj) $(pokegold_debug_obj): $(rgbasm_config_file)
+$(pokegold_obj) $(pokesilver_obj) $(pokegold_debug_obj) $(ai_reference_main_obj): $(rgbasm_config_file)
 
 $(pokegold_obj):         RGBASMFLAGS += -D _GOLD
 $(pokesilver_obj):       RGBASMFLAGS += -D _SILVER
 $(pokegold_debug_obj):   RGBASMFLAGS += -D _GOLD -D _DEBUG
+main_gold_ai_reference.o: RGBASMFLAGS += -D _GOLD -D BOSS_AI_REFERENCE
+main_silver_ai_reference.o: RGBASMFLAGS += -D _SILVER -D BOSS_AI_REFERENCE
 
 rgbdscheck.o: rgbdscheck.asm
 	$(RGBASM) -o $@ $<
@@ -169,6 +187,9 @@ $(foreach obj, $(gold_excl_obj) $(silver_excl_obj), \
 $(foreach obj, $(gold_debug_excl_obj), \
 	$(eval $(call DEP,$(obj),$(obj:_gold_debug.o=_gold.asm))))
 
+$(eval $(call DEP,main_gold_ai_reference.o,main.asm))
+$(eval $(call DEP,main_silver_ai_reference.o,main.asm))
+
 endif
 
 
@@ -176,6 +197,8 @@ RGBFIXFLAGS += -cjsv -k 01 -l 0x33 -m MBC3+TIMER+RAM+BATTERY -r 3 -p 0
 pokegold.gbc:         RGBFIXFLAGS += -t POKEMON_GLD -i AAUE
 pokesilver.gbc:       RGBFIXFLAGS += -t POKEMON_SLV -i AAXE
 pokegold_debug.gbc:   RGBFIXFLAGS += -t POKEMON_GLD -i AAUE
+pokegold_ai_reference.gbc: RGBFIXFLAGS += -t POKEMON_GLD -i AAUE
+pokesilver_ai_reference.gbc: RGBFIXFLAGS += -t POKEMON_SLV -i AAXE
 
 %.gbc: $$(%_obj) layout.link
 	$(RGBLINK) $(RGBLINKFLAGS) -l layout.link -n $*.sym -m $*.map -o $@ $(filter %.o,$^)

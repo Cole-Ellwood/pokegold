@@ -1,0 +1,780 @@
+{
+  "method": "Read-only source catalog extraction. Potential support only; runtime denial/items/conditions still apply. Physical categories are current Gen2 type categories; Outrage may use physical but power100 already present. Complex finishing/multihit envelopes are NOT derived here.",
+  "moves": 254,
+  "damaging": 157,
+  "potential_supported_damage": 134,
+  "formula_moves": 129,
+  "base_priority": 242,
+  "multihit": 11,
+  "recoveries": [
+    "RECOVER",
+    "SOFTBOILED",
+    "REST",
+    "MILK_DRINK",
+    "MORNING_SUN",
+    "SYNTHESIS",
+    "MOONLIGHT"
+  ],
+  "boosts": [
+    "HARDEN",
+    "WITHDRAW",
+    "BARRIER",
+    "AMNESIA",
+    "ACID_ARMOR"
+  ],
+  "modeled_zero_power_noop_count": 85,
+  "base_power_groups": {
+    "physical": [
+      10,
+      15,
+      20,
+      25,
+      30,
+      40,
+      45,
+      50,
+      55,
+      60,
+      65,
+      70,
+      75,
+      80,
+      90,
+      95,
+      100,
+      110,
+      120,
+      130,
+      180
+    ],
+    "special": [
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      50,
+      55,
+      60,
+      65,
+      70,
+      75,
+      80,
+      90,
+      95,
+      100,
+      120,
+      140,
+      180
+    ],
+    "selfdestruct": [
+      200,
+      250
+    ]
+  },
+  "non_lattice": [],
+  "layout": {
+    "AD": 51,
+    "AV": 89,
+    "AV_PREPARED": 324,
+    "JC": 457
+  },
+  "fixtures": [
+    {
+      "id": "exchange_trade_damage",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_fire_crossing",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_fire_same_band",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_ice_crossing",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_target_cap_growth",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_false_swipe_excluded",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_fang_excluded",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_multihit_excluded",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_pursuit_normalized",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_unknown_speed",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_own_vital_throw",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_reply_vital_throw",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_reply_miss",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_both_miss",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_cache_reuse_all_events",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_fast_finish",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_denied_by_finish",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_fast_recover",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_slow_recover",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_switch_tempo",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_replacement_no_extra_turn",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_entry_faint",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_large_hp_fraction",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_wincon_fraction",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_selfdestruct_guaranteed_miss",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_recoil_immunity",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_drain_immunity",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_sleep_denies_action",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_recharge_denies_action",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_frozen_denies_explosion",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_snore_wakes_and_fails",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_reply_sleep_denied",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_reply_recovers",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_rest_full_fails",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_fixed_own_miss_branch",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_fixed_own_hit_branch",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_ordinary_amount_range",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_overkill_raw_range",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_switch_pursuit_unresolved",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_quick_claw_order_uncertain",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_flinch_denies_action",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_attract_unresolved",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_life_orb_then_reply",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_life_orb_faint",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_shell_bell_raw_overkill",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_shell_bell_cap",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_shell_bell_cannot_revive_explosion",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_helmet_contact",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_helmet_noncontact",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_helmet_holder_faints",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_life_orb_zero_then_drain",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_helmet_zero_then_drain",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_shell_bell_then_recoil",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_own_maximum_amount",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_reply_minimum_amount",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_reply_maximum_amount",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_claw_own_first_branch",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_claw_reply_first_branch",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "exchange_priority_precedes_order_branch",
+      "path": "strategy/action-exchange",
+      "pins": "one material/HP scale respects action order, interruption, recovery caps and switch tempo"
+    },
+    {
+      "id": "defense_harden_own_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_own_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_own_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_own_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_player_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_player_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_player_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_harden_player_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_own_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_own_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_own_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_own_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_player_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_player_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_player_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_withdraw_player_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_own_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_own_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_own_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_own_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_player_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_player_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_player_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_barrier_player_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_own_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_own_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_own_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_own_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_player_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_player_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_player_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_acid_armor_player_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_own_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_own_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_own_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_own_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_player_0_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_player_0_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_player_1_0",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_amnesia_player_1_1",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_reflect",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_light_screen",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_public_reflect",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_public_light_screen",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_plus_five",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_plus_six",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_already_999",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_eviolite_reflect",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_eviolite_light_screen",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_edge_metal_powder_reflect",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_tie_own_12",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_tie_own_4",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_tie_player_12",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "defense_tie_player_4",
+      "path": "strategy/defense-exchange",
+      "pins": "combat defensive command and damage order; exact sparse state and cache parity"
+    },
+    {
+      "id": "joint_fast_finish",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_broad_prior_mass",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_equal_slots",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_cache_reinitialize",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_open_prior",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_replacement_hazards",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_empty_replacement",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_recharge_wait",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_exhausted_struggle",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_encore_exhausted",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_encore_exhausted_confused",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_encore_disabled",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_encore_disable_expires",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_encore_zero_counter_disabled",
+      "path": "strategy/joint-actions",
+      "pins": "all legal action/reply exchanges match exhaustive weighted aggregation in every traversal order"
+    },
+    {
+      "id": "joint_speed_tie_mixed",
+      "path": "strategy/joint-actions",
+      "pins": "modeled ties average explicit order branches with equal reply mass; unknown order remains conditional"
+    },
+    {
+      "id": "joint_speed_tie_quick_claw",
+      "path": "strategy/joint-actions",
+      "pins": "modeled ties average explicit order branches with equal reply mass; unknown order remains conditional"
+    },
+    {
+      "id": "joint_speed_tie_transformed",
+      "path": "strategy/joint-actions",
+      "pins": "modeled ties average explicit order branches with equal reply mass; unknown order remains conditional"
+    },
+    {
+      "id": "joint_speed_tie_speed_high_byte",
+      "path": "strategy/joint-actions",
+      "pins": "modeled ties average explicit order branches with equal reply mass; unknown order remains conditional"
+    },
+    {
+      "id": "joint_speed_tie_round_once",
+      "path": "strategy/joint-actions",
+      "pins": "odd order-branch sums round only after all reply weights are accumulated"
+    },
+    {
+      "id": "joint_accuracy_mixed",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_accuracy_own_selfdestruct_miss",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_accuracy_reply_selfdestruct_miss",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_accuracy_early_ko",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_accuracy_impossible_hits",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_accuracy_focus_band",
+      "path": "strategy/joint-actions",
+      "pins": "exact accuracy and order event weights match exhaustive conditional exchanges without early rounding"
+    },
+    {
+      "id": "joint_defense_transitions",
+      "path": "strategy/joint-actions",
+      "pins": "defensive successor changes and prepared damage invalidation agree with exhaustive accuracy/tie enumeration"
+    }
+  ]
+}

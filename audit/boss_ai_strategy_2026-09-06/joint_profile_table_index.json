@@ -1,0 +1,37 @@
+{
+  "case": "joint_broad_prior_mass",
+  "errors": [],
+  "profiles": [
+    {
+      "scan": 0,
+      "cycles_upper_bound": 380473636,
+      "calls": {
+        "table_offset": 21037,
+        "owned_context": 2844,
+        "player_stat": 2943,
+        "multiply": 17358,
+        "divide": 11549,
+        "hit_facts": 2844,
+        "speed_facts": 9,
+        "damage_range": 2185,
+        "hp_fraction": 3388,
+        "hp_fraction_end": 3388,
+        "mean": 9,
+        "mean_end": 9
+      },
+      "inclusive_loop_cycles": {
+        "table_offset": 2071224,
+        "multiply": 40876852,
+        "divide": 105836904,
+        "player_stat": 41036904,
+        "hit_facts": 19122288,
+        "owned_context": 96712288,
+        "speed_facts": 143664,
+        "damage_range": 164890540,
+        "hp_fraction": 38503556,
+        "mean": 750732
+      }
+    }
+  ],
+  "limits": "Whole-call cycles include under two frames of return-trap padding; loop times exclude return epilogues."
+}

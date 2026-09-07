@@ -1,0 +1,20 @@
+{
+  "parser_entries": 110,
+  "parser_equal": true,
+  "roms": [
+    {
+      "rom": "pokegold",
+      "bytes": 332,
+      "identical": true,
+      "sha256": "822bcb5bf741159f28fe4b4829f17cccaedd43a4047fef62db79237ecb53bcd1",
+      "bank": "11"
+    },
+    {
+      "rom": "pokesilver",
+      "bytes": 332,
+      "identical": true,
+      "sha256": "822bcb5bf741159f28fe4b4829f17cccaedd43a4047fef62db79237ecb53bcd1",
+      "bank": "11"
+    }
+  ]
+}

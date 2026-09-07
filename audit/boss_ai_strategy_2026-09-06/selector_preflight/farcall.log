@@ -1,0 +1,4 @@
+Farcall hl-clobber audit passed.
+Functions known to read hl as input: ['ApplyLateGenDamageStatsItemMods_Far', 'SpeciesItemBoost_Far']
+Functions known to return hl as output: 7 (['FindFirstEmptyObjectStruct', 'GetBattleVarAddr', 'GetEnemyMonDVs', 'GetOpponentItem', 'GetUserItem', 'PrintHour']�)
+Scanned 1886 ASM files.

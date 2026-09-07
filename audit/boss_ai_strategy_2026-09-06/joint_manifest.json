@@ -1,0 +1,23 @@
+{
+  "scope": "Bounded unpromoted conditional matrix and identity arithmetic; not roadmap completion",
+  "files": {
+    "engine/battle/ai/joint_action.asm": "e3318e5c3565753caf9749e384c6e7e18e3491e20e186a1a141e7bc441c09e0f",
+    "engine/battle/ai/action_value.asm": "ddd22c10cfca2d5da75a7cab37d1d05bba69f3ede8310de3faf632bfc14278c7",
+    "engine/battle/ai/damage_kernel.asm": "6c94479e156720806ca4362d4188e66a9fabe9850eb9cd8abd41175779e98a20",
+    "engine/battle/ai/public_replies.asm": "f3562c5a73386c4c29b2272f8958ae4261ba4c28227ebc4eaee24cf98ba9b967",
+    "engine/battle/ai/action_candidates.asm": "f7ba190181861f584469c1b16c4d5bb142624c5b664207928883a4effb5a5cb6",
+    "tools/boss_ai_fixtures/joint.py": "8710f94a6842a74dc89b6697e4346aef8b33e31d9a38a8666247903a4141b2ac",
+    "tools/boss_ai_fixtures/cases.py": "92c077d14eefbd74d3b8902b3b4a6b94e90e452176a9a14f5933dbe604b87907",
+    "tools/boss_ai_fixtures/runner.py": "8a98f1f329f00600dcb9018d3f5fe86d382eb22f63a28b8149061e0dd817e84b",
+    "tools/boss_ai_fixtures/harness.py": "41b30c5a994cead651565a3380d01e1c0b5e193eeddb40181eba1575d61631fd",
+    "tools/audit/check_boss_ai_no_cheat.py": "bab1f03de54b9232687002a9aa96003de99181c4b8dea84bd59b0abb21cc4926",
+    "tools/audit/check_farcall_hl_clobber.py": "58766d829ae38e4f8e1620585a2e334899f46ea316a801b87994b2727d262ef0",
+    "pokegold.gbc": "42463565d9a8b417256b1d6a598397bacbf87892f25a111a30c568fa56142987",
+    "pokegold.sym": "cd6ead6c8f4a1ec09a44cba16c9d034ca4c3f63cf116fd6b4148b4f8db7ef4a0",
+    "audit/boss_ai_strategy_2026-09-06/pokegold_joint_fixtures.json": "ec4dbeb29d1429487628ec5e80f6d616f71c4b940557b2ea77e10177561ddbdf",
+    "audit/boss_ai_strategy_2026-09-06/identity_math.json": "788e3a3a8edd957af30c16c84074e2aea43c591bb02833c38ae0ed2e64caf311",
+    "audit/boss_ai_strategy_2026-09-06/joint_profile.json": "aef13171c4a560fd3975399b9ede435ffc1a8d60cb6e87f8c13ffb393874cad2",
+    "audit/boss_ai_strategy_2026-09-06/joint_profile_before_identity.json": "789f05d427e8223b52eeaa0aa8166ce20bbcfe00ea974e6d7df7d1295c7da700",
+    "audit/boss_ai_strategy_2026-09-06/joint_checks.json": "0d42aa3479b816d5d81dd8fc38901e62c3f42e7e4797e98e150c10595e1a5b37"
+  }
+}

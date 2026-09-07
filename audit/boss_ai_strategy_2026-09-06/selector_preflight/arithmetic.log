@@ -1,0 +1,4 @@
+HP valuation comparisons: 4200496
+transition/accumulation comparisons: 100000
+five-power-step base comparisons: 520000
+PASS. No ROM behavior or timing has been verified by these checks.

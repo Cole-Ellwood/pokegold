@@ -290,8 +290,8 @@ ENDC
 .skip_tempo
 	call BossAI_IsCurrentEnemySetupMove
 	jr nc, .skip_setup
-	call .EnemyUnderPressure
-	jr c, .unsafe_setup
+	call BossAI_ShouldInvestInSetup
+	jr nc, .unsafe_setup
 	ld c, 3
 	call .EncourageByTierWeight
 	jr .skip_setup
@@ -321,7 +321,7 @@ ENDC
 	jr nc, .status_ok
 	ld a, 80
 	call BossAI_SetScoreHL
-	jr .skip_status
+	ret ; a publicly failing status cannot be reopened by plan/role bonuses
 .status_ok
 	ld c, 4
 	call .EncourageByTierWeight
@@ -1051,6 +1051,8 @@ ENDC
 	jr z, .hsmdm_none
 	cp d
 	jr z, .hsmdm_skip
+	call BossAI_MoveIsAvailable
+	jr nc, .hsmdm_skip
 	push hl
 	push bc
 	push de
@@ -1442,7 +1444,7 @@ ENDC
 	; boss holds a clean KO move. BossAI_HasAnyKOMove checks all 4 slots.
 	call BossAI_HasAnyKOMove
 	ret c
-	call BossAI_PlayerHasPublicThreatVsEnemy
+	call .HasDestinyBondRetaliation
 	ret nc
 	call BossAI_PublicEnemyFaster
 	ret nc
@@ -1450,6 +1452,56 @@ ENDC
 	call .EncourageByTierWeight
 	ld a, 3
 	jp BossAI_EncourageScoreHL
+
+.HasDestinyBondRetaliation
+; At quarter HP a revealed neutral attack can also cash in the trade.
+; This remains a danger estimate, not a damage guarantee; unknown attacks use
+; the existing conservative public super-effective threat fallback.
+	push hl
+	push bc
+	push de
+	ld hl, wPlayerUsedMoves
+	ld d, NUM_MOVES
+.db_retaliation_loop
+	ld a, [hli]
+	and a
+	jr z, .db_retaliation_next
+	push hl
+	dec a
+	ld hl, Moves + MOVE_EFFECT
+	call BossAI_GetMoveAttr
+	cp EFFECT_COUNTER
+	jr z, .db_retaliation_pop
+	cp EFFECT_MIRROR_COAT
+	jr z, .db_retaliation_pop
+	cp EFFECT_HIDDEN_POWER
+	jr z, .db_retaliation_pop
+	inc hl
+	call BossAI_GetMoveByte
+	and a
+	jr z, .db_retaliation_pop
+	inc hl
+	call BossAI_GetMoveByte
+	ld c, a
+	push de
+	call BossAI_PlayerThreatTypeHitsEnemy
+	pop de
+	jr c, .db_retaliation_yes
+.db_retaliation_pop
+	pop hl
+.db_retaliation_next
+	dec d
+	jr nz, .db_retaliation_loop
+	call BossAI_PlayerHasPublicThreatVsEnemyUncached.public_type_fallback
+	jr .db_retaliation_done
+.db_retaliation_yes
+	pop hl
+	scf
+.db_retaliation_done
+	pop de
+	pop bc
+	pop hl
+	ret
 
 .ApplyCounterCoatTradeBias
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
@@ -1570,11 +1622,15 @@ ENDC
 	ld c, a
 	ld hl, wBossAISeenPlayerSpecies
 	ld e, 0
+	ld a, [wBossAISeenPlayerAliveMask]
+	ld d, a
 	ld a, [wCurSpecies]
 	push af
 .choice_seen_loop
 	ld a, [hli]
 	and a
+	jr z, .choice_next_seen
+	bit 0, d
 	jr z, .choice_next_seen
 	push hl
 	push bc
@@ -1594,6 +1650,7 @@ ENDC
 	jr nc, .choice_next_seen
 	ld e, 1
 .choice_next_seen
+	srl d
 	dec c
 	jr nz, .choice_seen_loop
 	jr .choice_restore_species
@@ -2607,6 +2664,8 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ld e, a
 .encourage_loop
 	ld a, [hl]
+	cp 80
+	ret nc
 	cp 1
 	ret z
 	dec [hl]
@@ -3177,6 +3236,8 @@ BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	ret
 
 .public_type_fallback
+	call BossAI_PlayerActiveFourMoveSaturated
+	jr c, .no
 	ld a, [wBattleMonType1]
 	ld c, a
 	call BossAI_PlayerThreatTypeSuperEffectiveVsEnemy
@@ -3224,30 +3285,10 @@ BossAI_PlayerHasRevealedPriorityThreatUncached:
 	call BossAI_GetMoveAttr
 	cp EFFECT_PRIORITY_HIT
 	jr nz, .next
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	and a
-	jr z, .next
-	ld d, a
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	call BossAI_GetMoveAttr
-	ld c, a
-	call BossAI_PlayerThreatTypeHitsEnemy
-	jr nc, .next
-	call AICheckEnemyQuarterHP_HL
-	jr nc, .yes_pop
-	call AICheckEnemyHalfHP_HL
-	jr c, .next
-	ld a, d
-	cp 80
-	jr nc, .yes_pop
-	ld a, [wTypeMatchup]
-	cp EFFECTIVE + 1
-	jr nc, .yes_pop
+	ld c, b
+	ld b, 0 ; revealed incoming maximum, using the shared public model
+	farcall BossAI_PublicDamageKO
+	jr c, .yes_pop
 
 .next
 	pop bc
@@ -3276,36 +3317,14 @@ if DEF(BOSSAI_EMIT_MOVE_PRESSURE_SCORING)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_CurrentEnemyMoveHasKOPressure:
-	call BossAI_CurrentEnemyMovePressureScore
-	ld d, a
-	and a
-	jr z, .no
-	call AICheckPlayerQuarterHP_HL
-	jr nc, .low_hp
-	call AICheckPlayerHalfHP_HL
-	jr nc, .half_hp
-	ld a, d
-	cp 4
-	jr nc, .yes
-	jr .no
-
-.low_hp
-	ld a, d
-	cp 1
-	jr nc, .yes
-	jr .no
-
-.half_hp
-	ld a, d
-	cp 3
-	jr nc, .yes
-
-.no
-	and a
-	ret
-
-.yes
-	scf
+	push bc
+	push hl
+	ld a, [wEnemyMoveStruct + MOVE_ANIM]
+	ld c, a
+	ld b, 1 ; owned outgoing minimum, using the shared public model
+	farcall BossAI_PublicDamageKO
+	pop hl
+	pop bc
 	ret
 
 ; ai-layer: POLICY
@@ -4013,10 +4032,17 @@ if DEF(BOSSAI_EMIT_MOVE_PUBLIC_FASTER)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_PublicEnemyFaster:
-; Per-tick cache wrapper. The uncached body does two GetBaseData calls
-; (heaviest single op in ScoreMove). Inputs (player species, enemy species,
-; enemy item) are stable within one AI tick; cached result is reused across
-; all moves and lookahead candidates in the same turn.
+; Preserve the score cursor across the farcall macro.
+	push hl
+	farcall BossAI_PublicEnemyFasterFar
+	pop hl
+	ret
+endc
+
+if DEF(BOSSAI_EMIT_MOVE_PUBLIC_SPEED_ESTIMATE)
+BossAI_PublicEnemyFasterFar:
+; Per-tick cache: public estimate and own effective Speed are stable during
+; this decision. Reuse the result across moves and lookahead candidates.
 	ld a, [wBossAIPublicEnemyFasterCache]
 	inc a
 	jr z, .miss
@@ -4033,69 +4059,62 @@ BossAI_PublicEnemyFaster:
 	ret
 
 BossAI_PublicEnemyFasterUncached:
+; Compare own effective Speed with a public estimate: DV8, visible level,
+; stage and status/type modifiers. Unknown player items and badges are omitted.
 	push hl
 	push de
 	push bc
 	ld a, [wCurSpecies]
 	push af
-	ld a, [wBattleMonSpecies]
-	and a
-	jr z, .enemy_not_faster
-	ld [wCurSpecies], a
-	call GetBaseData
-	ld a, [wBaseSpeed]
+	call BossAI_EstimatePlayerSpeed
+.player_speed_ready
+	push bc
+	ld a, [wEnemyMonSpeed]
 	ld b, a
-	ld a, [wEnemyMonSpecies]
-	and a
-	jr nz, .got_enemy_species
-	ld a, [wTempEnemyMonSpecies]
-
-.got_enemy_species
-	and a
-	jr z, .enemy_not_faster
-	ld [wCurSpecies], a
-	call GetBaseData
-	ld a, [wBaseSpeed]
+	ld a, [wEnemyMonSpeed + 1]
 	ld c, a
-	cp b
-	jr c, .check_choice_scarf
-	jr z, .check_choice_scarf
-
-.enemy_faster
-	pop af
-	ld [wCurSpecies], a
-	and a
-	call nz, GetBaseData
+	push bc
+	ld a, [wEnemyMonItem]
+	ld b, a
+	callfar GetItemHeldEffect
+	ld a, b
 	pop bc
-	pop de
-	pop hl
-	scf
-	ret
-
-.check_choice_scarf
-	call BossAI_GetEnemyHeldEffect
 	cp HELD_CHOICE_SCARF
-	jr nz, .enemy_not_faster
-	ld a, c
-	srl a
-	add c
-	jr c, .enemy_faster
+	jr nz, .compare
+	ld h, b
+	ld l, c
+	srl h
+	rr l
+	add hl, bc
+	ld b, h
+	ld c, l
+.compare
+	pop de
+	ld a, d
 	cp b
-	jr c, .enemy_not_faster
-	jr z, .enemy_not_faster
-	jr .enemy_faster
-
+	jr c, .enemy_faster
+	jr nz, .enemy_not_faster
+	ld a, e
+	cp c
+	jr nc, .enemy_not_faster
+.enemy_faster
+	ld e, 1
+	jr .restore
 .enemy_not_faster
+	ld e, 0
+.restore
 	pop af
 	ld [wCurSpecies], a
+	push de
 	and a
 	call nz, GetBaseData
+	pop de
+	ld a, e
+	rrca
 	pop bc
 	pop de
 	pop hl
-	and a
 	ret
-
 ; ============================================================
 endc
 
@@ -4712,7 +4731,7 @@ BossAI_CoachExpectedMoveResistedByPlayer:
 	ld a, 1
 	ldh [hBattleTurn], a
 	ld a, c
-	ld hl, wBaseType1
+	ld hl, wBattleMonType1
 	call BossAI_CheckTypeMatchupNoItem
 	pop af
 	ldh [hBattleTurn], a
@@ -4996,11 +5015,9 @@ BossAI_SetupBoostHasFurtherValue:
 	cp d
 	pop de
 	jr nc, .no
-; Approved exact-speed exception: if the enemy already outspeeds the active
-; player mon, an Agility / Speed boost flips no race. Stop encouraging.
-; AICompareSpeed lives in the AI Scoring section now (separate bank); cross
-; via farcall. Safe because the helper takes no hl input.
-	farcall AICompareSpeed
+; Use the same public speed estimate as damage/action planning. Unknown
+; player Speed and held items do not justify a separate exact-speed exception.
+	call BossAI_PublicEnemyFaster
 	jr c, .no
 	jr .yes
 
@@ -5058,28 +5075,28 @@ BossAI_SetupBoostHasFurtherValue:
 	ret
 
 ; ai-layer: POLICY
-BossAI_SetupTurnIsAffordable:
-; Returns carry if spending another turn on setup is affordable based on
-; turns this mon has already spent on the field and current HP.
-;   turn 0:        always affordable (mon just entered, no damage yet)
-;   turn 1, full HP: affordable (player turn was wasted / trivial)
-;   turn 1, < full:  not affordable (took a real hit, attack instead)
-;   turn 2+:        never affordable (too many free turns spent setting up)
-; Applies uniformly to all setup effects, including Speed boosts: if you
-; haven't flipped the matchup in two turns, more setup just bleeds you out.
-	ld a, [wEnemyTurnsTaken]
+BossAI_ShouldInvestInSetup:
+; Shared by plan and projection: reject capped, unsafe or unnecessary boosts.
+	call BossAI_SetupBoostHasFurtherValue
+	ret nc
+	call BossAI_HasAnyKOMove
+	jr c, .no
+	jp BossAI_SetupTurnIsAffordable
+.no
 	and a
-	jr z, .yes
-	cp 2
-	jr nc, .no
-	call AICheckEnemyMaxHP_HL
-	jr c, .yes
-	jr .no
-
-.yes
-	scf
 	ret
 
+BossAI_SetupTurnIsAffordable:
+; Evaluate the current public board, not how long this mon has been present.
+; A later safe window is useful; low HP or an active public threat is not.
+	call AICheckEnemyQuarterHP_HL
+	jr nc, .no
+	call BossAI_PlayerHasRevealedPriorityThreat
+	jr c, .no
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr c, .no
+	scf
+	ret
 .no
 	and a
 	ret
@@ -5145,10 +5162,10 @@ BossAI_ComputePlayerPlausibleTypeMask:
 	ld [wBossAIPlausibleTypeMaskLevel], a
 	call BossAI_ClearPlausibleMask
 
-	call BossAI_AddPublicSTABThreatsToMask
 	call BossAI_AddRevealedDamagingTypesToMask
 	call BossAI_PlayerActiveFourMoveSaturated
 	jr c, .done
+	call BossAI_AddPublicSTABThreatsToMask
 	ld a, [wBossAITemp]
 	call BossAI_AddSpeciesAndPreEvolutionMovesToMask
 
@@ -5549,6 +5566,8 @@ BossAI_ApplyPlanMoveBias:
 	jr nz, .check_status
 	call BossAI_IsCurrentEnemySetupMove
 	ret nc
+	call BossAI_ShouldInvestInSetup
+	ret nc
 	ld a, 2
 	jp BossAI_EncourageScoreHL
 
@@ -5698,41 +5717,9 @@ IF DEF(BOSS_AI_TRACE)
 	ld [hl], a
 ENDC
 
-; Find the initial minimum non-blocked score (lower is better; scores >= 80
-; are blocked sentinel). Stored to wBossAILookaheadRunningBest as the
-; starting bound for the dynamic futility cutoff below.
-	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld c, NUM_MOVES
-	ld b, 79
-.best_loop
-	ld a, [de]
-	and a
-	jr z, .best_done
-	ld a, [hl]
-	cp 80
-	jr nc, .best_next
-	cp b
-	jr nc, .best_next
-	ld b, a
-.best_next
-	inc hl
-	inc de
-	dec c
-	jr nz, .best_loop
-
-.best_done
-	ld a, b
-	ld [wBossAILookaheadRunningBest], a
-
-; Dynamic futility cutoff: skip candidate i if score[i] > running_best + CAP.
-; Maximum upside delta is -CAP, so candidate's best-case post-eval is
-; score - CAP; if that exceeds running_best the candidate cannot improve
-; on the current best. running_best is updated after each evaluator so the
-; bound tightens monotonically. Behavior delta vs the old static cutoff
-; (initial_best + CAP, never updated): in near-tie cases an earlier
-; candidate whose delta improves running_best can newly exclude later
-; candidates — same class as S4 in audit/boss_ai_perf/hotspots.md.
+; Evaluate every selectable move on the same basis. With only four slots,
+; pruning an unevaluated score is not a valid signed-delta bound and also
+; biases the later coverage hedge. All selectable moves receive this pass.
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES
@@ -5744,13 +5731,6 @@ ENDC
 	ld a, [hl]
 	cp 80
 	jr nc, .eval_next
-	push bc
-	ld c, a
-	ld a, [wBossAILookaheadRunningBest]
-	add BOSS_AI_LOOKAHEAD_BONUS_CAP
-	cp c
-	pop bc
-	jr c, .eval_next
 	push hl
 	push de
 	ld a, [de]
@@ -5763,18 +5743,6 @@ ENDC
 	push bc
 	call BossAI_ApplySignedDeltaToScore
 	pop bc
-; Update running_best with the post-eval score if it improved. Use an hl
-; swap (smaller than push/pop bc + c-swap) to fit the bank-0E "Enemy
-; Trainers" budget. ApplySignedDeltaToScore saturates [hl] to [1, 79],
-; so reload via [hl] post-call.
-	push hl
-	ld a, [hl]
-	ld hl, wBossAILookaheadRunningBest
-	cp [hl]
-	jr nc, .no_update
-	ld [hl], a
-.no_update
-	pop hl
 IF DEF(BOSS_AI_TRACE)
 	push bc
 	push hl
@@ -5821,7 +5789,10 @@ BossAI_ApplySignedDeltaToScore:
 	ld c, a
 	ld a, [hl]
 	sub c
-	jr nc, .store
+	jr c, .minimum
+	and a
+	jr nz, .store
+.minimum
 	ld a, 1
 	jr .store
 
@@ -5871,34 +5842,18 @@ BossAI_EvaluateActionLookahead:
 	ld a, [wEnemyMoveStruct + MOVE_POWER]
 	and a
 	jr z, .check_setup
-	call BossAI_CurrentEnemyMovePressureScore
-	ld d, a
-	call AICheckPlayerQuarterHP_HL
-	jr nc, .low_hp
-	call AICheckPlayerHalfHP_HL
-	jr nc, .half_hp
-	ld a, d
-	cp 4
-	jr c, .not_ko
-	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
-	jr .check_setup
-
-.low_hp
-	ld a, d
-	cp 1
-	jr c, .not_ko
-	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
-	jr .check_setup
-
-.half_hp
-	ld a, d
-	cp 3
-	jr c, .not_ko
+	push bc
+	call BossAI_CurrentEnemyMoveHasKOPressure
+	pop bc
+	jr nc, .not_ko
 	ld b, BOSS_AI_LOOKAHEAD_BONUS_CAP
 	jr .check_setup
 
 .not_ko
-	ld a, d
+	push bc
+	call BossAI_CurrentEnemyMovePressureScore
+	pop bc
+	ld d, a
 	cp 3
 	jr c, .check_quarter
 	ld a, b
@@ -5923,22 +5878,7 @@ BossAI_EvaluateActionLookahead:
 ; Stop encouraging more boosts once a KO is already available — extra setup
 ; just wastes turns and burn/sandstorm chip while the player free-hits.
 	push bc
-	call BossAI_HasAnyKOMove
-	pop bc
-	jr c, .check_scout
-; Stop encouraging the move when the targeted stat is already at MAX_STAT_LEVEL.
-; Without this the AI loops Agility/Swords Dance to +6 and then keeps trying.
-	push bc
-	call BossAI_SetupBoostHasFurtherValue
-	pop bc
-	jr nc, .check_scout
-; Spamming setup past turn 0 means sitting in damage range while the player
-; free-hits. Showdown bot literature converges on "use a boosting move
-; *once*". Allow turn-0 setup unconditionally (no info yet, mon is fresh),
-; allow turn-1 setup only at full HP (player whiffed / switched / chipped
-; trivially), and refuse setup encouragement from turn 2 onward.
-	push bc
-	call BossAI_SetupTurnIsAffordable
+	call BossAI_ShouldInvestInSetup
 	pop bc
 	jr nc, .check_scout
 	ld a, b
@@ -6020,17 +5960,13 @@ BossAI_ApplyMultiTurnProjection:
 	call BossAI_IsCurrentEnemySetupMove
 	pop bc
 	jr nc, .check_scout
-	call .IsUnderPressure
-	jr c, .setup_risky
+	push bc
+	call BossAI_ShouldInvestInSetup
+	pop bc
+	jr nc, .check_scout
 	call .GetProjectionDepth
 	add a
 	call .AddUpsideByA
-	jr .check_scout
-
-.setup_risky
-	call .GetProjectionDepth
-	add a
-	call .AddDownsideByA
 
 .check_scout
 	push bc
@@ -6086,6 +6022,14 @@ BossAI_ApplyMultiTurnProjection:
 	jr nc, .check_accuracy
 
 .switch_candidate
+	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
+	cp EFFECT_SPIKES
+	jr z, .switch_pressure
+	push bc
+	call BossAI_ShouldInvestInSetup
+	pop bc
+	jr nc, .check_accuracy
+.switch_pressure
 	call .IsUnderPressure
 	jr c, .check_accuracy
 
@@ -6621,27 +6565,15 @@ endc
 
 if DEF(BOSSAI_EMIT_MOVE_SCOUT_DECISION)
 BossAI_ShouldScout:
-; Per-tick cache for the prereq chain only. The five prereq helpers
-; (IsActiveSpeciesScouted / GetPrimaryThreatType /
-; GetTypeThreatSeverityVsEnemyMon / HasAnyKOMove / GetScoutRollThreshold)
-; have turn-stable outputs. The Random roll varies per call and stays
-; inside this function so RNG consumption is preserved. We also capture
-; wTypeMatchup at end of prereqs and restore it on every cache hit so any
-; downstream reader sees the same byte the original chain would have left.
+; One strategic scouting decision per tick. Every scoring layer sees the same
+; answer; Random is consumed only on a cache miss with valid prerequisites.
 	ld a, [wBossAIShouldScoutPrereqCache]
 	inc a
 	jr z, .compute_prereqs
 	dec a
 	jr z, .no
-	; cached "prereqs passed" -- restore the side-effect wTypeMatchup write
-	; the original prereq chain would have left, then roll random.
 	ld a, [wBossAIShouldScoutMatchupValue]
 	ld [wTypeMatchup], a
-	ld a, [wBossAIShouldScoutThresholdCache]
-	ld b, a
-	call Random
-	cp b
-	jr nc, .no
 	jr .yes
 
 .compute_prereqs
@@ -6662,13 +6594,13 @@ BossAI_ShouldScout:
 	; would have left at end of prereqs.
 	ld a, [wTypeMatchup]
 	ld [wBossAIShouldScoutMatchupValue], a
-	ld a, 1
-	ld [wBossAIShouldScoutPrereqCache], a
 	ld a, [wBossAIShouldScoutThresholdCache]
 	ld b, a
 	call Random
 	cp b
-	jr nc, .no
+	jr nc, .prereqs_failed
+	ld a, 1
+	ld [wBossAIShouldScoutPrereqCache], a
 
 .yes
 IF DEF(BOSS_AI_TRACE)
@@ -6781,4 +6713,145 @@ BossAIRiskyEffects:
 INCLUDE "data/boss_ai/revealed_effect_matrix.asm"
 
 ; ============================================================
+endc
+
+if DEF(BOSSAI_EMIT_MOVE_PUBLIC_SPEED_ESTIMATE)
+; Public-only 16-bit estimate, kept outside the crowded trainer bank.
+; BC = estimated player Speed. Clobbers AF/DE/HL and HRAM math scratch.
+BossAI_EstimatePlayerSpeed:
+	ld a, [wBattleMonSpecies]
+	and a
+	jr nz, .have_species
+	ld bc, MAX_STAT_VALUE
+	ret
+.have_species
+	ld [wCurSpecies], a
+	call GetBaseData
+	ld a, [wBaseSpeed]
+	ld c, a
+	ld b, 0
+	ld hl, 8 ; assumed DV, not the player's private DV
+	add hl, bc
+	add hl, hl
+	ld b, h
+	ld c, l
+	ld a, [wBattleMonLevel]
+	ld d, a
+	ld e, 100
+	call .ScaleSpeedRaw
+	ld hl, 5
+	add hl, bc
+	ld b, h
+	ld c, l
+	push bc
+	ld a, [wPlayerSpdLevel]
+	dec a
+	cp MAX_STAT_LEVEL
+	jr c, .valid_stage
+	ld a, BASE_STAT_LEVEL - 1
+.valid_stage
+	add a
+	ld e, a
+	ld d, 0
+	ld hl, StatLevelMultipliers
+	add hl, de
+	ld a, BANK(StatLevelMultipliers)
+	call GetFarByte
+	push af
+	inc hl
+	ld a, BANK(StatLevelMultipliers)
+	call GetFarByte
+	ld e, a
+	pop af
+	ld d, a
+	pop bc
+	call .ScaleSpeed
+	ld a, b
+	cp HIGH(MAX_STAT_VALUE)
+	jr c, .stage_capped
+	jr nz, .cap_stage
+	ld a, c
+	cp LOW(MAX_STAT_VALUE)
+	jr c, .stage_capped
+.cap_stage
+	ld bc, MAX_STAT_VALUE
+.stage_capped
+	ld a, [wBattleMonType1]
+	cp ELECTRIC
+	jr z, .electric
+	ld a, [wBattleMonType2]
+	cp ELECTRIC
+	jr nz, .paralysis
+.electric
+	ld d, ELECTRIC_SPD_HALF_NUM
+	ld e, ELECTRIC_SPD_HALF_DEN
+	call .PlayerIsMonoType
+	jr nz, .apply_electric
+	ld d, ELECTRIC_SPD_FULL_NUM
+	ld e, ELECTRIC_SPD_FULL_DEN
+.apply_electric
+	call .ScaleSpeed
+.paralysis
+	ld a, [wBattleMonStatus]
+	bit PAR, a
+	jr z, .player_speed_ready
+	ld d, PRZ_SPD_NUM
+	ld e, PRZ_SPD_DEN
+	ld a, [wBattleMonType1]
+	cp FIGHTING
+	jr z, .fighting
+	ld a, [wBattleMonType2]
+	cp FIGHTING
+	jr nz, .apply_paralysis
+.fighting
+	ld d, PRZ_SPD_FIGHTING_HALF_NUM
+	ld e, PRZ_SPD_FIGHTING_HALF_DEN
+	call .PlayerIsMonoType
+	jr nz, .apply_paralysis
+	ld d, PRZ_SPD_FIGHTING_FULL_NUM
+	ld e, PRZ_SPD_FIGHTING_FULL_DEN
+.apply_paralysis
+	call .ScaleSpeed
+.player_speed_ready
+	ret
+
+.PlayerIsMonoType
+	ld a, [wBattleMonType1]
+	ld h, a
+	ld a, [wBattleMonType2]
+	cp h
+	ret
+
+.ScaleSpeed
+; Stage/passive results have minimum 1, but the base quotient may be zero.
+	call .ScaleSpeedRaw
+	ld a, c
+	or b
+	ret nz
+	inc c
+	ret
+
+.ScaleSpeedRaw
+; BC = floor(BC * D / E). No live battle stats are mutated.
+	push de
+	xor a
+	ldh [hMultiplicand], a
+	ld a, b
+	ldh [hMultiplicand + 1], a
+	ld a, c
+	ldh [hMultiplicand + 2], a
+	ld a, d
+	ldh [hMultiplier], a
+	call Multiply
+	pop de
+	ld a, e
+	ldh [hDivisor], a
+	ld b, 4
+	call Divide
+	ldh a, [hQuotient + 2]
+	ld b, a
+	ldh a, [hQuotient + 3]
+	ld c, a
+	ret
+
 endc

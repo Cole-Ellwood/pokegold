@@ -1,0 +1,153 @@
+{
+  "sha256": {
+    "pokegold.gbc": "7733800325651929bc24d47d1a6e2dcded3075aaadd45fa3673ada798f983fb7",
+    "pokegold.sym": "0f27b7b440d50699842f58d0fe2cf524c8eb00438b8ae640594092fe1f865267"
+  },
+  "status_reopened": {
+    "player_already_poisoned": true,
+    "plan": "STATUS_CHOKE",
+    "post_model_scores": [
+      78,
+      80,
+      80,
+      80
+    ],
+    "outcome": {
+      "scores": [
+        78,
+        80,
+        80,
+        80
+      ],
+      "chosen_move": 92,
+      "choice_ready": 1,
+      "carry": true,
+      "a": 33,
+      "chosen_slot": 0,
+      "switch_index": 0,
+      "switch_param": 0
+    }
+  },
+  "unavailable_attack": [
+    {
+      "thunderbolt_pp": 30,
+      "predicate": true
+    },
+    {
+      "thunderbolt_pp": 0,
+      "predicate": true
+    }
+  ],
+  "public_speed": [
+    {
+      "enemy_speed_stage_byte": 7,
+      "enemy_status": 0,
+      "predicts_enemy_faster": true
+    },
+    {
+      "enemy_speed_stage_byte": 1,
+      "enemy_status": 64,
+      "predicts_enemy_faster": true
+    }
+  ],
+  "futility_counterexample": {
+    "evidence_kind": "algebraic counterexample",
+    "scores": [
+      10,
+      15
+    ],
+    "deltas": [
+      4,
+      -4
+    ],
+    "evaluated_slots": [
+      0
+    ],
+    "pruned_result": [
+      14,
+      15
+    ],
+    "exhaustive_result": [
+      14,
+      11
+    ]
+  },
+  "switch_weights": [
+    {
+      "likely_type": "ICE",
+      "tier": 1,
+      "risk": 2
+    },
+    {
+      "likely_type": "ICE",
+      "tier": 2,
+      "risk": 2
+    },
+    {
+      "likely_type": "ICE",
+      "tier": 3,
+      "risk": 2
+    },
+    {
+      "likely_type": "ELECTRIC",
+      "tier": 1,
+      "risk": 99
+    },
+    {
+      "likely_type": "ELECTRIC",
+      "tier": 2,
+      "risk": 99
+    },
+    {
+      "likely_type": "ELECTRIC",
+      "tier": 3,
+      "risk": 99
+    },
+    {
+      "likely_type": "ROCK",
+      "tier": 1,
+      "risk": 32
+    },
+    {
+      "likely_type": "ROCK",
+      "tier": 2,
+      "risk": 32
+    },
+    {
+      "likely_type": "ROCK",
+      "tier": 3,
+      "risk": 32
+    }
+  ],
+  "perish_escape": {
+    "urgent": true,
+    "switch_param": 0,
+    "is_switching": 0
+  },
+  "lookahead_accumulators": [
+    {
+      "synthetic_full_hp": 60,
+      "delta": 4
+    },
+    {
+      "synthetic_full_hp": 64,
+      "delta": 4
+    },
+    {
+      "synthetic_full_hp": 80,
+      "delta": -4
+    },
+    {
+      "synthetic_full_hp": 100,
+      "delta": -4
+    },
+    {
+      "synthetic_full_hp": 128,
+      "delta": -3
+    },
+    {
+      "synthetic_full_hp": 130,
+      "delta": 1
+    }
+  ]
+}

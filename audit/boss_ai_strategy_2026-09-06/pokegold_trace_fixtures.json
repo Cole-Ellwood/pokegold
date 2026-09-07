@@ -1,0 +1,3386 @@
+{
+  "rom": "pokegold_trace",
+  "rom_sha256": "ef1f2b925872b0535d7f6199f4516ebea39e4432ba28e9e6925ee03ee5485d6e",
+  "total": 114,
+  "failed": 0,
+  "results": [
+    {
+      "id": "haki_boss_first_scored_array",
+      "path": "haki/boss-first",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 1,
+        "bc": 0,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "haki_boss_first_unscored_array",
+      "path": "haki/boss-first",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 1,
+        "bc": 0,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "haki_boss_first_immune_move_favoured",
+      "path": "haki/boss-first",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 1,
+        "bc": 0,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "haki_gate_requires_boss_first",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "haki_gate_requires_usemove",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "haki_gate_requires_eligible_window",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "haki_gate_once_per_battle",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "haki_gate_no_player_move_locked",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "haki_gate_locked_in_enemy",
+      "path": "haki/gates",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          28,
+          28,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 5120,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "eligible_mid_tier_gym_leader",
+      "path": "haki/eligibility",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 0,
+        "bc": 1083,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "eligible_early_tier_refused",
+      "path": "haki/eligibility",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 1,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "eligible_excluded_class_refused",
+      "path": "haki/eligibility",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 17,
+        "bc": 4411,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "haki_after_player_switch",
+      "path": "haki/after-player",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 1,
+        "bc": 0,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "haki_after_player_move",
+      "path": "haki/after-player",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 1,
+        "bc": 0,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": true
+      }
+    },
+    {
+      "id": "normal_turn_refuses_immune_move",
+      "path": "normal/move-choice",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": true,
+        "a": 94,
+        "bc": 24067,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "normal_turn_immune_move_poisoned_low",
+      "path": "normal/move-choice",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          71,
+          72,
+          63
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": true,
+        "a": 94,
+        "bc": 24067,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "destiny_bond_declined_at_full_hp",
+      "path": "scoring/destiny-bond",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          32,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": true,
+        "a": 94,
+        "bc": 24067,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "destiny_bond_taken_when_dying",
+      "path": "scoring/destiny-bond",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          19,
+          23
+        ],
+        "chosen_move": 194,
+        "choice_ready": 1,
+        "carry": false,
+        "a": 194,
+        "bc": 49666,
+        "chosen_slot": 2,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_pp_live",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_pp_empty",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_pp_up_bits_only",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_disabled",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_choice_same",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_choice_other",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_stale_choice",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_vest_attack",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 94,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_vest_status",
+      "path": "strategy/availability",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 194,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "ko_scan_usable",
+      "path": "strategy/available-ko",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 0,
+        "bc": 260,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "ko_scan_no_pp",
+      "path": "strategy/available-ko",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 258,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "ko_scan_disabled",
+      "path": "strategy/available-ko",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 258,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "ko_scan_choice_elsewhere",
+      "path": "strategy/available-ko",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 258,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "quarter_hp_24",
+      "path": "strategy/quarter-hp",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 256,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "quarter_hp_25",
+      "path": "strategy/quarter-hp",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 32,
+        "bc": 288,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "quarter_hp_26",
+      "path": "strategy/quarter-hp",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 32,
+        "bc": 288,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "quarter_hp_64",
+      "path": "strategy/quarter-hp",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 32,
+        "bc": 288,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "quarter_hp_65",
+      "path": "strategy/quarter-hp",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 32,
+        "bc": 288,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "setup_window_t0_hp100_threat0",
+      "path": "strategy/setup-window",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "setup_window_t7_hp100_threat0",
+      "path": "strategy/setup-window",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "setup_window_t7_hp20_threat0",
+      "path": "strategy/setup-window",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 59,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "setup_window_t7_hp100_threat1",
+      "path": "strategy/setup-window",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "scout_cached_0",
+      "path": "strategy/scout",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wBossAIShouldScoutPrereqCache": 0
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "scout_cached_1",
+      "path": "strategy/scout",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 1,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wBossAIShouldScoutPrereqCache": 1
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t1_none",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 31,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t1_likely",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 8,
+        "bc": 2079,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t1_possible",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 4,
+        "bc": 1055,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t2_none",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 31,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t2_likely",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 14,
+        "bc": 3615,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t2_possible",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 6,
+        "bc": 1567,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t3_none",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 31,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t3_likely",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 20,
+        "bc": 5151,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "switch_risk_t3_possible",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 2591,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "risk_accumulation_90_20",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 99,
+        "bc": 25403,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "risk_accumulation_250_20",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 99,
+        "bc": 25403,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "risk_accumulation_10_20",
+      "path": "strategy/switch-risk",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 30,
+        "bc": 7739,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own59_stage7_level24_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own20_stage7_level24_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own59_stage13_level24_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own59_stage1_level24_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own59_stage7_level80_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own20_stage7_level24_status64_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own25_stage7_level24_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own25_stage7_level24_status0_scarfTrue",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_own300_stage13_level80_status0_scarfFalse",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "lookahead_all_20_20_20_20",
+      "path": "strategy/exhaustive-lookahead",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          24,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 1024,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": [
+          20,
+          20,
+          24,
+          20
+        ],
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "lookahead_all_1_40_79_60",
+      "path": "strategy/exhaustive-lookahead",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          1,
+          40,
+          79,
+          60
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 1024,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": [
+          1,
+          40,
+          79,
+          60
+        ],
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "lookahead_all_80_20_80_60",
+      "path": "strategy/exhaustive-lookahead",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          20,
+          80,
+          60
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 512,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": [
+          80,
+          20,
+          80,
+          60
+        ],
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "scout_new_tick_resets",
+      "path": "strategy/scout",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 255,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wBossAIShouldScoutPrereqCache": 255
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "refiner_MANTINE_MANTINE_MANTINE_MANTINE_MANTINE_GOLEMFalse",
+      "path": "strategy/switch-selection",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 53,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 53,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 53,
+          "wBossAITargetMonIdx": 4
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "refiner_MANTINE_GOLEM_MANTINE_MANTINE_MANTINE_MANTINEFalse",
+      "path": "strategy/switch-selection",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 49,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 49,
+          "wBossAITargetMonIdx": 4
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "refiner_MANTINE_LANTURN_RAICHUTrue",
+      "path": "strategy/switch-selection",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 50,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 50,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 50,
+          "wBossAITargetMonIdx": 4
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "refiner_MANTINE_MANTINEFalse",
+      "path": "strategy/switch-selection",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 0,
+          "wBossAITargetMonIdx": 4
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_neutral_escape_hp100",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 49,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 49
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_neutral_escape_hp1",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 49,
+        "bc": 12320,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonParam": 49
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_neutral_escape_hp0",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 48,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "scout_one_actual_roll",
+      "path": "strategy/scout",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 1,
+        "bc": 26115,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "random_calls": 1,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_forced_count0",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_forced_count1",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 1,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_forced_count2",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 2,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_forced_count3",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 3,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_SHUCKLE_None_0_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 0,
+        "bc": 5,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_MAGNEMITE_('ELECTRIC', 'ELECTRIC')_0_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 31,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_MAGNEMITE_('ELECTRIC', 'STEEL')_0_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 30,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_MAGNEMITE_('FIGHTING', 'FIGHTING')_64_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 15,
+        "bc": 15,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_MAGNEMITE_('FIGHTING', 'ELECTRIC')_64_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 11,
+        "bc": 11,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_MAGNEMITE_('NORMAL', 'NORMAL')_64_7",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 7,
+        "bc": 7,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "speed_estimate_ELECTRODE_None_0_13",
+      "path": "strategy/public-speed",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 1048,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_threat_fullFalse_taintedFalse",
+      "path": "strategy/revealed-threat",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 40,
+        "bc": 20759,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_threat_fullTrue_taintedFalse",
+      "path": "strategy/revealed-threat",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 79,
+        "bc": 20736,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_threat_fullTrue_taintedTrue",
+      "path": "strategy/revealed-threat",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 40,
+        "bc": 20759,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_THUNDERBOLT",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 23,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_COUNTER",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_MIRROR_COAT",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_HIDDEN_POWER",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_PROTECT",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "bond_retaliation_SWIFT",
+      "path": "strategy/bond-retaliation",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "choice_regret_alive0",
+      "path": "strategy/choice-memory",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 256,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "choice_regret_alive1",
+      "path": "strategy/choice-memory",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 2,
+        "bc": 257,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "dominance_type_scale0",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 20539,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "dominance_type_scale2",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 20,
+        "bc": 10299,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "dominance_type_scale5",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 40,
+        "bc": 10299,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "dominance_type_scale10",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 80,
+        "bc": 20539,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "dominance_type_scale20",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 160,
+        "bc": 20539,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_alternative_BossAI_ApplyDamageDominanceBias_ppFalse",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemyAIMoveScores": 20
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_alternative_BossAI_ApplyMoveModel.HasStrongMatchupDamagingMove_ppFalse",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 5,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_alternative_BossAI_ApplyDamageDominanceBias_ppTrue",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          28,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 27,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemyAIMoveScores": 28
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "available_alternative_BossAI_ApplyMoveModel.HasStrongMatchupDamagingMove_ppTrue",
+      "path": "strategy/dominance",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 5,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "status_failure_stays_blocked",
+      "path": "strategy/hard-block",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          80,
+          31,
+          24,
+          23
+        ],
+        "chosen_move": 94,
+        "choice_ready": 1,
+        "carry": true,
+        "a": 94,
+        "bc": 24067,
+        "chosen_slot": 3,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_trapped_mean_look",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 128,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonIndex": 0
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "perish_trapped_wrap",
+      "path": "strategy/perish",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 1,
+        "bc": 315,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 49,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {
+          "wEnemySwitchMonIndex": 0
+        },
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_mask_fullFalse_taintedFalse",
+      "path": "strategy/revealed-mask",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 23,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_mask_fullTrue_taintedFalse",
+      "path": "strategy/revealed-mask",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 0,
+        "bc": 23,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true,
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "revealed_mask_fullTrue_taintedTrue",
+      "path": "strategy/revealed-mask",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 128,
+        "bc": 23,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false,
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "coach_visible_STEEL_stale_NORMAL",
+      "path": "strategy/coach-context",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": true,
+        "a": 5,
+        "bc": 51226,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          true
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    },
+    {
+      "id": "coach_visible_NORMAL_stale_STEEL",
+      "path": "strategy/coach-context",
+      "failures": [],
+      "outcome": {
+        "scores": [
+          20,
+          20,
+          20,
+          20
+        ],
+        "chosen_move": 0,
+        "choice_ready": 0,
+        "carry": false,
+        "a": 10,
+        "bc": 51226,
+        "chosen_slot": 0,
+        "switch_index": 0,
+        "switch_param": 0,
+        "returned": true,
+        "reference_scores": null,
+        "decisions": [
+          false
+        ],
+        "random_calls": 0,
+        "memory": {},
+        "haki_spent": false
+      }
+    }
+  ]
+}

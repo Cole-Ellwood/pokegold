@@ -429,3 +429,23 @@ Required behavior checks:
   actual battle engine.
 
 Store excerpts under `audit/boss_ai_trace/`.
+
+
+## Strategic consistency update — 2026-09-06
+
+The scorer now evaluates all selectable moves, uses shared move availability in
+strategic scans, and keeps hard blocks irreversible. Switch risk preserves tier
+weights, saturates before byte overflow, and ranks every living bench candidate
+after its voluntary safety gates. Last-turn Perish escape bypasses confidence
+randomness while respecting the outer trap/lock gates. Setup rewards share the
+same current-board eligibility; scouting rolls once per decision.
+
+Public Speed estimation now includes level, stat stages, paralysis and type
+passives, with documented uncertainty about player DVs/items/badges. Four stable
+revealed moves narrow both masks and threat fallback. Dead seen species no longer
+contribute Choice-lock regret. Coach resistance checks use the active defender.
+
+See `engine/battle/ai/POLICY_DESIGN.md` for the policy rationale and
+`audit/boss_ai_strategy_2026-09-06/implementation.md` for validation, costs and
+retained limitations. These changes establish coherent local decisions; they do
+not establish optimal play or a measured win-rate improvement.

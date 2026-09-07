@@ -15,6 +15,13 @@ ROOT = Path(__file__).resolve().parents[2]
 SCAN_FILES = [
     ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
+    ROOT / "engine" / "battle" / "ai" / "damage_kernel.asm",
+    ROOT / "engine" / "battle" / "ai" / "public_damage.asm",
+    ROOT / "engine" / "battle" / "ai" / "action_facts.asm",
+    ROOT / "engine" / "battle" / "ai" / "action_value.asm",
+    ROOT / "engine" / "battle" / "ai" / "action_candidates.asm",
+    ROOT / "engine" / "battle" / "ai" / "public_replies.asm",
+    ROOT / "engine" / "battle" / "ai" / "joint_action.asm",
     ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
     ROOT / "engine" / "battle" / "ai" / "observation_log.asm",
     ROOT / "data" / "boss_ai" / "role_package_classifier.asm",
@@ -59,6 +66,8 @@ FORBIDDEN_PATTERNS = [
     ForbiddenPattern(re.compile(r"\bwBattleMonMoves\b"), "unrevealed active player move list"),
     ForbiddenPattern(re.compile(r"\bwBattleMonPP\b"), "unrevealed active player move PP"),
     ForbiddenPattern(re.compile(r"\bwBattleMonItem\b"), "hidden active player held item"),
+    ForbiddenPattern(re.compile(r"\bwBattleMon(?:Attack|Defense|Speed|SpclAtk|SpclDef|DVs|Happiness)\b"), "private active player stats or DVs"),
+    ForbiddenPattern(re.compile(r"\bwPlayer(?:Stats|Attack|Defense|Speed|SpAtk|SpDef)\b"), "private unmodified player stats"),
     ForbiddenPattern(re.compile(r"\bwCurPlayerMove\b"), "player input read"),
     ForbiddenPattern(re.compile(r"\bwBattlePlayerAction\b"), "player input action read"),
     ForbiddenPattern(re.compile(r"\bhJoy[A-Za-z0-9_]*\b"), "joypad input read"),
@@ -71,14 +80,7 @@ DIRECT_EXACT_HELPER_RE = re.compile(
 )
 TOP_LABEL_RE = re.compile(r"^(?P<label>[A-Za-z_][A-Za-z0-9_]*):{1,2}$")
 
-APPROVED_DIRECT_HELPER_EXCEPTIONS = [
-    ApprovedDirectHelperException(
-        path="engine/battle/ai/boss_policy_move.asm",
-        helper="AICompareSpeed",
-        top_label="BossAI_SetupBoostHasFurtherValue",
-        reason="approved setup-speed headroom check",
-    ),
-]
+APPROVED_DIRECT_HELPER_EXCEPTIONS: list[ApprovedDirectHelperException] = []
 
 APPROVED_FORBIDDEN_PATTERN_EXCEPTIONS = [
     ApprovedForbiddenPatternException(
