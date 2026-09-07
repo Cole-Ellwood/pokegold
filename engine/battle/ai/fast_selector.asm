@@ -13,7 +13,8 @@ DEF FS_REPLY_W EQU FS_CONTROL + 8
 DEF FS_UNARY_INDEX EQU FS_CONTROL + 9 ; wait/switch record index, $ff none
 DEF FS_UNARY_KIND EQU FS_CONTROL + 10
 DEF FS_PLAN_FLAGS EQU FS_CONTROL + 11 ; setup|open prior|unknown order, move plans
-DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate
+DEF FS_UNARY_FLAGS EQU FS_CONTROL + 12 ; setup|open prior(|wait checks), unary candidate; reached reply flags accumulate here during the sweep
+DEF FS_TIE_ORDER EQU FS_CONTROL + 4 ; order of an equal-priority pair for this defender's speeds
 DEF FS_REPLY_REGIMES EQU FS_CONTROL + 13 ; HP regimes a reply can reach for this defender
 DEF FS_REPLY_IDENTITY EQU FS_CONTROL + 18 ; 1 when the current reply never changes HP
 DEF FS_ORDER EQU FS_CONTROL + 19 ; order descriptor of the pair being evaluated
@@ -312,16 +313,16 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, c
 	and 7
 	ld c, a
-	ld a, 1
-	jr z, .bit_ready
-.bit_shift
-	add a
-	dec c
-	jr nz, .bit_shift
-.bit_ready
+	push hl
+	ld hl, .BitMasks
+	add hl, bc
+	ld a, [hl]
+	pop hl
 	and [hl]
 	pop bc
 	ret
+.BitMasks
+	db 1, 2, 4, 8, 16, 32, 64, 128
 
 .OpenPrior
 ; A=the open-moveset prior flag for non-replacement candidates, else 0.
@@ -424,6 +425,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ret nc
 	call BossAI_FastPrepareReplyFacts
 	call .ImportOrderFacts
+	call .TieOrder
 	ld a, [FSA_SETUP_FLAGS]
 	ld b, a
 	call .OpenPrior
@@ -1021,7 +1023,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld b, a
 .reply_flags_ready
 	pop af
-	jp .OrRecordFlags
+	ld a, b
+	ad_address FS_UNARY_FLAGS
+	or [hl]
+	ld [hl], a ; committed to the unary record once per defender
+	ret
 
 .UnaryFallback
 ; Unrepresented reply: the wait/switch candidate takes the direct evaluator's
@@ -1058,7 +1064,10 @@ BossAI_ComparePublicActionsFastPrototype::
 	push bc
 	ad_address FS_PLAN
 	ld c, [hl]
-	call .PlanIndex
+	ld b, 0
+	ad_address FS_PLAN_INDEX
+	add hl, bc
+	ld a, [hl]
 	cp $ff
 	jr z, .plan_skip
 	call .PlanPair
@@ -1257,10 +1266,20 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr c, .order_done
 	ld a, 1
 	jr nz, .order_done
+	ad_address FS_TIE_ORDER
+	ld a, [hl]
+.order_done
+	pop bc
+	ret
+.TieOrder
+; FS_TIE_ORDER: the order of an equal-priority pair from the imported speeds.
+; Unknown public order or Quick Claw at equal speed keeps the reference's
+; conservative reply-first order; only a genuine same-speed pair without
+; Quick Claw is the two-order tie.
 	ld a, [FSA_SPEED_MODE]
 	and a
 	ld a, 1
-	jr nz, .order_done
+	jr nz, .tie_ready
 	ld a, [FSA_OWN_SPEED + 1]
 	ld c, a
 	ld a, [FSA_PLAYER_SPEED + 1]
@@ -1270,20 +1289,21 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld b, a
 	ld a, [FSA_PLAYER_SPEED]
 	sbc b
-	jr c, .own_first_order
+	jr c, .tie_own_first
 	or c
 	ld a, 1
-	jr nz, .order_done
+	jr nz, .tie_ready
 	ld a, [FSA_ITEM_CLASS]
 	and a
 	ld a, 1
-	jr nz, .order_done
+	jr nz, .tie_ready
 	ld a, 2
-	jr .order_done
-.own_first_order
+	jr .tie_ready
+.tie_own_first
 	xor a
-.order_done
-	pop bc
+.tie_ready
+	ad_address FS_TIE_ORDER
+	ld [hl], a
 	ret
 
 .AddPairTotal
@@ -1345,8 +1365,13 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [hl]
 	cp $ff
 	ret z
+	push af
 	ld hl, FSC_TEMP
-	jp .AddToRecord
+	call .AddToRecord
+	pop af
+	ad_address FS_UNARY_FLAGS
+	ld b, [hl]
+	jp .OrRecordFlags
 
 ; ---------------------------------------------------------------------------
 ; Record and wide-arithmetic helpers. Records are big-endian five-byte T,
