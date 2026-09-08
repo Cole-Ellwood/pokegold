@@ -429,7 +429,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld c, [hl]
 	call BossAI_FastImportActorHP
 	ret nc
-	call BossAI_FastPrepareReplyFacts
+	farcall BossAI_FastPrepareReplyFacts
 	call .OwnVariants
 	call .ImportOrderFacts
 	call .TieOrder
@@ -850,7 +850,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	call .InitUnaryRecord
 	call .ReplyRegimes
 	farcall BossAI_PreparePublicAction ; this bench actor's reply epoch
-	call BossAI_FastPrepareReplyFacts
+	farcall BossAI_FastPrepareReplyFacts
 	call .ReplySweep
 	ret nc
 	call .CommitIncoming
@@ -969,7 +969,9 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], a
 	call .PrepareReply
 	jr nc, .reply_fallback
-	call BossAI_FastCompileReplyVariants
+	ld a, [FSA_OWN_VARIANT_MASK]
+	and a
+	call nz, BossAI_FastCompileReplyVariants ; the active defender's own boosts only
 	call .ReplyStandalone
 	ret nc
 	call .AccumulateIncoming
@@ -1963,8 +1965,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [FSM_TEMP], a
 	ld a, [hl]
 	ld [FSM_TEMP + 1], a
-	ld hl, FSM_TEMP
-	call BossAI_FastPrepareReplyFacts.TruncateStats ; B=attack byte, C=defense byte
+	ld bc, FSM_TEMP
+	farcall BossAI_FastTruncateStatsFar ; B=attack byte, C=defense byte
 	ld a, [FSM_TEMP + 4]
 	add a
 	add LOW(FSA_OWN_VARIANTS)

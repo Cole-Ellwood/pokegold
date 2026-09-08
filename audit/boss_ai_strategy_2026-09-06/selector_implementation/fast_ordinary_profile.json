@@ -1,5 +1,5 @@
 {
-  "rom_sha256": "98a4748355a360cea4fcb6dff127a3d24ccd7c6e2c2cafcd1dbf1eba08cff10e",
+  "rom_sha256": "f0c0c82b2826911aa35081af5a0095ebc604d9267aca0b8362d1794d3dfbda7b",
   "oracle_sha256": "b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6",
   "unit": "DMG T-cycles, bank-qualified entry through the final CloseSRAM return; caller setup excluded",
   "reference_entry": "BossAI_ComparePublicActionsWithTables on the frozen oracle",
@@ -9,19 +9,19 @@
   "worst_native": {
     "case": "joint_broad_prior_mass",
     "scan": 0,
-    "native_cycles": 34620404,
+    "native_cycles": 34511344,
     "reference_cycles": 132211028,
     "status": 0,
     "phases": {
-      "reply_compile_native": 12348564,
+      "reply_compile_native": 12237416,
       "scalar_pair": 5277244,
       "orchestration": 5186460,
       "scalar_standalone": 4608044,
       "native_pair": 2564752,
       "reply_standalone": 2410020,
-      "owned_prepare": 1226612,
-      "hp_tables": 560940,
-      "reply_facts": 221152,
+      "owned_prepare": 1227492,
+      "hp_tables": 561116,
+      "reply_facts": 222184,
       "entry_inputs": 107324,
       "finalize": 55944,
       "owned_standalone": 53348
@@ -34,15 +34,15 @@
     }
   },
   "phase_totals_all_rows": {
-    "reply_compile_native": 31655304,
+    "reply_compile_native": 31372864,
     "orchestration": 29973000,
-    "owned_prepare": 28303456,
+    "owned_prepare": 28311872,
     "scalar_pair": 22481072,
     "native_pair": 13498728,
     "scalar_standalone": 11862832,
     "reply_standalone": 6620040,
-    "hp_tables": 5889968,
-    "reply_facts": 2517788,
+    "hp_tables": 5899824,
+    "reply_facts": 2529828,
     "entry_inputs": 2090128,
     "owned_standalone": 1728272,
     "finalize": 1424704,
@@ -56,10 +56,10 @@
       "phases": {
         "owned_prepare": 344108,
         "orchestration": 198944,
-        "hp_tables": 57948,
-        "reply_compile_native": 56420,
+        "hp_tables": 58124,
+        "reply_compile_native": 56040,
+        "reply_facts": 35864,
         "scalar_pair": 35780,
-        "reply_facts": 35692,
         "native_pair": 34016,
         "owned_standalone": 25868,
         "entry_inputs": 25072,
@@ -85,7 +85,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -103,7 +102,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1168028,
-      "native_cycles": 862616
+      "native_cycles": 862584
     },
     {
       "case": "joint_fast_finish",
@@ -112,10 +111,10 @@
       "phases": {
         "owned_prepare": 344108,
         "orchestration": 284336,
-        "hp_tables": 57948,
-        "reply_compile_native": 56420,
+        "hp_tables": 58124,
+        "reply_compile_native": 56040,
+        "reply_facts": 35864,
         "scalar_pair": 35780,
-        "reply_facts": 35692,
         "native_pair": 34016,
         "owned_standalone": 25868,
         "entry_inputs": 25072,
@@ -141,7 +140,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -159,22 +157,22 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1170312,
-      "native_cycles": 947584
+      "native_cycles": 947552
     },
     {
       "case": "joint_broad_prior_mass",
       "scan": 0,
       "status": 0,
       "phases": {
-        "reply_compile_native": 12348564,
+        "reply_compile_native": 12237416,
         "scalar_pair": 5277244,
         "orchestration": 5186460,
         "scalar_standalone": 4608044,
         "native_pair": 2564752,
         "reply_standalone": 2410020,
-        "owned_prepare": 1226612,
-        "hp_tables": 560940,
-        "reply_facts": 221152,
+        "owned_prepare": 1227492,
+        "hp_tables": 561116,
+        "reply_facts": 222184,
         "entry_inputs": 107324,
         "finalize": 55944,
         "owned_standalone": 53348
@@ -200,7 +198,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 146,
         "BossAI_FastCompileReplyNative": 1524,
-        "BossAI_FastCompileReplyVariants": 1524,
         "BossAI_FastFallbackPairNativeFar": 8,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 6,
@@ -220,22 +217,22 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 132211028,
-      "native_cycles": 34620404
+      "native_cycles": 34511344
     },
     {
       "case": "joint_broad_prior_mass",
       "scan": 15,
       "status": 0,
       "phases": {
-        "reply_compile_native": 12348564,
+        "reply_compile_native": 12237416,
         "scalar_pair": 5275228,
         "orchestration": 5143988,
         "scalar_standalone": 4610060,
         "native_pair": 2564752,
         "reply_standalone": 2410020,
-        "owned_prepare": 1226612,
-        "hp_tables": 560940,
-        "reply_facts": 221172,
+        "owned_prepare": 1227492,
+        "hp_tables": 561116,
+        "reply_facts": 222204,
         "entry_inputs": 107324,
         "finalize": 55944,
         "owned_standalone": 53348
@@ -261,7 +258,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 146,
         "BossAI_FastCompileReplyNative": 1524,
-        "BossAI_FastCompileReplyVariants": 1524,
         "BossAI_FastFallbackPairNativeFar": 8,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 6,
@@ -281,7 +277,7 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 132230960,
-      "native_cycles": 34577952
+      "native_cycles": 34468892
     },
     {
       "case": "joint_equal_slots",
@@ -290,11 +286,11 @@
       "phases": {
         "owned_prepare": 586520,
         "orchestration": 198944,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
+        "hp_tables": 65548,
         "native_pair": 43992,
+        "reply_compile_native": 43788,
         "scalar_pair": 37200,
-        "reply_facts": 35172,
+        "reply_facts": 35344,
         "owned_standalone": 28976,
         "entry_inputs": 25072,
         "finalize": 21812,
@@ -319,7 +315,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -337,7 +332,7 @@
         "BossAI_PublicDamageRange": 14
       },
       "reference_cycles": 1280680,
-      "native_cycles": 1113976
+      "native_cycles": 1113944
     },
     {
       "case": "joint_equal_slots",
@@ -346,11 +341,11 @@
       "phases": {
         "owned_prepare": 586520,
         "orchestration": 284336,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
+        "hp_tables": 65548,
         "native_pair": 43992,
+        "reply_compile_native": 43788,
         "scalar_pair": 37200,
-        "reply_facts": 35172,
+        "reply_facts": 35344,
         "owned_standalone": 28976,
         "entry_inputs": 25072,
         "finalize": 21812,
@@ -375,7 +370,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -393,7 +387,7 @@
         "BossAI_PublicDamageRange": 14
       },
       "reference_cycles": 1282852,
-      "native_cycles": 1198944
+      "native_cycles": 1198912
     },
     {
       "case": "joint_cache_reinitialize",
@@ -404,10 +398,10 @@
         "orchestration": 247748,
         "native_pair": 87988,
         "scalar_pair": 73032,
-        "hp_tables": 65372,
+        "hp_tables": 65548,
         "owned_standalone": 57388,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "finalize": 32424,
         "entry_inputs": 25680,
         "reply_standalone": 14404,
@@ -431,7 +425,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -449,7 +442,7 @@
         "BossAI_PublicDamageRange": 28
       },
       "reference_cycles": 2626624,
-      "native_cycles": 1443604
+      "native_cycles": 1443572
     },
     {
       "case": "joint_cache_reinitialize",
@@ -460,10 +453,10 @@
         "orchestration": 333140,
         "native_pair": 87988,
         "scalar_pair": 73032,
-        "hp_tables": 65372,
+        "hp_tables": 65548,
         "owned_standalone": 57388,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "finalize": 32424,
         "entry_inputs": 25680,
         "reply_standalone": 14404,
@@ -487,7 +480,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -505,21 +497,21 @@
         "BossAI_PublicDamageRange": 28
       },
       "reference_cycles": 2631144,
-      "native_cycles": 1528996
+      "native_cycles": 1528964
     },
     {
       "case": "joint_open_prior",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 525928,
+        "owned_prepare": 526104,
         "orchestration": 520516,
-        "reply_compile_native": 470124,
+        "reply_compile_native": 465800,
         "scalar_pair": 229800,
         "scalar_standalone": 152140,
         "entry_inputs": 137676,
-        "hp_tables": 130012,
-        "reply_facts": 73300,
+        "hp_tables": 130188,
+        "reply_facts": 73644,
         "native_pair": 68516,
         "reply_standalone": 38536,
         "finalize": 26956,
@@ -545,7 +537,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 58,
-        "BossAI_FastCompileReplyVariants": 58,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 2,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -564,7 +555,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 5437608,
-      "native_cycles": 2399812
+      "native_cycles": 2396184
     },
     {
       "case": "joint_open_prior",
@@ -572,13 +563,13 @@
       "status": 0,
       "phases": {
         "orchestration": 588320,
-        "owned_prepare": 525928,
-        "reply_compile_native": 470124,
+        "owned_prepare": 526104,
+        "reply_compile_native": 465800,
         "scalar_pair": 229800,
         "scalar_standalone": 152140,
         "entry_inputs": 137676,
-        "hp_tables": 130012,
-        "reply_facts": 73304,
+        "hp_tables": 130188,
+        "reply_facts": 73648,
         "native_pair": 68516,
         "reply_standalone": 38536,
         "finalize": 26956,
@@ -604,7 +595,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 58,
-        "BossAI_FastCompileReplyVariants": 58,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 2,
         "BossAI_FastNormalizedPair.CorrectionOnly": 2,
@@ -623,7 +613,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 5441268,
-      "native_cycles": 2467620
+      "native_cycles": 2463992
     },
     {
       "case": "joint_recharge_wait",
@@ -632,9 +622,9 @@
       "phases": {
         "orchestration": 154348,
         "owned_prepare": 82148,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 22676,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -653,7 +643,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -666,7 +655,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 567536,
-      "native_cycles": 447220
+      "native_cycles": 447188
     },
     {
       "case": "joint_recharge_wait",
@@ -675,9 +664,9 @@
       "phases": {
         "orchestration": 239880,
         "owned_prepare": 82148,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 22676,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -696,7 +685,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -709,7 +697,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 568640,
-      "native_cycles": 532328
+      "native_cycles": 532296
     },
     {
       "case": "joint_exhausted_struggle",
@@ -719,9 +707,9 @@
         "owned_prepare": 269392,
         "orchestration": 175268,
         "native_pair": 65556,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 24656,
         "finalize": 16368,
         "owned_standalone": 14992,
@@ -747,7 +735,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 3,
@@ -765,7 +752,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 648480,
-      "native_cycles": 738768
+      "native_cycles": 738736
     },
     {
       "case": "joint_exhausted_struggle",
@@ -775,9 +762,9 @@
         "owned_prepare": 269392,
         "orchestration": 260660,
         "native_pair": 65556,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 24656,
         "finalize": 16368,
         "owned_standalone": 14992,
@@ -803,7 +790,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 3,
@@ -821,7 +807,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 649584,
-      "native_cycles": 824160
+      "native_cycles": 824128
     },
     {
       "case": "joint_encore_exhausted",
@@ -830,9 +816,9 @@
       "phases": {
         "orchestration": 155152,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -851,7 +837,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -864,7 +849,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571536,
-      "native_cycles": 448904
+      "native_cycles": 448872
     },
     {
       "case": "joint_encore_exhausted",
@@ -873,9 +858,9 @@
       "phases": {
         "orchestration": 240684,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -894,7 +879,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -907,7 +891,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572640,
-      "native_cycles": 534436
+      "native_cycles": 534404
     },
     {
       "case": "joint_encore_exhausted_confused",
@@ -916,9 +900,9 @@
       "phases": {
         "orchestration": 155152,
         "owned_prepare": 82824,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -937,7 +921,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -950,7 +933,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571996,
-      "native_cycles": 448996
+      "native_cycles": 448964
     },
     {
       "case": "joint_encore_exhausted_confused",
@@ -959,9 +942,9 @@
       "phases": {
         "orchestration": 240684,
         "owned_prepare": 82824,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -980,7 +963,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -993,7 +975,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 573100,
-      "native_cycles": 534528
+      "native_cycles": 534496
     },
     {
       "case": "joint_encore_disabled",
@@ -1002,9 +984,9 @@
       "phases": {
         "orchestration": 155032,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -1023,7 +1005,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -1036,7 +1017,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571416,
-      "native_cycles": 448784
+      "native_cycles": 448752
     },
     {
       "case": "joint_encore_disabled",
@@ -1045,9 +1026,9 @@
       "phases": {
         "orchestration": 240564,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -1066,7 +1047,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -1079,7 +1059,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572520,
-      "native_cycles": 534316
+      "native_cycles": 534284
     },
     {
       "case": "joint_encore_disable_expires",
@@ -1088,9 +1068,9 @@
       "phases": {
         "owned_prepare": 259232,
         "orchestration": 175484,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "native_pair": 22844,
         "scalar_pair": 18528,
@@ -1117,7 +1097,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -1135,7 +1114,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 642740,
-      "native_cycles": 701340
+      "native_cycles": 701308
     },
     {
       "case": "joint_encore_disable_expires",
@@ -1144,9 +1123,9 @@
       "phases": {
         "orchestration": 260876,
         "owned_prepare": 259232,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "native_pair": 22844,
         "scalar_pair": 18528,
@@ -1173,7 +1152,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -1191,7 +1169,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 643844,
-      "native_cycles": 786732
+      "native_cycles": 786700
     },
     {
       "case": "joint_encore_zero_counter_disabled",
@@ -1200,9 +1178,9 @@
       "phases": {
         "orchestration": 155000,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -1221,7 +1199,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -1234,7 +1211,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 571384,
-      "native_cycles": 448752
+      "native_cycles": 448720
     },
     {
       "case": "joint_encore_zero_counter_disabled",
@@ -1243,9 +1220,9 @@
       "phases": {
         "orchestration": 240532,
         "owned_prepare": 82732,
-        "hp_tables": 65372,
-        "reply_compile_native": 44168,
-        "reply_facts": 35172,
+        "hp_tables": 65548,
+        "reply_compile_native": 43788,
+        "reply_facts": 35344,
         "entry_inputs": 23396,
         "finalize": 16588,
         "reply_standalone": 14404,
@@ -1264,7 +1241,6 @@
         "BossAI_ComparePublicActionsFastPrototype.reply_plans": 5,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastPrepareActiveFacts": 1,
@@ -1277,7 +1253,7 @@
         "BossAI_FastExecuteReplyPlan": 2
       },
       "reference_cycles": 572488,
-      "native_cycles": 534284
+      "native_cycles": 534252
     },
     {
       "case": "joint_speed_tie_mixed",
@@ -1287,11 +1263,11 @@
         "owned_prepare": 856284,
         "orchestration": 267988,
         "scalar_pair": 141008,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "native_pair": 78980,
-        "reply_compile_native": 58796,
+        "reply_compile_native": 58444,
         "owned_standalone": 55420,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 32784,
         "finalize": 32328,
         "scalar_standalone": 22440,
@@ -1314,7 +1290,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1332,7 +1307,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2712128,
-      "native_cycles": 1690428
+      "native_cycles": 1690424
     },
     {
       "case": "joint_speed_tie_mixed",
@@ -1342,11 +1317,11 @@
         "owned_prepare": 856284,
         "orchestration": 353380,
         "scalar_pair": 141008,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "native_pair": 78980,
-        "reply_compile_native": 58796,
+        "reply_compile_native": 58444,
         "owned_standalone": 55420,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 32784,
         "finalize": 32328,
         "scalar_standalone": 22440,
@@ -1369,7 +1344,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1387,7 +1361,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2716680,
-      "native_cycles": 1775820
+      "native_cycles": 1775816
     },
     {
       "case": "joint_speed_tie_quick_claw",
@@ -1397,11 +1371,11 @@
         "owned_prepare": 899268,
         "orchestration": 267988,
         "scalar_pair": 124836,
-        "hp_tables": 94956,
-        "reply_compile_native": 58796,
+        "hp_tables": 95132,
+        "reply_compile_native": 58444,
         "owned_standalone": 55420,
         "native_pair": 55260,
-        "reply_facts": 37456,
+        "reply_facts": 37628,
         "entry_inputs": 32784,
         "finalize": 32340,
         "scalar_standalone": 22000,
@@ -1424,7 +1398,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1442,7 +1415,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2511772,
-      "native_cycles": 1695512
+      "native_cycles": 1695508
     },
     {
       "case": "joint_speed_tie_quick_claw",
@@ -1452,11 +1425,11 @@
         "owned_prepare": 899268,
         "orchestration": 353380,
         "scalar_pair": 124836,
-        "hp_tables": 94956,
-        "reply_compile_native": 58796,
+        "hp_tables": 95132,
+        "reply_compile_native": 58444,
         "owned_standalone": 55420,
         "native_pair": 55260,
-        "reply_facts": 37456,
+        "reply_facts": 37628,
         "entry_inputs": 32784,
         "finalize": 32340,
         "scalar_standalone": 22440,
@@ -1479,7 +1452,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1497,7 +1469,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2516068,
-      "native_cycles": 1781344
+      "native_cycles": 1781340
     },
     {
       "case": "joint_speed_tie_transformed",
@@ -1507,14 +1479,14 @@
         "scalar_pair": 4545444,
         "orchestration": 2813216,
         "native_pair": 1960804,
-        "reply_compile_native": 1385648,
+        "reply_compile_native": 1367100,
         "scalar_standalone": 767540,
         "owned_prepare": 568800,
         "reply_standalone": 298628,
         "entry_inputs": 105664,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "owned_standalone": 52132,
-        "reply_facts": 35040,
+        "reply_facts": 35212,
         "finalize": 31028
       },
       "calls": {
@@ -1536,7 +1508,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 24,
         "BossAI_FastCompileReplyNative": 254,
-        "BossAI_FastCompileReplyVariants": 254,
         "BossAI_FastFallbackPairNativeFar": 8,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -1555,7 +1526,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 48668688,
-      "native_cycles": 12658900
+      "native_cycles": 12640700
     },
     {
       "case": "joint_speed_tie_transformed",
@@ -1565,14 +1536,14 @@
         "scalar_pair": 4547204,
         "orchestration": 2800184,
         "native_pair": 1960804,
-        "reply_compile_native": 1385648,
+        "reply_compile_native": 1367100,
         "scalar_standalone": 765780,
         "owned_prepare": 568800,
         "reply_standalone": 298628,
         "entry_inputs": 105664,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "owned_standalone": 52132,
-        "reply_facts": 35040,
+        "reply_facts": 35212,
         "finalize": 31028
       },
       "calls": {
@@ -1594,7 +1565,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 24,
         "BossAI_FastCompileReplyNative": 254,
-        "BossAI_FastCompileReplyVariants": 254,
         "BossAI_FastFallbackPairNativeFar": 8,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -1613,7 +1583,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 48677532,
-      "native_cycles": 12645868
+      "native_cycles": 12627668
     },
     {
       "case": "joint_speed_tie_speed_high_byte",
@@ -1623,11 +1593,11 @@
         "owned_prepare": 856216,
         "orchestration": 267988,
         "scalar_pair": 126848,
-        "hp_tables": 94956,
-        "reply_compile_native": 58796,
+        "hp_tables": 95132,
+        "reply_compile_native": 58444,
         "native_pair": 56956,
         "owned_standalone": 55420,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 32784,
         "finalize": 32340,
         "scalar_standalone": 22000,
@@ -1650,7 +1620,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1668,7 +1637,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2487228,
-      "native_cycles": 1653748
+      "native_cycles": 1653744
     },
     {
       "case": "joint_speed_tie_speed_high_byte",
@@ -1678,11 +1647,11 @@
         "owned_prepare": 856216,
         "orchestration": 353380,
         "scalar_pair": 126848,
-        "hp_tables": 94956,
-        "reply_compile_native": 58796,
+        "hp_tables": 95132,
+        "reply_compile_native": 58444,
         "native_pair": 56956,
         "owned_standalone": 55420,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 32784,
         "finalize": 32340,
         "scalar_standalone": 22440,
@@ -1705,7 +1674,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1723,20 +1691,20 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 2491524,
-      "native_cycles": 1739580
+      "native_cycles": 1739576
     },
     {
       "case": "joint_speed_tie_round_once",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 965068,
+        "owned_prepare": 965244,
         "orchestration": 326944,
-        "hp_tables": 189912,
+        "hp_tables": 190088,
         "scalar_pair": 143896,
-        "reply_compile_native": 107008,
+        "reply_compile_native": 106304,
         "native_pair": 78980,
-        "reply_facts": 70688,
+        "reply_facts": 71032,
         "owned_standalone": 55420,
         "scalar_standalone": 45396,
         "finalize": 37568,
@@ -1762,7 +1730,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 2,
         "BossAI_FastCompileReplyNative": 10,
-        "BossAI_FastCompileReplyVariants": 10,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 2,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1781,20 +1748,20 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 3290540,
-      "native_cycles": 2083076
+      "native_cycles": 2083068
     },
     {
       "case": "joint_speed_tie_round_once",
       "scan": 15,
       "status": 0,
       "phases": {
-        "owned_prepare": 965068,
+        "owned_prepare": 965244,
         "orchestration": 497900,
-        "hp_tables": 189912,
+        "hp_tables": 190088,
         "scalar_pair": 143896,
-        "reply_compile_native": 107008,
+        "reply_compile_native": 106304,
         "native_pair": 78980,
-        "reply_facts": 70692,
+        "reply_facts": 71036,
         "owned_standalone": 55420,
         "scalar_standalone": 45396,
         "finalize": 37568,
@@ -1820,7 +1787,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 2,
         "BossAI_FastCompileReplyNative": 10,
-        "BossAI_FastCompileReplyVariants": 10,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 2,
         "BossAI_FastNormalizedPair.CorrectionOnly": 4,
@@ -1839,7 +1805,7 @@
         "BossAI_PublicDamageRange": 22
       },
       "reference_cycles": 3296172,
-      "native_cycles": 2254036
+      "native_cycles": 2254028
     },
     {
       "case": "joint_accuracy_mixed",
@@ -1849,12 +1815,12 @@
         "owned_prepare": 848356,
         "native_pair": 568792,
         "orchestration": 264484,
-        "reply_compile_native": 109088,
-        "hp_tables": 94956,
+        "reply_compile_native": 108736,
+        "hp_tables": 95132,
         "scalar_pair": 68300,
         "owned_standalone": 60544,
         "reply_standalone": 42900,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 33824,
         "finalize": 32624,
         "scalar_standalone": 13964
@@ -1876,7 +1842,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 4,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -1895,7 +1860,7 @@
         "BossAI_PublicDamageRange": 20
       },
       "reference_cycles": 4184084,
-      "native_cycles": 2172868
+      "native_cycles": 2172864
     },
     {
       "case": "joint_accuracy_mixed",
@@ -1905,12 +1870,12 @@
         "owned_prepare": 848356,
         "native_pair": 568792,
         "orchestration": 353536,
-        "reply_compile_native": 109088,
-        "hp_tables": 94956,
+        "reply_compile_native": 108736,
+        "hp_tables": 95132,
         "scalar_pair": 68220,
         "owned_standalone": 60544,
         "reply_standalone": 42900,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "entry_inputs": 33824,
         "finalize": 32624,
         "scalar_standalone": 13964
@@ -1932,7 +1897,6 @@
         "BossAI_FastBuildOwnedStandalone": 4,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 4,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -1951,7 +1915,7 @@
         "BossAI_PublicDamageRange": 20
       },
       "reference_cycles": 4189032,
-      "native_cycles": 2261840
+      "native_cycles": 2261836
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
@@ -1961,10 +1925,10 @@
         "owned_prepare": 286164,
         "native_pair": 221516,
         "orchestration": 177912,
-        "reply_compile_native": 109044,
-        "hp_tables": 94380,
+        "reply_compile_native": 108692,
+        "hp_tables": 94556,
         "reply_standalone": 42976,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "entry_inputs": 32912,
         "owned_standalone": 17368,
         "finalize": 16368,
@@ -1987,7 +1951,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2004,7 +1967,7 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 813352,
-      "native_cycles": 1048624
+      "native_cycles": 1048620
     },
     {
       "case": "joint_accuracy_own_selfdestruct_miss",
@@ -2014,10 +1977,10 @@
         "owned_prepare": 286164,
         "orchestration": 266964,
         "native_pair": 221516,
-        "reply_compile_native": 109044,
-        "hp_tables": 94380,
+        "reply_compile_native": 108692,
+        "hp_tables": 94556,
         "reply_standalone": 42976,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "entry_inputs": 32912,
         "owned_standalone": 17368,
         "finalize": 16368,
@@ -2040,7 +2003,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2057,7 +2019,7 @@
         "BossAI_PublicDamageRange": 5
       },
       "reference_cycles": 814456,
-      "native_cycles": 1137252
+      "native_cycles": 1137248
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -2067,11 +2029,11 @@
         "owned_prepare": 432676,
         "orchestration": 206204,
         "native_pair": 174440,
-        "hp_tables": 94380,
-        "reply_compile_native": 80188,
+        "hp_tables": 94556,
+        "reply_compile_native": 79836,
         "reply_standalone": 53296,
         "scalar_pair": 50512,
-        "reply_facts": 35172,
+        "reply_facts": 35344,
         "entry_inputs": 33216,
         "owned_standalone": 26692,
         "finalize": 21760,
@@ -2094,7 +2056,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 2,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2113,7 +2074,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1667800,
-      "native_cycles": 1223464
+      "native_cycles": 1223460
     },
     {
       "case": "joint_accuracy_reply_selfdestruct_miss",
@@ -2123,11 +2084,11 @@
         "owned_prepare": 432676,
         "orchestration": 295256,
         "native_pair": 174440,
-        "hp_tables": 94380,
-        "reply_compile_native": 80188,
+        "hp_tables": 94556,
+        "reply_compile_native": 79836,
         "reply_standalone": 53296,
         "scalar_pair": 50512,
-        "reply_facts": 35172,
+        "reply_facts": 35344,
         "entry_inputs": 33216,
         "owned_standalone": 26692,
         "finalize": 21760,
@@ -2150,7 +2111,6 @@
         "BossAI_FastBuildOwnedStandalone": 2,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 2,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2169,7 +2129,7 @@
         "BossAI_PublicDamageRange": 8
       },
       "reference_cycles": 1669836,
-      "native_cycles": 1312092
+      "native_cycles": 1312088
     },
     {
       "case": "joint_accuracy_early_ko",
@@ -2178,11 +2138,11 @@
       "phases": {
         "owned_prepare": 250928,
         "orchestration": 177204,
-        "hp_tables": 93804,
-        "reply_compile_native": 65372,
+        "hp_tables": 93980,
+        "reply_compile_native": 65020,
         "reply_standalone": 42972,
         "native_pair": 42864,
-        "reply_facts": 35556,
+        "reply_facts": 35728,
         "entry_inputs": 32912,
         "scalar_pair": 21244,
         "finalize": 16412,
@@ -2206,7 +2166,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 1,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2225,7 +2184,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 688856,
-      "native_cycles": 807608
+      "native_cycles": 807604
     },
     {
       "case": "joint_accuracy_early_ko",
@@ -2234,11 +2193,11 @@
       "phases": {
         "orchestration": 266256,
         "owned_prepare": 250928,
-        "hp_tables": 93804,
-        "reply_compile_native": 65372,
+        "hp_tables": 93980,
+        "reply_compile_native": 65020,
         "reply_standalone": 42972,
         "native_pair": 42864,
-        "reply_facts": 35556,
+        "reply_facts": 35728,
         "entry_inputs": 32912,
         "scalar_pair": 21244,
         "finalize": 16412,
@@ -2262,7 +2221,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 3,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFallbackPairNativeFar": 1,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
@@ -2281,7 +2239,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 689960,
-      "native_cycles": 896236
+      "native_cycles": 896232
     },
     {
       "case": "joint_accuracy_impossible_hits",
@@ -2290,9 +2248,9 @@
       "phases": {
         "owned_prepare": 328424,
         "orchestration": 164144,
-        "hp_tables": 94956,
-        "reply_compile_native": 40388,
-        "reply_facts": 35036,
+        "hp_tables": 95132,
+        "reply_compile_native": 40008,
+        "reply_facts": 35208,
         "entry_inputs": 23872,
         "native_pair": 19712,
         "finalize": 16280,
@@ -2319,7 +2277,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -2337,7 +2294,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 725972,
-      "native_cycles": 758200
+      "native_cycles": 758168
     },
     {
       "case": "joint_accuracy_impossible_hits",
@@ -2346,9 +2303,9 @@
       "phases": {
         "owned_prepare": 328424,
         "orchestration": 256856,
-        "hp_tables": 94956,
-        "reply_compile_native": 40388,
-        "reply_facts": 35036,
+        "hp_tables": 95132,
+        "reply_compile_native": 40008,
+        "reply_facts": 35208,
         "entry_inputs": 23872,
         "native_pair": 19712,
         "finalize": 16280,
@@ -2375,7 +2332,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -2393,7 +2349,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 727236,
-      "native_cycles": 850912
+      "native_cycles": 850880
     },
     {
       "case": "joint_accuracy_focus_band",
@@ -2402,10 +2358,10 @@
       "phases": {
         "owned_prepare": 354472,
         "orchestration": 180896,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "scalar_pair": 60708,
-        "reply_compile_native": 48516,
-        "reply_facts": 38576,
+        "reply_compile_native": 48164,
+        "reply_facts": 38748,
         "native_pair": 35932,
         "entry_inputs": 27776,
         "scalar_standalone": 23248,
@@ -2430,7 +2386,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -2448,7 +2403,7 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 821056,
-      "native_cycles": 911200
+      "native_cycles": 911196
     },
     {
       "case": "joint_accuracy_focus_band",
@@ -2457,10 +2412,10 @@
       "phases": {
         "owned_prepare": 354472,
         "orchestration": 266288,
-        "hp_tables": 94956,
+        "hp_tables": 95132,
         "scalar_pair": 60708,
-        "reply_compile_native": 48516,
-        "reply_facts": 38576,
+        "reply_compile_native": 48164,
+        "reply_facts": 38748,
         "native_pair": 35932,
         "entry_inputs": 27776,
         "scalar_standalone": 23328,
@@ -2485,7 +2440,6 @@
         "BossAI_FastBuildOwnedStandalone": 1,
         "BossAI_FastBuildReplyStandalone": 1,
         "BossAI_FastCompileReplyNative": 5,
-        "BossAI_FastCompileReplyVariants": 5,
         "BossAI_FastFinalizeResults": 1,
         "BossAI_FastImportActorHP": 1,
         "BossAI_FastNormalizedPair.CorrectionOnly": 1,
@@ -2503,21 +2457,21 @@
         "BossAI_PublicDamageRange": 7
       },
       "reference_cycles": 822320,
-      "native_cycles": 996672
+      "native_cycles": 996668
     },
     {
       "case": "joint_defense_transitions",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 725304,
+        "owned_prepare": 726048,
         "orchestration": 263348,
         "native_pair": 142576,
-        "hp_tables": 94956,
-        "reply_compile_native": 69704,
+        "hp_tables": 95132,
+        "reply_compile_native": 69804,
         "scalar_pair": 62256,
         "owned_standalone": 50824,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "finalize": 32396,
         "entry_inputs": 28128,
         "reply_standalone": 14756,
@@ -2561,21 +2515,21 @@
         "BossAI_PublicDamageRange": 15
       },
       "reference_cycles": 3283504,
-      "native_cycles": 1532212
+      "native_cycles": 1533404
     },
     {
       "case": "joint_defense_transitions",
       "scan": 15,
       "status": 0,
       "phases": {
-        "owned_prepare": 725304,
+        "owned_prepare": 726048,
         "orchestration": 348740,
         "native_pair": 142576,
-        "hp_tables": 94956,
-        "reply_compile_native": 69704,
+        "hp_tables": 95132,
+        "reply_compile_native": 69804,
         "scalar_pair": 62256,
         "owned_standalone": 50824,
-        "reply_facts": 35036,
+        "reply_facts": 35208,
         "finalize": 32396,
         "entry_inputs": 28128,
         "reply_standalone": 14756,
@@ -2619,21 +2573,21 @@
         "BossAI_PublicDamageRange": 15
       },
       "reference_cycles": 3288392,
-      "native_cycles": 1617604
+      "native_cycles": 1618796
     },
     {
       "case": "joint_own_harden_first",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 757724,
+        "owned_prepare": 758096,
         "orchestration": 262536,
         "native_pair": 155600,
-        "hp_tables": 94380,
-        "reply_compile_native": 84256,
+        "hp_tables": 94556,
+        "reply_compile_native": 84356,
         "scalar_pair": 61816,
         "owned_standalone": 50824,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "finalize": 32428,
         "reply_standalone": 29512,
         "entry_inputs": 25616,
@@ -2675,21 +2629,21 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 2653768,
-      "native_cycles": 1610176
+      "native_cycles": 1610996
     },
     {
       "case": "joint_own_harden_first",
       "scan": 15,
       "status": 0,
       "phases": {
-        "owned_prepare": 757724,
+        "owned_prepare": 758096,
         "orchestration": 351588,
         "native_pair": 155600,
-        "hp_tables": 94380,
-        "reply_compile_native": 84256,
+        "hp_tables": 94556,
+        "reply_compile_native": 84356,
         "scalar_pair": 61816,
         "owned_standalone": 50824,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "finalize": 32428,
         "reply_standalone": 29512,
         "entry_inputs": 25616,
@@ -2731,21 +2685,21 @@
         "BossAI_PublicDamageRange": 16
       },
       "reference_cycles": 2657856,
-      "native_cycles": 1699308
+      "native_cycles": 1700128
     },
     {
       "case": "joint_own_barrier_screens_first",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 561232,
+        "owned_prepare": 561976,
         "orchestration": 262536,
         "native_pair": 132504,
-        "hp_tables": 93804,
-        "reply_compile_native": 91100,
+        "hp_tables": 93980,
+        "reply_compile_native": 91200,
         "scalar_pair": 62624,
         "owned_standalone": 47964,
-        "reply_facts": 35656,
+        "reply_facts": 35828,
         "finalize": 32500,
         "reply_standalone": 29512,
         "entry_inputs": 25616,
@@ -2787,21 +2741,21 @@
         "BossAI_PublicDamageRange": 9
       },
       "reference_cycles": 2593788,
-      "native_cycles": 1393488
+      "native_cycles": 1394680
     },
     {
       "case": "joint_own_barrier_screens_first",
       "scan": 15,
       "status": 0,
       "phases": {
-        "owned_prepare": 561232,
+        "owned_prepare": 561976,
         "orchestration": 351588,
         "native_pair": 132504,
-        "hp_tables": 93804,
-        "reply_compile_native": 91100,
+        "hp_tables": 93980,
+        "reply_compile_native": 91200,
         "scalar_pair": 61112,
         "owned_standalone": 47964,
-        "reply_facts": 35656,
+        "reply_facts": 35828,
         "finalize": 32500,
         "reply_standalone": 29512,
         "entry_inputs": 25616,
@@ -2843,21 +2797,21 @@
         "BossAI_PublicDamageRange": 9
       },
       "reference_cycles": 2598036,
-      "native_cycles": 1481612
+      "native_cycles": 1482804
     },
     {
       "case": "joint_own_boosts_eviolite_slow",
       "scan": 0,
       "status": 0,
       "phases": {
-        "owned_prepare": 659148,
+        "owned_prepare": 659892,
         "orchestration": 262536,
-        "hp_tables": 93048,
-        "reply_compile_native": 92540,
+        "hp_tables": 93224,
+        "reply_compile_native": 92640,
         "scalar_pair": 69224,
         "native_pair": 49304,
         "owned_standalone": 47964,
-        "reply_facts": 40756,
+        "reply_facts": 40928,
         "finalize": 32508,
         "entry_inputs": 30800,
         "scalar_standalone": 23560,
@@ -2899,21 +2853,21 @@
         "BossAI_PublicDamageRange": 9
       },
       "reference_cycles": 2590084,
-      "native_cycles": 1416144
+      "native_cycles": 1417336
     },
     {
       "case": "joint_own_boosts_eviolite_slow",
       "scan": 15,
       "status": 0,
       "phases": {
-        "owned_prepare": 659148,
+        "owned_prepare": 659892,
         "orchestration": 351588,
-        "hp_tables": 93048,
-        "reply_compile_native": 92540,
+        "hp_tables": 93224,
+        "reply_compile_native": 92640,
         "scalar_pair": 69224,
         "native_pair": 49304,
         "owned_standalone": 47964,
-        "reply_facts": 40756,
+        "reply_facts": 40928,
         "finalize": 32508,
         "entry_inputs": 30800,
         "scalar_standalone": 23136,
@@ -2955,21 +2909,21 @@
         "BossAI_PublicDamageRange": 9
       },
       "reference_cycles": 2594036,
-      "native_cycles": 1504772
+      "native_cycles": 1505964
     },
     {
       "case": "joint_own_harden_multihit",
       "scan": 0,
       "status": 1,
       "phases": {
-        "owned_prepare": 428396,
+        "owned_prepare": 428768,
         "fallback_pair": 357908,
         "orchestration": 209376,
-        "reply_compile_native": 95792,
-        "hp_tables": 94380,
+        "reply_compile_native": 95892,
+        "hp_tables": 94556,
         "native_pair": 87480,
         "reply_standalone": 49344,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "entry_inputs": 28208,
         "owned_standalone": 25412,
         "scalar_pair": 22272,
@@ -3015,21 +2969,21 @@
         "BossAI_ValuePublicExchange": 2
       },
       "reference_cycles": 1529572,
-      "native_cycles": 1469992
+      "native_cycles": 1470812
     },
     {
       "case": "joint_own_harden_multihit",
       "scan": 15,
       "status": 1,
       "phases": {
-        "owned_prepare": 428396,
+        "owned_prepare": 428768,
         "fallback_pair": 357908,
         "orchestration": 294768,
-        "reply_compile_native": 95792,
-        "hp_tables": 94380,
+        "reply_compile_native": 95892,
+        "hp_tables": 94556,
         "native_pair": 87480,
         "reply_standalone": 49344,
-        "reply_facts": 36036,
+        "reply_facts": 36208,
         "entry_inputs": 28208,
         "owned_standalone": 25412,
         "scalar_pair": 22272,
@@ -3075,7 +3029,7 @@
         "BossAI_ValuePublicExchange": 2
       },
       "reference_cycles": 1531608,
-      "native_cycles": 1555464
+      "native_cycles": 1556284
     }
   ]
 }

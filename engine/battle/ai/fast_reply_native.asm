@@ -104,9 +104,6 @@ PURGE BOSSAI_EMIT_LOCAL_CONTACT_FLAGS
 DEF BOSSAI_EMIT_LOCAL_ACCURACY EQU 1
 INCLUDE "data/battle/accuracy_multipliers.asm"
 PURGE BOSSAI_EMIT_LOCAL_ACCURACY
-DEF BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST EQU 1
-INCLUDE "data/types/type_matchups.asm"
-PURGE BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST
 ; Effect classes: bit0 directly supported damage effect, bit1 HP-only script
 ; family, bits 2..3 the effect's move priority, bit4 an effect whose support
 ; needs the battle state (.EffectSupport's special cases). Built from the
@@ -202,437 +199,11 @@ FOR fx, 256
 ENDR
 PURGE fast_effect_class
 PURGE fast_effect_priority
-BossAI_FastTypeMatchupIndex:
-	dw BossAI_FastTypeMatchups.NORMAL, BossAI_FastTypeMatchups.NORMAL_FORESIGHT
-	dw BossAI_FastTypeMatchups.FIGHTING, BossAI_FastTypeMatchups.FIGHTING_FORESIGHT
-	dw BossAI_FastTypeMatchups.FLYING, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.POISON, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.GROUND, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.ROCK, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END ; BIRD
-	dw BossAI_FastTypeMatchups.BUG, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.GHOST, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.STEEL, BossAI_FastTypeMatchups.END
-REPT SPECIAL - STEEL - 1
-	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END
-ENDR
-	dw BossAI_FastTypeMatchups.FIRE, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.WATER, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.GRASS, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.ELECTRIC, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.PSYCHIC_TYPE, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.ICE, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.DRAGON, BossAI_FastTypeMatchups.END
-	dw BossAI_FastTypeMatchups.DARK, BossAI_FastTypeMatchups.END
-ASSERT @ - BossAI_FastTypeMatchupIndex == TYPES_END * 4
-ASSERT BANK(BossAI_FastMoves) == BANK(BossAI_FastTypeMatchupIndex)
 
-BossAI_FastPrepareReplyFacts::
-; DE=context after the defender's PreparePublicAction (incoming actor
-; template and both stat pairs are current), AV_SLOT=defender, AV_KIND=
-; candidate kind. Fills FSN from the templates and the public battle state
-; the producers read per reply, and invalidates the base caches. SRAM0 open;
-; DE/SP preserved.
-	ad_address AV_PREPARED_ACTOR + AD_LEVEL
-	ld a, [hl]
-	ld [FSN_LEVEL], a
-	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_TYPES
-	ld a, [hli]
-	ld [FSN_PLAYER_TYPES], a
-	ld a, [hli]
-	ld [FSN_PLAYER_TYPES + 1], a
-	ld a, [hli]
-	ld [FSN_OWN_TYPES], a
-	ld a, [hl]
-	ld [FSN_OWN_TYPES + 1], a
-	ad_address AV_PREPARED_ACTOR + AD_WEATHER
-	ld a, [hl]
-	ld [FSN_WEATHER], a
-	ad_address AV_PREPARED_ACTOR + AD_FLAGS
-	ld a, [hl]
-	and (1 << AD_IDENTIFIED_F) | (1 << AD_DEFENDER_STATUS_F) | (1 << AD_SUBSTITUTE_F) | (1 << AD_BALLOON_F)
-	ld [FSN_FLAGS], a
-	ad_address AV_KIND
-	ld a, [hl]
-	cp AV_SWITCH_ACTION
-	ld a, 0
-	jr nz, .kind_ready
-	inc a
-.kind_ready
-	ld [FSN_SWITCH], a
-; player facts
-	ld a, [wPlayerAccLevel]
-	ld [FSN_ACC_STAGE], a
-	ld a, [wPlayerSubStatus4]
-	ld [FSN_PLAYER_SS4], a
-	ld a, [wPlayerSubStatus3]
-	ld [FSN_PLAYER_SS3], a
-	ld a, [wBattleMonStatus]
-	ld [FSN_PLAYER_STATUS], a
-	ld a, [wPlayerSubStatus5]
-	and 1 << SUBSTATUS_TRANSFORMED
-	ld a, 0
-	jr z, .transform_ready
-	ld a, 2
-.transform_ready
-	ld [FSN_GUARDS], a
-; own facts: active battler or a neutral bench entry
-	ad_address AV_SLOT
-	ld a, [hl]
-	cp $ff
-	jr nz, .bench
-	ld a, [wEnemyEvaLevel]
-	ld [FSN_EVA_STAGE], a
-	ld a, [wEnemySubStatus5]
-	ld [FSN_OWN_SS5], a
-	ld a, [wEnemySubStatus3]
-	ld [FSN_OWN_SS3], a
-	ld a, [wEnemyMinimized]
-	ld [FSN_MINIMIZED], a
-	ld a, [wEnemyMonItem]
-	ld [FSN_OWN_ITEM], a
-	ld a, [wEnemyMonStatus]
-	ld [FSN_OWN_STATUS], a
-	jr .own_ready
-.bench
-	ld hl, wOTPartyMon1Species
-	ld bc, PARTYMON_STRUCT_LENGTH
-	call AddNTimes
-	push hl
-	ld a, [hl]
-	cp DITTO
-	jr nz, .not_ditto
-	ld hl, FSN_GUARDS
-	set 0, [hl]
-.not_ditto
-	pop hl
-	push hl
-	ld bc, MON_ITEM
-	add hl, bc
-	ld a, [hl]
-	ld [FSN_OWN_ITEM], a
-	pop hl
-	ld bc, MON_STATUS
-	add hl, bc
-	ld a, [hl]
-	ld [FSN_OWN_STATUS], a
-	ld a, BASE_STAT_LEVEL
-	ld [FSN_EVA_STAGE], a
-	xor a
-	ld [FSN_OWN_SS5], a
-	ld [FSN_OWN_SS3], a
-	ld [FSN_MINIMIZED], a
-.own_ready
-; typing-derived constants
-	ld a, STEEL
-	ld hl, FSN_PLAYER_TYPES
-	call .Contribution
-	ld [FSN_STEEL], a
-	ld a, FLYING
-	ld hl, FSN_PLAYER_TYPES
-	call .Contribution
-	and a
-	jr z, .flying_ready
-	cp 2
-	ld a, 26
-	jr nz, .flying_ready
-	ld a, 27
-.flying_ready
-	ld [FSN_FLYING], a
-	ld a, PSYCHIC_TYPE
-	ld hl, FSN_OWN_TYPES
-	call .Contribution
-	ld [FSN_PSYCHIC], a
-	ld a, POISON
-	ld hl, FSN_OWN_TYPES
-	call .Contribution
-	ld [FSN_POISON], a
-; Bright Powder / Focus Band parameters of the known own item
-	xor a
-	ld [FSN_POWDER], a
-	ld [FSN_FOCUS], a
-	ld a, [FSN_OWN_ITEM]
-	and a
-	jr z, .powder_ready
-	dec a
-	ld hl, ItemAttributes + ITEMATTR_EFFECT
-	ld bc, ITEMATTR_STRUCT_LENGTH
-	call AddNTimes
-	ld a, BANK(ItemAttributes)
-	call GetFarByte
-	ld b, a
-	inc hl
-	ld a, BANK(ItemAttributes)
-	call GetFarByte
-	ld c, a
-	ld a, b
-	cp HELD_BRIGHTPOWDER
-	jr nz, .focus_band
-	ld a, c
-	ld [FSN_POWDER], a
-	jr .powder_ready
-.focus_band
-	cp HELD_FOCUS_BAND
-	jr nz, .powder_ready
-	ld a, c
-	ld [FSN_FOCUS], a
-.powder_ready
-; Helmet quota: the attacker's (player's) max HP/6, minimum one, only for a
-; known Rocky Helmet on the defender
-	xor a
-	ld [FSN_HELMET], a
-	ld [FSN_HELMET + 1], a
-	ld a, [FSN_OWN_ITEM]
-	cp ROCKY_HELMET
-	jr nz, .helmet_ready
-	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_MAXHP
-	ld a, [hli]
-	ld b, a
-	ld a, [hl]
-	ld c, a
-	or b
-	jr z, .helmet_ready
-	ld a, 1
-	ld h, ROCKY_HELMET_DEN
-	call BossAI_FastCompileReplyNative.Scale
-	ld a, b
-	ld [FSN_HELMET], a
-	ld a, c
-	ld [FSN_HELMET + 1], a
-.helmet_ready
-; Outrage's public category: physical only for a Dragon attacker whose raw
-; public Attack exceeds its raw public Sp. Atk.
-	xor a
-	ld [FSN_OUTRAGE], a
-	ld a, DRAGON
-	ld hl, FSN_PLAYER_TYPES
-	call .Contribution
-	and a
-	jr z, .outrage_ready
-	ld bc, 0
-	farcall BossAI_EstimatePlayerDamageStat
-	ld a, b
-	ld [FSM_TEMP], a
-	ld a, c
-	ld [FSM_TEMP + 1], a
-	ld bc, 3
-	farcall BossAI_EstimatePlayerDamageStat
-	ld hl, FSM_TEMP + 1
-	ld a, c
-	sub [hl]
-	dec hl
-	ld a, b
-	sbc [hl]
-	jr nc, .outrage_ready ; Sp. Atk >= Attack stays special
-	ld a, 1
-	ld [FSN_OUTRAGE], a
-.outrage_ready
-; truncated formula operands per category, as .Formula truncates them
-	ad_address AV_PREPARED_STATS
-	call .TruncateStats
-	ld a, b
-	ld [FSN_PHYS_ATTACK], a
-	ld a, c
-	ld [FSN_PHYS_DEFENSE], a
-	ad_address AV_PREPARED_STATS + 4
-	call .TruncateStats
-	ld a, b
-	ld [FSN_SPEC_ATTACK], a
-	ld a, c
-	ld [FSN_SPEC_DEFENSE], a
-; base caches
-	push de
-	ld hl, FSN_PHYS_CACHE_LOW
-	ld b, 48
-	call .ClearBytes
-	pop de
-	ad_address FSN_SPEC_CACHE
-	ld b, 102
-	call .ClearBytes
-	jr .BuildChart
-.ClearBytes
-	xor a
-.clear_byte
-	ld [hli], a
-	dec b
-	jr nz, .clear_byte
-	ret
-.BuildChart
-; FSN_CHART and FSN_MAJESTY from the defender's types, its identified flag
-; and the attacker's types. Every chart multiplier is 0, 5 or 20.
-	ld a, DRAGON
-	ld hl, FSN_PLAYER_TYPES
-	call .Contribution
-	ld [FSN_MAJESTY], a
-	push de
-	ld de, FSN_CHART
-	xor a
-	ld [FSM_TEMP], a
-.chart_type
-	xor a
-	ld [FSM_TEMP + 1], a
-	ld [FSM_TEMP + 2], a
-	ld l, 0
-	call .chart_rows
-	ld a, [FSN_FLAGS]
-	bit AD_IDENTIFIED_F, a
-	jr nz, .chart_store
-	ld l, 2
-	call .chart_rows
-.chart_store
-	ld a, [FSM_TEMP + 1]
-	ld [de], a
-	inc de
-	ld hl, FSM_TEMP
-	inc [hl]
-	ld a, [hl]
-	cp UNUSED_TYPES
-	jr nz, .chart_next_type
-	ld a, UNUSED_TYPES_END ; skip the gap: no move carries those types
-	ld [hl], a
-.chart_next_type
-	cp TYPES_END
-	jr c, .chart_type
-	pop de
-; packed contributions for the passives
-	ld a, WATER
-	ld hl, FSN_OWN_TYPES
-	call .Contribution
-	ld b, a
-	ld a, BUG
-	ld hl, FSN_OWN_TYPES
-	call .PackContribution
-	ld a, GROUND
-	ld hl, FSN_OWN_TYPES
-	call .PackContribution
-	ld a, DRAGON
-	ld hl, FSN_OWN_TYPES
-	call .PackContribution
-	ld a, b
-	ld [FSN_PASSIVES], a
-	ld a, GHOST
-	ld hl, FSN_PLAYER_TYPES
-	call .Contribution
-	ld b, a
-	ld a, FIRE
-	ld hl, FSN_PLAYER_TYPES
-	call .PackContribution
-	ld a, NORMAL
-	ld hl, FSN_PLAYER_TYPES
-	call .PackContribution
-	ld a, ICE
-	ld hl, FSN_OWN_TYPES
-	call .PackContribution
-	ld a, b
-	ld [FSN_PASSIVES + 1], a
-	ret
-.PackContribution
-; B=packed so far; shifts B up two bits and adds the contribution of type A
-; in the type pair at HL.
-	call .Contribution
-	sla b
-	sla b
-	or b
-	ld b, a
-	ret
-.chart_rows
-; L=index offset (0 ordinary rows, 2 Foresight-only rows). Appends the codes
-; of the rows of FSM_TEMP's attacking type that match a defender type.
-	ld a, [FSM_TEMP]
-	add a
-	add a
-	add l
-	ld l, a
-	ld h, 0
-	ld bc, BossAI_FastTypeMatchupIndex
-	add hl, bc
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
-.chart_row
-	ld a, [hli]
-	cp -1
-	ret z
-	cp -2
-	ret z
-	ld b, a
-	ld a, [FSM_TEMP]
-	cp b
-	ret nz ; the next attacking type's rows
-	ld a, [hli]
-	ld b, a
-	ld a, [FSN_OWN_TYPES]
-	cp b
-	jr z, .chart_match
-	ld a, [FSN_OWN_TYPES + 1]
-	cp b
-	jr z, .chart_match
-	inc hl
-	jr .chart_row
-.chart_match
-	ld a, [hli]
-	ld c, 3
-	and a
-	jr z, .chart_code
-	ld c, 1
-	cp NOT_VERY_EFFECTIVE
-	jr nz, .chart_code
-	ld c, 2
-.chart_code
-	ld a, [FSM_TEMP + 2]
-	and a
-	jr z, .chart_first_row
-	sla c
-	sla c
-.chart_first_row
-	ld a, [FSM_TEMP + 1]
-	or c
-	ld [FSM_TEMP + 1], a
-	ld a, 2
-	ld [FSM_TEMP + 2], a
-	jr .chart_row
-.TruncateStats
-; HL=attack word then defense word. B=attack byte, C=defense byte after the
-; kernel's once-only quartering when either stat exceeds 255.
-	ld a, [hli]
-	ld b, a
-	ld c, [hl]
-	inc hl
-	push bc
-	ld a, [hli]
-	ld b, a
-	ld c, [hl]
-	pop hl ; HL=attack, BC=defense
-	ld a, h
-	or b
-	jr z, .truncated
-	srl b
-	rr c
-	srl b
-	rr c
-	ld a, b
-	or c
-	jr nz, .defense_truncated
-	inc c
-.defense_truncated
-	srl h
-	rr l
-	srl h
-	rr l
-	ld a, h
-	or l
-	jr nz, .truncated
-	inc l
-.truncated
-	ld b, l
-	ld a, c
-	and a
-	ret nz
-	inc c ; the kernel's defense-zero guard
-	ret
-.Contribution
+BossAI_FastTypeContribution::
 ; A=type, HL=type pair. A=0 none, 1 one of two distinct types, 2 both.
-; BC/DE preserved (callers keep the running amount in BC).
+; BC/DE preserved (callers keep the running amount in BC). The hot copy of
+; BossAI_FastPrepareReplyFacts.Contribution for the per-amount STAB test.
 	push bc
 	ld b, a
 	ld a, [hli]
@@ -1507,7 +1078,7 @@ BossAI_FastCompileReplyNative::
 	call .Weather
 	ld a, [FSM_TYPE]
 	ld hl, FSN_PLAYER_TYPES
-	call BossAI_FastPrepareReplyFacts.Contribution
+	call BossAI_FastTypeContribution
 	and a
 	jr z, .no_stab
 	ld a, 3
@@ -2426,3 +1997,504 @@ BossAI_FastCompileReplyVariants::
 	xor a
 	ld [FSM_VARIANT], a
 	ret
+
+; Once-per-defender facts preparation, out of the hot bank (see the routine
+; header). The FSN/FSM constants above are shared with the compiler.
+PUSHS
+SECTION "Boss AI Fast Reply Facts", ROMX
+; The type chart mirror and its index are read only by .BuildChart below.
+DEF BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST EQU 1
+INCLUDE "data/types/type_matchups.asm"
+PURGE BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST
+BossAI_FastTypeMatchupIndex:
+	dw BossAI_FastTypeMatchups.NORMAL, BossAI_FastTypeMatchups.NORMAL_FORESIGHT
+	dw BossAI_FastTypeMatchups.FIGHTING, BossAI_FastTypeMatchups.FIGHTING_FORESIGHT
+	dw BossAI_FastTypeMatchups.FLYING, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.POISON, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GROUND, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ROCK, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END ; BIRD
+	dw BossAI_FastTypeMatchups.BUG, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GHOST, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.STEEL, BossAI_FastTypeMatchups.END
+REPT SPECIAL - STEEL - 1
+	dw BossAI_FastTypeMatchups.END, BossAI_FastTypeMatchups.END
+ENDR
+	dw BossAI_FastTypeMatchups.FIRE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.WATER, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.GRASS, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ELECTRIC, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.PSYCHIC_TYPE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.ICE, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.DRAGON, BossAI_FastTypeMatchups.END
+	dw BossAI_FastTypeMatchups.DARK, BossAI_FastTypeMatchups.END
+ASSERT @ - BossAI_FastTypeMatchupIndex == TYPES_END * 4
+ASSERT BANK(BossAI_FastTypeMatchupIndex) == BANK(BossAI_FastPrepareReplyFacts)
+BossAI_FastPrepareReplyFacts::
+; DE=context after the defender's PreparePublicAction (incoming actor
+; template and both stat pairs are current), AV_SLOT=defender, AV_KIND=
+; candidate kind. Fills FSN from the templates and the public battle state
+; the producers read per reply, and invalidates the base caches. SRAM0 open;
+; DE/SP preserved. Once per defender: lives in a cold section, reached by
+; farcall (no register inputs besides DE, no register outputs).
+	ad_address AV_PREPARED_ACTOR + AD_LEVEL
+	ld a, [hl]
+	ld [FSN_LEVEL], a
+	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_TYPES
+	ld a, [hli]
+	ld [FSN_PLAYER_TYPES], a
+	ld a, [hli]
+	ld [FSN_PLAYER_TYPES + 1], a
+	ld a, [hli]
+	ld [FSN_OWN_TYPES], a
+	ld a, [hl]
+	ld [FSN_OWN_TYPES + 1], a
+	ad_address AV_PREPARED_ACTOR + AD_WEATHER
+	ld a, [hl]
+	ld [FSN_WEATHER], a
+	ad_address AV_PREPARED_ACTOR + AD_FLAGS
+	ld a, [hl]
+	and (1 << AD_IDENTIFIED_F) | (1 << AD_DEFENDER_STATUS_F) | (1 << AD_SUBSTITUTE_F) | (1 << AD_BALLOON_F)
+	ld [FSN_FLAGS], a
+	ad_address AV_KIND
+	ld a, [hl]
+	cp AV_SWITCH_ACTION
+	ld a, 0
+	jr nz, .kind_ready
+	inc a
+.kind_ready
+	ld [FSN_SWITCH], a
+; player facts
+	ld a, [wPlayerAccLevel]
+	ld [FSN_ACC_STAGE], a
+	ld a, [wPlayerSubStatus4]
+	ld [FSN_PLAYER_SS4], a
+	ld a, [wPlayerSubStatus3]
+	ld [FSN_PLAYER_SS3], a
+	ld a, [wBattleMonStatus]
+	ld [FSN_PLAYER_STATUS], a
+	ld a, [wPlayerSubStatus5]
+	and 1 << SUBSTATUS_TRANSFORMED
+	ld a, 0
+	jr z, .transform_ready
+	ld a, 2
+.transform_ready
+	ld [FSN_GUARDS], a
+; own facts: active battler or a neutral bench entry
+	ad_address AV_SLOT
+	ld a, [hl]
+	cp $ff
+	jr nz, .bench
+	ld a, [wEnemyEvaLevel]
+	ld [FSN_EVA_STAGE], a
+	ld a, [wEnemySubStatus5]
+	ld [FSN_OWN_SS5], a
+	ld a, [wEnemySubStatus3]
+	ld [FSN_OWN_SS3], a
+	ld a, [wEnemyMinimized]
+	ld [FSN_MINIMIZED], a
+	ld a, [wEnemyMonItem]
+	ld [FSN_OWN_ITEM], a
+	ld a, [wEnemyMonStatus]
+	ld [FSN_OWN_STATUS], a
+	jr .own_ready
+.bench
+	ld hl, wOTPartyMon1Species
+	ld bc, PARTYMON_STRUCT_LENGTH
+	call AddNTimes
+	push hl
+	ld a, [hl]
+	cp DITTO
+	jr nz, .not_ditto
+	ld hl, FSN_GUARDS
+	set 0, [hl]
+.not_ditto
+	pop hl
+	push hl
+	ld bc, MON_ITEM
+	add hl, bc
+	ld a, [hl]
+	ld [FSN_OWN_ITEM], a
+	pop hl
+	ld bc, MON_STATUS
+	add hl, bc
+	ld a, [hl]
+	ld [FSN_OWN_STATUS], a
+	ld a, BASE_STAT_LEVEL
+	ld [FSN_EVA_STAGE], a
+	xor a
+	ld [FSN_OWN_SS5], a
+	ld [FSN_OWN_SS3], a
+	ld [FSN_MINIMIZED], a
+.own_ready
+; typing-derived constants
+	ld a, STEEL
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld [FSN_STEEL], a
+	ld a, FLYING
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	and a
+	jr z, .flying_ready
+	cp 2
+	ld a, 26
+	jr nz, .flying_ready
+	ld a, 27
+.flying_ready
+	ld [FSN_FLYING], a
+	ld a, PSYCHIC_TYPE
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld [FSN_PSYCHIC], a
+	ld a, POISON
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld [FSN_POISON], a
+; Bright Powder / Focus Band parameters of the known own item
+	xor a
+	ld [FSN_POWDER], a
+	ld [FSN_FOCUS], a
+	ld a, [FSN_OWN_ITEM]
+	and a
+	jr z, .powder_ready
+	dec a
+	ld hl, ItemAttributes + ITEMATTR_EFFECT
+	ld bc, ITEMATTR_STRUCT_LENGTH
+	call AddNTimes
+	ld a, BANK(ItemAttributes)
+	call GetFarByte
+	ld b, a
+	inc hl
+	ld a, BANK(ItemAttributes)
+	call GetFarByte
+	ld c, a
+	ld a, b
+	cp HELD_BRIGHTPOWDER
+	jr nz, .focus_band
+	ld a, c
+	ld [FSN_POWDER], a
+	jr .powder_ready
+.focus_band
+	cp HELD_FOCUS_BAND
+	jr nz, .powder_ready
+	ld a, c
+	ld [FSN_FOCUS], a
+.powder_ready
+; Helmet quota: the attacker's (player's) max HP/6, minimum one, only for a
+; known Rocky Helmet on the defender
+	xor a
+	ld [FSN_HELMET], a
+	ld [FSN_HELMET + 1], a
+	ld a, [FSN_OWN_ITEM]
+	cp ROCKY_HELMET
+	jr nz, .helmet_ready
+	ad_address AV_PREPARED_ACTOR + AD_ATTACKER_MAXHP
+	ld a, [hli]
+	ld b, a
+	ld a, [hl]
+	ld c, a
+	or b
+	jr z, .helmet_ready
+	push de
+	call .SixthMinOne
+	pop de
+	ld a, b
+	ld [FSN_HELMET], a
+	ld a, c
+	ld [FSN_HELMET + 1], a
+.helmet_ready
+; Outrage's public category: physical only for a Dragon attacker whose raw
+; public Attack exceeds its raw public Sp. Atk.
+	xor a
+	ld [FSN_OUTRAGE], a
+	ld a, DRAGON
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	and a
+	jr z, .outrage_ready
+	ld bc, 0
+	farcall BossAI_EstimatePlayerDamageStat
+	ld a, b
+	ld [FSM_TEMP], a
+	ld a, c
+	ld [FSM_TEMP + 1], a
+	ld bc, 3
+	farcall BossAI_EstimatePlayerDamageStat
+	ld hl, FSM_TEMP + 1
+	ld a, c
+	sub [hl]
+	dec hl
+	ld a, b
+	sbc [hl]
+	jr nc, .outrage_ready ; Sp. Atk >= Attack stays special
+	ld a, 1
+	ld [FSN_OUTRAGE], a
+.outrage_ready
+; truncated formula operands per category, as .Formula truncates them
+	ad_address AV_PREPARED_STATS
+	call .TruncateStats
+	ld a, b
+	ld [FSN_PHYS_ATTACK], a
+	ld a, c
+	ld [FSN_PHYS_DEFENSE], a
+	ad_address AV_PREPARED_STATS + 4
+	call .TruncateStats
+	ld a, b
+	ld [FSN_SPEC_ATTACK], a
+	ld a, c
+	ld [FSN_SPEC_DEFENSE], a
+; base caches
+	push de
+	ld hl, FSN_PHYS_CACHE_LOW
+	ld b, 48
+	call .ClearBytes
+	pop de
+	ad_address FSN_SPEC_CACHE
+	ld b, 102
+	call .ClearBytes
+	jr .BuildChart
+.ClearBytes
+	xor a
+.clear_byte
+	ld [hli], a
+	dec b
+	jr nz, .clear_byte
+	ret
+.BuildChart
+; FSN_CHART and FSN_MAJESTY from the defender's types, its identified flag
+; and the attacker's types. Every chart multiplier is 0, 5 or 20.
+	ld a, DRAGON
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld [FSN_MAJESTY], a
+	push de
+	ld de, FSN_CHART
+	xor a
+	ld [FSM_TEMP], a
+.chart_type
+	xor a
+	ld [FSM_TEMP + 1], a
+	ld [FSM_TEMP + 2], a
+	ld l, 0
+	call .chart_rows
+	ld a, [FSN_FLAGS]
+	bit AD_IDENTIFIED_F, a
+	jr nz, .chart_store
+	ld l, 2
+	call .chart_rows
+.chart_store
+	ld a, [FSM_TEMP + 1]
+	ld [de], a
+	inc de
+	ld hl, FSM_TEMP
+	inc [hl]
+	ld a, [hl]
+	cp UNUSED_TYPES
+	jr nz, .chart_next_type
+	ld a, UNUSED_TYPES_END ; skip the gap: no move carries those types
+	ld [hl], a
+.chart_next_type
+	cp TYPES_END
+	jr c, .chart_type
+	pop de
+; packed contributions for the passives
+	ld a, WATER
+	ld hl, FSN_OWN_TYPES
+	call .Contribution
+	ld b, a
+	ld a, BUG
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, GROUND
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, DRAGON
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, b
+	ld [FSN_PASSIVES], a
+	ld a, GHOST
+	ld hl, FSN_PLAYER_TYPES
+	call .Contribution
+	ld b, a
+	ld a, FIRE
+	ld hl, FSN_PLAYER_TYPES
+	call .PackContribution
+	ld a, NORMAL
+	ld hl, FSN_PLAYER_TYPES
+	call .PackContribution
+	ld a, ICE
+	ld hl, FSN_OWN_TYPES
+	call .PackContribution
+	ld a, b
+	ld [FSN_PASSIVES + 1], a
+	ret
+.PackContribution
+; B=packed so far; shifts B up two bits and adds the contribution of type A
+; in the type pair at HL.
+	call .Contribution
+	sla b
+	sla b
+	or b
+	ld b, a
+	ret
+.chart_rows
+; L=index offset (0 ordinary rows, 2 Foresight-only rows). Appends the codes
+; of the rows of FSM_TEMP's attacking type that match a defender type.
+	ld a, [FSM_TEMP]
+	add a
+	add a
+	add l
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastTypeMatchupIndex
+	add hl, bc
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+.chart_row
+	ld a, [hli]
+	cp -1
+	ret z
+	cp -2
+	ret z
+	ld b, a
+	ld a, [FSM_TEMP]
+	cp b
+	ret nz ; the next attacking type's rows
+	ld a, [hli]
+	ld b, a
+	ld a, [FSN_OWN_TYPES]
+	cp b
+	jr z, .chart_match
+	ld a, [FSN_OWN_TYPES + 1]
+	cp b
+	jr z, .chart_match
+	inc hl
+	jr .chart_row
+.chart_match
+	ld a, [hli]
+	ld c, 3
+	and a
+	jr z, .chart_code
+	ld c, 1
+	cp NOT_VERY_EFFECTIVE
+	jr nz, .chart_code
+	ld c, 2
+.chart_code
+	ld a, [FSM_TEMP + 2]
+	and a
+	jr z, .chart_first_row
+	sla c
+	sla c
+.chart_first_row
+	ld a, [FSM_TEMP + 1]
+	or c
+	ld [FSM_TEMP + 1], a
+	ld a, 2
+	ld [FSM_TEMP + 2], a
+	jr .chart_row
+.TruncateStats
+; HL=attack word then defense word. B=attack byte, C=defense byte after the
+; kernel's once-only quartering when either stat exceeds 255.
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	inc hl
+	push bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	pop hl ; HL=attack, BC=defense
+	ld a, h
+	or b
+	jr z, .truncated
+	srl b
+	rr c
+	srl b
+	rr c
+	ld a, b
+	or c
+	jr nz, .defense_truncated
+	inc c
+.defense_truncated
+	srl h
+	rr l
+	srl h
+	rr l
+	ld a, h
+	or l
+	jr nz, .truncated
+	inc l
+.truncated
+	ld b, l
+	ld a, c
+	and a
+	ret nz
+	inc c ; the kernel's defense-zero guard
+	ret
+.Contribution
+; A=type, HL=type pair. A=0 none, 1 one of two distinct types, 2 both.
+; BC/DE preserved (callers keep the running amount in BC).
+	push bc
+	ld b, a
+	ld a, [hli]
+	ld c, a
+	ld a, [hl]
+	cp c
+	jr nz, .dual
+	cp b
+	ld a, 0
+	jr nz, .contribution_done
+	ld a, 2
+	jr .contribution_done
+.dual
+	cp b
+	jr z, .half
+	ld a, c
+	cp b
+	ld a, 0
+	jr nz, .contribution_done
+.half
+	ld a, 1
+.contribution_done
+	pop bc
+	ret
+
+.SixthMinOne
+; BC=BC/ROCKY_HELMET_DEN, minimum one for positive input: what
+; BossAI_FastCompileReplyNative.Scale computes for 1/ROCKY_HELMET_DEN.
+	ld h, b
+	ld l, c
+	ld d, ROCKY_HELMET_DEN
+	ld e, 16
+	xor a
+.sixth_bit
+	add hl, hl
+	rla
+	jr c, .sixth_subtract
+	cp d
+	jr c, .sixth_next
+.sixth_subtract
+	sub d
+	inc l
+.sixth_next
+	dec e
+	jr nz, .sixth_bit
+	ld b, h
+	ld c, l
+	ld a, h
+	or l
+	ret nz
+	inc c
+	ret
+
+BossAI_FastTruncateStatsFar::
+; BC=pointer to an attack word then a defense word. B=attack byte, C=defense
+; byte, as BossAI_FastPrepareReplyFacts.TruncateStats (reached by farcall: the
+; pointer travels in BC because farcall clobbers HL).
+	ld h, b
+	ld l, c
+	jp BossAI_FastPrepareReplyFacts.TruncateStats
+POPS
