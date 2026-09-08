@@ -101,9 +101,6 @@ PURGE BOSSAI_EMIT_LOCAL_MOVES
 DEF BOSSAI_EMIT_LOCAL_CONTACT_FLAGS EQU 1
 INCLUDE "data/moves/contact_flags.asm"
 PURGE BOSSAI_EMIT_LOCAL_CONTACT_FLAGS
-DEF BOSSAI_EMIT_LOCAL_PRIORITIES EQU 1
-INCLUDE "data/moves/effects_priorities.asm"
-PURGE BOSSAI_EMIT_LOCAL_PRIORITIES
 DEF BOSSAI_EMIT_LOCAL_ACCURACY EQU 1
 INCLUDE "data/battle/accuracy_multipliers.asm"
 PURGE BOSSAI_EMIT_LOCAL_ACCURACY
@@ -111,14 +108,38 @@ DEF BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST EQU 1
 INCLUDE "data/types/type_matchups.asm"
 PURGE BOSSAI_EMIT_LOCAL_TYPE_MATCHUPS_FAST
 ; Effect classes: bit0 directly supported damage effect, bit1 HP-only script
-; family. Built from the same lists the producers scan (.DirectEffects and
-; .HPOnlyEffects in the public damage/action code).
+; family, bits 2..3 the effect's move priority, bit4 an effect whose support
+; needs the battle state (.EffectSupport's special cases). Built from the
+; same lists the producers scan (.DirectEffects and .HPOnlyEffects in the
+; public damage/action code) and data/moves/effects_priorities.asm; the
+; differential fixture holds every move against the producer path.
 MACRO fast_effect_class
 	REDEF fast_effect_class_{d:\1} = fast_effect_class_{d:\1} | \2
 ENDM
+MACRO fast_effect_priority
+	REDEF fast_effect_class_{d:\1} = (fast_effect_class_{d:\1} & ~%1100) | (\2 << 2)
+ENDM
 FOR fx, 256
-	DEF fast_effect_class_{d:fx} = 0
+	DEF fast_effect_class_{d:fx} = BASE_PRIORITY << 2
 ENDR
+	fast_effect_priority EFFECT_PROTECT, 3
+	fast_effect_priority EFFECT_ENDURE, 3
+	fast_effect_priority EFFECT_PRIORITY_HIT, 2
+	fast_effect_priority EFFECT_FORCE_SWITCH, 0
+	fast_effect_priority EFFECT_COUNTER, 0
+	fast_effect_priority EFFECT_MIRROR_COAT, 0
+	fast_effect_priority EFFECT_FOCUS_PUNCH, 0
+	fast_effect_class EFFECT_MULTI_HIT, 16
+	fast_effect_class EFFECT_DOUBLE_HIT, 16
+	fast_effect_class EFFECT_POISON_MULTI_HIT, 16
+	fast_effect_class EFFECT_SOLARBEAM, 16
+	fast_effect_class EFFECT_DREAM_EATER, 16
+	fast_effect_class EFFECT_SNORE, 16
+	fast_effect_class EFFECT_EARTHQUAKE, 16
+	fast_effect_class EFFECT_GUST, 16
+	fast_effect_class EFFECT_TWISTER, 16
+	fast_effect_class EFFECT_STOMP, 16
+	fast_effect_class EFFECT_PURSUIT, 16
 	fast_effect_class EFFECT_NORMAL_HIT, 1
 	fast_effect_class EFFECT_POISON_HIT, 1
 	fast_effect_class EFFECT_LEECH_HIT, 1
@@ -180,6 +201,7 @@ FOR fx, 256
 	db fast_effect_class_{d:fx}
 ENDR
 PURGE fast_effect_class
+PURGE fast_effect_priority
 BossAI_FastTypeMatchupIndex:
 	dw BossAI_FastTypeMatchups.NORMAL, BossAI_FastTypeMatchups.NORMAL_FORESIGHT
 	dw BossAI_FastTypeMatchups.FIGHTING, BossAI_FastTypeMatchups.FIGHTING_FORESIGHT
@@ -899,14 +921,23 @@ BossAI_FastCompileReplyNative::
 	ld [hl], a
 	ld a, [FSM_POWER]
 	ld c, a
-	ld b, $ff
-.divide_five
-	inc b
-	ld a, c
-	sub 5
-	ld c, a
-	jr nc, .divide_five
-	ld a, b ; power/5, the base cache index
+	ld b, 0
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, bc
+	add hl, hl
+	add hl, hl
+	add hl, hl
+	add hl, bc
+	add hl, hl
+	add hl, bc
+	add hl, hl
+	add hl, hl
+	add hl, bc ; 205*power
+	ld a, h
+	srl a
+	srl a ; power/5, the base cache index
 	ld [FSM_TEMP + 2], a
 	xor a
 	ld [FSM_REGIME], a
@@ -942,6 +973,16 @@ BossAI_FastCompileReplyNative::
 	ret
 .effect
 	ld a, [FSM_EFFECT]
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastEffectClass
+	add hl, bc
+	bit 4, [hl]
+	jr nz, .special_effect
+	bit 0, [hl]
+	ret nz
+	jp .unsupported
+.special_effect
 	cp EFFECT_MULTI_HIT
 	jr z, .multi
 	cp EFFECT_DOUBLE_HIT
@@ -964,10 +1005,6 @@ BossAI_FastCompileReplyNative::
 	jr z, .stomp
 	cp EFFECT_PURSUIT
 	jr z, .pursuit
-	ld l, a
-	ld h, 0
-	ld bc, BossAI_FastEffectClass
-	add hl, bc
 	bit 0, [hl]
 	ret nz
 	jr .unsupported
@@ -1245,21 +1282,14 @@ BossAI_FastCompileReplyNative::
 	ld a, 0
 	ret z
 	ld a, [FSM_EFFECT]
-	ld c, a
-	ld hl, BossAI_FastMoveEffectPriorities
-.priority_loop
-	ld a, [hli]
-	cp -1
-	jr z, .default_priority
-	cp c
-	jr z, .priority_found
-	inc hl
-	jr .priority_loop
-.priority_found
+	ld l, a
+	ld h, 0
+	ld bc, BossAI_FastEffectClass
+	add hl, bc
 	ld a, [hl]
-	ret
-.default_priority
-	ld a, BASE_PRIORITY
+	rrca
+	rrca
+	and 3
 	ret
 
 .EffectUncertainty
@@ -2075,7 +2105,7 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	jr z, .scale_halve ; divisor 2
 	ld a, c
 	inc a
-	jr z, .scale_by_255 ; divisor 255
+	jp z, .scale_by_255 ; divisor 255
 	call .Div24By8 ; B:HL=quotient
 .scale_quotient
 	ld a, b
@@ -2097,8 +2127,20 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	jr .scale_quotient
 .scale_plus_one
 ; floor(n*(H+1)/H) = n + floor(n/H); positive input stays positive
-	push bc
 	ld a, h
+	cp 2
+	jr nz, .scale_plus_one_divide
+	ld h, b
+	ld l, c
+	srl h
+	rr l
+	add hl, bc
+	jr c, .scale_saturate
+	ld b, h
+	ld c, l
+	ret
+.scale_plus_one_divide
+	push bc
 	call .Div16By8
 	pop hl
 	add hl, bc
@@ -2108,6 +2150,13 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	ret
 .scale_minus_one
 ; floor(n*(H-1)/H) = n - ceil(n/H) = n - floor((n+H-1)/H)
+	ld a, h
+	cp 2
+	jr nz, .scale_minus_one_divide
+	srl b
+	rr c
+	jp .MinOne
+.scale_minus_one_divide
 	push bc
 	ld a, h
 	dec a
@@ -2297,13 +2346,21 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	pop de
 	ret
 .Div16By8
-; BC / A -> BC, A=remainder. DE preserved.
+; BC / A -> BC, A=remainder. DE preserved. A zero high byte needs only eight
+; quotient trials.
 	push de
 	ld d, a
 	ld e, 16
-	xor a
 	ld h, b
 	ld l, c
+	ld a, b
+	and a
+	jr nz, .div16_wide
+	ld e, 8
+	ld h, c
+	ld l, a
+.div16_wide
+	xor a
 .div16_bit
 	add hl, hl
 	rla
