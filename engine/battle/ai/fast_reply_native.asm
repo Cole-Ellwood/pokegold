@@ -87,6 +87,9 @@ DEF FSM_NEGATION EQU $a575
 DEF FSM_CHECK_FLAGS EQU $a576
 DEF FSM_CAN_ACT EQU $a577
 ASSERT FSM_CAN_ACT < $a578
+; The header has consumed the check-flags byte before the amounts compile;
+; the regime loop reuses it.
+DEF FSM_REGIME_REPEAT EQU FSM_CHECK_FLAGS ; 1 when the remaining masked regimes re-store the first regime's amount
 DEF FSM_TEMP EQU $a5d8 ; eight bytes
 DEF FSM_OPCODE EQU FSM_TEMP + 5
 DEF FSM_DELTAS EQU FSM_TEMP + 6 ; store per-regime max-min deltas
@@ -514,17 +517,61 @@ BossAI_FastCompileReplyNative::
 	ld [FSM_REGIME], a
 	ld a, [FSM_MASK]
 	ld [FSM_TEMP + 3], a
-.regime
+	and a
+	jr z, .regimes_done
+.first_regime
 	ld hl, FSM_TEMP + 3
 	srl [hl]
-	jr nc, .next_regime
+	jr c, .first_masked
+	ld hl, FSM_REGIME
+	inc [hl]
+	jr .first_regime
+.first_masked
 	call .Amount
-.next_regime
+	jr nc, .first_unknown
+	ld a, [FSM_TEMP + 3]
+	and a
+	jr z, .regimes_done ; the usual single regime
+; The regime bits reach an amount only through the Fire passive (attacker
+; low: a Fire reply against a player Fire contribution) and the Ice passive
+; (defender high: an own Ice contribution); otherwise the remaining masked
+; regimes re-store this amount.
+	ld a, [FSN_PASSIVES + 1]
+	ld l, a
+	and %11
+	ld h, 0
+	jr nz, .repeat_rule
+	ld a, [FSM_TYPE]
+	cp FIRE
+	jr nz, .repeat_all
+	ld a, l
+	and %110000
+	jr nz, .repeat_rule
+.repeat_all
+	inc h
+.repeat_rule
+	ld a, h ; BC still holds the amount the repeats re-store
+	jr .repeat_ready
+.first_unknown
+	xor a ; unknown at every regime: each remaining regime asks .Amount, cheaply
+.repeat_ready
+	ld [FSM_REGIME_REPEAT], a
+.regime
 	ld a, [FSM_TEMP + 3]
 	and a
 	jr z, .regimes_done ; no masked regime remains
 	ld hl, FSM_REGIME
 	inc [hl]
+	ld hl, FSM_TEMP + 3
+	srl [hl]
+	jr nc, .regime
+	ld a, [FSM_REGIME_REPEAT]
+	and a
+	jr nz, .repeat_amount
+	call .Amount
+	jr .regime
+.repeat_amount
+	call .store ; BC and FSM_MIN still hold the previous regime's amount
 	jr .regime
 .regimes_done
 	ld a, [FSM_OPCODE]
@@ -1031,7 +1078,8 @@ BossAI_FastCompileReplyNative::
 
 .Amount
 ; One regime: RAW_MAX, plus the regime's range and support bits, from the
-; single-hit kernel path with a cached formula base.
+; single-hit kernel path with a cached formula base. Carry=stored (BC=raw
+; maximum, FSM_MIN=raw minimum); clear when unsupported or without power.
 	ld a, [FSM_REGIME]
 	add a
 	and (1 << AD_ATTACKER_LOW_F) | (1 << AD_DEFENDER_HIGH_F)
@@ -1137,7 +1185,7 @@ BossAI_FastCompileReplyNative::
 	ld a, c
 	ld [FSM_MIN + 1], a
 .store
-; BC=raw maximum, FSM_MIN=raw minimum; both supported
+; BC=raw maximum, FSM_MIN=raw minimum; both supported. BC preserved; carry set.
 	ld a, [FSM_VARIANT]
 	and a
 	jp nz, .StoreVariant
@@ -1201,13 +1249,16 @@ BossAI_FastCompileReplyNative::
 	jr nz, .range
 	ld a, [FSM_MIN + 1]
 	cp c
-	ret z
+	jr nz, .range
+	scf
+	ret
 .range
 	ld a, [FSM_TEMP]
 	ld hl, FSR_BASE + FSR_RANGE
 	add hl, de
 	or [hl]
 	ld [hl], a
+	scf
 	ret
 .StoreVariant
 ; BC=raw maximum at the raised own defense, FSM_MIN=its minimum. The word goes
