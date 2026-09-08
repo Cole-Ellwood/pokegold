@@ -38,6 +38,9 @@ BossAI_FastLoseHP::
 	pop de
 	ret
 
+PUSHS
+SECTION "Boss AI Fast Recovery Quota", ROMX
+; Reached by farcall only (the owned compiler and the fixtures): out of the hot bank.
 BossAI_FastRecoveryQuota::
 ; DE=public damage context. BC=uncapped recovery quota, carry=recognized.
 ; Independent of current HP: plans must remain valid after preceding damage.
@@ -116,6 +119,7 @@ BossAI_FastRecoveryQuota::
 	pop af
 	scf
 	ret
+POPS
 
 BossAI_FastGainHP::
 ; HL=current HP word, BC=uncapped quota, DE=maximum HP (>0).

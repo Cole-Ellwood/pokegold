@@ -1,5 +1,8 @@
 ; Import the HP portion of the two compact actors from an owned public context.
-; Other actor fields remain unpopulated until their producer owns them.
+; Other actor fields remain unpopulated until their producer owns them. Once
+; per defender: a cold section, reached by farcall (C and DE in, carry out).
+PUSHS
+SECTION "Boss AI Fast Actors", ROMX
 BossAI_FastImportActorHP::
 ; C=own weight128/192, DE=owned AD context, SRAM0 open. Context/DE/SP preserved.
 ; Validates both HP/max pairs before writing. Carry=success; rejects malformed
@@ -57,16 +60,11 @@ BossAI_FastImportActorHP::
 	ld c, a
 	farcall BossAI_FastBuildOwnHPTableFar
 	ld [FSA_HP_MODE], a
-	push de
-	ld d, a
 	ld a, [FSA_START_HP]
 	ld b, a
 	ld a, [FSA_START_HP + 1]
 	ld c, a
-	ld a, [FSA_WEIGHT]
-	ld hl, $a000
-	call BossAI_FastHPPotential
-	pop de
+	farcall BossAI_FastOwnPotentialFar
 	ld a, b
 	ld [FSA_START_PHI], a
 	ld [FSA_ENTRY_PHI], a
@@ -89,16 +87,11 @@ BossAI_FastImportActorHP::
 	ld c, a
 	farcall BossAI_FastBuildPlayerHPTableFar
 	ld [FSA_PLAYER + 37], a
-	push de
-	ld d, a
 	ld a, [FSA_PLAYER]
 	ld b, a
 	ld a, [FSA_PLAYER + 1]
 	ld c, a
-	ld a, 128
-	ld hl, $a180
-	call BossAI_FastHPPotential
-	pop de
+	farcall BossAI_FastPlayerPotentialFar
 	ld a, b
 	ld [FSA_PLAYER + 4], a
 	ld [FSA_PLAYER + 8], a
@@ -133,3 +126,4 @@ BossAI_FastImportActorHP::
 .invalid_hp
 	and a
 	ret
+POPS

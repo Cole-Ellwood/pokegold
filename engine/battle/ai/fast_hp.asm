@@ -464,6 +464,27 @@ BossAI_FastHPThresholds::
 	pop de
 	ret
 
+BossAI_FastOwnPotentialFar::
+; BC=own HP. BC=Phi with the own table, weight and mode; for cold callers
+; (reached by farcall; DE preserved).
+	push de
+	ld a, [FSA_HP_MODE]
+	ld d, a
+	ld a, [FSA_WEIGHT]
+	ld hl, $a000
+	call BossAI_FastHPPotential
+	pop de
+	ret
+BossAI_FastPlayerPotentialFar::
+; BC=player HP. BC=Phi with the player table and mode; for cold callers.
+	push de
+	ld a, [FSA_PLAYER + 37]
+	ld d, a
+	ld a, 128
+	ld hl, $a180
+	call BossAI_FastHPPotential
+	pop de
+	ret
 BossAI_FastHPPotential::
 ; HL=table, BC=HP (0..max), A=weight, D=valid table mode0..2.
 ; BC=Phi(HP): zero at zero HP, otherwise 2W+floor(W*HP/max).
