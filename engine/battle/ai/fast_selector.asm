@@ -30,6 +30,29 @@ DEF FSA_SETUP_FLAGS EQU FSA_OWN + 35
 DEF FSA_SPEED_MODE EQU FSA_OWN + 36 ; bit0: public order unknown
 DEF FSA_PLAYER_SPEED EQU FSA_PLAYER + 14
 ASSERT FS_PLAN_INDEX + 4 <= FS_LEGAL_MASK - 1
+; Fast pair facts (WRAMX bank 1, reference build only). Per plan: what a
+; plain damage pair reads per reply; per reply: the same for the current one.
+DEF FPP_SIZE EQU 16
+DEF FPP_STATE EQU 0 ; bit0 plain damage plan, bit1 the own hit leaves a fainted actor
+DEF FPP_REGIME EQU 1 ; the reply's amount regime after the own hit
+DEF FPP_FLAGS_HIT EQU 2 ; own hit flags at each of the four regimes
+DEF FPP_FLAGS_MISS EQU 6
+DEF FPP_Z EQU 7 ; own hit mass 0..256
+DEF FPP_ACC EQU 9 ; five-byte sum of weight*z_reply*K over the sweep
+DEF FPP_UNION EQU 14 ; reached flags over the sweep
+DEF FRP_STATE EQU 0 ; bit0 plain damage reply, bit1 the reply hit leaves a fainted actor
+DEF FRP_REGIME EQU 1 ; the own amount regime after the reply hit
+DEF FRP_FLAGS_HIT EQU 2
+DEF FRP_FLAGS_MISS EQU 6
+DEF FRP_Z EQU 7
+DEF FRP_SIZE EQU 9
+PUSHS
+SECTION "Boss AI Fast Sweep State", WRAMX, BANK[1]
+wFastPlanPairs:: ds 4 * FPP_SIZE
+wFastReplyPair:: ds FRP_SIZE
+wFastStartOutRegime:: db ; the own attack regime at the start state
+wFastStartGated:: db ; 1 when the start state has a fainted actor
+POPS
 
 BossAI_ComparePublicActionsFastPrototype::
 ; DE=472-byte context, A=decision0/2, B=scan0..15, SRAM closed. Same full
@@ -472,9 +495,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr c, .plan_init
 	call .InitUnaryRecord
 	call .ReplyRegimes
+	call .PreparePlanPairs
 	call .ReplySweep
 	ret nc
 	call .CommitIncoming
+	call .CommitPairs
 	scf
 	ret
 
@@ -482,7 +507,18 @@ BossAI_ComparePublicActionsFastPrototype::
 ; FS_REPLY_REGIMES=bit per incoming HP regime reachable on this defender: the
 ; start state plus every live plan's original-event successors. Regime bit0 is
 ; the player's attacker-low predicate 3*HP<max, bit1 the own defender-high
-; predicate 2*HP>max, both in the executor's wrapped 16-bit arithmetic.
+; predicate 2*HP>max, both in the executor's wrapped 16-bit arithmetic. Also
+; the start state's outgoing regime and gate for the fast standalone/pairs.
+	ld a, [FSA_START_HP]
+	ld b, a
+	ld a, [FSA_START_HP + 1]
+	ld c, a
+	ld hl, FSA_PLAYER
+	call .OutgoingRegimeIndex
+	ld [wFastStartOutRegime], a
+	ld hl, FSA_START_HP
+	call .StateGated
+	ld [wFastStartGated], a
 	ld a, [FSA_START_HP]
 	ld b, a
 	ld a, [FSA_START_HP + 1]
@@ -1067,6 +1103,8 @@ BossAI_ComparePublicActionsFastPrototype::
 ; from any state) get their trivial record directly; plain families take the
 ; scalar path; the rest use the sequential builder, whose continuation flags
 ; are copied into the record. Carry=complete.
+	xor a
+	ld [wFastReplyPair + FRP_STATE], a ; only .PlainStandalone marks a reply for the fast pairs
 	call .ClassifyIdentity
 	ad_address FS_REPLY_IDENTITY
 	ld a, [hl]
@@ -1077,6 +1115,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [hl]
 	cp FSR_BOOST
 	jr z, .IdentityStandalone ; no HP change, check flags only (damage flags are zero)
+	cp FSR_DAMAGE
+	jr nz, .general_standalone
+	call .PlainStandalone
+	ret c
+.general_standalone
 	call BossAI_FastScalarReplyStandalone
 	ret c
 	call BossAI_FastBuildReplyStandalone
@@ -1371,7 +1414,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	call .PlanAddress
 	ld a, [hl]
 	and a
-	jr z, .pair_fallback
+	jp z, .pair_fallback
 	ld hl, FSR_BASE + FSR_OPCODE
 	add hl, de
 	ld a, [hl]
@@ -1436,6 +1479,12 @@ BossAI_ComparePublicActionsFastPrototype::
 	pop af
 	push af
 	push bc
+	call .FastPair
+	pop bc
+	jr c, .pair_fast
+	pop af
+	push af
+	push bc
 	call BossAI_FastScalarPair
 	pop bc
 	jr c, .pair_scalar
@@ -1446,6 +1495,12 @@ BossAI_ComparePublicActionsFastPrototype::
 	pop af
 	scf
 	jr .pair_total
+.pair_fast
+; accumulated on the plan; nothing to add to the record now
+	pop af
+	pop bc
+	scf
+	ret
 .pair_fallback
 	pop af
 	cp 2
@@ -2322,4 +2377,976 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [FS_MULTIPLICAND + 3], a
 	ld a, [hl]
 	ld [FS_MULTIPLICAND + 4], a
+	ret
+
+; ---------------------------------------------------------------------------
+; Fast pairs: a plain damage own plan against a plain damage reply. K and the
+; flags equal BossAI_FastScalarPair's, from per-plan facts prepared once per
+; defender and per-reply facts prepared with the standalone record. The
+; reply's delta after the own hit differs from its standalone delta only when
+; the own hit changed the reply's amount regime (the player's HP fell under a
+; third) or fainted an actor, and the own delta after the reply hit likewise;
+; every other pair has K=0 and only flags. The products weight*z_reply*K
+; accumulate per plan and z_own multiplies the sum once at .CommitPairs; the
+; flags accumulate per plan the same way.
+
+.PlanPairFacts
+; HL=wFastPlanPairs entry of the plan FPK_INDEX. BC/DE preserved.
+	ld a, [FPK_INDEX]
+	swap a
+	add LOW(wFastPlanPairs)
+	ld l, a
+	adc HIGH(wFastPlanPairs)
+	sub l
+	ld h, a
+	ret
+
+.StateGated
+; HL=state (own HP word, player HP word). A=1 when an actor is fainted.
+; BC/DE preserved.
+	ld a, [hli]
+	or [hl]
+	jr z, .state_gated
+	inc hl
+	ld a, [hli]
+	or [hl]
+	jr z, .state_gated
+	xor a
+	ret
+.state_gated
+	ld a, 1
+	ret
+
+.IncomingRegimeIndex
+; BC=own HP, HL=player HP word. A=the player's attack regime index from that
+; state (bit0 3*player HP<player max, bit1 2*own HP>own max) in the
+; executors' wrapped 16-bit arithmetic. DE preserved.
+	push de
+	push bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, bc ; 3*player HP
+	ld a, [FSA_PLAYER + 3]
+	ld e, a
+	ld a, [FSA_PLAYER + 2]
+	ld d, a
+	ld a, l
+	sub e
+	ld a, h
+	sbc d
+	ld a, 0
+	adc 0 ; 1 when 3*HP<max
+	pop bc
+	ld e, a
+	sla c
+	rl b ; 2*own HP
+	ld a, [FSA_MAX_HP]
+	cp b
+	jr c, .incoming_regime_high
+	jr nz, .incoming_regime_done
+	ld a, [FSA_MAX_HP + 1]
+	cp c
+	jr nc, .incoming_regime_done
+.incoming_regime_high
+	set 1, e
+.incoming_regime_done
+	ld a, e
+	pop de
+	ret
+
+.OutgoingRegimeIndex
+; BC=own HP, HL=player HP word. A=the own attack regime index from that state
+; (bit0 3*own HP<own max, bit1 2*player HP>player max). DE preserved.
+	push de
+	push hl
+	ld h, b
+	ld l, c
+	add hl, hl
+	add hl, bc ; 3*own HP
+	ld a, [FSA_MAX_HP + 1]
+	ld e, a
+	ld a, [FSA_MAX_HP]
+	ld d, a
+	ld a, l
+	sub e
+	ld a, h
+	sbc d
+	ld a, 0
+	adc 0
+	ld e, a
+	pop hl
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	sla c
+	rl b ; 2*player HP
+	ld a, [FSA_PLAYER + 2]
+	cp b
+	jr c, .outgoing_regime_high
+	jr nz, .outgoing_regime_done
+	ld a, [FSA_PLAYER + 3]
+	cp c
+	jr nc, .outgoing_regime_done
+.outgoing_regime_high
+	set 1, e
+.outgoing_regime_done
+	ld a, e
+	pop de
+	ret
+
+.RegimeFlags
+; B=hit flags at any regime, [FSK_STATE]=range mask, [FSK_STATE+1]=support
+; mask. Writes the hit flags at each of the four regimes at HL (advanced past
+; them): the range flag where the amount is a range, unknown damage where it
+; is unsupported. BC/DE preserved.
+	push bc
+	ld c, 1 ; the regime's bit
+.regime_flags_byte
+	ld a, [FSK_STATE + 1]
+	and c
+	ld a, 0
+	jr nz, .regime_flags_supported
+	ld a, 1 << AV_UNKNOWN_DAMAGE_F
+.regime_flags_supported
+	or b
+	ld [hl], a
+	ld a, [FSK_STATE]
+	and c
+	jr z, .regime_flags_next
+	ld a, [hl]
+	or 1 << AV_AMOUNT_RANGE_F
+	ld [hl], a
+.regime_flags_next
+	inc hl
+	sla c
+	bit 4, c
+	jr z, .regime_flags_byte
+	pop bc
+	ret
+
+.PreparePlanPairs
+; Per-plan facts for this defender's plans (after their standalone records and
+; .ReplyRegimes, which sets the start state's outgoing regime and gate).
+	ld c, 0
+.prepare_plan
+	push bc
+	ld a, c
+	ld [FPK_INDEX], a
+	call .PlanPairFacts
+	push hl
+	ld b, FPP_SIZE
+	xor a
+.prepare_clear
+	ld [hli], a
+	dec b
+	jr nz, .prepare_clear
+	pop hl
+	call .PlanIndex
+	cp $ff
+	jp z, .prepare_next
+	ld a, FSP_OPCODE
+	call .PlanAddress
+	ld a, [hl]
+	cp FSP_DAMAGE
+	jp nz, .prepare_next
+	ld a, FSP_DESCRIPTOR
+	call .PlanAddress
+	ld a, [hli]
+	ld l, [hl]
+	ld h, a
+	ld a, [hli]
+	or [hl]
+	jp nz, .prepare_next ; drain, recoil or an item: the sequential pair
+	ld a, FSP_HIT_HP
+	call .PlanAddress
+	call .StateGated
+	add a
+	or 1 ; plain, and whether the own hit leaves a fainted actor
+	push af
+	call .PlanPairFacts
+	pop af
+	ld [hli], a
+	push hl
+	ld a, FSP_HIT_HP
+	call .PlanAddress
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	inc hl
+	call .IncomingRegimeIndex
+	pop hl
+	ld [hli], a ; FPP_REGIME
+	ld a, [FPK_INDEX]
+	ld c, a
+; the own flags at each regime, then on a miss
+	ld a, FSP_CHECK_FLAGS
+	call .PlanAddress
+	ld b, [hl]
+	ld a, FSP_CAN_ACT
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .prepare_own_constant ; cannot act: the check flags on every path
+	ld a, FSP_DAMAGE_FLAGS
+	call .PlanAddress
+	ld a, [hl]
+	or b
+	ld b, a
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .prepare_own_constant ; no hit: no amount bits
+	ld a, FSP_RANGE
+	call .PlanAddress
+	ld a, [hli]
+	ld [FSK_STATE], a
+	ld a, [hl]
+	ld [FSK_STATE + 1], a
+	call .PlanPairFacts
+	inc hl
+	inc hl
+	call .RegimeFlags
+	ld [hl], b ; FPP_FLAGS_MISS
+	jr .prepare_own_mass
+.prepare_own_constant
+	call .PlanPairFacts
+	inc hl
+	inc hl
+	ld a, b
+	rept 5
+	ld [hli], a
+	endr
+.prepare_own_mass
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	call BossAI_FastNormalizedPair.Decode ; BC=z
+	call .PlanPairFacts
+	ld a, l
+	add FPP_Z
+	ld l, a
+	jr nc, .prepare_own_z
+	inc h
+.prepare_own_z
+	ld [hl], b
+	inc hl
+	ld [hl], c
+.prepare_next
+	pop bc
+	inc c
+	ld a, c
+	cp 4
+	jp c, .prepare_plan
+	ret
+
+.PlainStandalone
+; The compiled reply is a damage opcode that is not identity. When its
+; descriptor is plain (no drain/recoil, no Helmet): the standalone record as
+; BossAI_FastScalarReplyStandalone writes it, plus wFastReplyPair for the
+; fast pairs; carry set. Otherwise carry clear without writes.
+	ld hl, FSR_BASE + FSR_DESCRIPTOR
+	add hl, de
+	ld a, [hli]
+	ld l, [hl]
+	ld h, a
+	ld a, [hli]
+	or [hl]
+	ret nz
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+; both successors start as the start state, deltas and moment zero
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	ld b, 2
+.plain_successor
+	ld a, [FSA_START_HP]
+	ld [hli], a
+	ld a, [FSA_START_HP + 1]
+	ld [hli], a
+	ld a, [FSA_PLAYER]
+	ld [hli], a
+	ld a, [FSA_PLAYER + 1]
+	ld [hli], a
+	dec b
+	jr nz, .plain_successor
+	xor a
+	rept 7
+	ld [hli], a
+	endr
+; the hit: from a living start state, a reply that can act and can hit takes
+; its amount at the start regime off the own HP
+	ld a, [wFastStartGated]
+	and a
+	jp nz, .plain_facts
+	ld hl, FSR_BASE + FSR_CAN_ACT
+	add hl, de
+	ld a, [hl]
+	and a
+	jp z, .plain_facts
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jp z, .plain_facts
+	ld a, [FSA_START_REGIME]
+	ld c, a
+	ld b, 0
+	ld hl, .RegimeBits
+	add hl, bc
+	ld a, [hl]
+	ld hl, FSR_BASE + FSR_SUPPORT
+	add hl, de
+	and [hl]
+	jr z, .plain_unsupported
+	ld a, c
+	add a
+	add FSR_RAW_MAX
+	ld l, a
+	ld h, 0
+	add hl, de
+	ld bc, FSR_BASE
+	add hl, bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	call BossAI_FastLoseHP
+	jr .plain_hit_delta
+.plain_unsupported
+	ld hl, FSR_BASE + FSR_POWER
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .plain_facts ; no amount: the start state
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	xor a
+	ld [hli], a
+	ld [hl], a ; the conservative KO
+.plain_hit_delta
+; hit delta = Phi(own HP after) - Phi(start); moment = p * hit delta
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	call BossAI_FastScalarPair.OwnPhi ; BC=Phi; D clobbered
+	ld a, [FSA_START_PHI + 1]
+	ld l, a
+	ld a, c
+	sub l
+	ld l, a
+	ld a, [FSA_START_PHI]
+	ld h, a
+	ld a, b
+	sbc h
+	ld h, a
+	call BossAI_FastNormalizedPair.Context
+	push hl
+	ld hl, FSR_BASE + FSR_HIT_DELTA
+	add hl, de
+	pop bc
+	ld [hl], b
+	inc hl
+	ld [hl], c
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	cp 255
+	jr nz, .plain_moment
+	xor a ; 256
+.plain_moment
+	ld h, b
+	ld l, c
+	call BossAI_FastMulSigned16By8 ; A:HL=signed 24-bit product
+	push hl
+	ld hl, FSR_BASE + FSR_MOMENT
+	add hl, de
+	ld [hli], a
+	pop bc
+	ld [hl], b
+	inc hl
+	ld [hl], c
+.plain_facts
+; the reply facts: gate and the own regime after the hit, flags per regime
+; and on a miss, mass
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	push hl
+	call .StateGated
+	add a
+	or 1
+	ld [wFastReplyPair + FRP_STATE], a
+	pop hl
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	inc hl
+	call .OutgoingRegimeIndex
+	ld [wFastReplyPair + FRP_REGIME], a
+	ld hl, FSR_BASE + FSR_CHECK_FLAGS
+	add hl, de
+	ld b, [hl]
+	dec hl ; FSR_CAN_ACT
+	ld a, [hl]
+	and a
+	jr z, .plain_flags_constant
+	inc hl
+	inc hl ; FSR_DAMAGE_FLAGS
+	ld a, [hl]
+	or b
+	ld b, a
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .plain_flags_constant
+	ld hl, FSR_BASE + FSR_RANGE
+	add hl, de
+	ld a, [hli]
+	ld [FSK_STATE], a
+	ld a, [hl]
+	ld [FSK_STATE + 1], a
+	ld hl, wFastReplyPair + FRP_FLAGS_HIT
+	call .RegimeFlags
+	ld [hl], b
+	jr .plain_mass
+.plain_flags_constant
+	ld hl, wFastReplyPair + FRP_FLAGS_HIT
+	ld a, b
+	rept 5
+	ld [hli], a
+	endr
+.plain_mass
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	call BossAI_FastNormalizedPair.Decode
+	ld a, b
+	ld [wFastReplyPair + FRP_Z], a
+	ld a, c
+	ld [wFastReplyPair + FRP_Z + 1], a
+; the standalone flags at the start state for both original events
+	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
+	add hl, de
+	ld a, [wFastStartGated]
+	and a
+	jr z, .plain_standalone_flags
+	xor a
+	ld [hli], a
+	ld [hl], a
+	scf
+	ret
+.plain_standalone_flags
+	push hl
+	ld a, [FSA_START_REGIME]
+	add LOW(wFastReplyPair + FRP_FLAGS_HIT)
+	ld l, a
+	adc HIGH(wFastReplyPair + FRP_FLAGS_HIT)
+	sub l
+	ld h, a
+	ld a, [hl]
+	pop hl
+	ld [hli], a
+	ld a, [wFastReplyPair + FRP_FLAGS_MISS]
+	ld [hl], a
+	scf
+	ret
+
+.FastPair
+; C=plan slot, A=order (0 own first, 1 reply first, 2 tie). Carry=handled
+; (both sides plain damage; the plan's sum and union updated); clear=not
+; eligible, nothing written. DE preserved.
+	ld [FPK_ORDER], a
+	ld a, c
+	ld [FPK_INDEX], a
+	call .PlanPairFacts
+	ld a, [hl]
+	and 1
+	ret z
+	ld a, [wFastReplyPair + FRP_STATE]
+	and 1
+	ret z
+	ld a, d
+	ld [FPK_CONTEXT], a
+	ld a, e
+	ld [FPK_CONTEXT + 1], a
+	push de
+	xor a
+	ld [FPK_K], a
+	ld [FPK_K + 1], a
+; no correction without both hit masses
+	ld a, [wFastReplyPair + FRP_Z]
+	ld hl, wFastReplyPair + FRP_Z + 1
+	or [hl]
+	jr z, .fast_pair_flags
+	call .PlanPairFacts
+	ld bc, FPP_Z
+	add hl, bc
+	ld a, [hli]
+	or [hl]
+	jr z, .fast_pair_flags
+	ld a, [FPK_ORDER]
+	cp 1
+	jr z, .fast_pair_reply_first
+	call .FastK1
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .fast_pair_k1
+	add hl, hl
+.fast_pair_k1
+	call BossAI_FastScalarPair.AddK
+	ld a, [FPK_ORDER]
+	and a
+	jr z, .fast_pair_flags
+.fast_pair_reply_first
+	call .FastK2
+	ld a, [FPK_ORDER]
+	cp 2
+	jr z, .fast_pair_k2
+	add hl, hl
+.fast_pair_k2
+	call BossAI_FastScalarPair.AddK
+.fast_pair_flags
+	call .FastFlags
+	push af
+	call .PlanPairFacts ; clobbers A
+	ld bc, FPP_UNION
+	add hl, bc
+	pop af
+	or [hl]
+	ld [hl], a
+	ld hl, FPK_K
+	ld a, [hli]
+	or [hl]
+	call nz, .FastAccumulate
+	pop de
+	scf
+	ret
+
+.FastK1
+; HL=K1: the reply's delta after the own hit minus its standalone delta.
+	call .PlanPairFacts
+	ld a, [hli]
+	and 2
+	jr nz, .k1_nothing ; an actor fainted: the reply never happens
+	ld b, [hl] ; the reply's regime after the own hit
+	ld hl, FSR_BASE + FSR_CAN_ACT
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .k1_nothing
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .k1_nothing
+	ld a, [FSA_START_REGIME]
+	cp b
+	jr nz, .k1_regime_changed
+	ld hl, 0 ; the same amount as standalone: K1=0
+	ret
+.k1_regime_changed
+	ld c, b
+	ld b, 0
+	ld hl, .RegimeBits
+	add hl, bc
+	ld a, [hl]
+	ld hl, FSR_BASE + FSR_SUPPORT
+	add hl, de
+	and [hl]
+	jr z, .k1_unsupported
+	ld a, c
+	add a
+	add FSR_RAW_MAX
+	ld l, a
+	ld h, 0
+	add hl, de
+	ld bc, FSR_BASE
+	add hl, bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld a, [FSA_START_HP]
+	ld [FSK_STATE], a
+	ld a, [FSA_START_HP + 1]
+	ld [FSK_STATE + 1], a
+	ld hl, FSK_STATE
+	call BossAI_FastLoseHP
+	jr .k1_phi
+.k1_unsupported
+	ld hl, FSR_BASE + FSR_POWER
+	add hl, de
+	ld a, [hl]
+	and a
+	jr z, .k1_nothing ; no amount: the reply changes nothing
+	xor a
+	ld [FSK_STATE], a
+	ld [FSK_STATE + 1], a ; the conservative KO
+.k1_phi
+	ld hl, FSK_STATE
+	call BossAI_FastScalarPair.OwnPhi ; BC=Phi(own HP after both hits); D clobbered
+	ld a, [FSA_START_PHI + 1]
+	ld l, a
+	ld a, c
+	sub l
+	ld l, a
+	ld a, [FSA_START_PHI]
+	ld h, a
+	ld a, b
+	sbc h
+	ld h, a
+	call BossAI_FastNormalizedPair.Context
+	jr .k1_minus_standalone
+.k1_nothing
+	ld hl, 0
+.k1_minus_standalone
+	push hl
+	ld hl, FSR_BASE + FSR_HIT_DELTA
+	add hl, de
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	pop hl
+	jp BossAI_FastScalarPair.SubtractWord
+
+.FastK2
+; HL=K2: the own delta after the reply hit minus its standalone delta.
+	ld a, [wFastReplyPair + FRP_STATE]
+	and 2
+	jr nz, .k2_nothing ; an actor fainted: the own plan never happens
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_CAN_ACT
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .k2_nothing
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld a, [hl]
+	and a
+	jr z, .k2_nothing
+	ld a, [wFastReplyPair + FRP_REGIME]
+	ld b, a
+	ld a, [wFastStartOutRegime]
+	cp b
+	jr nz, .k2_regime_changed
+	ld hl, 0
+	ret
+.k2_regime_changed
+	push bc
+	ld c, b
+	ld b, 0
+	ld hl, .RegimeBits
+	add hl, bc
+	ld a, [hl]
+	pop bc
+	push af
+	ld a, FSP_SUPPORT
+	call .PlanAddress
+	pop af
+	and [hl]
+	jr z, .k2_nothing ; an unsupported own amount changes nothing
+	ld a, b
+	add a
+	add FSP_RAW_MIN
+	call .PlanAddress
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	ld a, [FSA_PLAYER]
+	ld [FSK_STATE + 2], a
+	ld a, [FSA_PLAYER + 1]
+	ld [FSK_STATE + 3], a
+	ld hl, FSK_STATE + 2
+	call BossAI_FastLoseHP
+	ld hl, FSK_STATE + 2
+	call BossAI_FastScalarPair.PlayerPhi ; BC=Phi(player HP after both hits); D clobbered
+	ld a, [FSA_PLAYER + 5]
+	sub c
+	ld l, a
+	ld a, [FSA_PLAYER + 4]
+	sbc b
+	ld h, a ; the start player Phi minus the new
+	call BossAI_FastNormalizedPair.Context
+	jr .k2_minus_standalone
+.k2_nothing
+	ld hl, 0
+.k2_minus_standalone
+	push hl
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_HIT_DELTA
+	call .PlanAddress
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
+	pop hl
+	jp BossAI_FastScalarPair.SubtractWord
+
+.FastFlags
+; A=union of reached flags over every positive original-event path and every
+; modeled order (BossAI_FastScalarPair.Flags with the prepared flags).
+	xor a
+	ld [FPK_FLAGS], a
+	ld a, [FPK_ORDER]
+	cp 2
+	jr nz, .ff_orders
+	ld a, 1 << AV_UNKNOWN_ORDER_F
+	ld [FPK_FLAGS], a
+.ff_orders
+	xor a
+	ld [FPK_FIRST_EVENT], a
+.ff_own_event
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, FSP_ACCURACY
+	call .PlanAddress
+	ld b, [hl]
+	ld a, [FPK_FIRST_EVENT]
+	and a
+	ld a, b
+	jr nz, .ff_own_miss_mass
+	and a
+	jp z, .ff_next_own ; no hit mass
+	jr .ff_own_mass
+.ff_own_miss_mass
+	cp 255
+	jp z, .ff_next_own ; no miss mass
+.ff_own_mass
+	xor a
+	ld [FPK_SECOND_EVENT], a
+.ff_reply_event
+	ld hl, FSR_BASE + FSR_ACCURACY
+	add hl, de
+	ld b, [hl]
+	ld a, [FPK_SECOND_EVENT]
+	and a
+	ld a, b
+	jr nz, .ff_reply_miss_mass
+	and a
+	jp z, .ff_next_reply
+	jr .ff_reply_mass
+.ff_reply_miss_mass
+	cp 255
+	jp z, .ff_next_reply
+.ff_reply_mass
+	ld a, [FPK_ORDER]
+	cp 1
+	jr z, .ff_reply_first
+; own first: the own standalone flags, then the reply's at the own successor
+	ld a, [FPK_INDEX]
+	ld c, a
+	ld a, [FPK_FIRST_EVENT]
+	add FSP_STANDALONE_HIT_FLAGS
+	call .PlanAddress
+	ld a, [hl]
+	ld [FSK_UNION], a
+	ld a, [FPK_FIRST_EVENT]
+	and a
+	jr nz, .ff_own_first_start
+	call .PlanPairFacts
+	ld a, [hli]
+	and 2
+	jr nz, .ff_own_first_done ; fainted after the own hit
+	ld a, [hl] ; the reply's regime there
+	jr .ff_own_first_reply
+.ff_own_first_start
+	ld a, [wFastStartGated]
+	and a
+	jr nz, .ff_own_first_done
+	ld a, [FSA_START_REGIME]
+.ff_own_first_reply
+	ld c, a
+	ld a, [FPK_SECOND_EVENT]
+	and a
+	jr z, .ff_own_first_reply_hit
+	ld a, [wFastReplyPair + FRP_FLAGS_MISS]
+	jr .ff_own_first_union
+.ff_own_first_reply_hit
+	ld b, 0
+	ld hl, wFastReplyPair + FRP_FLAGS_HIT
+	add hl, bc
+	ld a, [hl]
+.ff_own_first_union
+	ld hl, FSK_UNION
+	or [hl]
+	ld [hl], a
+.ff_own_first_done
+	ld a, [FSK_UNION]
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
+	ld a, [FPK_ORDER]
+	and a
+	jr z, .ff_next_reply
+.ff_reply_first
+; the reply's standalone flags, then the own at the reply successor
+	ld a, [FPK_SECOND_EVENT]
+	add FSR_STANDALONE_HIT_FLAGS
+	ld l, a
+	ld h, 0
+	add hl, de
+	ld bc, FSR_BASE
+	add hl, bc
+	ld a, [hl]
+	ld [FSK_UNION], a
+	ld a, [FPK_SECOND_EVENT]
+	and a
+	jr nz, .ff_reply_first_start
+	ld a, [wFastReplyPair + FRP_STATE]
+	and 2
+	jr nz, .ff_reply_first_done ; fainted after the reply hit
+	ld a, [wFastReplyPair + FRP_REGIME]
+	jr .ff_reply_first_own
+.ff_reply_first_start
+	ld a, [wFastStartGated]
+	and a
+	jr nz, .ff_reply_first_done
+	ld a, [wFastStartOutRegime]
+.ff_reply_first_own
+	ld c, a
+	ld a, [FPK_FIRST_EVENT]
+	and a
+	jr z, .ff_reply_first_own_hit
+	call .PlanPairFacts
+	ld bc, FPP_FLAGS_MISS
+	add hl, bc
+	ld a, [hl]
+	jr .ff_reply_first_union
+.ff_reply_first_own_hit
+	call .PlanPairFacts
+	ld a, c
+	add FPP_FLAGS_HIT
+	ld c, a
+	ld b, 0
+	add hl, bc
+	ld a, [hl]
+.ff_reply_first_union
+	ld hl, FSK_UNION
+	or [hl]
+	ld [hl], a
+.ff_reply_first_done
+	ld a, [FSK_UNION]
+	ld hl, FPK_FLAGS
+	or [hl]
+	ld [hl], a
+.ff_next_reply
+	ld hl, FPK_SECOND_EVENT
+	inc [hl]
+	ld a, [hl]
+	cp 2
+	jp c, .ff_reply_event
+.ff_next_own
+	ld hl, FPK_FIRST_EVENT
+	inc [hl]
+	ld a, [hl]
+	cp 2
+	jp c, .ff_own_event
+	ld a, [FPK_FLAGS]
+	ret
+
+.FastAccumulate
+; The plan's sum += weight*z_reply*K (signed 40-bit).
+	ld a, [FPK_K]
+	ld h, a
+	ld a, [FPK_K + 1]
+	ld l, a
+	ld a, [wFastReplyPair + FRP_Z + 1] ; 0 means 256
+	call BossAI_FastMulSigned16By8 ; A:HL=signed 24-bit product
+	ld [FSC_TEMP + 2], a
+	add a
+	sbc a
+	ld [FSC_TEMP], a
+	ld [FSC_TEMP + 1], a
+	ld a, h
+	ld [FSC_TEMP + 3], a
+	ld a, l
+	ld [FSC_TEMP + 4], a
+	ad_address FS_REPLY_W
+	ld a, [hl]
+	cp JC_REVEALED_WEIGHT
+	jr nz, .fast_accumulate_add
+	ld hl, FSC_TEMP
+	ld b, 3
+	call .ShiftLeft
+.fast_accumulate_add
+	call .PlanPairFacts
+	ld bc, FPP_ACC + 4
+	add hl, bc
+	ld bc, FSC_TEMP + 4
+	push de
+	ld d, 5
+	and a
+.fast_accumulate_byte
+	ld a, [bc]
+	adc [hl]
+	ld [hl], a
+	dec hl
+	dec bc
+	dec d
+	jr nz, .fast_accumulate_byte
+	pop de
+	ret
+
+.CommitPairs
+; T[plan]+=z_own*sum and flags|=union for every plain damage plan of this
+; defender.
+	ld c, 0
+.commit_pair
+	push bc
+	call .PlanIndex
+	cp $ff
+	jr z, .commit_pair_next
+	ld [FSK_STATE], a ; the record index
+	ld a, c
+	ld [FPK_INDEX], a
+	call .PlanPairFacts
+	ld a, [hli]
+	and 1
+	jr z, .commit_pair_next
+	push hl
+	ld bc, FPP_Z - 1
+	add hl, bc
+	ld a, [hli]
+	ld [FS_MULTIPLIER + 1], a
+	ld a, [hl]
+	ld [FS_MULTIPLIER + 2], a
+	xor a
+	ld [FS_MULTIPLIER], a
+	pop hl
+	ld bc, FPP_ACC - 1
+	add hl, bc
+	push de
+	ld de, FS_MULTIPLICAND
+	ld b, 5
+.commit_pair_copy
+	ld a, [hli]
+	ld [de], a
+	inc de
+	dec b
+	jr nz, .commit_pair_copy
+	pop de
+	call BossAI_FastMultiply40By24
+	ld a, [FSK_STATE]
+	ld hl, FS_PRODUCT
+	call .AddToRecord
+	call .PlanPairFacts
+	ld bc, FPP_UNION
+	add hl, bc
+	ld b, [hl]
+	ld a, [FSK_STATE]
+	call .OrRecordFlags
+.commit_pair_next
+	pop bc
+	inc c
+	ld a, c
+	cp 4
+	jr c, .commit_pair
 	ret
