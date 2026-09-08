@@ -585,6 +585,54 @@ claim is made.
   now native except the designed multihit fallback; no producer runs during
   a native decision. Target 8,388,608, not met.
 
+#### Speed pass (2026-09-07 night, continued 2026-09-08)
+
+Commits, each exact on the frozen oracle (88 vectors, 29 native-only), the
+touched unit fixtures and the 843-fixture suite before it was made; the game
+ROM's bytes unchanged throughout (SHA1
+`85a2fe838a28f23b198845e63876a637580e91a9`). Whole-decision numbers are
+`fast_ordinary_profile.py` (24 ordinary fixtures in two scans):
+
+| Commit | Change | Broad benchmark | Average decision |
+| --- | --- | ---: | ---: |
+| `f99cf46f` (start) | | 36,186,008 | 2,906,745 |
+| `b5e52223` | Compile micro-optimisations: priorities in the effect class table (bits 2..3) and its bit 4 gating the effect-support special cases, power/5 as floor(205p/1024), H=2 ratios as shifts, eight-trial 16-bit division for a zero high byte | 34,620,404 | 2,835,019 |
+| `35c36038` | `BossAI_FastPrepareReplyFacts`, the type chart mirror and its index in the cold "Boss AI Fast Reply Facts" section behind farcall (`BossAI_FastTruncateStatsFar` takes the pointer in BC; the hot compiler keeps `BossAI_FastTypeContribution`); the per-reply own-variant call skipped without boost plans | 34,511,344 | 2,830,517 |
+| `4133fdbe` | Fast pairs: per-plan facts (`.PreparePlanPairs`: the reply's regime after the own hit, gate, own flags per regime and on a miss, z_own) and per-reply facts (`.PlainStandalone`, which also replaces the scalar standalone for plain damage replies) make K1/K2 two compares unless a hit changed the other side's amount regime or fainted an actor; weight*z_reply*K accumulates per plan in WRAMX bank 1 ("Boss AI Fast Sweep State", reference build only) and z_own multiplies once at `.CommitPairs` | 31,074,396 | 2,596,931 |
+| `0b91d7d8` | Own recovery plans on the fast pairs (heal from the HP the reply left; Rest transition below the maximum); bench defenders write only the two standalone flag bytes; `.ReplyMass` fills a page-aligned per-move weight table the sweeps read; arithmetic `.PlanAddress`; the actor import and the recovery quota in cold sections | 27,696,268 | 2,388,164 |
+
+The bench reply cache in WRAMX bank 2 (the brief's step 1) was built,
+verified byte-exact through a fill/use fixture, and reverted: after the
+compile micro-optimisations the defender-independent facts cost about 1.2k
+cycles per compile, so the cache saved 0.27M on the broad case for 650 bytes
+of hot bank and an interrupt-atomic bank window. A bench compile pays for its
+amounts, not its facts.
+
+Per-pair differential (`.local/ai-two-second/wt_debug_fastpair.py <case>`):
+every fast pair of the broad case replayed through `BossAI_FastScalarPair`,
+0 of 636 differ. It found the two defects of the fast-pair commit before the
+oracle did: `.PlanPairFacts` clobbering A before the union OR (the flags byte
+became the WRAM page), and per-reply facts left over from the previous plain
+reply on multi-hit, recoil, drain and recovery replies (the eligibility byte
+is now cleared for every reply before its standalone).
+
+Attribution of the broad case after `0b91d7d8` (27.64M): native reply compile
+11.33M (1,524 compiles, 7.4k each), sequential family standalone 2.41M (146
+replies, 16.5k each), factored family pairs 1.81M (88, 20.5k each), plain
+standalone 1.50M (784), reply/own preparation `PreparePublicAction` 1.07M
+(10 calls), fast pair flags 0.98M (520 pairs, 1.9k each), pair dispatch and
+order 0.94M, actor import 0.64M (6, the player table rebuilt each time),
+K2 for recovery plans 0.60M, incoming accumulation and flags 0.90M,
+identity classification/standalone/pairs 1.30M. Two ordinary fixtures remain
+over the 8,388,608 budget: `joint_broad_prior_mass` and
+`joint_speed_tie_transformed` (8.77M after `0b91d7d8`); 22 of 24 are under.
+**The two-second target is not met.** What the numbers say: after the pairs,
+the per-reply floor is the compile's amount pipeline (about 3.9k cycles per
+amount) plus the record clear and header (about 1.5k), and 1,524 compiles at
+that floor alone exceed the budget; reaching it needs the compile's per-reply
+cost cut roughly threefold, which is grouped amounts (Milestone 4) rather
+than more trimming.
+
 The [replacement profile](fast_replacement_profile.json) was refreshed on the
 restructured bench loop: the largest native sample is 623,988 cycles
 (`replacement_hp65535_spikes2`, oracle 925,704); among maxima <=999 the largest
@@ -774,33 +822,33 @@ one hot bank; `check_cross_bank_call.py` now audits the reference build too.
 ## Remaining implementation
 
 Ordinary orchestration, switch/wait handling with an explicit post-entry
-baseline, the unary fallback, lazy reply regimes, the scalar pair/standalone
-paths, the native reply compiler, the native multihit/Super Fang/False
-Swipe/Selfdestruct families and both defense-boost directions are implemented
-and match the frozen reference on every joint fixture; the only remaining
-fallback route is an own boost against a multihit, False Swipe or Selfdestruct
-reply. Still remaining, in the order the profile suggests (broad benchmark
-36.19M against 8,388,608; every remaining item is per (defender, reply) work,
-about 24k cycles each today against a budget of about 5k):
+baseline, the unary fallback, lazy reply regimes, the fast pairs and plain
+standalone, the native reply compiler, the native families and both
+defense-boost directions are implemented and match the frozen reference on
+every joint fixture; the only remaining fallback route is an own boost
+against a multihit, False Swipe or Selfdestruct reply. The broad benchmark is
+above 8,388,608 (see the speed pass above for the current number). Still
+remaining, in the order the attribution suggests:
 
-1. **Per-reply defender-independent compile facts** cached in WRAMX bank 2 for
-   the five bench defenders (effect support, accuracy before evasion and
-   Bright Powder, can-act, priority, recovery quota, uncertainty flags, hits:
-   about 14 bytes per reply), so bench compiles do only the amount, item and
-   typing-dependent parts. The compile is 13.9M of 36.2M at 8.4k per reply.
-2. **A lighter bench standalone** (moment and flags without the record) and
-   grouping identical records for the active defender's pairs (249 replies
-   collapse to about 140 distinct records).
+1. **The compile's amounts** (11.3M): a memo of the amount at a regime keyed
+   by (power/5, type, category, amount effect class, postrolls, regime bits)
+   in WRAMX bank 2 (about 26% of the damaging moves share a (power, type)
+   pair; expected about 1.5M), the chart probe from the two row codes instead
+   of a scaled call (0.2M), the record clear and header writes trimmed for
+   the selector's own use (0.2M), the 24-bit divisions of `.Formula` (0.3M).
+   Beyond that only grouped base arithmetic by category and power group
+   (Milestone 4) moves the compile below a few thousand cycles per reply.
+2. **Family replies**: a fast standalone and fast pairs for drain/recoil and
+   multi-hit replies (the sequential executor costs 16.5k per standalone and
+   20.5k per pair; 2.4M and 1.8M on the broad case).
 3. **Owned preparation**: `BossAI_FastPrepareOwnedCandidate` runs
-   `PreparePublicAction` once per plan at 110k-130k cycles each, four times
-   per decision. On small decisions it is now the largest phase
-   (`joint_defense_transitions`: 725k of 1.54M). One preparation per defender
-   plus a cheaper per-move outgoing build is the fix noted in
-   `cleanup_notes.md`.
-4. **Cheaper per-reply scalar work**: the scalar pair (8.3k per pair) and
-   standalone (5.0k per reply) still recompute plan addresses and gate reads a
-   per-defender cache could hold; move the five-byte accumulations off
-   `FSC_TEMP`; hoist the own-variant mask test out of the per-reply call.
+   `PreparePublicAction` once per plan (4 x 107k), and the actor import
+   rebuilds the player HP table for every defender (6 x 105k): one
+   preparation per defender and a player table built once.
+4. **Per-reply glue**: the flags pass (hoist the event masses out of its
+   loop), `.PrepareReply`'s constant marshaling, the identity
+   classification/standalone/pair trio, the four-byte incoming accumulation
+   on `FSC_TEMP`.
 5. Adversarial-domain fixtures (maximum candidates and replies, both sides
    uncertain, Fire/Ice thresholds, complex after-effects), then the isolated
    and integrated timing gates and the production ABI/interrupt ownership work.

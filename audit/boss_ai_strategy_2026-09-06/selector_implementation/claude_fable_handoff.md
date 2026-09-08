@@ -445,3 +445,62 @@ Facts a successor needs:
   stopped. Background runs did finish this session when given no timeout and
   a log file; the harness reopens the ROM per case, so never rebuild while a
   run is in flight.
+
+## Speed pass (2026-09-07 night to 2026-09-08)
+
+Work happened in the worktree `.claude/worktrees/ecstatic-lewin-9d3386`
+(branch `claude/ecstatic-lewin-9d3386`, with copies of `rgbds-1.0.1/` and
+`.local/ai-two-second/` since both are untracked), fast-forwarded into
+`master` after each green commit: `b5e52223`, `35c36038`, `4133fdbe`,
+`0b91d7d8`. The numbers per commit are in status.md ("Speed pass"). Broad
+benchmark 36,186,008 -> 27,696,268 at `0b91d7d8`; average 2,906,745 ->
+2,388,164; target 8,388,608 not met (two fixtures over: the broad case and
+`joint_speed_tie_transformed` at 8.77M).
+
+- Fast pairs (`fast_selector.asm`, after `.SignExtend24`): `.PreparePlanPairs`
+  (once per active defender, after `.ReplyRegimes`), `.PlainStandalone` (plain
+  damage replies, active and bench), `.FastPair`/`.FastK1`/`.FastK2`/
+  `.FastFlags`/`.FastAccumulate`, `.CommitPairs` (after `.CommitIncoming`).
+  State in "Boss AI Fast Sweep State" (WRAMX bank 1, reference build only,
+  declared in fast_selector.asm): `wFastPlanPairs` (4 x FPP_SIZE),
+  `wFastReplyPair`, `wFastStartOutRegime`, `wFastStartGated`, plus the
+  page-aligned `wFastReplyWeights`. `.ReplyRegimes` sets the start facts for
+  every defender; `.ReplyStandalone` clears `wFastReplyPair+FRP_STATE` first
+  so only `.PlainStandalone` marks a reply eligible.
+- The identities the fast pairs rely on: for a plain damage own plan the own
+  HP after the own hit is the start HP, so K1 is zero unless the reply's
+  regime after the own hit differs from the start regime (or the hit fainted
+  someone); for a plain damage reply likewise for K2 with the outgoing
+  regime. Recovery plans compute from the healed HP (`.OwnHPAfterOwnHit`,
+  `.OwnPhiAfterOwnHit` = start Phi + own delta) and heal from the HP the
+  reply left (zero when it is the start HP). Recovery replies (7 moves) stay
+  on `BossAI_FastScalarPair`.
+- The per-pair differential `.local/ai-two-second/wt_debug_fastpair.py
+  <case>` snapshots SRAM, the context and the sweep state at every `.FastPair`
+  call and replays each through the old scalar pair and the fast pair,
+  comparing K and the flags. Run it before the oracle after any pair change.
+- Cold sections added: "Boss AI Fast Reply Facts" (facts preparation, chart
+  mirror and index, `BossAI_FastTruncateStatsFar`), "Boss AI Fast Actors"
+  (`BossAI_FastImportActorHP`, reaching the potential through
+  `BossAI_FastOwnPotentialFar`/`BossAI_FastPlayerPotentialFar`, BC in and
+  out), "Boss AI Fast Recovery Quota". Hot bank after `0b91d7d8`: $3f23 of
+  $4000 (221 bytes free); with the level-term/plan-header commit $3f6a
+  (150 free). Space for anything larger comes from moving
+  `BossAI_FastBuildOwnedStandalone` or the executors cold with thunks.
+- Trap: a routine moved cold can still read data tables in the hot bank; the
+  cross-bank audit checks `call`/`jp` only. The chart mirror had to move with
+  `.BuildChart`.
+- Trap: the compile's regime loop uses `FSM_TEMP+3` as its mask counter, so
+  the priority is not there after the amounts (read it from the record).
+- Level-term/plan-header commit (`.local/ai-two-second/wt_patch_f.py`:
+  `wFastLevelTerm` = floor(2L/5)+2 once per defender in
+  `BossAI_FastPrepareReplyFacts`, `.Passives` gated by the packed
+  contribution bytes, FPP_SIZE 32 with the plan header read through
+  `.PlanPairByte` by `.PlanPair`, `.OrderDescriptor` and `.FastFlags`):
+  built and exact (oracle 88, per-pair differential 0 of 636) but measured slower, broad 27,696,268 -> 27,992,100 and `joint_speed_tie_transformed` 8.77M -> 9.21M, because `.PlanPairByte` (push/pop plus the facts address) costs more than the arithmetic `.PlanAddress` it replaced; reverted, not on master. Worth retrying with only the level term and the passive gating (the first two edits of the patch), which should save about 0.4M.
+- Profiling: `python -m tools.boss_ai_fixtures.fast_ordinary_profile` (whole
+  decisions; PHASES include the fast-pair labels) and `PYTHONPATH=. python
+  .local/ai-two-second/phase_profile.py <case> <labels>` (entry-order
+  attribution). Launch long runs one per background command; two profiles
+  started from one shell with `&` shared a log file and ran concurrently for
+  fifteen minutes.

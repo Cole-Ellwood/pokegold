@@ -140,3 +140,25 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
 - `.OwnVariants` and `BossAI_FastCompileReplyVariants` use `FSM_TEMP+3/+4` as
   scratch outside a compile; that is safe today only because no compile is in
   flight at either point. A dedicated byte would make the lifetime explicit.
+
+## Speed pass (Claude-authored, 2026-09-07 night to 2026-09-08)
+
+- `BossAI_FastScalarPair` (1,451 bytes) now serves only recovery replies and
+  the unit fixture; its standalone (`BossAI_FastScalarReplyStandalone`) only
+  recovery replies too. Once family replies get fast paths, both can become
+  a small recovery-reply pair or move cold with thunks for their hot helpers.
+- `.IncomingRegimeIndex` duplicates `.ReplyRegimeBit`'s arithmetic and
+  `.OutgoingRegimeIndex` duplicates `BossAI_FastScalarPair.OutgoingRegime`;
+  one index routine each with the bit table applied by the caller would
+  remove both copies.
+- `.PlanPairFacts` clobbers A; every caller that holds a value in A must
+  save it (the union OR did not, once). A version that preserves A costs a
+  push/pop and would remove the trap.
+- `.IdentityPair`, `.BoostPair` and `.OwnBoostPair` still read the plan
+  record through `.PlanAddress`; the per-plan facts hold the plan header.
+- The fast-pair flags pass re-reads the own and reply accuracies per event
+  combination; hoisting the two mass tests out of the loop halves its cost.
+- `fast_ordinary_profile.py` attributes by entry order; a label that is not
+  in PHASES falls into the previous phase, which is why the compile phase
+  absorbed `.PlainStandalone` until the labels were added. Add new selector
+  labels to PHASES with the code.
