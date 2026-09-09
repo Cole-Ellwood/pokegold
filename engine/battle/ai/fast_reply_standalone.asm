@@ -57,7 +57,28 @@ BossAI_FastBuildReplyStandalone::
 	inc de
 	dec b
 	jr nz, .copy_hp
+; a successor equal to the start state (a miss, or a hit that cannot land)
+; leaves both potentials where the import put them: delta zero
+	call BossAI_FastExecuteReplyPlan.Continuation
+	ld a, [FSA_START_HP]
+	cp [hl]
+	jr nz, .delta
+	inc hl
+	ld a, [FSA_START_HP + 1]
+	cp [hl]
+	jr nz, .delta
+	inc hl
+	ld a, [FSA_PLAYER]
+	cp [hl]
+	jr nz, .delta
+	inc hl
+	ld a, [FSA_PLAYER + 1]
+	cp [hl]
+	ld bc, 0
+	jr z, .delta_ready
+.delta
 	call BossAI_FastBuildOwnedStandalone.Delta
+.delta_ready
 	push bc
 	ld a, [FSO_EVENT]
 	add a

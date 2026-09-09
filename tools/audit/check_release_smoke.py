@@ -1540,6 +1540,7 @@ def main() -> int:
         check_farcall_hl_clobber(),
         check_farcall_a_clobber(),
         check_cross_bank_call(),
+        check_fast_contact_flags(),
         check_ld_a_zero(),
         check_cp_zero(),
         check_grass_regrowth_rom(),
@@ -1610,6 +1611,12 @@ def check_cross_bank_call() -> bool:
     # boss AI behavior does not depend on the pre-f2e18554 broken
     # cross-bank calls. This is the May 2026 type-immunity softlock class.
     return _run_subaudit("check_cross_bank_call.py", "cross-bank call")
+
+
+def check_fast_contact_flags() -> bool:
+    # The reference build's moves mirror reads contact flags from a generated
+    # include; this fails when data/moves/contact_flags.asm changed without it.
+    return _run_subaudit("check_fast_contact_flags.py", "fast contact flags")
 
 
 def check_grass_regrowth_rom() -> bool:

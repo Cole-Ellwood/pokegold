@@ -4,11 +4,18 @@
 PUSHS
 SECTION "Boss AI Fast Actors", ROMX
 BossAI_FastImportActorHP::
-; C=own weight128/192, DE=owned AD context, SRAM0 open. Context/DE/SP preserved.
-; Validates both HP/max pairs before writing. Carry=success; rejects malformed
-; HP, zero maxima, wrong direction or weight without writes. Writes actor80,
-; the two HP-table reservations and table-builder arithmetic scratch only.
+; C=own weight128/192, plus bit0 when the player HP table built by an earlier
+; import may be kept if its maximum is unchanged (the caller vouches that
+; nothing wrote the SRAM reservation since). DE=owned AD context, SRAM0 open.
+; Context/DE/SP preserved. Validates both HP/max pairs before writing.
+; Carry=success; rejects malformed HP, zero maxima, wrong direction or weight
+; without writes. Writes actor80, the two HP-table reservations,
+; table-builder arithmetic scratch and wFastPlayerTable only.
 	ld a, c
+	and 1
+	ld [wFastPlayerTable + 3], a
+	xor c
+	ld c, a
 	cp 128
 	jr z, .weight_ok
 	cp 192
@@ -85,7 +92,30 @@ BossAI_FastImportActorHP::
 	ld a, [hl]
 	ld [FSA_PLAYER + 3], a
 	ld c, a
+; the player table depends on the maximum alone
+	ld hl, wFastPlayerTable
+	ld a, [hli]
+	cp b
+	jr nz, .build_player_table
+	ld a, [hli]
+	cp c
+	jr nz, .build_player_table
+	inc hl
+	ld a, [hld] ; the keep bit
+	and a
+	jr z, .build_player_table
+	ld a, [hl] ; the mode recorded with the table
+	jr .player_table_ready
+.build_player_table
 	farcall BossAI_FastBuildPlayerHPTableFar
+	ld [wFastPlayerTable + 2], a
+	ld hl, wFastPlayerTable
+	ld a, [FSA_PLAYER + 2]
+	ld [hli], a
+	ld a, [FSA_PLAYER + 3]
+	ld [hl], a
+	ld a, [wFastPlayerTable + 2]
+.player_table_ready
 	ld [FSA_PLAYER + 37], a
 	ld a, [FSA_PLAYER]
 	ld b, a

@@ -53,6 +53,7 @@ wFastPlanPairs:: ds 4 * FPP_SIZE
 wFastReplyPair:: ds FRP_SIZE
 wFastStartOutRegime:: db ; the own attack regime at the start state
 wFastStartGated:: db ; 1 when the start state has a fainted actor
+wFastPlayerTable:: ds 4 ; the player HP table last built: maximum (two bytes), mode, then the keep bit of the current import
 SECTION "Boss AI Fast Reply Weights", WRAMX, BANK[1], ALIGN[8]
 wFastReplyWeights:: ds 256 ; per move: 0 impossible, else its reply weight (set by .ReplyMass)
 POPS
@@ -862,6 +863,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [hl], 0
 	farcall BossAI_FastPrepareReplacementFacts
 	ld a, [FSA_WEIGHT]
+	or 1 ; keep the player table: the active import built it this decision and only the builder writes that reservation
 	ld c, a
 	farcall BossAI_FastImportActorHP
 	ret nc

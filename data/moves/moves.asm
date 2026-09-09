@@ -2,15 +2,19 @@
 
 IF DEF(BOSSAI_EMIT_LOCAL_MOVES)
 ; In-bank mirror for the offline AI reference: only the four bytes its
-; compiler reads (effect, power, type, accuracy), four per move.
+; compiler reads (effect, power, type, accuracy), four per move. Bit 7 of the
+; type byte is the move's contact flag (fast_contact_N from the generated
+; engine/battle/ai/fast_contact_flags.inc, included first).
 IF DEF(move)
 PURGE move
 ENDC
+DEF fast_move_index = 1
 MACRO move
 	db \2 ; effect
 	db \3 ; power
-	db \4 ; type
+	db \4 | (fast_contact_{d:fast_move_index} << 7) ; type, contact in bit 7
 	db \5 percent ; accuracy
+	REDEF fast_move_index = fast_move_index + 1
 ENDM
 BossAI_FastMoves:
 	table_width 4

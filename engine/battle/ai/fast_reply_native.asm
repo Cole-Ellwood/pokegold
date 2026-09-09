@@ -76,7 +76,6 @@ DEF FSM_MIN_HITS EQU $a568
 DEF FSM_MAX_HITS EQU $a569
 DEF FSM_FLAGS EQU $a56a ; AD_FLAGS for the current regime
 DEF FSM_MATCHUP EQU $a56b
-DEF FSM_AMOUNT EQU $a56c ; two bytes, working amount
 DEF FSM_MIN EQU $a56e ; two bytes
 DEF FSM_CONTACT EQU $a570
 DEF FSM_MOVE EQU $a571
@@ -87,9 +86,12 @@ DEF FSM_NEGATION EQU $a575
 DEF FSM_CHECK_FLAGS EQU $a576
 DEF FSM_CAN_ACT EQU $a577
 ASSERT FSM_CAN_ACT < $a578
-; The header has consumed the check-flags byte before the amounts compile;
-; the regime loop reuses it.
+; The header has consumed the hit counts, negation, check-flags and can-act
+; bytes before the amounts compile; the damage path reuses them.
+DEF FSM_PASSIVE EQU FSM_MIN_HITS ; 0 when no type passive can apply to this reply
+DEF FSM_CHART_ROWS EQU FSM_NEGATION ; the defender's chart byte for the reply's type (0: no rows)
 DEF FSM_REGIME_REPEAT EQU FSM_CHECK_FLAGS ; 1 when the remaining masked regimes re-store the first regime's amount
+DEF FSM_CHART_MAJESTY EQU FSM_CAN_ACT ; 16 when a no-effect row halves (Dragon attacker, ordinary effect), else 0
 DEF FSM_TEMP EQU $a5d8 ; eight bytes
 DEF FSM_OPCODE EQU FSM_TEMP + 5
 DEF FSM_DELTAS EQU FSM_TEMP + 6 ; store per-regime max-min deltas
@@ -97,13 +99,14 @@ DEF FSM_HALVE EQU FSM_TEMP + 7 ; Selfdestruct: halved truncated defense
 DEF FSM_VARIANT EQU FSM_TEMP + 4 ; own defensive variant slot+1 while an amount compiles against it, 0 none (the header's uncertainty temporary is dead by then)
 ASSERT FSM_TEMP + 8 <= FSN
 
-; In-bank mirrors. Bytes are the authoritative data files' bytes.
+; In-bank mirrors. Bytes are the authoritative data files' bytes; the generated
+; fast_contact_flags.inc (scripts/generate_fast_contact_flags.py, audited by
+; tools/audit/check_fast_contact_flags.py) defines fast_contact_N for the moves
+; mirror, which folds each into bit 7 of its type byte.
+INCLUDE "engine/battle/ai/fast_contact_flags.inc"
 DEF BOSSAI_EMIT_LOCAL_MOVES EQU 1
 INCLUDE "data/moves/moves.asm"
 PURGE BOSSAI_EMIT_LOCAL_MOVES
-DEF BOSSAI_EMIT_LOCAL_CONTACT_FLAGS EQU 1
-INCLUDE "data/moves/contact_flags.asm"
-PURGE BOSSAI_EMIT_LOCAL_CONTACT_FLAGS
 DEF BOSSAI_EMIT_LOCAL_ACCURACY EQU 1
 INCLUDE "data/battle/accuracy_multipliers.asm"
 PURGE BOSSAI_EMIT_LOCAL_ACCURACY
@@ -242,10 +245,16 @@ BossAI_FastCompileReplyNative::
 	ld [FSM_MOVE], a
 	ld a, c
 	ld [FSM_MASK], a
-	ld hl, FSR_BASE
+; clear what the header (bytes 0..6) and the hit counts (43..44) do not write
+	ld hl, FSR_BASE + FSR_HIT_FLAGS
 	add hl, de
 	xor a
-	rept FSR_SIZE
+	rept FSR_MIN_HITS - FSR_HIT_FLAGS
+	ld [hli], a
+	endr
+	inc hl
+	inc hl
+	rept FSR_SIZE - FSR_STEEL
 	ld [hli], a
 	endr
 ; move facts from the mirror
@@ -262,17 +271,15 @@ BossAI_FastCompileReplyNative::
 	ld a, [hli]
 	ld [FSM_POWER], a
 	ld a, [hli]
+	ld b, a
+	and $7f
 	ld [FSM_TYPE], a
+	ld a, b
+	rlca
+	and 1
+	ld [FSM_CONTACT], a ; bit 7 of the mirror's type byte
 	ld a, [hl]
 	ld [FSM_ACCURACY], a
-	ld a, [FSM_MOVE]
-	dec a
-	ld c, a
-	ld b, 0
-	ld hl, BossAI_FastMoveContactFlags
-	add hl, bc
-	ld a, [hl]
-	ld [FSM_CONTACT], a
 ; category: type bucket, with Outrage's public override
 	ld a, [FSM_TYPE]
 	cp SPECIAL
@@ -513,6 +520,89 @@ BossAI_FastCompileReplyNative::
 	srl a
 	srl a ; power/5, the base cache index
 	ld [FSM_TEMP + 2], a
+; Facts every amount of this reply shares, computed once when an amount can
+; compile at all: the defender's chart rows for the reply's type, whether a
+; no-effect row halves (Dragon attacker, ordinary effect), and whether any
+; type passive can apply.
+	ld a, [FSM_UNSUPPORTED]
+	and a
+	jp nz, .amount_facts_ready
+	ld a, [FSM_POWER]
+	and a
+	jp z, .amount_facts_ready
+	ld a, [FSM_STRUGGLE]
+	and a
+	jr nz, .chart_rows_none
+	ld a, [FSM_TYPE]
+	cp TYPES_END
+	jr nc, .chart_rows_none
+	cp UNUSED_TYPES_END
+	jr c, .chart_row_index
+	sub UNUSED_TYPES_END - UNUSED_TYPES
+.chart_row_index
+	ld c, a
+	ld b, 0
+	ld hl, FSN_CHART
+	add hl, bc
+	ld a, [hl]
+	ld [FSM_CHART_ROWS], a
+	xor a
+	ld [FSM_CHART_MAJESTY], a
+	ld a, [FSN_MAJESTY]
+	and a
+	jr z, .passive_rule
+	ld a, [FSM_EFFECT]
+	cp EFFECT_STATIC_DAMAGE
+	jr z, .passive_rule
+	cp EFFECT_LEVEL_DAMAGE
+	jr z, .passive_rule
+	cp EFFECT_SUPER_FANG
+	jr z, .passive_rule
+	ld a, 16
+	ld [FSM_CHART_MAJESTY], a
+	jr .passive_rule
+.chart_rows_none
+	xor a
+	ld [FSM_CHART_ROWS], a
+	ld [FSM_CHART_MAJESTY], a
+.passive_rule
+; .Passives in one test: own contributions (Dragon/Ground by matchup, Bug/Water
+; by category) and own Ice (defender high) may always apply; the player's
+; Ghost needs a statused defender, Normal a Normal reply, Fire a Fire reply
+	ld a, [FSN_PASSIVES]
+	and a
+	jr nz, .passive_possible
+	ld a, [FSN_PASSIVES + 1]
+	ld l, a
+	and %11
+	jr nz, .passive_possible
+	ld a, [FSN_FLAGS]
+	bit AD_DEFENDER_STATUS_F, a
+	jr z, .passive_no_ghost
+	ld a, l
+	and %11000000
+	jr nz, .passive_possible
+.passive_no_ghost
+	ld a, [FSM_TYPE]
+	cp NORMAL
+	jr nz, .passive_not_normal
+	ld a, l
+	and %00001100
+	jr .passive_flag
+.passive_not_normal
+	cp FIRE
+	jr nz, .passive_none
+	ld a, l
+	and %00110000
+	jr .passive_flag
+.passive_none
+	xor a
+	jr .passive_flag
+.passive_possible
+	ld a, 1
+.passive_flag
+	ld [FSM_PASSIVE], a
+.amount_facts_ready
 	xor a
 	ld [FSM_REGIME], a
 	ld a, [FSM_MASK]
@@ -580,6 +670,11 @@ BossAI_FastCompileReplyNative::
 	db 1, 2, 4, 8
 .MinDeltaOffsets
 	db FSR_MIN_DELTA0, FSR_MIN_DELTA1, FSR_MIN_DELTA2, FSR_MIN_DELTA3
+.MatchupByRows
+; EFFECTIVE through .chart_apply for both row codes (low field first): rows
+; 0..15, then the same with a no-effect row halving (FSM_CHART_MAJESTY).
+	db 10, 20, 5, 0, 20, 40, 10, 0, 5, 10, 2, 0, 0, 0, 0, 0
+	db 10, 20, 5, 5, 20, 40, 10, 10, 5, 10, 2, 2, 5, 10, 2, 2
 
 .EffectSupport
 ; BuildPublicDamageContext.EffectSupport for the incoming direction.
@@ -1096,12 +1191,18 @@ BossAI_FastCompileReplyNative::
 .unknown
 	ret ; raw stays zero; no range/support bits
 .known_power
-	ld bc, EFFECTIVE
-	call .Chart
-	ld a, c
+	ld a, [FSM_CHART_ROWS]
+	and $0f
+	ld hl, FSM_CHART_MAJESTY
+	or [hl]
+	ld c, a
+	ld b, 0
+	ld hl, .MatchupByRows
+	add hl, bc
+	ld a, [hl]
 	ld [FSM_MATCHUP], a
-	ld a, b
-	or c
+	ld c, a ; B=0: the probe's amount, zero when immune
+	and a
 	jp z, .fixed ; immune: supported zero
 	ld a, [FSN_FLAGS]
 	bit AD_BALLOON_F, a
@@ -1138,25 +1239,26 @@ BossAI_FastCompileReplyNative::
 .variation
 ; minimum endpoint: roll 217/255 then the post-roll multiplier; the maximum
 ; keeps the pre-roll amount then the post-roll multiplier
-	ld a, b
-	ld [FSM_AMOUNT], a
-	ld a, c
-	ld [FSM_AMOUNT + 1], a
+	push bc
 	ld a, 217
 	ld h, 255
 	call .Scale
 	ld a, [FSM_POSTROLL]
+	dec a
+	jr z, .min_rolled
+	inc a
 	ld h, 1
 	call .Scale
+.min_rolled
 	ld a, b
 	ld [FSM_MIN], a
 	ld a, c
 	ld [FSM_MIN + 1], a
-	ld a, [FSM_AMOUNT]
-	ld b, a
-	ld a, [FSM_AMOUNT + 1]
-	ld c, a
+	pop bc
 	ld a, [FSM_MAX_POSTROLL]
+	dec a
+	jr z, .store
+	inc a
 	ld h, 1
 	call .Scale
 	jr .store
@@ -1481,30 +1583,14 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	jp .Scale
 
 .Chart
-; Apply the defender's precomputed rows for FSM_TYPE to BC in chart order:
-; double (saturating), halve (minimum one), or no effect, which a Dragon
-; attacker turns into a halving except for fixed-amount effects. Struggle and
-; zero pass through, like the kernel's row scan.
-	ld a, [FSM_STRUGGLE]
-	and a
-	ret nz
+; Apply the defender's rows for the reply's type (FSM_CHART_ROWS) to BC in
+; chart order: double (saturating), halve (minimum one), or no effect, which
+; a Dragon attacker turns into a halving except for fixed-amount effects.
+; Struggle and zero pass through, like the kernel's row scan.
 	ld a, b
 	or c
 	ret z
-	ld a, [FSM_TYPE]
-	cp TYPES_END
-	ret nc
-	cp UNUSED_TYPES_END
-	jr c, .chart_index
-	sub UNUSED_TYPES_END - UNUSED_TYPES
-.chart_index
-	push bc
-	ld c, a
-	ld b, 0
-	ld hl, FSN_CHART
-	add hl, bc
-	ld a, [hl]
-	pop bc
+	ld a, [FSM_CHART_ROWS]
 	ld [FSM_TEMP + 1], a
 	call .chart_apply
 	ret c
@@ -1551,7 +1637,10 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 
 .Passives
 ; Type passives in the kernel's order, from the packed per-epoch
-; contributions (see FSN_PASSIVES).
+; contributions (see FSN_PASSIVES); FSM_PASSIVE says whether any can apply.
+	ld a, [FSM_PASSIVE]
+	and a
+	ret z
 	ld a, b
 	or c
 	ret z
@@ -1927,13 +2016,14 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	pop de
 	ret
 .Div24By8
-; B:HL / C -> B:HL, A=remainder. DE preserved. A zero high byte needs only
-; sixteen quotient trials.
+; B:HL / C -> B:HL, A=remainder. DE preserved. A high byte below the divisor
+; (zero included) is the remainder after the first eight trials, which then
+; need not run: the quotient's high byte is zero.
 	push de
 	ld d, c
 	ld a, b
-	and a
-	jr z, .div_short
+	cp d
+	jr c, .div_short_high
 	ld e, 24
 	xor a
 .div_bit
@@ -1951,7 +2041,8 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	jr nz, .div_bit
 	pop de
 	ret
-.div_short
+.div_short_high
+	ld b, 0
 	ld e, 16
 .div_short_bit
 	add hl, hl

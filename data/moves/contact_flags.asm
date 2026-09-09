@@ -1,11 +1,7 @@
 ; Move contact flags (Gen 6 style).
 ; Generated from Pokemon Showdown move flags, mapped to this hack's move list.
 
-IF DEF(BOSSAI_EMIT_LOCAL_CONTACT_FLAGS)
-BossAI_FastMoveContactFlags: ; in-bank mirror for the offline AI reference
-ELSE
 MoveContactFlags:
-ENDC
 ; entries correspond to move ids (see constants/move_constants.asm)
 	table_width 1
 	db TRUE  ; IRON_HEAD

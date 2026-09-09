@@ -83,24 +83,21 @@ BossAI_FastExecuteReplyPlan::
 	ld a, [FSE_FLAGS]
 	or [hl]
 	ld [FSE_FLAGS], a
+	ld a, [FSE_EVENT]
+	and a
+	jr z, .hit_regime
+; a miss changes no HP but Selfdestruct's own; its regime is never read
+	ld a, [FSE_OPCODE]
+	cp FSR_SELFDESTRUCT
+	jp nz, .done
+	call .SelfFaint
+	jp .done
+.hit_regime
 ; amounts use the regime before Selfdestruct's self-faint
 	call .Regime
 	ld a, [FSE_OPCODE]
 	cp FSR_SELFDESTRUCT
-	jr nz, .no_self_faint
-	ld a, [FSE_MODE]
-	and a
-	jr nz, .no_self_faint
-	call .Continuation
-	inc hl
-	inc hl
-	xor a
-	ld [hli], a
-	ld [hl], a ; the user faints even when it misses
-.no_self_faint
-	ld a, [FSE_EVENT]
-	and a
-	jp nz, .done
+	call z, .SelfFaint
 	ld a, FSR_ACCURACY
 	call .PlanAddress
 	ld a, [hl]
@@ -505,6 +502,18 @@ BossAI_FastExecuteReplyPlan::
 	ld [hl], a
 	pop de
 	scf
+	ret
+.SelfFaint
+; Selfdestruct's user faints whether it hits or misses (not in flags-only mode).
+	ld a, [FSE_MODE]
+	and a
+	ret nz
+	call .Continuation
+	inc hl
+	inc hl
+	xor a
+	ld [hli], a
+	ld [hl], a
 	ret
 .Regime
 ; Match the public model's finite 16-bit predicates, including wrapped 3*HP

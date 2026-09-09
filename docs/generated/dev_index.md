@@ -38,7 +38,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Moves
 - Intent: Move stats, effects, descriptions, contact flags, and animations.
 - Start here: `data/moves/moves.asm`, `data/moves/effects.asm`, `data/moves/effects_pointers.asm`, `data/moves/contact_flags.asm`, `data/moves/descriptions.asm`, `constants/move_constants.asm`
-- Anchors: `Moves` (10:5aaa, `data/moves/moves.asm:30`); `MoveEffects` (09:7489, `data/moves/effects.asm:3`); `MoveContactFlags` (13:4c6b, `data/moves/contact_flags.asm:7`); `Spikes` (09:79a7, `data/moves/effects.asm:1529`); `RapidSpin` (09:7a7c, `data/moves/effects.asm:1776`)
+- Anchors: `Moves` (10:5aaa, `data/moves/moves.asm:34`); `MoveEffects` (09:7489, `data/moves/effects.asm:3`); `MoveContactFlags` (13:4c6b, `data/moves/contact_flags.asm:13`); `Spikes` (09:79a7, `data/moves/effects.asm:1529`); `RapidSpin` (09:7a7c, `data/moves/effects.asm:1776`)
 
 ### Items and held items
 - Intent: Item data, descriptions, pockets, marts, and battle held effects.
@@ -228,9 +228,9 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `ApplyLateGenDamageMultipliers_Far` | 13:40c5 | `engine/battle/late_gen_held_items.asm:177` |
 | `HandleLateGenAfterHitEffects_Far` | 13:4166 | `engine/battle/late_gen_held_items.asm:286` |
 | `TryActivateDittoImposter` | 01:7ae1 | `engine/battle/ditto_imposter.asm:1` |
-| `Moves` | 10:5aaa | `data/moves/moves.asm:30` |
+| `Moves` | 10:5aaa | `data/moves/moves.asm:34` |
 | `MoveEffects` | 09:7489 | `data/moves/effects.asm:3` |
-| `MoveContactFlags` | 13:4c6b | `data/moves/contact_flags.asm:7` |
+| `MoveContactFlags` | 13:4c6b | `data/moves/contact_flags.asm:13` |
 | `Spikes` | 09:79a7 | `data/moves/effects.asm:1529` |
 | `RapidSpin` | 09:7a7c | `data/moves/effects.asm:1776` |
 | `ItemAttributes` | 01:68c1 | `data/items/attributes.asm:8` |
