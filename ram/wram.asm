@@ -2451,7 +2451,9 @@ wBossAIRevealedPriorityCache:: db   ; $ff = uncomputed, 0 = no, 1 = yes
 wBossAIPrimaryThreatCache:: db      ; $ff = uncomputed, $20 = no threat, else type id
 wBossAIPublicEnemyFasterCache:: db  ; $ff = uncomputed, 0 = not faster, 1 = enemy faster
 wBossAILookaheadDepthCache:: db     ; $ff = uncomputed, else projection depth (0 / mid-1 / late-1)
-wBossAILookaheadRunningBest:: db    ; reserved: retired pruning scratch; keep WRAM layout stable
+wBossAITransformSource:: db         ; 0 none, else 1 + the own party slot whose moves the player's
+                                    ; active mon copied with Transform (BossAI_RecordPlayerTransform);
+                                    ; read by BossAI_BuildPublicReplySet while the player stays transformed
 wBossAILastMatchupType:: db         ; $ff = uncomputed, else last MOVE_TYPE queried via
                                     ; BossAI_CheckEnemyMoveTypeMatchupVsPlayerNoItem
 wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMatchupType

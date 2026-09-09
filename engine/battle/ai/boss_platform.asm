@@ -123,6 +123,25 @@ BossAI_CurrentEnemyIsAce:
 	ret
 
 ; ai-layer: PLATFORM
+BossAI_RecordPlayerTransform:
+; Called by BattleCommand_Transform once the transform took: the player's
+; active mon now has the moves of the boss's Pokémon that is out, which the
+; boss knows exactly. Remember the own party slot (1-based; 0 = none) so
+; BossAI_BuildPublicReplySet uses those moves while the player stays
+; transformed. Covers Transform, Ditto Imposter and a Metronome or Sleep Talk
+; Transform alike. Nothing is recorded when the boss is the one transforming.
+	ld a, [wBossAITier]
+	and a
+	ret z
+	ldh a, [hBattleTurn]
+	and a
+	ret nz
+	ld a, [wCurOTMon]
+	inc a
+	ld [wBossAITransformSource], a
+	ret
+
+; ai-layer: PLATFORM
 BossAI_RecordPlayerSwitch:
 	ld a, [wBossAITier]
 	and a

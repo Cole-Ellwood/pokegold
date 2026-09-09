@@ -24,6 +24,7 @@ BattleCommand_Transform:
 	ld a, BATTLE_VARS_SUBSTATUS5
 	call GetBattleVarAddr
 	set SUBSTATUS_TRANSFORMED, [hl]
+	callfar BossAI_RecordPlayerTransform ; the boss remembers which of its own Pokémon the player copied
 	call ResetActorDisable
 	ld hl, wBattleMonSpecies
 	ld de, wEnemyMonSpecies

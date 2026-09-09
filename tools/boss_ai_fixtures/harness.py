@@ -295,6 +295,7 @@ class BossAIHarness:
                     scores: list[int] | None = None,
                     battle_turn: int = 1, extra: dict | None = None) -> None:
         self.wr("wBossAITier", tier)
+        self.wr("wBossAITransformSource", 0)  # ClearBossAIState leaves it zero at battle start
         self.seed_mon("wEnemyMon", boss)
         self.seed_mon("wBattleMon", player)
         for side in ("wEnemyStatLevels", "wPlayerStatLevels"):

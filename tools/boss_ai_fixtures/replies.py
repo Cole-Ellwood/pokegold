@@ -62,19 +62,51 @@ def natural_moves(h, species, level):
     return result
 
 
+# The design lead's Smeargle expectation (public_replies.asm .SmeargleExpectedReplies):
+# Spore, Spikes, the set-up moves and Baton Pass. Mirrored here on purpose so a
+# table edit is a deliberate two-place change.
+SMEARGLE_EXPECTED = ["SKETCH", "SPORE", "SPIKES", "BATON_PASS", "SUBSTITUTE", "BELLY_DRUM", "SWORDS_DANCE",
+                     "AGILITY", "AMNESIA", "CURSE", "GROWTH", "BARRIER", "ACID_ARMOR",
+                     "DRAGON_DANCE", "CALM_MIND", "QUIVER_DANCE"]
+
+
 def run_reply_check(h, case):
     spec = case.reply_check
     observed = {MOVES[name] for name in spec.get("revealed", [])}
     h.wr("wPlayerSubStatus5", 8 if spec.get("transformed") else 0)
     h.wr("wBossAISeenPlayerSpeciesCount", 0)
+    h.wr("wBossAITransformSource", 0)
     for i in range(4):
         h.wr("wPlayerUsedMoves", MOVES[spec["revealed"][i]] if i < len(spec.get("revealed", [])) else 0, i)
+    if "copied" in spec:
+        # The boss's own party slot the player transformed into: its moves are the reply set.
+        slot = spec.get("source_slot", 0)
+        h.wr("wOTPartyCount", max(slot + 1, h.rd("wOTPartyCount") or 0))
+        for i in range(4):
+            h.wr("wOTPartyMon1Moves", MOVES[spec["copied"][i]] if i < len(spec["copied"]) else 0, slot * 48 + i)
+        if "record" in spec:
+            # Through the recorder the Transform effect calls: hBattleTurn 0 is the
+            # player transforming (recorded), 1 the boss (nothing recorded).
+            h.wr("wCurOTMon", slot)
+            h.wr("hBattleTurn", spec["record"])
+            if "tier" in spec:
+                h.wr("wBossAITier", spec["tier"])  # tier 0: not a boss battle, the recorder is inert
+            assert h.invoke("BossAI_RecordPlayerTransform")
+            h.wr("hBattleTurn", 1)
+        else:
+            h.wr("wBossAITransformSource", slot + 1)
     for key, value in case.extra.items():
         h.wr(key[0], value, key[1]) if isinstance(key, tuple) else h.wr(key, value)
     if spec.get("closed"):
         expected, flags = observed.copy(), 1
     elif spec.get("broad"):
         expected, flags = set(range(1, MOVES["QUIVER_DANCE"] + 1)), 2
+    elif "copied" in spec and (spec.get("record", 0) == 1 or spec.get("tier", 1) == 0):
+        expected, flags = set(range(1, MOVES["QUIVER_DANCE"] + 1)), 2  # not recorded (boss turn / no boss): broad
+    elif "copied" in spec:
+        expected, flags = {MOVES[name] for name in spec["copied"]} | observed, 1  # the whole moveset is known
+    elif spec.get("authored"):
+        expected, flags = {MOVES[name] for name in SMEARGLE_EXPECTED} | observed, 0
     else:
         expected, flags = natural_moves(h, case.player.species, case.player.level) | observed, 0
     expected.add(MOVES["STRUGGLE"])

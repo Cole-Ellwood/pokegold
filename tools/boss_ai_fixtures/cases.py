@@ -1290,9 +1290,18 @@ for name, species, level, spec, extra in [
     ("temporary_observation_not_complete", "PIDGEY", 5, {"revealed":["TACKLE","GROWL","SLEEP_TALK","QUICK_ATTACK"]}, {}),
     ("tainted_history_not_complete", "PIDGEY", 5, {"revealed":["TACKLE","GROWL","SAND_ATTACK","QUICK_ATTACK"]},
         {"wBossAISeenPlayerSpeciesCount":1,"wBossAISeenPlayerSpecies":SPECIES["PIDGEY"],"wBossAIRevealedMovesBitmapSpare":1}),
-    ("sketch_prior", "SMEARGLE", 20, {"broad":True}, {}),
+    ("sketch_prior", "SMEARGLE", 20, {"authored":True}, {}),
+    ("sketch_prior_with_observed", "SMEARGLE", 20, {"authored":True,"revealed":["TACKLE"]}, {}),
     ("sketch_four_observed", "SMEARGLE", 20, {"revealed":["TACKLE","GROWL","SAND_ATTACK","QUICK_ATTACK"],"closed":True}, {}),
     ("transformed_prior", "PIDGEY", 20, {"transformed":True,"broad":True}, {}),
+    ("transformed_known", "DITTO", 20, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"]}, {}),
+    ("transformed_known_bench_slot", "DITTO", 20, {"transformed":True,"copied":["EARTHQUAKE","ROCK_SLIDE"],"source_slot":2}, {}),
+    ("transformed_known_with_observed", "MEW", 50, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"],"revealed":["SWIFT"]}, {}),
+    ("transformed_source_out_of_range", "DITTO", 20, {"transformed":True,"broad":True}, {"wBossAITransformSource":7}),
+    ("transformed_recorded_by_effect", "DITTO", 20, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"],"source_slot":1,"record":0}, {}),
+    ("transformed_recorded_boss_turn_ignored", "DITTO", 20, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"],"source_slot":1,"record":1}, {}),
+    ("transformed_recorded_no_boss_ignored", "DITTO", 20, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"],"source_slot":1,"record":0,"tier":0}, {}),
+    ("not_transformed_ignores_source", "PIDGEY", 20, {}, {"wBossAITransformSource":1}),
     ("ditto_before_transform", "DITTO", 20, {}, {}),
 ]:
     CASES.append(Case(id="replies_"+name,path="strategy/public-replies",
@@ -1303,11 +1312,26 @@ for name, species, level, spec, extra in [
 for name, boss, player, spec, extra in [
     ("fast_finish", Mon.of("ALAKAZAM", 50, ["SEISMIC_TOSS", "RECOVER"]),
      Mon.of("PIDGEY", 5, ["TACKLE"]), {"best":0}, {}),
-    ("broad_prior_mass", Mon.of("SNORLAX", 50, ["TACKLE", "RECOVER", "SEISMIC_TOSS", "REST"]),
+    # Was joint_broad_prior_mass while Smeargle's set was all 254 moves; it now
+    # measures the authored Smeargle prior (16 moves) against five bench mons.
+    ("smeargle_authored_prior", Mon.of("SNORLAX", 50, ["TACKLE", "RECOVER", "SEISMIC_TOSS", "REST"]),
      Mon.of("SMEARGLE", 50, ["TACKLE"]),
      {"revealed":["TACKLE"], "bench":[Mon.of("STEELIX",50,["TACKLE"]),
        Mon.of("PIDGEOT",50,["TACKLE"]),Mon.of("GENGAR",50,["TACKLE"]),
        Mon.of("ALAKAZAM",50,["TACKLE"]),Mon.of("MACHAMP",50,["TACKLE"])]}, {}),
+    # The widest natural prior of any species at level 50 (58 moves): the
+    # realistic worst case for the two-second budget now that Smeargle's set is
+    # authored.
+    ("broad_nidoqueen", Mon.of("SNORLAX", 50, ["TACKLE", "RECOVER", "SEISMIC_TOSS", "REST"]),
+     Mon.of("NIDOQUEEN", 50, ["TACKLE"]),
+     {"revealed":["TACKLE"], "bench":[Mon.of("STEELIX",50,["TACKLE"]),
+       Mon.of("PIDGEOT",50,["TACKLE"]),Mon.of("GENGAR",50,["TACKLE"]),
+       Mon.of("ALAKAZAM",50,["TACKLE"]),Mon.of("MACHAMP",50,["TACKLE"])]}, {}),
+    # A transformed player mon whose Transform the boss saw: the reply set is
+    # the boss's own remembered moves (slot 1) plus Struggle.
+    ("transformed_known", Mon.of("SNORLAX", 50, ["TACKLE", "RECOVER", "SEISMIC_TOSS", "REST"]),
+     Mon.of("DITTO", 50, ["TACKLE"]),
+     {"bench":[Mon.of("STEELIX",50,["TACKLE"])]}, {"wPlayerSubStatus5": 8, "wBossAITransformSource": 1}),
     ("equal_slots", Mon.of("SNORLAX", 50, ["TACKLE", "TACKLE"]),
      Mon.of("PIDGEY", 50, ["TACKLE"]), {"best":0}, {}),
     ("cache_reinitialize", Mon.of("SNORLAX", 50, ["TACKLE", "TOXIC", "SEISMIC_TOSS", "QUIVER_DANCE"]),
@@ -1354,7 +1378,10 @@ _tie_moves = ["SEISMIC_TOSS", "QUICK_ATTACK", "VITAL_THROW", "RECOVER"]
 for name, extra, tie_count in (
     ("mixed", {}, 8),
     ("quick_claw", {"wEnemyMonItem": ITEMS["QUICK_CLAW"]}, 0),
-    ("transformed", {"wPlayerSubStatus5": 8}, 0),
+    # A transformed player mon in a boss battle always has its copy recorded
+    # (BossAI_RecordPlayerTransform runs in the Transform effect); slot 1 is
+    # the boss itself, so the reply set is its own four moves plus Struggle.
+    ("transformed", {"wPlayerSubStatus5": 8, "wBossAITransformSource": 1}, 0),
     ("speed_high_byte", {("wEnemyMonSpeed", 0): 1}, 0),
 ):
     CASES.append(Case(id="joint_speed_tie_" + name, path="strategy/joint-actions",

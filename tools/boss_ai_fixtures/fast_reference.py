@@ -8,7 +8,7 @@ from tools.boss_ai_fixtures.joint import ITEMS, seed_joint_case
 from tools.boss_ai_fixtures.runner import run_case, check
 
 
-ORACLE = ".local/ai-two-second/preflight-2026-09-06-pro2/oracle"
+ORACLE = ".local/ai-two-second/preflight-2026-09-08-replies/oracle"
 
 
 def replacement_boundaries():

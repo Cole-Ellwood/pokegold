@@ -18,8 +18,11 @@ BossAI_BuildPublicReplySet::
 ; earliest ancestor includes every level-up move: breeding can pass moves
 ; known by both parents without checking the child's level. This deliberately
 ; overapproximates breeding eligibility; it never asserts actual ownership. Four
-; trusted revealed moves close the natural prior. Unknown transformed/Sketch
-; sets stay broad. Struggle remains possible because player PP is private.
+; trusted revealed moves close the natural prior. A transformed player mon has
+; the boss's own remembered moves (wBossAITransformSource, written by
+; BossAI_RecordPlayerTransform from the Transform effect); Smeargle has the
+; authored expectation list below; a transform with no record stays broad.
+; Struggle remains possible because player PP is private.
 ; No RNG or live battle writes. The pre-evolution lookup briefly uses and
 ; restores its non-battle wCurPartySpecies argument; BaseData stays untouched.
 	ld h, d
@@ -51,14 +54,14 @@ BossAI_BuildPublicReplySet::
 .prior
 	ld a, [wPlayerSubStatus5]
 	bit SUBSTATUS_TRANSFORMED, a
-	jp nz, .broad
+	jp nz, .transformed
 	ld a, [wBattleMonSpecies]
 	and a
 	jp z, .broad
 	cp NUM_POKEMON + 1
 	jp nc, .broad
 	cp SMEARGLE
-	jp z, .broad
+	jp z, .sketch
 	ad_address PR_SPECIES
 	ld [hl], a
 	ad_address PR_HOPS
@@ -91,6 +94,56 @@ BossAI_BuildPublicReplySet::
 .done
 	ld a, STRUGGLE
 	jp .AddPossible
+
+.transformed
+; Transform copied the moves of the boss's own Pokémon that was out when the
+; player transformed (Transform, Ditto Imposter, Metronome); the boss knows
+; those four exactly and BossAI_RecordPlayerTransform remembered the slot.
+; No record (a transform from before this boss battle's state existed, or a
+; slot out of range) leaves the set broad.
+	ld a, [wBossAITransformSource]
+	and a
+	jp z, .broad
+	dec a
+	cp PARTY_LENGTH
+	jp nc, .broad
+	ld hl, wOTPartyMon1Moves
+	ld bc, PARTYMON_STRUCT_LENGTH
+	call AddNTimes
+	ld b, NUM_MOVES
+.copied_move
+	ld a, [hli]
+	push bc
+	push hl
+	call .AddPossible
+	pop hl
+	pop bc
+	dec b
+	jr nz, .copied_move
+; the copied set is the whole moveset: as closed as four revealed moves
+	ad_address PR_FLAGS
+	set PR_FOUR_REVEALED_F, [hl]
+	jp .done
+
+.sketch
+; Sketch can copy anything, so Smeargle's natural prior is Sketch itself plus
+; what players actually bring it for: Spore, Spikes, the set-up moves and
+; Baton Pass. The list is the design lead's call (2026-09-08); edit the
+; table, not the rule.
+	ld hl, .SmeargleExpectedReplies
+.sketch_move
+	ld a, [hli]
+	and a
+	jp z, .done
+	push hl
+	call .AddPossible
+	pop hl
+	jr .sketch_move
+.SmeargleExpectedReplies
+	db SKETCH, SPORE, SPIKES, BATON_PASS, SUBSTITUTE
+	db BELLY_DRUM, SWORDS_DANCE, AGILITY, AMNESIA, CURSE, GROWTH, BARRIER, ACID_ARMOR
+	db DRAGON_DANCE, CALM_MIND, QUIVER_DANCE
+	db 0
 
 .AddRevealed
 	and a
