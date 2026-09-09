@@ -60,7 +60,9 @@ and repository RGBDS 1.0.1 Windows tools. ROM SHA256:
     b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6
 
 Local immutable comparison copy:
-`.local/ai-two-second/preflight-2026-09-06-pro2/oracle.{gbc,sym,map}`.
+`.local/ai-two-second/preflight-2026-09-06-pro2/oracle.{gbc,sym,map}`
+(superseded 2026-09-08 by `.local/ai-two-second/preflight-2026-09-08-replies/oracle.*`,
+rebuilt for the reply-set change; `tools/boss_ai_fixtures/fast_reference.py` names the current one).
 The same directory contains `review_source.zip` and `source_manifest.json` for
 433 relevant source/test files. This is a focused source snapshot, not a complete
 standalone checkout with every build asset. The manifest also identifies the

@@ -214,6 +214,7 @@ Changes:
 - Added `TryActivateDittoImposter` calls on battle-entry flow after both active battlers are loaded, including normal enemy lead startup and switch-in flow after hazard processing.
 - If entering mon is Ditto, alive, not already transformed, and opponent is not hidden (Fly/Dig states), Ditto auto-uses Transform.
 - Displays explicit activation text.
+- Boss AI: a player mon that transforms (Transform, Imposter, Metronome) copies the boss's own active Pokémon's moves, which the boss knows; `BossAI_RecordPlayerTransform` (called from the Transform effect) remembers the own party slot and `BossAI_BuildPublicReplySet` uses those four moves as the public reply set while the player stays transformed. Public information only: the boss reads its own party and a transform it watched.
 
 ### 1.6 Trainer Battle Menu and Item Access Rules
 

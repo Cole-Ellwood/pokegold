@@ -748,6 +748,56 @@ cycles. These are measured replacement samples, not a whole-domain or ordinary
 decision timing guarantee. Caller argument loading and production integration
 are excluded.
 
+#### Reply sets: transformed player mon and Smeargle (2026-09-08, `30c3dfc8`)
+
+Approved by the project lead and co-signed by an independent Opus 5 review
+before landing (zero blocking findings; its non-blocking ones are folded in).
+`public_replies.asm` is compiled into the reference build only, so the reply
+set change lives in the reference selector; the game ROM gains only the
+recorder hook in the Transform effect as forward wiring (its bytes change for
+that alone). `BossAI_BuildPublicReplySet` gave a Transformed player mon and
+Smeargle the full 254-move set. Transform copies the moves of the boss's own
+Pokémon that is out, which the boss knows exactly: `BossAI_RecordPlayerTransform`
+(platform hook called from the Transform effect, so it covers the Transform
+move, this hack's Ditto Imposter auto-transform and a Metronome or Sleep Talk
+Transform) remembers the own party slot in `wBossAITransformSource` (the
+retired `wBossAILookaheadRunningBest` byte, no WRAM offset moved, zeroed by
+`ClearBossAIState`), and the reply set while the player stays transformed is
+that slot's four moves plus Struggle, flagged as a closed set
+(`PR_FOUR_REVEALED_F`: the whole moveset is known). A transform with no record
+(unreachable in a boss battle; pinned by fixtures) stays broad. Smeargle's set
+is the revealed moves plus the lead's authored expectation
+(`.SmeargleExpectedReplies`: Sketch, Spore, Spikes, Baton Pass, Substitute and
+the set-up moves) plus Struggle, since
+Sketch can copy anything and a veteran expects exactly those. Neither is a
+hidden-information read: the boss reads its own party's moves and remembers a
+transform it watched happen (`check_boss_ai_no_cheat` passes).
+
+Fixtures: `replies_transformed_known`, `_known_bench_slot`,
+`_known_with_observed`, `_recorded_by_effect` (through the recorder with the
+player's turn), `_recorded_boss_turn_ignored`, `_recorded_no_boss_ignored`, `_source_out_of_range`,
+`not_transformed_ignores_source`, `sketch_prior` (authored), `sketch_prior_with_observed`;
+joint `joint_transformed_known` and `joint_broad_nidoqueen` (the widest natural
+prior of any species at level 50, 57 moves plus Struggle, tied with Mew: the
+realistic worst case now that Smeargle's set is authored);
+`joint_broad_prior_mass` is renamed `joint_smeargle_authored_prior` for what it
+now measures; `joint_speed_tie_transformed` records the copy as every boss
+battle would. The harness zeroes `wBossAITransformSource` per seeded
+battle as the game does at battle start. The frozen oracle was rebuilt from
+this source (`.local/ai-two-second/preflight-2026-09-08-replies/oracle`, replacing
+`preflight-2026-09-06-pro2`) because the reply set is an input to both
+selectors; 94 vectors exact. 853 fixtures pass; release smoke passes on the
+rebuilt game ROM.
+
+Whole-decision timing after this change (30 ordinary fixtures x 2 scans):
+worst `joint_broad_nidoqueen` 8,143,568 (scan 15) and 8,135,984 (scan 0)
+against the 8,388,608 budget; `joint_smeargle_authored_prior` about 3.6M;
+average 1,486,638; **no ordinary fixture over budget**. The headroom on the
+realistic worst case is about 3%, so the approved exactness-preserving cuts
+(shared identity record, heal-effect gate, False Swipe as identity, reply-side
+minimum roll, Helmet gate) are still worth landing for margin; the cost of an
+unrealistic 254-move prior is no longer the gate.
+
 ## Independent review
 
 The existing Astra-low reviewer approved each arithmetic, HP, and boundary

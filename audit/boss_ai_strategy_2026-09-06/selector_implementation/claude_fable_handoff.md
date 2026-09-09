@@ -56,7 +56,7 @@ because you are starting a new session.
 
 ## Frozen oracle and checkpoint evidence
 
-- Frozen oracle prefix: `.local/ai-two-second/preflight-2026-09-06-pro2/oracle`
+- Frozen oracle prefix: `.local/ai-two-second/preflight-2026-09-06-pro2/oracle` (until 2026-09-08; since then `preflight-2026-09-08-replies/oracle`, rebuilt for the reply-set change)
   (`.gbc`, `.sym`, `.map`). ROM SHA256:
   `b6ccc77d19649750a722a0029578d413063e28273ad68233e2cb2f7d4fefe2d6`.
 - Current `pokegold_ai_reference.gbc` SHA256:
@@ -569,3 +569,27 @@ Facts a successor needs:
 - The read-only cut-candidate review is `.local/ai-two-second/
   cut_candidates_2026-09-08.md`; its Smeargle finding is summarised in
   status.md. Nothing from it is implemented; the lead rules.
+
+## Reply sets (2026-09-08, `30c3dfc8`)
+
+Reference-selector change (the game ROM gains only the recorder hook): a
+transformed player mon's reply set is the boss's own remembered moves (`BossAI_RecordPlayerTransform` from the Transform effect
+into `wBossAITransformSource`, the retired `wBossAILookaheadRunningBest`
+byte), Smeargle's is revealed moves plus `.SmeargleExpectedReplies`. See
+status.md "Reply sets". Facts a successor needs:
+
+- The recorder fires in `BattleCommand_Transform` after the substatus is set,
+  player turn only (`hBattleTurn` 0), boss battles only (`wBossAITier`). Ditto
+  Imposter reaches it because it calls `BattleCommand_Transform`; an
+  announce-time hook in `BossAI_RecordRevealedPlayerMove` would have missed it.
+- The joint fixtures share one emulator: any boss-AI memory a case sets must be
+  zeroed by `seed_battle` or it leaks into later cases (this one is; a first
+  cut leaked `wBossAITransformSource` into `joint_speed_tie_transformed`).
+- The frozen oracle moved to `.local/ai-two-second/preflight-2026-09-08-replies/oracle`
+  (`fast_reference.py` ORACLE); refreeze again whenever a change alters an
+  input shared by the prototype and the reference path.
+- `public_replies.asm` is reference-build only (`main.asm` includes it under
+  `BOSS_AI_REFERENCE`); the game ROM changed only by the recorder hook, and
+  the reply-set fixtures are all `requires_reference`. The reference build's
+  timing gate now has every ordinary fixture under budget with the realistic
+  worst case (`joint_broad_nidoqueen`) at about 8.14M.
