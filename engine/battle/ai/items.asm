@@ -12,6 +12,14 @@ AI_SwitchOrTryItem:
 	farcall CheckEnemyLockedIn
 	ret nz
 
+	; Bosses dispatch before the trap checks: a Mean Looked or Wrapped ace must
+	; still get its once-per-battle Haki read (the move half is legal while
+	; trapped). BossAI_TrySwitch re-checks BossAI_EnemyIsTrapped before any
+	; switch decision, and the Haki pivot finder refuses a pivot while trapped.
+	ld a, [wBossAITier]
+	and a
+	jp nz, BossAI_TrySwitch
+
 	ld a, [wPlayerSubStatus5]
 	bit SUBSTATUS_CANT_RUN, a
 	jr nz, DontSwitch
@@ -19,10 +27,6 @@ AI_SwitchOrTryItem:
 	ld a, [wEnemyWrapCount]
 	and a
 	jr nz, DontSwitch
-
-	ld a, [wBossAITier]
-	and a
-	jp nz, BossAI_TrySwitch
 
 	ld a, [wTrainerClass]
 	dec a

@@ -25,6 +25,11 @@ BossAI_TrySwitch:
 	ret nz
 	call BossAI_HakiReserveAceAction
 	ret nz
+	; Mean Look / Wrap: the boss still gets its Haki read above (the move half
+	; is legal while trapped), but no switch decision this turn. Carry stays
+	; clear so core.asm sees "no switch".
+	call BossAI_EnemyIsTrapped
+	ret nz
 
 	call BossAI_EnemyPerishEscapeForced
 	jr nc, .ordinary_switch
@@ -242,6 +247,16 @@ BossAI_HakiReserveAceAction:
 	xor a
 	ret
 
+BossAI_EnemyIsTrapped:
+; NZ when the boss cannot switch this turn (Mean Look / Spider Web on it, or
+; a Wrap-family bind). Carry is always clear on return.
+	ld a, [wPlayerSubStatus5]
+	and 1 << SUBSTATUS_CANT_RUN
+	ret nz
+	ld a, [wEnemyWrapCount]
+	and a
+	ret
+
 BossAI_HakiReadyCommon:
 	ld a, [wBossAITier]
 	and a
@@ -377,6 +392,9 @@ BossAI_HakiFindImmunitySwitch:
 
 	ld a, [wCurSpecies]
 	ld [wBossAITemp3], a
+
+	call BossAI_EnemyIsTrapped
+	jr nz, .none ; Mean Look / Wrap: the pivot is not legal, Haki picks a move
 
 	ld a, [wEnemyMonSpecies]
 	and a
@@ -696,6 +714,14 @@ BossAI_GetSwitchThreshold:
 
 ; ai-layer: POLICY
 BossAI_NeedsLoopPenalty:
+; Preserves bc: BossAI_TrySwitch holds the switch threshold in c across this call,
+; and the exception helpers below (immunity pivot, revenge respect, ace timing)
+; all use bc as scratch.
+	push bc
+	call .body
+	pop bc
+	ret
+.body
 	ld a, [wBossAISwitchCooldown]
 	and a
 	jr z, .no_penalty
@@ -1758,6 +1784,12 @@ BossAI_ApplyPreservationSwitchBias:
 
 ; ai-layer: POLICY
 BossAI_ShouldSackInsteadOfSwitch:
+; Preserves bc: BossAI_TrySwitch holds the switch threshold in c across this call.
+	push bc
+	call .body
+	pop bc
+	ret
+.body
 	call AICheckEnemyQuarterHP_HL
 	jr c, .no
 	call BossAI_HasAnyKOMove
@@ -2352,6 +2384,13 @@ BossAI_ShouldSackHard:
 
 ; ai-layer: POLICY
 BossAI_IsSwitchingIntoWinconRisk:
+; Preserves bc: BossAI_TrySwitch holds the switch threshold in c across this call,
+; and BossAI_ComputeSwitchCandidateRisk returns with c as its own scratch.
+	push bc
+	call .body
+	pop bc
+	ret
+.body
 	ld a, [wEnemySwitchMonParam]
 	and $f
 	inc a

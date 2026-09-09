@@ -86,13 +86,25 @@ def run_reply_check(h, case):
             h.wr("wOTPartyMon1Moves", MOVES[spec["copied"][i]] if i < len(spec["copied"]) else 0, slot * 48 + i)
         if "record" in spec:
             # Through the recorder the Transform effect calls: hBattleTurn 0 is the
-            # player transforming (recorded), 1 the boss (nothing recorded).
+            # player transforming (recorded), 1 the boss (nothing recorded). The
+            # effect calls it before setting SUBSTATUS_TRANSFORMED, so the recorder
+            # can stash which seen player species is transforming (high nibble).
             h.wr("wCurOTMon", slot)
             h.wr("hBattleTurn", spec["record"])
+            h.wr("wPlayerSubStatus5", 0)
+            h.wr("wBossAISeenPlayerSpeciesCount", 1)
+            h.wr("wBossAISeenPlayerSpecies", case.player.species)
             if "tier" in spec:
                 h.wr("wBossAITier", spec["tier"])  # tier 0: not a boss battle, the recorder is inert
             assert h.invoke("BossAI_RecordPlayerTransform")
             h.wr("hBattleTurn", 1)
+            h.wr("wPlayerSubStatus5", 8)
+            recorded = h.rd("wBossAITransformSource")
+            want = 0 if spec["record"] == 1 or spec.get("tier", 1) == 0 else (1 << 4) | (slot + 1)
+            if recorded != want:
+                raise FixtureError(
+                    f"{case.id}: BossAI_RecordPlayerTransform stored {recorded:#04x}, expected {want:#04x} "
+                    "(low nibble own slot + 1, high nibble the transforming seen species index)")
         else:
             h.wr("wBossAITransformSource", slot + 1)
     for key, value in case.extra.items():

@@ -3369,7 +3369,7 @@ BossAI_CurrentEnemyMovePressureScore:
 	jr z, .stab_bonus
 	ld a, [wEnemyMonType2]
 	cp c
-	jr nz, .imperial_scales
+	jr nz, .ko_band_oracle ; super-effective coverage without STAB still asks the oracle
 
 .stab_bonus
 	inc b
@@ -3380,6 +3380,7 @@ BossAI_CurrentEnemyMovePressureScore:
 	and a
 	jr z, .done
 	dec b
+	jr .imperial_scales ; the oracle only credits super-effective moves
 
 .ko_band_oracle
 	farcall BossAI_ApplyKOBandOraclePressure
@@ -5103,11 +5104,16 @@ BossAI_SetupTurnIsAffordable:
 
 ; ai-layer: POLICY
 BossAI_IsStatusEffect:
+; A = move effect. Carry when it is a primary-status effect. Preserves bc:
+; IsInArray writes b (index) and c (key), and BossAI_LastPlayerMoveRolePackageMask
+; keeps the effect in b and its role mask in c across this call.
 	push hl
 	push de
+	push bc
 	ld hl, BossAIStatusEffects
 	ld de, 1
 	call IsInArray
+	pop bc
 	pop de
 	pop hl
 	ret

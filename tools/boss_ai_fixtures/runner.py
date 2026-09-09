@@ -70,11 +70,22 @@ def run_case(harness, case: Case) -> dict:
         harness.seed_battle(case.boss, case.player, tier=case.tier,
                             scores=case.scores, extra=case.extra)
     decisions = []
-    random_calls = []
-    random_sym = harness.syms.get("Random")
+    # Call counters: "random_calls" pins the RNG budget; "calls" pins how many
+    # times each named routine ran (a routing fixture, e.g. "the KO-band oracle
+    # is consulted once for a super-effective coverage move and never for a
+    # resisted one"). Both count entries into the symbol's address.
+    watched = list(case.expect.get("calls", {}))
     if "random_calls" in case.expect:
-        harness.pb.hook_register(random_sym.bank, random_sym.address,
-                                 lambda _: random_calls.append(1), None)
+        watched.append("Random")
+    counts = {name: 0 for name in watched}
+    hooked = []
+    for name in watched:
+        sym = harness.syms[name]
+
+        def _bump(_, name=name):
+            counts[name] += 1
+        harness.pb.hook_register(sym.bank, sym.address, _bump, None)
+        hooked.append(sym)
     try:
         registers = {
             key: harness.syms[value[0]].address + value[1]
@@ -85,14 +96,15 @@ def run_case(harness, case: Case) -> dict:
             returned = harness.invoke(sym, registers) and returned
             decisions.append(harness.outcome()["carry"])
     finally:
-        if "random_calls" in case.expect:
-            harness.pb.hook_deregister(random_sym.bank, random_sym.address)
+        for sym in hooked:
+            harness.pb.hook_deregister(sym.bank, sym.address)
 
     out = harness.outcome()
     out["returned"] = returned
     out["reference_scores"] = reference
     out["decisions"] = decisions
-    out["random_calls"] = len(random_calls)
+    out["random_calls"] = counts.get("Random", 0)
+    out["calls"] = {name: counts[name] for name in case.expect.get("calls", {})}
     out["memory"] = {
         key: harness.rd(key[0], key[1]) if isinstance(key, tuple) else harness.rd(key)
         for key in case.expect.get("memory", {})
@@ -121,6 +133,9 @@ def check(case: Case, out: dict) -> list[str]:
     for key in ("bc", "random_calls"):
         if key in exp and out[key] != exp[key]:
             fails.append(f"{key}={out[key]}, expected {exp[key]}")
+    for name, want in exp.get("calls", {}).items():
+        if out["calls"][name] != want:
+            fails.append(f"{name} ran {out['calls'][name]} time(s), expected {want}")
     if exp.get("consistent_decisions") and len(set(out["decisions"])) != 1:
         fails.append(f"inconsistent decisions: {out['decisions']}")
     for key, want in exp.get("memory", {}).items():

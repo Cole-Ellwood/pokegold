@@ -27,9 +27,16 @@ def main() -> int:
     except Exception as exc:  # pragma: no cover - environment guard
         print(f"SKIP: boss-AI decision-path fixtures (import failed: {exc})")
         return 0
+    # A missing game ROM is a failure, not an environment skip: this gate is the
+    # release floor's only behavioural boss-AI check, and "no ROM" must not be
+    # indistinguishable from "all fixtures hold".
+    missing = [name for name in ("pokegold.gbc", "pokegold.sym") if not (ROOT / name).exists()]
+    if missing:
+        print(f"FAIL: boss-AI decision-path fixtures (build first; missing {', '.join(missing)})")
+        return 1
     try:
         # The game build has no offline reference evaluator; the reference suite
-        # runs separately against pokegold_ai_reference (see --suite in __main__).
+        # runs in check_boss_ai_reference_fixtures.py against pokegold_ai_reference.
         results, _ = run_all(suite="production")
     except Skip as exc:
         print(f"SKIP: boss-AI decision-path fixtures ({exc})")

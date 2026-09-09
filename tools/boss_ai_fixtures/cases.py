@@ -1499,3 +1499,92 @@ for name, player, extra, entry, expect in (
         pins="a transformed player mon is bookkept as the Pokémon that transformed, never as the copied species",
         boss=Mon.of("SNORLAX", 50, ["TACKLE"]), player=player, entry=entry,
         extra={**_seen_pidgey_ditto, **extra}, expect=expect))
+
+# BossAI_TrySwitch keeps the tier switch threshold in c across three helpers.
+# Each helper must hand bc back untouched on both of its answers; the review
+# of 2026-09-08 found all three clobbering it (a type id, a party slot or a
+# player HP byte was compared against the 60/70/80 threshold instead).
+_two_gengar = _bench(["GENGAR", "GENGAR"], threat="NORMAL")
+for name, boss, extra, entry, carry in (
+    ("wincon_path", gengar(), {"wBossAIWinconMonIdx": 2}, ("BossAI_IsSwitchingIntoWinconRisk",), None),
+    ("not_wincon", gengar(), {"wBossAIWinconMonIdx": 1}, ("BossAI_IsSwitchingIntoWinconRisk",), False),
+    ("loop_exceptions", gengar(), {"wBossAISwitchCooldown": 1, "wBossAILastSwitchedOut": 2}, ("BossAI_NeedsLoopPenalty",), None),
+    ("no_cooldown", gengar(), {"wBossAISwitchCooldown": 0}, ("BossAI_NeedsLoopPenalty",), False),
+    ("sack_low_hp", Mon.of("GENGAR", 26, ["LICK"], hp_pct=10), {"wBossAIWinconMonIdx": 2, "wBossAIHasKOMoveCache": 0}, ("BossAI_ShouldSackInsteadOfSwitch",), True),
+    ("sack_full_hp", gengar(), {"wBossAIWinconMonIdx": 2, "wBossAIHasKOMoveCache": 0}, ("BossAI_ShouldSackInsteadOfSwitch",), False),
+):
+    expect = {"bc": 0x1246}
+    if carry is not None:
+        expect["carry"] = carry
+    CASES.append(Case(id="switch_threshold_"+name, path="strategy/switch-threshold",
+        pins="the threshold helpers preserve bc on both answers, so BossAI_TrySwitch compares confidence against the tier threshold and not helper scratch",
+        boss=boss, player=magnemite(), entry=entry, registers={"B": 0x12, "C": 0x46},
+        extra={**_two_gengar, **extra}, expect=expect))
+
+# The role-package mask of the player's last move: one bit per role, or none.
+# BossAI_IsStatusEffect used to let IsInArray overwrite b and c, so every mask
+# came back as the move effect id with stray bits and the trap/perish role was
+# unreachable.
+for move, mask in (("ROAR", 1 << 1), ("THUNDER_WAVE", 1 << 5), ("MEAN_LOOK", 1 << 6),
+                   ("SPIKES", 0), ("EARTHQUAKE", 1 << 7), ("RECOVER", 1 << 3),
+                   ("SWORDS_DANCE", 1 << 2), ("QUICK_ATTACK", 1 << 4), ("RAPID_SPIN", 1 << 0)):
+    CASES.append(Case(id=f"role_mask_{move}", path="strategy/role-package",
+        pins="the last player move maps to exactly its role bits (status, trap and none included)",
+        boss=gengar(), player=magnemite(), entry=("BossAI_LastPlayerMoveRolePackageMask",),
+        extra={"wLastPlayerMove": MOVES[move]}, expect={"a": mask}))
+
+# A Mean Looked or Wrapped ace keeps its once-per-battle Haki read (the move
+# half is legal while trapped); only the switch half is refused.
+for trap, extra in (("free", {}), ("mean_look", {"wPlayerSubStatus5": 128}), ("wrap", {"wEnemyWrapCount": 2})):
+    CASES.append(Case(id=f"haki_read_while_{trap}", path="haki/gates",
+        pins="the boss-first dispatch reaches the Haki read even when the boss cannot switch",
+        boss=gengar(), player=magnemite(), entry=("AI_SwitchOrTryItem",), prescore=True,
+        extra=_haki_ready({"wBattleMode": 2, "wLinkMode": 0, "wEnemySwitchMonIndex": 0, **extra}),
+        expect={"haki_spent": True, "choice_ready": 1, "chosen_move_not": [IMMUNE_MOVE],
+                "memory": {"wEnemySwitchMonIndex": 0}}))
+# Ground into Magnemite with a Ground-immune Gengar on the bench: the Haki
+# pivot is found when the boss is free and refused when it is trapped.
+for trap, extra, found in (("free", {}, True), ("mean_look", {"wPlayerSubStatus5": 128}, False),
+                           ("wrap", {"wEnemyWrapCount": 2}, False)):
+    CASES.append(Case(id=f"haki_pivot_{trap}", path="haki/gates",
+        pins="the Haki immunity pivot is legal only when the boss can switch",
+        boss=Mon.of("MAGNEMITE", 24, ["THUNDERBOLT"]), player=Mon.of("GEODUDE", 24, ["EARTHQUAKE"]),
+        entry=("BossAI_HakiFindImmunitySwitch",),
+        extra={**_bench(["MAGNEMITE", "GENGAR"], threat="GROUND"), "wCurPlayerMove": MOVES["EARTHQUAKE"], **extra},
+        expect={"carry": found}))
+
+# The KO-band oracle is consulted for every super-effective move, STAB or
+# coverage, and never for a resisted one (its own gate would refuse anyway).
+for name, boss, player, move, calls in (
+    ("stab_se", gengar(), Mon.of("ALAKAZAM", 40, ["PSYCHIC_M"]), "SHADOW_BALL", 1),
+    ("coverage_se", gengar(), Mon.of("MANTINE", 40, ["SURF"]), "THUNDERBOLT", 1),
+    ("resisted", Mon.of("SNORLAX", 40, ["BODY_SLAM"]), Mon.of("STEELIX", 40, ["TACKLE"]), "BODY_SLAM", 0),
+):
+    CASES.append(Case(id=f"ko_band_oracle_{name}", path="strategy/ko-band-oracle",
+        pins="super-effective coverage reaches the KO-band oracle like STAB does; resisted moves skip it",
+        boss=boss, player=player, entry=("AIGetEnemyMove_HL", "BossAI_CurrentEnemyMovePressureScore"),
+        registers={"A": MOVES[move]}, tier=AI_TIER_MID,
+        expect={"calls": {"BossAI_ApplyKOBandOraclePressure": calls}}))
+
+# The Speed-cap rule by base Speed band (CLAUDE.md): >= 90 caps at +1,
+# 60..89 at +2, <= 59 at +3, pinned one stage either side of every boundary
+# with the public speed estimate held at "not faster".
+for base, stage, further in ((90, 0, True), (90, 1, False), (89, 1, True), (89, 2, False),
+                             (60, 1, True), (60, 2, False), (59, 2, True), (59, 3, False)):
+    CASES.append(Case(id=f"speed_cap_base{base}_stage{stage}", path="strategy/setup-window",
+        pins="Agility has further value only below the base-Speed band cap",
+        boss=Mon.of("GENGAR", 26, ["AGILITY"]), player=magnemite(),
+        entry=("AIGetEnemyMove_HL", "BossAI_SetupBoostHasFurtherValue"), registers={"A": MOVES["AGILITY"]},
+        extra={("wEnemyMonBaseStats", 3): base, "wEnemySpdLevel": 7 + stage, "wBossAIPublicEnemyFasterCache": 0},
+        expect={"carry": further}))
+
+# Haki eligibility: the last excluded class (the loop must advance past the
+# first entry) and the baseline tier (the tier gate's zero polarity).
+CASES.append(Case(id="eligible_excluded_last_class_refused", path="haki/eligibility",
+    pins="the excluded-class walk reaches the last table entry",
+    boss=gengar(), player=magnemite(), entry=("BossAI_HakiTrainerEligible",), tier=AI_TIER_MID,
+    extra={"wTrainerClass": TRAINER_CLASSES["BLAINE"]}, expect={"carry": False}))
+CASES.append(Case(id="eligible_baseline_tier_refused", path="haki/eligibility",
+    pins="a non-boss tier never arms a Haki window",
+    boss=gengar(), player=magnemite(), entry=("BossAI_HakiTrainerEligible",), tier=0,
+    extra={"wTrainerClass": TRAINER_CLASSES["MORTY"]}, expect={"carry": False}))

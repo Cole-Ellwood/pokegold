@@ -11,24 +11,19 @@ from _common import strip_comment
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Minimum required scan surface from sprint spec.
-SCAN_FILES = [
-    ROOT / "engine" / "battle" / "ai" / "boss_platform.asm",
-    ROOT / "engine" / "battle" / "ai" / "boss_policy_move.asm",
-    ROOT / "engine" / "battle" / "ai" / "damage_kernel.asm",
-    ROOT / "engine" / "battle" / "ai" / "public_damage.asm",
-    ROOT / "engine" / "battle" / "ai" / "action_facts.asm",
-    ROOT / "engine" / "battle" / "ai" / "action_value.asm",
-    ROOT / "engine" / "battle" / "ai" / "action_candidates.asm",
-    ROOT / "engine" / "battle" / "ai" / "public_replies.asm",
-    ROOT / "engine" / "battle" / "ai" / "joint_action.asm",
-    ROOT / "engine" / "battle" / "ai" / "boss_policy_switch.asm",
-    ROOT / "engine" / "battle" / "ai" / "observation_log.asm",
+# Every file under engine/battle/ai/ is scanned unless it is vanilla trainer AI
+# that boss tiers never reach (move.asm branches to .BossModel before the
+# AIScoringPointers layers; items.asm jumps to BossAI_TrySwitch before the
+# vanilla switch helpers). Those two files read private player state by
+# design; the tier routing is what keeps bosses out of them. A new boss file is
+# covered the day it is created rather than when someone remembers this list.
+VANILLA_AI_FILES = {"scoring.asm", "switch.asm"}
+SCAN_FILES = sorted(
+    p for p in (ROOT / "engine" / "battle" / "ai").glob("*.asm")
+    if p.name not in VANILLA_AI_FILES
+) + [
     ROOT / "data" / "boss_ai" / "role_package_classifier.asm",
     ROOT / "data" / "boss_ai" / "coach_plan_templates.asm",
-    ROOT / "engine" / "battle" / "ai" / "boss_thunks.asm",
-    ROOT / "engine" / "battle" / "ai" / "move.asm",
-    ROOT / "engine" / "battle" / "ai" / "items.asm",
 ]
 
 
