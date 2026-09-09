@@ -421,7 +421,7 @@ FindAliveEnemyMonsWithASuperEffectiveMove:
 .next
 	srl b
 	push bc
-	ld bc, wPartyMon2HP - (wPartyMon1HP + 1)
+	ld bc, PARTYMON_STRUCT_LENGTH - 1
 	add hl, bc
 	pop bc
 	dec e

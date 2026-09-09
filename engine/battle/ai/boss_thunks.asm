@@ -10,24 +10,22 @@
 ; Layer: THUNK
 ; Original lines: 59
 ; ============================================================
-; AI Scoring helpers live in bank 0x0b ("AI Scoring"). boss.asm itself
-; lives in bank 0x0e ("Enemy Trainers"), so a plain `call AIxxx` from
-; boss.asm to a scoring helper resolves at offset $7xxx in bank 0x0e
-; (garbage). `farcall` would clobber `hl` before the target runs (per
-; CLAUDE.md), and many boss.asm callers need `hl` preserved across the
-; call (e.g., `jp BossAI_*ScoreHL`).
+; The AI Scoring helpers (scoring.asm) sit in the floating "AI Scoring"
+; section, a different ROMX bank from the boss policy files here in bank
+; 0x0e ("Enemy Trainers"), so a plain `call AIxxx` from a boss_*.asm file
+; would resolve inside bank 0x0e (garbage). `farcall` clobbers `hl` before
+; the target runs (asm guide 3.2), and many boss callers need `hl`
+; preserved across the call (e.g. `jp BossAI_*ScoreHL`).
 ;
-; These intra-bank thunks live alongside boss.asm in bank 0x0e, so plain
-; `call AIxxx_HL` from boss.asm reaches them. Most thunks wrap `farcall`
-; to the bank-0x0b target with `push hl` / `pop hl` so caller's hl is
-; preserved end-to-end. AIGetEnemyMove_HL also preserves bc and passes
-; the move id through c because farcall consumes a for the target bank.
-; ROM0 was too tight for these (Home section had 13 bytes free; the
-; 229 ROM0-free is fragmented across rst-handler gaps).
+; These thunks share bank 0x0e with the boss files, so a plain
+; `call AIxxx_HL` reaches them. Each wraps `farcall` with `push hl` /
+; `pop hl` so the caller's hl is preserved end-to-end. AIGetEnemyMove_HL
+; also preserves bc and passes the move id through c because farcall
+; consumes a for the target bank. ROM0 was too tight for these.
 ;
 ; Rationale: `tools/audit/check_cross_bank_call.py` flagged 39 plain-call
-; sites in boss.asm targeting scoring.asm; this is the same class as
-; the May 2026 cross-bank softlock (commit 2593278d).
+; sites in the boss policy code targeting scoring.asm; this is the same
+; class as the May 2026 cross-bank softlock (commit 2593278d).
 
 ; ai-layer: THUNK
 AIGetEnemyMove_HL:

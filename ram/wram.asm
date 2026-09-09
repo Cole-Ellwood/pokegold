@@ -2461,7 +2461,8 @@ wBossAILastMatchupType:: db         ; $ff = uncomputed, else last MOVE_TYPE quer
 wBossAILastMatchupResult:: db       ; last wTypeMatchup result for wBossAILastMatchupType
 wBossAIShouldScoutPrereqCache:: db  ; $ff = uncomputed, 0 = do not scout,
                                     ; 1 = scout; includes the one random roll for this tick
-wBossAIShouldScoutThresholdCache:: db  ; cached GetScoutRollThreshold result (valid iff prereq=1)
+wBossAIShouldScoutThresholdCache:: db  ; same-function scratch in BossAI_ShouldScout: holds the
+                                    ; roll threshold across the wTypeMatchup capture; never read on a cache hit
 wBossAIShouldScoutMatchupValue:: db ; wTypeMatchup value captured at end of ShouldScout prereqs;
                                     ; restored to wTypeMatchup on cache hit so the side-effect
                                     ; write that GetTypeThreatSeverityVsEnemyMon makes is preserved

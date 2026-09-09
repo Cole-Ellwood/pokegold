@@ -456,6 +456,10 @@ BossAI_ApplyDamageDominanceBias::
 	ret
 
 .DiscourageCurrentScoreBy8
+; Hand copy of BossAI_DiscourageScoreHL with the amount fixed at 8: that
+; helper lives in bank 0x0e and takes its amount in a, which farcall
+; overwrites with the bank. Saturates at 79 so a discouraged score never
+; crosses the 80 hard block.
 	ld a, [wBossAIScorePtr]
 	ld h, a
 	ld a, [wBossAIScorePtr + 1]

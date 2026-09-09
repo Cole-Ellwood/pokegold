@@ -847,7 +847,6 @@ BossAI_CurrentEnemyMoveCategory:
 	pop hl
 	ret
 
-; ai-layer: PLATFORM
 endc
 if DEF(BOSSAI_EMIT_PLATFORM_DARK_SHIELD_AND_TYPES)
 BossAI_CurrentMoveDarkShieldEligible:
@@ -1227,7 +1226,6 @@ BossAI_ClearPlausibleMask:
 	ld [hl], a
 	ret
 
-; ai-layer: PLATFORM
 endc
 
 if DEF(BOSSAI_EMIT_PLATFORM_MASK_SET_BITS)
@@ -1294,7 +1292,6 @@ BossAI_SetLikelyMaskBit:
 	ld [hl], a
 	ret
 
-; ai-layer: PLATFORM
 endc
 
 if DEF(BOSSAI_EMIT_PLATFORM_MASK_TEST_BITS)
@@ -1473,7 +1470,6 @@ BossAI_SetActiveSpeciesScouted:
 	ld [wBossAIScoutedMask], a
 	ret
 
-; ai-layer: PLATFORM
 endc
 
 if DEF(BOSSAI_EMIT_PLATFORM_REPEAT_TRACKER)
@@ -1502,7 +1498,6 @@ BossAI_UpdateRepeatTracker:
 	ld [wBossAIRepeatCount], a
 	ret
 
-; ai-layer: PLATFORM
 endc
 
 if DEF(BOSSAI_EMIT_PLATFORM_NO_CHEAT_TABLES)
@@ -1545,5 +1540,4 @@ BossAIHiddenPowerThreatTypes:
 ; (own SECTION) so the trace build doesn't push the "Enemy Trainers" bank
 ; over its 16 KB ceiling. Caller below uses farcall.
 
-; ai-layer: PLATFORM
 endc

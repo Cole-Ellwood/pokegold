@@ -12,6 +12,7 @@ IF DEF(BOSS_AI_TRACE)
 ; All are reached via farcall; inputs ride in b/c (survive rst FarCall).
 
 BossAI_TraceClearMoveModelScores::
+	assert wBossAITracePostModelScores == wBossAITracePreModelScores + NUM_MOVES ; one clear covers both
 	ld hl, wBossAITracePreModelScores
 	ld c, NUM_MOVES * 2
 	ld a, $ff

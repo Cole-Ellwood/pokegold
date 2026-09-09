@@ -122,7 +122,7 @@ AI_Redundant:
 .Spikes:
 	ld a, [wPlayerScreens]
 	and SCREENS_SPIKES_MASK
-	cp 3
+	cp SCREENS_SPIKES_MASK
 	jr z, .Redundant
 	jr .NotRedundant
 

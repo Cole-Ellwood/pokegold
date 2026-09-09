@@ -11,7 +11,9 @@ if DEF(BOSSAI_EMIT_OBSERVATION_LOG)
 ; newly selected WRAMX bank.
 ; The VBlank handler reads/writes bank-1 WRAMX symbols (GameTimer et al.), so
 ; the whole away-from-bank-1 window must be interrupt-atomic: di on leaving
-; bank 1, ei after returning to it (see home/wram_bank.asm header).
+; bank 1, ei after returning to it (see home/wram_bank.asm header). The
+; return arm re-enables interrupts unconditionally, so every caller must run
+; with IME set (all do today: battle-turn code, never an interrupt handler).
 MACRO boss_ai_set_wram_bank
 	if (\1) == 1
 	ld a, \1
@@ -66,6 +68,7 @@ BossAI_AppendObservationLog::
 	xor a
 .index_ok
 	ld h, a
+	assert BOSS_AI_OBS_ENTRY_SIZE == 4 ; the two shifts below are the entry stride
 	add a
 	add a
 	add LOW(wBossAIObsEntries)

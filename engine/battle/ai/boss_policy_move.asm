@@ -1426,8 +1426,9 @@ ENDC
 ; Above the trade window, Destiny Bond buys nothing: the bond only pays out if
 ; this mon faints before its next turn. Declining to encourage it is not enough,
 ; because at the neutral score it TIES the best surviving attack and then wins
-; that tie on moveset order alone -- BossAI_ChooseBestOracleMove keeps the first
-; strict minimum. That is how a full-HP Gengar spent a turn on Destiny Bond
+; that tie on moveset order alone -- the first-pass scan in BossAI_SelectMove
+; (and the Haki-only BossAI_ChooseBestOracleMove) keeps the first strict
+; minimum. That is how a full-HP Gengar spent a turn on Destiny Bond
 ; against a Magnemite that could not KO it: Shadow Ball was blocked (Steel is
 ; Ghost-immune in this hack), Thunderbolt scored 28, and Destiny Bond and Psychic
 ; both scored 24 -- with Destiny Bond in the earlier slot. Discourage so any
@@ -2264,6 +2265,9 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ret
 
 .ApplySpikesLayer2UnrevealedSpinRisk
+; Deliberate no-op: a second layer carries no unrevealed-Spin penalty (the
+; revealed-Spin check above is the only layer-2 risk). Kept as a named step
+; because tools/audit/trace_logic.py and the debugger rule map anchor on it.
 .spikes_l2_soft_spin_risk
 	ret
 
@@ -4021,7 +4025,6 @@ BossAI_CurrentEnemyMoveAccuracyRisky:
 	and a
 	ret
 
-; ai-layer: POLICY
 endc
 
 if DEF(BOSSAI_EMIT_MOVE_PUBLIC_FASTER)
@@ -4068,7 +4071,6 @@ BossAI_PublicEnemyFasterUncached:
 	ld a, [wCurSpecies]
 	push af
 	call BossAI_EstimatePlayerSpeed
-.player_speed_ready
 	push bc
 	ld a, [wEnemyMonSpeed]
 	ld b, a
@@ -4128,10 +4130,10 @@ if DEF(BOSSAI_EMIT_MOVE_PREDICT_AND_REVEALED_SE)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_PredictPlayerSwitch:
-; Not separately memoized: its two heavy internal calls
-; (PlayerHasPublicThreatVsEnemy, HasRevealedSuperEffectiveMove via the cached
-; public threat helper) hit the per-tick cache, so this routine's per-call
-; cost is already collapsed.
+; Not memoized. PlayerHasPublicThreatVsEnemy hits the per-tick cache, but the
+; BossAI_HasRevealedSuperEffectiveMove call below runs uncached (a revealed
+; move walk against the type chart) on every call, and this routine runs
+; from six sites including once per lookahead candidate.
 	ld a, 10
 	ld [wBossAITemp], a
 
@@ -5221,7 +5223,6 @@ BossAI_PlayerActiveFourMoveSaturated:
 	and a
 	ret
 
-; ai-layer: POLICY
 endc
 
 if DEF(BOSSAI_EMIT_MOVE_MASK_REVEALED_AND_MOVE_ADDS)
@@ -5312,7 +5313,6 @@ BossAI_AddMoveIdToLikelyMask:
 	call BossAI_SetLikelyMaskBit
 	ret
 
-; ai-layer: POLICY
 endc
 
 if DEF(BOSSAI_EMIT_MOVE_MASK_SPECIES_SOURCES)
@@ -5551,7 +5551,6 @@ BossAI_AddSpeciesEggMovesToMask:
 	inc hl
 	jr .loop
 
-; ai-layer: POLICY
 endc
 
 if DEF(BOSSAI_EMIT_MOVE_PLAN_MOVE_BIAS)
@@ -5725,7 +5724,8 @@ ENDC
 
 ; Evaluate every selectable move on the same basis. With only four slots,
 ; pruning an unevaluated score is not a valid signed-delta bound and also
-; biases the later coverage hedge. All selectable moves receive this pass.
+; biases the later coverage hedge. Every selectable move below the 80 block
+; receives this pass.
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
 	ld c, NUM_MOVES

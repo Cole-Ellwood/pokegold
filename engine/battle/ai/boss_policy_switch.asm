@@ -55,7 +55,6 @@ BossAI_TrySwitch:
 	and a
 	ret z
 
-.candidate_answers_threat
 	; LATE-tier categorical sack: dying low-speed non-wincon non-asleep mons
 	; stay in to use their last turn instead of letting the player get a free
 	; hit on the next mon. Soft +8 to threshold doesn't move the needle when
@@ -120,14 +119,11 @@ ENDC
 	jr nc, .stay
 
 	; Read the finalized candidate fresh from WRAM, the vanilla
-	; AI_SwitchOrTryItem idiom (engine/battle/ai/items.asm). The old code pop'd
-	; a byte pushed at .no_low_hp_block, but BossAI_ShouldSackHard and
-	; BossAI_SwitchCandidateLowHPBlock both clobber `a` between the param load at
-	; .candidate_answers_threat and that push, so the pushed byte was garbage. On
-	; its common return path BossAI_SwitchCandidateLowHPBlock left a=0, giving
-	; wEnemySwitchMonIndex = 1 = party slot 0 = the active mon: the boss
-	; "switched" into itself every turn (shared_switch_loop). wEnemySwitchMonParam
-	; is stable from BossAI_RefineSwitchCandidateForPlausibleRisk to here.
+	; AI_SwitchOrTryItem idiom (engine/battle/ai/items.asm).
+	; wEnemySwitchMonParam is stable from
+	; BossAI_RefineSwitchCandidateForPlausibleRisk to here. An earlier version
+	; carried it in a across the sack helpers, which clobber a, and the boss
+	; "switched" into itself (slot 0) every turn.
 .commit_switch
 	ld a, [wEnemySwitchMonParam]
 	and $f
@@ -381,9 +377,8 @@ BossAI_HakiFindImmunitySwitch:
 ; Reads:    wCurPlayerMove (non-zero), wEnemyMonSpecies, wOTPartyCount,
 ;           wCurOTMon, wOTPartySpecies, wOTPartyMon1HP.
 ; Clobbers: bc, de, hl; wBossAITemp (slot on success), wBossAITemp2/3
-;           (scratch), wCurSpecies (restored), wBaseStats / wBaseType*
-;           (left at whichever mon was last looked up; callers needing
-;           active base data must reload via GetBaseData).
+;           (scratch). wCurSpecies and its base data are restored on both
+;           exits (GetBaseData is re-run when wCurSpecies was nonzero).
 	ld a, [wCurPlayerMove]
 	dec a
 	ld hl, Moves + MOVE_TYPE
@@ -1306,7 +1301,6 @@ BossAI_ComputeSwitchCandidateRisk:
 .immunity_tiebreak
 	call .ApplyPrimaryThreatImmunityTieBreak
 
-.done
 	ld a, b
 	cp 100
 	jr c, .restore_return

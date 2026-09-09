@@ -327,6 +327,8 @@ BossAI_DamageKernel::
 .SingleHitRange
 ; Both endpoints share all pre-roll arithmetic. Keep the general kernel for
 ; multiple hits, whose later hits observe changed HP-dependent passives.
+; Entered by jp from BossAI_PublicDamageRange and returns its contract:
+; BC = min, DE = max HP loss, so unlike the kernel above DE is not preserved.
 	ad_address AD_POSTROLL
 	ld a, [hl]
 	push af
@@ -993,9 +995,11 @@ ENDM
 ; ai-layer: POLICY
 BossAI_Divide::
 ; Four-byte unsigned hDividend / byte hDivisor. Exact hQuotient/remainder;
-; BC/DE/HL preserved. All callers here supply B=4. No bank change or RAM.
-; Leading zero bytes need no quotient trials. Keep the original undefined
-; zero-divisor behavior rather than inventing a supported damage result.
+; BC/DE/HL preserved. b is ignored: all four dividend bytes are always
+; processed. Leading zero bytes need no quotient trials. No bank change or
+; RAM, except that a zero divisor falls back to the ROM0 Divide (which does
+; bank-switch) to keep the original undefined result rather than inventing a
+; supported damage number.
 	ldh a, [hDivisor]
 	and a
 	jp z, Divide

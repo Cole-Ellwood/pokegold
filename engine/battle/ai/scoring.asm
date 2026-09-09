@@ -2655,8 +2655,9 @@ AI_Smart_Thunder:
 	inc [hl]
 	ret
 
-AICompareSpeed::
-; Return carry if enemy is faster than player.
+AICompareSpeed:
+; Return carry if enemy is faster than player. Only the tier-0 layers in this
+; file call it.
 
 	push bc
 	ld a, [wEnemyMonSpeed + 1]
