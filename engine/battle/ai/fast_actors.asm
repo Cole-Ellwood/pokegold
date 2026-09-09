@@ -12,10 +12,7 @@ BossAI_FastImportActorHP::
 ; without writes. Writes actor80, the two HP-table reservations,
 ; table-builder arithmetic scratch and wFastPlayerTable only.
 	ld a, c
-	and 1
-	ld [wFastPlayerTable + 3], a
-	xor c
-	ld c, a
+	and $fe ; the weight without the keep bit
 	cp 128
 	jr z, .weight_ok
 	cp 192
@@ -49,6 +46,9 @@ BossAI_FastImportActorHP::
 	jr nz, .clear
 	pop bc
 	ld a, c
+	and 1
+	ld [wFastPlayerTable + 3], a ; the keep bit, once the import is accepted
+	xor c
 	ld [FSA_WEIGHT], a
 	ld a, 128
 	ld [FSA_PLAYER + 34], a
