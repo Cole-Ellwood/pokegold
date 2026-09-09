@@ -1629,3 +1629,84 @@ for name, levels, slot, ace in (("highest_mid_slot", (30, 50, 40), 1, True),
         pins="the Haki window's ace test is the same highest-level rule",
         boss=gengar(), player=magnemite(), entry=("BossAI_CurrentEnemyIsAce",),
         extra={**extra, "wCurOTMon": slot}, expect={"carry": ace}))
+
+# ---------------- Haki ace window: arms once, on the ace, then closes ---------
+# BossAI_UpdateHakiAceWindow runs at every turn boundary. The one-turn ELIGIBLE
+# window opens the first time the ace (highest level; a tie goes to the later
+# party slot) starts a turn active for an eligible trainer, and never re-arms
+# once ACE_SEEN or SPENT is set. The row after the arming row is the next turn.
+from tools.boss_ai_fixtures.harness import HAKI_ACE_SEEN_F
+_ACE_ARMED = (1 << HAKI_ACE_SEEN_F) | (1 << HAKI_ELIGIBLE_F)
+_ACE_PARTY = {"wOTPartyCount": 2, "wTrainerClass": TRAINER_CLASSES["MORTY"],
+              ("wOTPartySpecies", 0): SPECIES["GASTLY"], ("wOTPartySpecies", 1): SPECIES["GENGAR"],
+              ("wOTPartySpecies", 2): 255, "wOTPartyMon1Level": 20, "wOTPartyMon2Level": 26}
+for name, over, before, after, tier in (
+    ("arms_on_ace", {"wCurOTMon": 1}, 0, _ACE_ARMED, AI_TIER_MID),
+    ("lead_is_not_ace", {"wCurOTMon": 0}, 0, 0, AI_TIER_MID),
+    ("closes_next_turn", {"wCurOTMon": 1}, _ACE_ARMED, 1 << HAKI_ACE_SEEN_F, AI_TIER_MID),
+    ("ace_seen_never_rearms", {"wCurOTMon": 1}, 1 << HAKI_ACE_SEEN_F, 1 << HAKI_ACE_SEEN_F, AI_TIER_MID),
+    ("spent_never_rearms", {"wCurOTMon": 1}, 1 << HAKI_SPENT_F, 1 << HAKI_SPENT_F, AI_TIER_MID),
+    ("spent_closes_stale_window", {"wCurOTMon": 1}, (1 << HAKI_SPENT_F) | (1 << HAKI_ELIGIBLE_F), 1 << HAKI_SPENT_F, AI_TIER_MID),
+    ("level_tie_later_slot_is_ace", {"wCurOTMon": 1, "wOTPartyMon1Level": 26}, 0, _ACE_ARMED, AI_TIER_MID),
+    ("level_tie_earlier_slot_is_not_ace", {"wCurOTMon": 0, "wOTPartyMon1Level": 26}, 0, 0, AI_TIER_MID),
+    ("early_tier_never_arms", {"wCurOTMon": 1}, 0, 0, AI_TIER_EARLY),
+    ("excluded_class_never_arms", {"wCurOTMon": 1, "wTrainerClass": TRAINER_CLASSES["BROCK"]}, 0, 0, AI_TIER_MID),
+):
+    CASES.append(Case(id="haki_window_" + name, path="haki/eligibility",
+        pins="the ace window arms exactly once, only while the ace is active for an eligible trainer, and closes at the next turn boundary",
+        boss=gengar(), player=magnemite(), entry=("BossAI_UpdateHakiAceWindow",), tier=tier,
+        extra={**_ACE_PARTY, ("wBossAIRevealedMovesBitmapSpare", 1): before, **over},
+        expect={"memory": {("wBossAIRevealedMovesBitmapSpare", 1): after}}))
+
+# Twins of perish_trapped_*. The real AI_SwitchOrTryItem positive cannot
+# return in the harness (AI_Switch runs the switch itself, including text that
+# waits on VBlank), so the untrapped answer is pinned at the two decisions it
+# is made of: the trap gate says free, and the escape picker commits slot 2.
+_untrapped = _bench(["GENGAR", "GENGAR"], perish=True, threat="NORMAL")
+_untrapped.update({"wPlayerSubStatus5": 0, "wEnemyWrapCount": 0})
+for name, over, trapped in (("free", {}, False), ("mean_look", {"wPlayerSubStatus5": 128}, True),
+                            ("wrap", {"wEnemyWrapCount": 1}, True)):
+    CASES.append(Case(id=f"perish_trap_gate_{name}", path="strategy/perish",
+        pins="BossAI_EnemyIsTrapped answers nonzero only under Mean Look or a Wrap bind",
+        boss=gengar(), player=magnemite(), entry=("BossAI_EnemyIsTrapped",),
+        extra={**_untrapped, **over}, expect={"a": 128 if name == "mean_look" else int(trapped)}))
+for name, hp, carry, param in (("escapes", {}, True, 0x31), ("no_bench", {1: 0}, False, 0)):
+    CASES.append(Case(id=f"perish_untrapped_{name}", path="strategy/perish",
+        pins="with no trap the emergency escape commits the alive bench slot ($30 | slot 1) and leaves the cleared param alone when the bench is fainted",
+        boss=gengar(), player=magnemite(), entry=("BossAI_PickPerishEscape",),
+        extra={**_bench(["GENGAR", "GENGAR"], hp=hp, perish=True, threat="NORMAL"), "wPlayerSubStatus5": 0,
+               "wEnemyWrapCount": 0, "wEnemySwitchMonParam": 0},
+        expect={"carry": carry, "memory": {"wEnemySwitchMonParam": param}}))
+
+# BossAI_PredictPlayerSwitch switch-rate band: twice the switch count against
+# the turns elapsed. Normal-vs-Normal with no revealed moves keeps the threat
+# and HP terms out, so the answer is the 10 base plus the rate bonus alone.
+for turns, count, expected in ((0, 5, 10), (10, 0, 10), (10, 4, 20), (10, 5, 30), (10, 6, 30)):
+    CASES.append(Case(id=f"predict_switch_rate_{turns}_{count}", path="strategy/switch-risk",
+        pins="switch rate adds 10 below half a switch per turn and 20 at or above it; nothing at zero turns or zero switches",
+        boss=Mon.of("SNORLAX", 50, ["TACKLE"]), player=Mon.of("SNORLAX", 50, ["TACKLE"]),
+        entry=("BossAI_PredictPlayerSwitch",),
+        extra={"wBossAITurnsElapsed": turns, "wBossAIPlayerSwitchCount": count, "wPlayerUsedMoves": 0},
+        expect={"a": expected}))
+
+# Weather scaling in the shared kernel, both directions, against combat.
+for weather_name, weather in (("none", 0), ("rain", 1), ("sun", 2)):
+    for direction in (0, 1):
+        for move in ("FIRE_BLAST", "SURF", "SOLARBEAM"):
+            CASES.append(Case(id=f"damage_weather_{weather_name}_{direction}_{move}", path="strategy/damage-kernel",
+                pins="rain and sun scale Fire and Water exactly as combat does in both directions; Solarbeam is a public estimate only in sun (a two-turn move otherwise)",
+                boss=Mon.of("DRATINI", 50, [move]), player=Mon.of("SNORLAX", 50, [move]),
+                extra={"wBattleWeather": weather}, entry=(), expect={},
+                damage_check={"direction": direction, "move": move, "adapter": True,
+                              "supported": move != "SOLARBEAM" or weather == 2}))
+
+# A Dragon attacker's Majesty factor must not resurrect a chart-immune hit:
+# Ground into Flying and Electric into Ground stay at zero, and the neutral
+# twin keeps the factor visible.
+for direction in (0, 1):
+    for move, defender in (("EARTHQUAKE", "PIDGEOT"), ("THUNDERBOLT", "GOLEM"), ("EARTHQUAKE", "SNORLAX")):
+        attacker, target = Mon.of("DRATINI", 50, [move]), Mon.of(defender, 50, [move])
+        CASES.append(Case(id=f"damage_majesty_immune_{direction}_{move}_{defender}", path="strategy/damage-kernel",
+            pins="a Dragon attacker into a chart-immune defender deals zero in the kernel as in combat; the neutral defender is the twin",
+            boss=attacker if direction else target, player=target if direction else attacker,
+            entry=(), expect={}, damage_check={"direction": direction, "move": move, "adapter": True}))
