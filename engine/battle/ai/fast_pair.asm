@@ -481,33 +481,6 @@ BossAI_FastNormalizedPair::
 	jr nz, .shift
 	ld hl, FS_MULTIPLICAND + 4
 	ret
-.SubtractBaseline
-; FPK_TOTAL already contains the full fallback N. Replace the same baseline
-; assigned to this pair, using current stored moments (zero for opcode0).
-	ld hl, FPK_TOTAL + 1
-	ld a, [hl]
-	sub 8
-	ld [hld], a
-	ld a, [hl]
-	sbc 0
-	ld [hl], a
-	ld a, FSP_MOMENT
-	call .OwnAddress
-	call .SubtractMoment512
-	ld a, FSR_MOMENT
-	call .ReplyAddress
-.SubtractMoment512
-	call .ShiftMoment512
-	ld b, 5
-	scf
-.negate
-	ld a, [hl]
-	cpl
-	adc 0
-	ld [hld], a
-	dec b
-	jr nz, .negate
-	ld hl, FS_MULTIPLICAND + 4
 .AddTotal
 	ld de, FPK_TOTAL + 4
 	ld b, 5

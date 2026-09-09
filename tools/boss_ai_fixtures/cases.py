@@ -1588,3 +1588,14 @@ CASES.append(Case(id="eligible_baseline_tier_refused", path="haki/eligibility",
     pins="a non-boss tier never arms a Haki window",
     boss=gengar(), player=magnemite(), entry=("BossAI_HakiTrainerEligible",), tier=0,
     extra={"wTrainerClass": TRAINER_CLASSES["MORTY"]}, expect={"carry": False}))
+
+# A bench mon that faints to entry hazards reaches no reply: identity
+# (zero-power) replies must carry no flags at that start state, exactly as
+# plain damage replies do. Found by the 2026-09-08 review as a frozen-oracle
+# mismatch on the switch record's uncertainty byte.
+CASES.append(Case(id="joint_entry_ko_identity_replies", path="strategy/joint-actions",
+    pins="identity replies at a start state the bench mon does not survive carry no flags",
+    boss=Mon.of("SNORLAX", 50, ["TACKLE", "RECOVER"]), player=Mon.of("PIDGEY", 50, ["TACKLE"]),
+    extra={"wEnemyScreens": 3}, entry=(), expect={},
+    joint_check={"revealed": ["GROWL", "LEER", "AGILITY", "SPLASH"],
+                 "bench": [Mon.of("STEELIX", 50, ["TACKLE"], hp_pct=1)]}))

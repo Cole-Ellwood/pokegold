@@ -652,7 +652,6 @@ BossAI_ComparePublicActionsFastPrototype::
 	push bc
 	farcall BossAI_FastPrepareOwnedCandidate
 	pop bc
-	jr .PlanVariants
 .PlanVariants
 ; C=plan slot, AD prefix=this plan's outgoing context. For a plain damage plan
 ; store the raw minimum at the start regime against the player's raised
@@ -1307,6 +1306,16 @@ BossAI_ComparePublicActionsFastPrototype::
 	rept 7
 	ld [hli], a
 	endr
+; a start state the defender does not survive (entry hazards) reaches no reply:
+; no flags on either event, as .PlainStandalone gates
+	ld a, [wFastStartGated]
+	and a
+	jr z, .identity_living
+	xor a
+	ld b, a
+	ld c, a
+	jr .identity_flags
+.identity_living
 	ld hl, FSR_BASE + FSR_CHECK_FLAGS
 	add hl, de
 	ld b, [hl]
