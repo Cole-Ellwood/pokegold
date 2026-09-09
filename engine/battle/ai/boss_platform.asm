@@ -124,20 +124,28 @@ BossAI_CurrentEnemyIsAce:
 
 ; ai-layer: PLATFORM
 BossAI_RecordPlayerTransform:
-; Called by BattleCommand_Transform once the transform took: the player's
-; active mon now has the moves of the boss's Pokémon that is out, which the
-; boss knows exactly. Remember the own party slot (1-based; 0 = none) so
-; BossAI_BuildPublicReplySet uses those moves while the player stays
-; transformed. Covers Transform, Ditto Imposter and a Metronome or Sleep Talk
-; Transform alike. Nothing is recorded when the boss is the one transforming.
+; Called by BattleCommand_Transform once the transform is certain to take,
+; before the copy: the player's active mon is about to have the moves of the
+; boss's Pokémon that is out, which the boss knows exactly. Remember the own
+; party slot (low nibble, 1-based; 0 = none) so BossAI_BuildPublicReplySet
+; uses those moves while the player stays transformed, and the seen-species
+; index of the Pokémon that transformed (high nibble, 1-based; 0 = unknown)
+; so BossAI_RecordPlayerFaint retires the right public bench entry while
+; wBattleMonSpecies still carries the copied species. Covers Transform, Ditto
+; Imposter and a Metronome or Sleep Talk Transform alike. Nothing is recorded
+; when the boss is the one transforming.
 	ld a, [wBossAITier]
 	and a
 	ret z
 	ldh a, [hBattleTurn]
 	and a
 	ret nz
+	call BossAI_GetActiveSpeciesSeenIndex
+	swap a
+	ld b, a
 	ld a, [wCurOTMon]
 	inc a
+	or b
 	ld [wBossAITransformSource], a
 	ret
 
@@ -207,6 +215,22 @@ BossAI_RecordPlayerFaint:
 	and a
 	ret z
 
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_TRANSFORMED, a
+	jr z, .by_species
+; wBattleMonSpecies holds the copied species; the transform record names the
+; seen-species entry that actually fainted.
+	ld a, [wBossAITransformSource]
+	swap a
+	and $0f
+	ret z
+	dec a
+	cp PARTY_LENGTH
+	ret nc
+	ld c, a
+	jp BossAI_ClearSeenPlayerAliveBit
+
+.by_species
 	ld a, [wBattleMonSpecies]
 	and a
 	ret z
@@ -436,7 +460,11 @@ BossAI_MirrorPlayerUsedMovesToSpeciesSlot:
 BossAI_GetActiveSpeciesUsedMovesPointer:
 ; Scan-only (no auto-append) lookup for the active mon's slot in
 ; wBossAISpeciesUsedMoves. CF set with hl pointing at the slot; CF clear with
-; hl unchanged when the species is not (yet) in the seen list.
+; hl unchanged when the species is not (yet) in the seen list, or while the
+; player is transformed (wBattleMonSpecies is then the copied species).
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_TRANSFORMED, a
+	jr nz, .no_species
 	ld a, [wBattleMonSpecies]
 	and a
 	jr z, .no_species
@@ -1125,6 +1153,11 @@ if DEF(BOSSAI_EMIT_PLATFORM_SEEN_SPECIES_INDEX)
 ; ============================================================
 ; ai-layer: PLATFORM
 BossAI_GetActiveSpeciesSeenIndex:
+; A transformed player mon carries the copied species in wBattleMonSpecies:
+; that is not a player species to look up or record (0 = none).
+	ld a, [wPlayerSubStatus5]
+	bit SUBSTATUS_TRANSFORMED, a
+	jr nz, .none
 	ld a, [wBattleMonSpecies]
 	and a
 	jr z, .none

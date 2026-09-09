@@ -108,7 +108,7 @@ BossAI_BuildPublicReplySet::
 ; No record (a transform from before this boss battle's state existed, or a
 ; slot out of range) leaves the set broad.
 	ld a, [wBossAITransformSource]
-	and a
+	and $0f ; the high nibble is the faint recorder's seen-species index
 	jp z, .broad
 	dec a
 	cp PARTY_LENGTH

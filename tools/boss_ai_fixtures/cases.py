@@ -1453,3 +1453,49 @@ for name, boss, player, extra, revealed in (
         pins="the boss's own defense boosts lower the replies that follow them in every order, with screens and items",
         boss=boss,player=player,extra=extra,entry=(),expect={},
         joint_check={"revealed":revealed,"check_accuracy":True}))
+
+# A transformed player mon carries the copied species in wBattleMonSpecies.
+# The Transform recorder stashes which seen player species transformed, the
+# faint recorder retires that entry (not the copied species), and the
+# seen-species lookups neither record nor pollute the copied species while the
+# transform lasts. Each branch is pinned at both polarities.
+_seen_pidgey_ditto = {
+    "wBossAISeenPlayerSpeciesCount": 2, "wBossAISeenPlayerSpecies": SPECIES["PIDGEY"],
+    ("wBossAISeenPlayerSpecies", 1): SPECIES["DITTO"], "wBossAISeenPlayerAliveMask": 3}
+for name, player, extra, entry, expect in (
+    ("faint_untransformed_clears_species", Mon.of("DITTO", 20, ["TRANSFORM"]),
+     {"wPlayerSubStatus5": 0}, ("BossAI_RecordPlayerFaint",),
+     {"memory": {"wBossAISeenPlayerAliveMask": 1, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("faint_transformed_clears_recorded_species", Mon.of("GENGAR", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 8, "wBossAITransformSource": 0x21}, ("BossAI_RecordPlayerFaint",),
+     {"memory": {"wBossAISeenPlayerAliveMask": 1, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("faint_transformed_without_record_keeps_bench", Mon.of("GENGAR", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 8, "wBossAITransformSource": 0x01}, ("BossAI_RecordPlayerFaint",),
+     {"memory": {"wBossAISeenPlayerAliveMask": 3, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("faint_transformed_record_out_of_range_keeps_bench", Mon.of("GENGAR", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 8, "wBossAITransformSource": 0x71}, ("BossAI_RecordPlayerFaint",),
+     {"memory": {"wBossAISeenPlayerAliveMask": 3, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("seen_index_untransformed_appends", Mon.of("GENGAR", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 0}, ("BossAI_GetActiveSpeciesSeenIndex",),
+     {"a": 3, "memory": {"wBossAISeenPlayerSpeciesCount": 3, ("wBossAISeenPlayerSpecies", 2): SPECIES["GENGAR"]}}),
+    ("seen_index_transformed_is_none", Mon.of("GENGAR", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 8}, ("BossAI_GetActiveSpeciesSeenIndex",),
+     {"a": 0, "memory": {"wBossAISeenPlayerSpeciesCount": 2, ("wBossAISeenPlayerSpecies", 2): 0}}),
+    ("used_moves_slot_untransformed_found", Mon.of("PIDGEY", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 0}, ("BossAI_GetActiveSpeciesUsedMovesPointer",), {"carry": True}),
+    ("used_moves_slot_transformed_none", Mon.of("PIDGEY", 20, ["TACKLE"]),
+     {"wPlayerSubStatus5": 8}, ("BossAI_GetActiveSpeciesUsedMovesPointer",), {"carry": False}),
+    ("record_stashes_seen_index", Mon.of("DITTO", 20, ["TRANSFORM"]),
+     {"wPlayerSubStatus5": 0, "hBattleTurn": 0, "wCurOTMon": 0}, ("BossAI_RecordPlayerTransform",),
+     {"memory": {"wBossAITransformSource": 0x21, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("record_boss_turn_ignored", Mon.of("DITTO", 20, ["TRANSFORM"]),
+     {"wPlayerSubStatus5": 0, "hBattleTurn": 1, "wCurOTMon": 0}, ("BossAI_RecordPlayerTransform",),
+     {"memory": {"wBossAITransformSource": 0, "wBossAISeenPlayerSpeciesCount": 2}}),
+    ("record_unseen_species_appends", Mon.of("MEW", 20, ["TRANSFORM"]),
+     {"wPlayerSubStatus5": 0, "hBattleTurn": 0, "wCurOTMon": 2}, ("BossAI_RecordPlayerTransform",),
+     {"memory": {"wBossAITransformSource": 0x33, "wBossAISeenPlayerSpeciesCount": 3}}),
+):
+    CASES.append(Case(id="transform_"+name, path="strategy/transform-bookkeeping",
+        pins="a transformed player mon is bookkept as the Pokémon that transformed, never as the copied species",
+        boss=Mon.of("SNORLAX", 50, ["TACKLE"]), player=player, entry=entry,
+        extra={**_seen_pidgey_ditto, **extra}, expect=expect))
