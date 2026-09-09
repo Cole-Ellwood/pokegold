@@ -600,6 +600,8 @@ ROM's bytes unchanged throughout (SHA1
 | `35c36038` | `BossAI_FastPrepareReplyFacts`, the type chart mirror and its index in the cold "Boss AI Fast Reply Facts" section behind farcall (`BossAI_FastTruncateStatsFar` takes the pointer in BC; the hot compiler keeps `BossAI_FastTypeContribution`); the per-reply own-variant call skipped without boost plans | 34,511,344 | 2,830,517 |
 | `4133fdbe` | Fast pairs: per-plan facts (`.PreparePlanPairs`: the reply's regime after the own hit, gate, own flags per regime and on a miss, z_own) and per-reply facts (`.PlainStandalone`, which also replaces the scalar standalone for plain damage replies) make K1/K2 two compares unless a hit changed the other side's amount regime or fainted an actor; weight*z_reply*K accumulates per plan in WRAMX bank 1 ("Boss AI Fast Sweep State", reference build only) and z_own multiplies once at `.CommitPairs` | 31,074,396 | 2,596,931 |
 | `0b91d7d8` | Own recovery plans on the fast pairs (heal from the HP the reply left; Rest transition below the maximum); bench defenders write only the two standalone flag bytes; `.ReplyMass` fills a page-aligned per-move weight table the sweeps read; arithmetic `.PlanAddress`; the actor import and the recovery quota in cold sections | 27,696,268 | 2,388,164 |
+| `efcc0382` (2026-09-08) | The compile's regime loop re-stores the first regime's amount for the remaining masked regimes when neither the Fire passive (attacker low) nor the Ice passive (defender high) can apply, the only two places the regime bits reach an amount; decided only after a first amount stored and only when a second masked regime exists. 198 of 979 amounts on the broad case (the 11 multi-hit moves at four regimes per defender) | 27,067,104 | 2,360,134 |
+| `6cebb74a` | Per-reply amount facts computed once (the defender's chart rows for the reply's type, whether a no-effect row halves, whether any type passive can apply): the matchup probe is a 32-entry table (`.MatchupByRows`), `.Chart` and `.Passives` read the facts; the contact flag folded into bit 7 of the moves mirror's type byte (the 254-byte contact mirror gone; `fast_contact_N` comes from the generated `engine/battle/ai/fast_contact_flags.inc`, `scripts/generate_fast_contact_flags.py` from the untouched `data/moves/contact_flags.asm`, drift caught by `tools/audit/check_fast_contact_flags.py` in the release-smoke floor); the record clear skips the bytes the header always writes; `.Div24By8` skips the first eight trials when the high byte is below the divisor; `.variation` keeps the pre-roll amount on the stack and skips unit post-roll multipliers; the reply standalone writes delta zero when an event's successor equals the start state; the reply executor computes the regime for the hit event only (`.SelfFaint` shared); bench imports keep the player HP table built by the active import (`wFastPlayerTable`, C bit0) | 26,128,232 | 2,317,392 |
 
 The bench reply cache in WRAMX bank 2 (the brief's step 1) was built,
 verified byte-exact through a fill/use fixture, and reverted: after the
@@ -632,6 +634,69 @@ amount) plus the record clear and header (about 1.5k), and 1,524 compiles at
 that floor alone exceed the budget; reaching it needs the compile's per-reply
 cost cut roughly threefold, which is grouped amounts (Milestone 4) rather
 than more trimming.
+
+Continued 2026-09-08 (worktree `.claude/worktrees/nostalgic-wu-e45477`,
+branch `claude/nostalgic-wu-e45477`, fast-forwarded into `master`). Two code
+commits, `efcc0382` and `6cebb74a`, rows above; every gate exact on each
+(oracle 88 vectors, `fast_reply_native` 5,588 compiles byte-exact, per-pair
+differential 0 of 636, `fast_reply_standalone` 3,000, `fast_hp` 1,614,
+`fast_standalone` 2,430, the 843-fixture suite, `check_cross_bank_call`,
+`check_release_smoke`; game ROM SHA1 unchanged). Broad benchmark 27,696,268
+-> 26,128,232, average 2,388,164 -> 2,317,392, `joint_speed_tie_transformed`
+8,775,728 -> 8,726,488; 22 of 24 fixtures under budget, the same two over.
+**The target is still not met.**
+
+Measured before building, and dropped: the per-defender amount memo keyed by
+(power/5, type, category, postrolls, regime) that headed the remaining list.
+A census of the broad case's amount stream (`.local/ai-two-second/
+nw_amount_census.py`, `nw_amount_keys.py`) gives 961 memo-eligible amounts
+per decision with 241 possible hits (25%: the same 118 distinct keys on every
+defender, post-roll bits constant, regime 2 for 123 of 156), each hit saving
+about 3k cycles: a gross ceiling of 0.67M against 0.4-0.5M of miss-path and
+key overhead, 372 bytes of SRAM and most of the hot bank's free space. The
+best cheap hash (`power/5 + 7*type + 8*regime`, 62 slots) reaches 223 of
+those 241. Its one real component, the multi-hit moves' four regimes sharing
+one amount, became `efcc0382` instead.
+
+Whole-decision phases of the broad case after `6cebb74a` (26.13M): native
+reply compile 11.17M (1,524 compiles, 7.3k each), orchestration 3.50M, scalar
+pair 2.49M, native pair 2.47M, scalar standalone 2.29M, family (sequential)
+standalone 2.19M, owned preparation 1.24M, HP tables 0.34M (the player table
+built once), reply facts 0.22M, entry 0.11M, finalize 0.06M. Inside the
+compile, the header and glue that run for every reply (record clear and move
+facts 0.84k, Descriptor with the amount facts and the first-regime scan
+~1.0k, Accuracy 0.43k, HitUncertainty 0.43k, PlayerCanAct 0.28k,
+MultiHitItemState 0.23k, EffectSupport 0.22k, Priority 0.17k, RecoveryQuota
+0.15k and the rest) cost about 4.0k per compile, more than the amounts
+(Formula 4.1k on the 271 base-cache misses, variation 0.78k, Passives 0.56k,
+probe 0.24k, Chart 0.21k per amount). Attribution logs:
+`.local/ai-two-second/nw-attr-compile-0.log` (start), `-a3` (after
+`efcc0382`), `-b` (after `6cebb74a`; the compiler bytes of that build are the
+final ones), `nw-attr-orch-a3.log` (orchestration:
+`PreparePublicAction` 0.78M for 10 calls, own and player HP tables 0.26M
+each, `PrepareReplyFacts` 36k per defender, `ReplyMass` 0.19M),
+`nw-attr-family-a3.log` (the family standalone at 16.5k per reply: executor
+validate/represented/Regime/done glue 4.5k per event, `Delta` 2.3k per
+event, Moment 1.9k).
+
+An independent read-only review (Opus 5, 2026-09-08, requested by the
+project lead; `.local/ai-two-second/cut_candidates_2026-09-08.md`, scratch)
+listed 13 things the selector computes whose cost exceeds their plausible
+effect on the decision. Nothing from it is implemented; the lead rules on
+each item. Its headline changes how the target should be read:
+`joint_broad_prior_mass` is a level 50 Smeargle, and `BossAI_BuildPublicReplySet`
+(`engine/battle/ai/public_replies.asm`) emits the 254-move set only for
+Smeargle, a Transformed mon or an unreadable species byte; every real species'
+natural prior at level 50 has 2 to 58 moves (median 36, Nidoqueen the
+largest) and four revealed moves close it to five. The sweep is close to
+linear in reply count, so the worst realistic decision projects to about
+8.1M, inside the budget, while the two fixtures over budget are both
+254-move priors. The other large items: a shared record for the 85 zero-power
+identity moves (3.9M, exactness-preserving as grouping), bench defenders
+against revealed moves only (15.0M, a fairness cost the lead must weigh),
+multi-hit exactness (1.9M), pairing every reply against four own plans
+(3.1M), drain/recoil bookkeeping (1.0M); Explosion and Pursuit are explicit
+keeps.
 
 The [replacement profile](fast_replacement_profile.json) was refreshed on the
 restructured bench loop: the largest native sample is 623,988 cycles
@@ -830,26 +895,29 @@ against a multihit, False Swipe or Selfdestruct reply. The broad benchmark is
 above 8,388,608 (see the speed pass above for the current number). Still
 remaining, in the order the attribution suggests:
 
-1. **The compile's amounts** (11.3M): a memo of the amount at a regime keyed
-   by (power/5, type, category, amount effect class, postrolls, regime bits)
-   in WRAMX bank 2 (about 26% of the damaging moves share a (power, type)
-   pair; expected about 1.5M), the chart probe from the two row codes instead
-   of a scaled call (0.2M), the record clear and header writes trimmed for
-   the selector's own use (0.2M), the 24-bit divisions of `.Formula` (0.3M).
-   Beyond that only grouped base arithmetic by category and power group
-   (Milestone 4) moves the compile below a few thousand cycles per reply.
-2. **Family replies**: a fast standalone and fast pairs for drain/recoil and
-   multi-hit replies (the sequential executor costs 16.5k per standalone and
-   20.5k per pair; 2.4M and 1.8M on the broad case).
-3. **Owned preparation**: `BossAI_FastPrepareOwnedCandidate` runs
-   `PreparePublicAction` once per plan (4 x 107k), and the actor import
-   rebuilds the player HP table for every defender (6 x 105k): one
-   preparation per defender and a player table built once.
-4. **Per-reply glue**: the flags pass (hoist the event masses out of its
-   loop), `.PrepareReply`'s constant marshaling, the identity
-   classification/standalone/pair trio, the four-byte incoming accumulation
-   on `FSC_TEMP`.
-5. Adversarial-domain fixtures (maximum candidates and replies, both sides
+1. **The lead's ruling on the cut list** (see the speed pass above). Capping
+   the unbounded Smeargle/Transformed prior changes an input to both selectors
+   and needs a refrozen oracle; a shared record for the 85 identity moves is
+   exactness-preserving grouping (the census shows 61 byte-identical records
+   per defender) and saves 3.9M on the broad case.
+2. **Family replies** (2.19M standalone plus about 1.8M of pairs): a fast
+   standalone and fast pairs for drain/recoil and multi-hit replies. The
+   sequential executor's cost is mostly glue (validate/represented/Regime/
+   done about 4.5k per event, `Delta` 2.3k per event, Moment 1.9k); the
+   family arithmetic itself (`.MultiPath`, `BossAI_FastDamageScript`) is small
+   and reusable.
+3. **Owned preparation** (1.24M): `BossAI_FastPrepareOwnedCandidate` runs
+   `PreparePublicAction` once per plan (78k each, 10 calls in all) although
+   `BossAI_PrepareIncomingActor` and the speeds repeat for the same actor;
+   `PrepareReplyFacts` costs 36k per defender; `ReplyMass` 0.19M.
+4. **Per-reply glue** (about 2.5M): `AccumulateIncoming` 0.9M, `PrepareReply`
+   0.41M, `ClassifyIdentity` 0.58M, `reply_next` 0.26M, the identity
+   standalone/pair trio, `PlanPair` dispatch 0.84M.
+5. **The compile's header** (about 4.0k of its 7.3k per reply): most of it
+   depends on the move and the player, not the defender, and is recomputed
+   for all six defenders; the amounts below it are near their floor without
+   grouped base arithmetic (Milestone 4). The memo is measured out (above).
+6. Adversarial-domain fixtures (maximum candidates and replies, both sides
    uncertain, Fire/Ice thresholds, complex after-effects), then the isolated
    and integrated timing gates and the production ABI/interrupt ownership work.
 

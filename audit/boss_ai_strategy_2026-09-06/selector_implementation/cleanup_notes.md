@@ -162,3 +162,27 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
   in PHASES falls into the previous phase, which is why the compile phase
   absorbed `.PlainStandalone` until the labels were added. Add new selector
   labels to PHASES with the code.
+
+## Speed pass, second day (Claude-authored, 2026-09-08)
+
+- Four header bytes of the compile scratch now double as amount facts
+  (`FSM_PASSIVE`, `FSM_CHART_ROWS`, `FSM_REGIME_REPEAT`, `FSM_CHART_MAJESTY`).
+  Correct because the header is written before any amount compiles, but a
+  dedicated eight-byte amount-facts block would make the lifetimes obvious;
+  `FSM_TEMP` is full.
+- `.MatchupByRows` is `.chart_apply` on EFFECTIVE tabulated by hand (from a
+  Python simulation of the routine). The compiler differential covers it for
+  every move in eleven scenarios, one of them a Dragon attacker, but a
+  generator or an ASSERT-style derivation would remove the duplicated rule.
+- `engine/battle/ai/fast_contact_flags.inc` restates the contact table as
+  254 `DEF` lines because RGBDS cannot read `db` values back. It is the
+  first generated `.inc` under `engine/`; if a second one appears, give the
+  generators a shared home and one audit that checks them all.
+- The reply executor's miss path still runs `.validate`/`.represented`
+  (about 1.2k cycles) to reach two flag ORs; the standalone's start-state
+  compare and `.PlainStandalone`'s "miss = start" are the same fact written
+  twice. A miss-only entry that returns the flags without touching the
+  continuation would remove both.
+- `BossAI_FastImportActorHP` takes its keep bit in C bit0 because both
+  weights (128, 192) leave the low bits free. It is an ABI convention with
+  one caller; if a second caller appears, give it a named constant.

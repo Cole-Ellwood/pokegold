@@ -504,3 +504,68 @@ benchmark 36,186,008 -> 27,696,268 at `0b91d7d8`; average 2,906,745 ->
   attribution). Launch long runs one per background command; two profiles
   started from one shell with `&` shared a log file and ran concurrently for
   fifteen minutes.
+
+---
+
+# Continuation 2026-09-08 (Claude Fable): speed pass, second day
+
+Worktree `.claude/worktrees/nostalgic-wu-e45477` (branch
+`claude/nostalgic-wu-e45477`, with copies of `rgbds-1.0.1/` and
+`.local/ai-two-second/`), fast-forwarded into `master`. Code commits
+`efcc0382` (regime repeat) and `6cebb74a` (the trims batch); rows and the
+attribution in status.md "Speed pass". Broad benchmark 27,696,268 ->
+26,128,232; average 2,388,164 -> 2,317,392; target 8,388,608 not met.
+
+Facts a successor needs:
+
+- Compile scratch aliases (all header bytes dead once the amounts compile):
+  `FSM_PASSIVE` = `FSM_MIN_HITS`, `FSM_CHART_ROWS` = `FSM_NEGATION`,
+  `FSM_REGIME_REPEAT` = `FSM_CHECK_FLAGS`, `FSM_CHART_MAJESTY` = `FSM_CAN_ACT`.
+  `FSM_AMOUNT` is gone (`.variation` keeps the pre-roll amount on the stack).
+  The per-reply amount facts are computed after the power/5 index and only
+  when `FSM_UNSUPPORTED` is clear and the power nonzero; `.MatchupByRows`
+  (32 bytes after `.MinDeltaOffsets`) is `.chart_apply` on EFFECTIVE for
+  both row codes, second half with a no-effect row halving.
+- `.Amount` returns carry when it stored; `.store` preserves BC and sets
+  carry. The regime loop's repeat path is `call .store` with BC/FSM_MIN from
+  the previous regime: nothing between `.Amount` and the repeats may touch
+  BC (the first cut of the rule used B/C as scratch and every repeated
+  regime read 0x0104; the compiler differential caught it).
+- The contact flag lives in bit 7 of the moves mirror's type byte
+  (`data/moves/moves.asm` mirror macro, `fast_move_index`). `fast_contact_N`
+  is defined by the generated `engine/battle/ai/fast_contact_flags.inc`
+  (`scripts/generate_fast_contact_flags.py` from `data/moves/contact_flags.asm`,
+  whose rows are untouched; include order: the .inc before moves.asm).
+  `tools/audit/check_fast_contact_flags.py` (release-smoke floor) fails when
+  the include drifts from the table; a move added to the data file without
+  regenerating also fails to assemble in the reference build. A first cut
+  rewrote the 254 data-file rows as macro calls; the pre-commit hook flagged
+  that as a file rewrite needing the lead's approval, and the generated
+  include is the smaller change anyway. Game ROM SHA1 unchanged; the
+  reference ROM is byte-identical either way.
+- `wFastPlayerTable` (4 bytes, "Boss AI Fast Sweep State"): the maximum and
+  mode of the last player HP table built, then the keep bit of the current
+  import. `BossAI_FastImportActorHP` keeps the table when C bit0 is set and
+  the maximum matches; only `.SwitchDefender` sets the bit. A WRAM-key-only
+  version (reuse decided inside `BossAI_FastBuildPlayerHPTableFar`) was
+  exact in the selector but failed `fast_reply_standalone.py`, which wipes
+  SRAM to 0xa5 between imports; the caller vouching is the robust form.
+- The reply executor computes `.Regime` for the hit event only; the miss
+  event runs `.SelfFaint` for Selfdestruct and goes to `.done`. Nothing
+  reads `FSE_REGIME` after a miss execution (grep before changing that).
+- `BossAI_FastBuildReplyStandalone` writes delta zero when an event's
+  successor equals the start state (four-byte compare against
+  `FSA_START_HP`/`FSA_PLAYER`); this relies on `FSA_START_PHI` and
+  `FSA_PLAYER+4/5` being the potentials of those HP values, which the import
+  and `.ApplyEntry` guarantee.
+- Hot bank after `6cebb74a`: $3f2f of $4000 (209 bytes free). A `jr` over the
+  amount-facts preamble was out of range once; the two guards use `jp`.
+- Census and probe scripts (`.local/ai-two-second/`): `nw_amount_census.py`
+  and `nw_amount_keys.py` (memo hit ceiling), `nw_probe_tables.py`
+  (`FSN_PASSIVES` per defender, HP table hashes per sweep),
+  `reply_group_census.py` (distinct records per defender). Label lists for
+  `phase_profile.py`: `nw_labels_compile.txt`, `nw_labels_orch.txt`,
+  `nw_labels_family.txt`.
+- The read-only cut-candidate review is `.local/ai-two-second/
+  cut_candidates_2026-09-08.md`; its Smeargle finding is summarised in
+  status.md. Nothing from it is implemented; the lead rules.
