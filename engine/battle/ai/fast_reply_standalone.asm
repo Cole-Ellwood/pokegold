@@ -16,11 +16,11 @@ BossAI_FastBuildReplyStandalone::
 	ld [FSO_EVENT], a
 .event
 	push de ; restore context before the next incoming executor
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FSO_EVENT]
 	and a
 	jr z, .continuation
-	ld hl, $a460
+	ld hl, FSE_CONT_MISS
 .continuation
 	push hl
 	ld b, 24

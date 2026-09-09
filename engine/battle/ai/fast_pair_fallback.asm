@@ -164,7 +164,7 @@ BossAI_FastFallbackPair::
 	add hl, bc ; U=1024+V(final)-V(initial), positive
 	ld b, h
 	ld c, l
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 .accumulate
 ; A=reached flags, BC=U
 	ld hl, FPK_FLAGS
@@ -304,7 +304,6 @@ BossAI_FastFallbackPair::
 	call .ReplyAddress
 .read_accuracy
 	ld a, [hl]
-.Decode
 	ld b, 0
 	ld c, a
 	cp 255
@@ -355,7 +354,7 @@ BossAI_FastFallbackPair::
 	ld e, a
 	ret
 .InitialContinuation
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld b, 24
 	xor a
 .clear_continuation
@@ -363,13 +362,13 @@ BossAI_FastFallbackPair::
 	dec b
 	jr nz, .clear_continuation
 	ld a, [FSA_START_HP]
-	ld [$a448], a
+	ld [FSE_CONT_HIT], a
 	ld a, [FSA_START_HP + 1]
-	ld [$a449], a
+	ld [FSE_CONT_HIT + 1], a
 	ld a, [FSA_PLAYER]
-	ld [$a44a], a
+	ld [FSE_CONT_HIT + 2], a
 	ld a, [FSA_PLAYER + 1]
-	ld [$a44b], a
+	ld [FSE_CONT_HIT + 3], a
 	ret
 .SubtractBaseline
 ; FPK_TOTAL already contains the full fallback N. Replace the same baseline

@@ -48,11 +48,12 @@ DEF FSR_MIN_DELTA1 EQU 8
 DEF FSR_MIN_DELTA2 EQU 23
 DEF FSR_MIN_DELTA3 EQU 26
 ; A plain damage reply keeps its amounts against the boss's own defense boosts
-; in the same free bytes (a family never carries both): the raw maximum at the
-; start regime at Defense+1 or Special Defense+2 in byte 7 and at Defense+2 in
-; byte 26, with a valid and a range bit per own boost slot in byte 23 (slot 0
-; Defense+1 bits 0/1, slot 1 Defense+2 bits 2/3, slot 2 Special Defense+2 bits
-; 4/5). BossAI_FastCompileReplyVariants writes them after the native compile;
+; in the same free bytes (a family never carries both): the raw maximum word
+; at the start regime at Defense+1 or Special Defense+2 in bytes 7..8 (byte 8,
+; FSR_HP_DEPEND, is never read) and at Defense+2 in bytes 26..27, with a valid
+; and a range bit per own boost slot in byte 23 (slot 0 Defense+1 bits 0/1,
+; slot 1 Defense+2 bits 2/3, slot 2 Special Defense+2 bits 4/5).
+; BossAI_FastCompileReplyVariants writes them after the native compile;
 ; neither compiler does.
 DEF FSR_VARIANT_A EQU 7
 DEF FSR_VARIANT_B EQU 26

@@ -1274,11 +1274,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	ret c
 	call BossAI_FastBuildReplyStandalone
 	ret nc
-	ld a, [$a458] ; original-hit continuation flags
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS] ; original-hit continuation flags
 	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
 	add hl, de
 	ld [hli], a
-	ld a, [$a470] ; original-miss continuation flags
+	ld a, [FSE_CONT_MISS + FSE_CONT_FLAGS] ; original-miss continuation flags
 	ld [hl], a
 	scf
 	ret
@@ -1765,7 +1765,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [FPK_INDEX]
 	ld c, a
 	xor a
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	call BossAI_FastExecuteOwnedPlan
 	xor a
 	ld [FSV_OVERRIDE], a
@@ -1792,7 +1792,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	or b
 	ld [FPK_FLAGS], a
 .boost_variant_flags
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 	ld hl, FPK_FLAGS
 	or [hl]
 	ld [hl], a
@@ -1941,7 +1941,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	jp nc, .own_boost_total ; the reply carries no amount for this boost
 ; the reply's hit at the variant, from the start state
 	call BossAI_FastNormalizedPair.InitialContinuation
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	xor a
 	call BossAI_FastExecuteReplyPlan
 	xor a
@@ -1970,7 +1970,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, b
 	ld [FPK_FLAGS], a
 .own_boost_variant_flags
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 	ld hl, FPK_FLAGS
 	or [hl]
 	ld [hl], a

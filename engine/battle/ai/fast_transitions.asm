@@ -205,7 +205,7 @@ DEF FST_RECOIL EQU FST_ITEM_QUOTA + 2 ; Steel contribution0..2
 DEF FST_ITEM EQU FST_RECOIL + 1 ; 0none,1user loss,2user gain
 DEF FST_EFFECT EQU FST_ITEM + 1 ; 0plain,1drain,2recoil
 DEF FST_ACTUAL_LOSS EQU FST_EFFECT + 1 ; BE output
-ASSERT FST_ACTUAL_LOSS + 2 <= $a560
+ASSERT FST_ACTUAL_LOSS + 2 <= FSE_OPCODE ; the executor's opcode byte follows the script's inputs
 
 BossAI_FastDamageScript::
 ; SRAM bank0 open. Inputs above describe an already reached successful
