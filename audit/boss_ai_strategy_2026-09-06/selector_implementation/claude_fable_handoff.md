@@ -593,3 +593,23 @@ status.md "Reply sets". Facts a successor needs:
   the reply-set fixtures are all `requires_reference`. The reference build's
   timing gate now has every ordinary fixture under budget with the realistic
   worst case (`joint_broad_nidoqueen`) at about 8.14M.
+
+## Approved cuts (2026-09-08, `0e2110cf`)
+
+Identity duplicates skipped in the reply sweep (`.IdentityDuplicate` before
+`.PrepareReply`, `.RecordIdentityKey` after `.ReplyStandalone`,
+`wFastIdentityKeys` 65 bytes in the sweep state, reset per defender at
+`.ReplySweep`); heal-effect bit 5 gates `.RecoveryQuota`; False Swipe cleared
+from the public reply set. Details and numbers in status.md "The lead's
+approved cuts". Facts a successor needs:
+
+- The duplicate key is (mirror accuracy, effect class & %1110 | contact).
+  Adding a move-specific rule to the compiler's header (anything reading
+  `FSM_MOVE` for a zero-power move) must add that move to the exclusion list
+  in `.IdentityDuplicate`, or duplicates of it will be skipped wrongly. The
+  compiler differential does not catch that; the oracle does.
+- Hot bank is at 17 bytes free. Move something cold before adding hot code
+  (candidates in cleanup_notes.md).
+- Item 9 (reply-side minimum roll) was deliberately not landed: it changes an
+  output the production evaluator still computes, so the exactness gate would
+  break without a matching production change.

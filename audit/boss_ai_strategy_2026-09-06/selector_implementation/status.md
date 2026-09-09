@@ -798,6 +798,55 @@ realistic worst case is about 3%, so the approved exactness-preserving cuts
 minimum roll, Helmet gate) are still worth landing for margin; the cost of an
 unrealistic 254-move prior is no longer the gate.
 
+#### The lead's approved cuts (2026-09-08, `0e2110cf`)
+
+From the read-only review's list, the project lead approved items 2 (shared
+handling of identity replies), 11 (heal-effect gate), 10a (False Swipe not
+weighed), 9 (reply-side minimum roll) and 7 (Helmet gate), and ruled the
+Smeargle prior an authored list (landed with the reply-set change above).
+Landed here, all exactness-preserving:
+
+- **Identity duplicates skipped** (`.IdentityDuplicate`, `.RecordIdentityKey`,
+  `wFastIdentityKeys` in the sweep state). A zero-power reply's compiled
+  record depends on its mirror accuracy, its effect-class bits (HP-only,
+  priority) and its contact flag besides per-defender constants; its amounts
+  are unknown and its opcode is damage unless it heals or is one of the five
+  defense boosts (Whirlwind and Sleep Talk read their move id in the accuracy
+  and can-act rules). Those moves are never skipped; every other zero-power
+  reply whose (accuracy, class) key this defender already swept as an identity
+  reply is skipped whole, because its moment is zero, its pair corrections are
+  zero and the flags it would add are already in every union (unions are
+  idempotent, and the mass M is computed once by `.ReplyMass`). Up to 32 keys
+  per defender. On `joint_broad_nidoqueen` 120 of 384 replies skip (the 22
+  status moves collapse to a few keys on each of six defenders).
+- **Heal-effect bit** (bit 5 of `BossAI_FastEffectClass`): `.RecoveryQuota`
+  runs only for the four recovery effects. Cycles: negligible (the routine
+  already began with four compares); landed because approved and six lines.
+- **False Swipe is never a considered reply**: `BossAI_BuildPublicReplySet`
+  clears its possible bit after Struggle (`.ClearBit`); it stays in the
+  revealed set as a fact. Both selectors see the same input, so the oracle was
+  refrozen again (same directory). Fixtures `replies_false_swipe_never_weighed`
+  and `replies_false_swipe_not_in_closed_set`.
+- **Helmet gate (item 7)**: already the shipped shape; `.Descriptor` and
+  `.MultiHitItemState` test the boss's item first and the Helmet work runs only
+  when the boss holds one. Nothing to cut; the residual is the plain
+  descriptor lookup, about 40 cycles per reply.
+- **Reply-side minimum roll (item 9): not landed.** Dropping it changes the
+  reply records' range bit, which the reference evaluator (production
+  `BossAI_ValuePublicExchange`) still computes, so the exactness gate would
+  fail unless the production evaluator changed with it. The saving is about
+  2%; the gate is worth more. Revisit only together with a production change.
+
+Whole-decision timing (30 ordinary fixtures x 2 scans): worst
+`joint_broad_nidoqueen` 8,143,568 -> 7,685,280 (headroom 8.4% under
+8,388,608); `joint_smeargle_authored_prior` 3,483,228 -> 3,144,796 (scan 15);
+average 1,488,178 -> 1,445,944; no ordinary fixture over budget. Gates: oracle
+94 vectors exact (refrozen for the False Swipe input), `fast_reply_native`
+5,588 byte-exact, per-pair differential 0 of 148 on the Nidoqueen case, the
+fixture suite and release smoke green; game ROM bytes unchanged from
+`30c3dfc8`. Hot bank $3fef of $4000 (17 bytes free): the next hot-bank code
+needs something moved cold first.
+
 ## Independent review
 
 The existing Astra-low reviewer approved each arithmetic, HP, and boundary

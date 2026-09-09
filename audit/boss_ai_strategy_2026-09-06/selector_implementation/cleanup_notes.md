@@ -186,3 +186,19 @@ the orchestration work stayed reviewable. Revisit after the timing gates.
 - `BossAI_FastImportActorHP` takes its keep bit in C bit0 because both
   weights (128, 192) leave the low bits free. It is an ABI convention with
   one caller; if a second caller appears, give it a named constant.
+
+## Approved cuts (Claude-authored, 2026-09-08)
+
+- `.IdentityDuplicate` re-derives the zero-power header's key by hand (accuracy,
+  class bits, contact, eleven excluded moves). A generated "header depends on
+  move id" bit in the effect-class table, asserted against the compiler's
+  `FSM_MOVE` reads, would make the exclusion list unforgettable.
+- `.RecordIdentityKey` calls `.IdentityDuplicate` a second time to recover the
+  key (B/C are not live after the standalone). Two bytes of scratch for the key
+  would save the second walk; it costs about 400 cycles per identity reply.
+- `wFastIdentityKeys` is a linear list of up to 32 pairs. A 256-bit bitmap
+  keyed by (class << 4 | accuracy index) would be constant time, but accuracy
+  takes only eight values among zero-power moves and the list never exceeded
+  ten entries on any fixture.
+- `.ClearBit` in public_replies.asm duplicates `.SetBit`'s bit-index arithmetic;
+  a shared "address and mask of move bit" helper would serve both.
