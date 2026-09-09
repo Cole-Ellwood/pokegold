@@ -14,7 +14,9 @@ DEF FSE_MODE EQU $a54b ; 0execute,1flags only
 DEF FSE_OPCODE EQU $a53f
 ; Amount override for a defensive variant (the selector's boost pairs): the
 ; flag byte is exactly 1 while live (any other value is inactive, so poisoned
-; scratch cannot arm it), then the raw minimum and bit0 range / bit1 supported.
+; scratch cannot arm it), then the raw amount word and bit0 range / bit1
+; supported. Only the owned-plan executor reads bit1; the reply executor keeps
+; its record's support bit under an override (see .OwnBoostVariant).
 DEF FSV_OVERRIDE EQU $a4b4
 ; Family scratch. It aliases the damage script's inputs and is consumed
 ; before .Script writes them.
