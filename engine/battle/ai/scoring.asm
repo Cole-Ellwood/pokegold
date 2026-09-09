@@ -230,7 +230,15 @@ AI_Types:
 	jr .checkmove
 
 .immune
+; The chart only stops damaging moves: Growl still lands on a Ghost. Block an
+; immune attack outright; keep vanilla's nudge for a status move.
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	jr z, .immune_status
 	call AIBlockMove
+	jr .checkmove
+.immune_status
+	call AIDiscourageMove
 	jr .checkmove
 
 
@@ -3179,13 +3187,13 @@ AIDiscourageMove:
 	ret
 
 AIBlockMove:
-; Push the score at [hl] up to BossAI's "blocked" threshold (80) so the move
-; is treated as a non-option in BossAI_SelectMove's first-pass scan. Used by
-; AI_Types/AI_Status .immune branches: vanilla's +10 nudge left immune moves
-; competitive with discouraged-but-real moves and let bosses pick them
-; (Falkner Pidgeotto vs FLYING → Mud Slap for 0 damage). Secondary effects
-; on a _HIT variant don't apply through type immunity in Gen 2 anyway, so an
-; immune attacking move is strictly wasted.
+; Push the score at [hl] up to the "blocked" threshold (80) so the move is a
+; non-option for the ordinary (tier-0) trainer layers. Used by AI_Types and
+; AI_Status .immune branches for damaging moves only: vanilla's +10 nudge left
+; an immune attack competitive with discouraged-but-real moves. Bosses never
+; run these layers; their immunity block is .DamagingMoveBlockedByTypeImmunity
+; in boss_policy_move.asm. Secondary effects on a _HIT variant don't apply
+; through type immunity in Gen 2 anyway, so an immune attack is strictly wasted.
 	ld a, [hl]
 	cp 80
 	ret nc

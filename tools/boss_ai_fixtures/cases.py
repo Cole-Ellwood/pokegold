@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 
 from tools.boss_ai_fixtures.harness import (
-    AI_TIER_EARLY, AI_TIER_MID, BATTLEPLAYERACTION_SWITCH,
+    AI_TIER_EARLY, AI_TIER_LATE, AI_TIER_MID, BATTLEPLAYERACTION_SWITCH,
     BATTLEPLAYERACTION_USEMOVE, HAKI_ELIGIBLE_F, HAKI_SPENT_F, MOVES,
     SUBSTATUS_ENCORED, TRAINER_CLASSES, Mon, SPECIES, TYPES, ROOT, _parse_const_file,
 )
@@ -1599,3 +1599,33 @@ CASES.append(Case(id="joint_entry_ko_identity_replies", path="strategy/joint-act
     extra={"wEnemyScreens": 3}, entry=(), expect={},
     joint_check={"revealed": ["GROWL", "LEER", "AGILITY", "SPLASH"],
                  "bench": [Mon.of("STEELIX", 50, ["TACKLE"], hp_pct=1)]}))
+
+# Ordinary (tier-0) trainer layer: the chart stops damaging moves only. An
+# immune attack is blocked at 80; a status move into the same defender keeps
+# vanilla's +10 nudge (Growl still lands on a Ghost).
+CASES.append(Case(id="tier0_types_immune_status_only_discouraged", path="normal/tier-zero",
+    pins="AI_Types blocks an immune attack and only discourages a status move of an immune type",
+    boss=Mon.of("PIDGEY", 20, ["GROWL", "TACKLE"]), player=Mon.of("GENGAR", 26, ["LICK"]),
+    tier=0, scores=[20, 20, 20, 20], entry=("AI_Types",),
+    expect={"memory": {"wEnemyAIMoveScores": 30, ("wEnemyAIMoveScores", 1): 80}}))
+
+# One definition of "ace" (design lead, 2026-09-09): the highest-level party
+# member, later slot on ties. The ace-timing switch hook and the Haki window
+# must agree.
+_three_gengar = _bench(["GENGAR", "GENGAR", "GENGAR"])
+for name, levels, slot, ace in (("highest_mid_slot", (30, 50, 40), 1, True),
+                                ("last_slot_not_highest", (30, 50, 40), 2, False),
+                                ("tie_later_slot", (30, 50, 50), 2, True),
+                                ("tie_earlier_slot", (30, 50, 50), 1, False)):
+    extra = {**_three_gengar, "wEnemySwitchMonParam": 0x30 | slot, "wTrainerClass": TRAINER_CLASSES["CLAIR"],
+             "wBossAITurnsElapsed": 5}
+    for i, level in enumerate(levels):
+        extra[f"wOTPartyMon{i + 1}Level"] = level
+    CASES.append(Case(id=f"ace_timing_{name}", path="strategy/ace",
+        pins="the ace-timing hook uses the highest-level rule, later slot on ties",
+        boss=gengar(), player=magnemite(), tier=AI_TIER_LATE, entry=("BossAI_AceTimingHook",),
+        extra=extra, expect={"carry": ace}))
+    CASES.append(Case(id=f"current_is_ace_{name}", path="strategy/ace",
+        pins="the Haki window's ace test is the same highest-level rule",
+        boss=gengar(), player=magnemite(), entry=("BossAI_CurrentEnemyIsAce",),
+        extra={**extra, "wCurOTMon": slot}, expect={"carry": ace}))

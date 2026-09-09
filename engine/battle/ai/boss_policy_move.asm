@@ -5910,11 +5910,11 @@ BossAI_EvaluateActionLookahead:
 	push bc
 	call BossAI_HasAnyKOMove
 	pop bc
-	jr c, .late_reply
+	jr c, .delta
 	push bc
 	call BossAI_GetPrimaryThreatType
 	pop bc
-	jr nc, .late_reply
+	jr nc, .delta
 	push bc
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
 	pop bc
@@ -5922,19 +5922,6 @@ BossAI_EvaluateActionLookahead:
 	ld a, c
 	add e
 	ld c, a
-
-.late_reply
-	ld a, [wBossAITier]
-	cp AI_TIER_LATE
-	jr c, .delta
-	push bc
-	call BossAI_HasAnyKOMove
-	pop bc
-	jr nc, .delta
-	ld a, c
-	and a
-	jr z, .delta
-	dec c
 
 .delta
 	call BossAI_ApplyMultiTurnProjection

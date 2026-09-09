@@ -1000,11 +1000,16 @@ BossAI_AceTimingHook:
 	jr nz, .no
 
 .check_slot
+; The ace is the highest-level party member (BossAI_FindAceSlot), the same
+; rule the Haki window uses; it used to be "the last party slot".
 	ld a, [wEnemySwitchMonParam]
 	and $f
-	inc a
 	ld b, a
-	ld a, [wOTPartyCount]
+	push bc
+	call BossAI_FindAceSlot
+	pop bc
+	jr nc, .no
+	ld a, e
 	cp b
 	jr nz, .no
 

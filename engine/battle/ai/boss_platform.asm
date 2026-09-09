@@ -89,11 +89,14 @@ BossAI_HakiTrainerEligible:
 	scf
 	ret
 
-BossAI_CurrentEnemyIsAce:
+BossAI_FindAceSlot:
 ; Ace = highest-level party member; ties resolve to the later party slot.
+; Carry with e = the ace's 0-based party slot; carry clear for an empty
+; party. Clobbers a, b, c, d, hl. Shared by the Haki window (is the active
+; mon the ace?) and the ace-timing switch hook (is the candidate the ace?).
 	ld a, [wOTPartyCount]
 	and a
-	jr z, .no
+	ret z
 	ld b, a ; remaining mons
 	ld c, 0 ; current party index
 	ld d, 0 ; best level
@@ -113,6 +116,12 @@ BossAI_CurrentEnemyIsAce:
 	inc c
 	dec b
 	jr nz, .loop
+	scf
+	ret
+
+BossAI_CurrentEnemyIsAce:
+	call BossAI_FindAceSlot
+	ret nc
 	ld a, [wCurOTMon]
 	cp e
 	jr nz, .no
