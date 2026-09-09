@@ -93,7 +93,13 @@ BossAI_BuildPublicReplySet::
 	jr c, .all_moves
 .done
 	ld a, STRUGGLE
-	jp .AddPossible
+	call .AddPossible
+; False Swipe cannot finish a Pokémon and there is nothing to catch in a
+; trainer battle: the boss does not weigh it at all (design lead, 2026-09-08).
+; It stays in the revealed set as a fact; only the possible set drops it.
+	ld a, FALSE_SWIPE
+	ld bc, PR_POSSIBLE
+	jp .ClearBit
 
 .transformed
 ; Transform copied the moves of the boss's own Pokémon that was out when the
@@ -185,6 +191,35 @@ BossAI_BuildPublicReplySet::
 	jr nz, .shift
 .set_bit
 	or [hl]
+	ld [hl], a
+	ret
+
+.ClearBit
+; A=move ID, BC=set offset. DE=context. The bit's complement masks the byte.
+	ld h, d
+	ld l, e
+	add hl, bc
+	ld c, a
+	srl a
+	srl a
+	srl a
+	ld b, 0
+	push bc
+	ld c, a
+	add hl, bc
+	pop bc
+	ld a, c
+	and 7
+	ld c, a
+	ld a, 1
+	jr z, .clear_bit
+.clear_shift
+	add a
+	dec c
+	jr nz, .clear_shift
+.clear_bit
+	cpl
+	and [hl]
 	ld [hl], a
 	ret
 

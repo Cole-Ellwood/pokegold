@@ -1303,6 +1303,8 @@ for name, species, level, spec, extra in [
     ("transformed_recorded_no_boss_ignored", "DITTO", 20, {"transformed":True,"copied":["TACKLE","RECOVER","SEISMIC_TOSS","REST"],"source_slot":1,"record":0,"tier":0}, {}),
     ("not_transformed_ignores_source", "PIDGEY", 20, {}, {"wBossAITransformSource":1}),
     ("ditto_before_transform", "DITTO", 20, {}, {}),
+    ("false_swipe_never_weighed", "SCYTHER", 40, {"revealed":["FALSE_SWIPE"]}, {}),
+    ("false_swipe_not_in_closed_set", "SCYTHER", 40, {"revealed":["FALSE_SWIPE","SLASH","WING_ATTACK","AGILITY"],"closed":True}, {}),
 ]:
     CASES.append(Case(id="replies_"+name,path="strategy/public-replies",
         pins="exhaustive ROM learnability/ancestry plus observed moves, without hidden move/PP/item/input reads",

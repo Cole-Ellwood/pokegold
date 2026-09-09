@@ -110,6 +110,7 @@ def run_reply_check(h, case):
     else:
         expected, flags = natural_moves(h, case.player.species, case.player.level) | observed, 0
     expected.add(MOVES["STRUGGLE"])
+    expected.discard(MOVES["FALSE_SWIPE"])  # never weighed as a reply (design lead, 2026-09-08)
     spans = (("wEnemyMon", 48), ("wBattleMon", 48), ("wOTPartyMon1Species", 288),
              ("wCurSpecies", 1), ("wCurPartySpecies", 1), ("wBossAITemp", 5),
              ("wCurBaseData", h.syms["wCurBaseDataEnd"].address - h.syms["wCurBaseData"].address),

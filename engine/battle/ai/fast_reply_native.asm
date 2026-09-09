@@ -112,7 +112,8 @@ INCLUDE "data/battle/accuracy_multipliers.asm"
 PURGE BOSSAI_EMIT_LOCAL_ACCURACY
 ; Effect classes: bit0 directly supported damage effect, bit1 HP-only script
 ; family, bits 2..3 the effect's move priority, bit4 an effect whose support
-; needs the battle state (.EffectSupport's special cases). Built from the
+; needs the battle state (.EffectSupport's special cases), bit5 a recovery
+; effect (.RecoveryQuota runs for these only). Built from the
 ; same lists the producers scan (.DirectEffects and .HPOnlyEffects in the
 ; public damage/action code) and data/moves/effects_priorities.asm; the
 ; differential fixture holds every move against the producer path.
@@ -199,6 +200,10 @@ ENDR
 	fast_effect_class EFFECT_PURSUIT, 2
 	fast_effect_class EFFECT_PAY_DAY, 2
 	fast_effect_class EFFECT_PRIORITY_HIT, 2
+	fast_effect_class EFFECT_HEAL, 32
+	fast_effect_class EFFECT_MORNING_SUN, 32
+	fast_effect_class EFFECT_SYNTHESIS, 32
+	fast_effect_class EFFECT_MOONLIGHT, 32
 BossAI_FastEffectClass:
 FOR fx, 256
 	db fast_effect_class_{d:fx}
@@ -410,6 +415,15 @@ BossAI_FastCompileReplyNative::
 	ld c, 4
 	cp AMNESIA
 	jr z, .boost
+	ld a, [FSM_EFFECT]
+	ld hl, BossAI_FastEffectClass
+	add l
+	ld l, a
+	adc h
+	sub l
+	ld h, a
+	bit 5, [hl]
+	jr z, .damage ; not a recovery effect
 	call .RecoveryQuota
 	jr nc, .damage
 	ld hl, FSR_BASE + FSR_RECOVERY_QUOTA

@@ -54,6 +54,7 @@ wFastReplyPair:: ds FRP_SIZE
 wFastStartOutRegime:: db ; the own attack regime at the start state
 wFastStartGated:: db ; 1 when the start state has a fainted actor
 wFastPlayerTable:: ds 4 ; the player HP table last built: maximum (two bytes), mode, then the keep bit of the current import
+wFastIdentityKeys:: ds 1 + 2 * 32 ; per defender: count, then (mirror accuracy, header class) of each zero-power identity reply swept
 SECTION "Boss AI Fast Reply Weights", WRAMX, BANK[1], ALIGN[8]
 wFastReplyWeights:: ds 256 ; per move: 0 impossible, else its reply weight (set by .ReplyMass)
 POPS
@@ -993,12 +994,16 @@ BossAI_ComparePublicActionsFastPrototype::
 
 .ReplySweep
 ; Stream every possible reply once for the current defender. Carry=complete.
+; A zero-power reply whose record can only repeat one this defender already
+; swept is skipped whole: its moment is zero, its pair corrections are zero
+; and the flags it would add are already in every union (.IdentityDuplicate).
 	ld hl, FSC_INCOMING
 	xor a
 	ld [hli], a
 	ld [hli], a
 	ld [hli], a
 	ld [hl], a
+	ld [wFastIdentityKeys], a
 	ad_address FS_SCAN
 	bit 1, [hl]
 	ld a, 1
@@ -1017,6 +1022,8 @@ BossAI_ComparePublicActionsFastPrototype::
 	jr z, .reply_next ; impossible
 	ad_address FS_REPLY_W
 	ld [hl], a
+	call .IdentityDuplicate
+	jp c, .reply_next
 	call .PrepareReply
 	jr nc, .reply_fallback
 	ld a, [FSA_OWN_VARIANT_MASK]
@@ -1024,6 +1031,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	call nz, BossAI_FastCompileReplyVariants ; the active defender's own boosts only
 	call .ReplyStandalone
 	ret nc
+	call .RecordIdentityKey
 	call .AccumulateIncoming
 	jr .reply_plans
 .reply_fallback
@@ -1085,6 +1093,136 @@ BossAI_ComparePublicActionsFastPrototype::
 	jp .reply
 .sweep_done
 	scf
+	ret
+
+; Carry when the reply in FS_REPLY_ID is a zero-power move whose compiled
+; record could only repeat one already swept for this defender. A zero-power
+; move's header depends on its mirror accuracy, its effect class bits
+; (HP-only, priority) and its contact flag besides per-defender constants;
+; its amounts are unknown; its opcode is damage unless the move heals or is
+; one of the five defense boosts; Whirlwind and Sleep Talk read their move id
+; in the accuracy and can-act rules. Those moves are never skipped, so every
+; skipped reply would have classified identity with the recorded one's flags.
+; Clear return: B=class, C=accuracy (B=$ff when the move is excluded).
+; DE preserved; A/BC/HL scratch.
+.identity_excluded
+	and a
+	ret
+.IdentityDuplicate
+	ld b, $ff
+	ad_address FS_REPLY_ID
+	ld a, [hl]
+	cp WHIRLWIND
+	jr z, .identity_excluded
+	cp SLEEP_TALK
+	jr z, .identity_excluded
+	cp HARDEN
+	jr z, .identity_excluded
+	cp WITHDRAW
+	jr z, .identity_excluded
+	cp BARRIER
+	jr z, .identity_excluded
+	cp ACID_ARMOR
+	jr z, .identity_excluded
+	cp AMNESIA
+	jr z, .identity_excluded
+	dec a
+	ld l, a
+	ld h, 0
+	add hl, hl
+	add hl, hl
+	ld bc, BossAI_FastMoves
+	add hl, bc
+	ld a, [hli] ; effect
+	ld c, a
+	ld a, [hli] ; power
+	and a
+	jr nz, .identity_excluded
+	ld a, c
+	cp EFFECT_HEAL
+	jr z, .identity_excluded
+	cp EFFECT_MORNING_SUN
+	jr z, .identity_excluded
+	cp EFFECT_SYNTHESIS
+	jr z, .identity_excluded
+	cp EFFECT_MOONLIGHT
+	jr z, .identity_excluded
+	ld a, [hli] ; type, contact in bit 7
+	rlca
+	and 1
+	ld b, a
+	ld a, [hl] ; accuracy
+	push af
+	ld a, c
+	ld hl, BossAI_FastEffectClass
+	add l
+	ld l, a
+	adc h
+	sub l
+	ld h, a
+	ld a, [hl]
+	and %1110 ; HP-only family, priority
+	or b
+	ld b, a
+	pop af
+	ld c, a ; B=class, C=accuracy
+	ld hl, wFastIdentityKeys
+	ld a, [hli]
+	and a
+	ret z ; nothing swept yet
+	push de
+	ld e, a
+.identity_key
+	ld a, [hli]
+	cp c
+	jr nz, .identity_key_next
+	ld a, [hl]
+	cp b
+	jr z, .identity_key_found
+.identity_key_next
+	inc hl
+	dec e
+	jr nz, .identity_key
+	pop de
+	and a
+	ret
+.identity_key_found
+	pop de
+	scf
+	ret
+.RecordIdentityKey
+; After the standalone of a compiled reply: when it classified identity and
+; has no power, remember its key so later zero-power replies with the same
+; key are skipped (at most 32 keys per defender; further ones sweep normally).
+	ad_address FS_REPLY_IDENTITY
+	ld a, [hl]
+	and a
+	ret z
+	ld hl, FSR_BASE + FSR_POWER
+	add hl, de
+	ld a, [hl]
+	and a
+	ret nz
+	ld a, [wFastIdentityKeys]
+	cp 32
+	ret nc
+	call .IdentityDuplicate
+	ret c ; cannot happen: the reply compiled because no key matched
+	ld a, b
+	inc a
+	ret z ; an excluded move: not a key
+	ld a, [wFastIdentityKeys]
+	add a
+	add LOW(wFastIdentityKeys + 1)
+	ld l, a
+	adc HIGH(wFastIdentityKeys + 1)
+	sub l
+	ld h, a
+	ld [hl], c
+	inc hl
+	ld [hl], b
+	ld hl, wFastIdentityKeys
+	inc [hl]
 	ret
 
 .PrepareReply
