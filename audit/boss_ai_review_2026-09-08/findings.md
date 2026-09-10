@@ -99,3 +99,17 @@ Cole ruled on the open rows and set a standing rule that behaviour-preserving cl
 Still open, listed for Cole: release smoke returning 0 on skipped sub-audits; the plausible-risk medium/light tier (taste); Dream Eater against an awake target on the reference path; the Foresight bench-candidate row; `BossAI_IsScarfSwingPossible` (four docs cite it); the `.Scale` table and identity-key scratch ideas in the reference bank.
 
 Final state: production suite 644/644, full reference suite 1026/1026 on the merged tree, frozen oracle exact (97 vectors), release smoke green, worst ordinary fixture 7,642,912 cycles against the 8,388,608 budget. Game ROM SHA1 `c28b4693…`.
+
+## Follow-up 2, 2026-09-09 (late)
+
+Cole ruled on the last open rows; two GPT-6 Astra jobs built them from briefs:
+
+| Commit(s) | What |
+| --- | --- |
+| `916e12cc` | Release smoke fails when a sub-audit skips (banner names them; `--allow-skips` for machines without PyBoy); the memory-budget audit joins the floor, its trace half is informational and its save-offset check now always runs |
+| `105383c0` | Switch-risk medium penalty is three quarters of the full one (was within 1 of light); 10 fixtures |
+| `f87930e9` | A bench candidate is scored without the active mon's Foresight (Ghost bench keeps its immunities); 24 fixtures |
+| `7c0ff6f2` | `BossAI_IsScarfSwingPossible` deleted with its debugger entry and four doc citations; the no-cheat note lives in the spec |
+| `0546b284` `d0c15568` `e4336f0b` `97518955` | Dream Eater against an awake target is a known miss on the public estimator and its native mirror (14 + 2 fixtures); the frozen oracle refrozen to `.local/ai-two-second/preflight-2026-09-09-dreameater/` with a manifest hash the gate now verifies; identity-reply keys kept in SRAM scratch (worst ordinary fixture 7,642,912 to 7,629,136 cycles); the `.Scale` table declined because the "eleven pairs" premise undercounts the accuracy-stage ratios |
+
+Final state: production suite 692/692, full reference suite green on the merged tree, oracle exact on 103 vectors against the new freeze, release smoke green with no skips, bank 0e 365 bytes free. Nothing from the review table is open.

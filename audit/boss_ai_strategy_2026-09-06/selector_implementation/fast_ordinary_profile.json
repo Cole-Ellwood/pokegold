@@ -1,5 +1,5 @@
 {
-  "rom_sha256": "c1ca9fcb7eceb75d60f0d4637924ece679062c5818bc4500dfb905638c590ae3",
+  "rom_sha256": "264be72065436e257cc7636be998d0fc4cc37a245ec3784220d74fec6e9a523b",
   "oracle_sha256": "9dc8ce698db14c45db2fc13aedbec65ec8a932794b0c7392e68a61f50889aba5",
   "unit": "DMG T-cycles, bank-qualified entry through the final CloseSRAM return; caller setup excluded",
   "reference_entry": "BossAI_ComparePublicActionsWithTables on the frozen oracle",
