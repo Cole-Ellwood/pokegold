@@ -130,19 +130,7 @@ BossAI_DamageKernel::
 ; underestimate the upper bound after the defender falls below half HP.
 	sla c
 	rl b
-	ad_address AD_FLAGS
-	res AD_DEFENDER_HIGH_F, [hl]
-	ad_address AD_DEFENDER_MAXHP
-	ld a, [hli]
-	cp b
-	jr c, .still_high
-	jr nz, .next_hit
-	ld a, [hl]
-	cp c
-	jr nc, .next_hit
-.still_high
-	ad_address AD_FLAGS
-	set AD_DEFENDER_HIGH_F, [hl]
+	call .SetDefenderHighFlag
 .next_hit
 	ad_address AD_HITS_LEFT
 	dec [hl]
@@ -322,6 +310,25 @@ BossAI_DamageKernel::
 	inc hl
 	ld [hl], c
 	scf
+	ret
+
+.SetDefenderHighFlag
+; BC = twice the defender's current HP. Set AD_DEFENDER_HIGH_F when that
+; exceeds max HP (the defender is above half), clear it otherwise. Shared
+; with the adapter's HP-flag refresh in public_damage.asm. Clobbers a, hl.
+	ad_address AD_FLAGS
+	res AD_DEFENDER_HIGH_F, [hl]
+	ad_address AD_DEFENDER_MAXHP
+	ld a, [hli]
+	cp b
+	jr c, .defender_high
+	ret nz
+	ld a, [hl]
+	cp c
+	ret nc
+.defender_high
+	ad_address AD_FLAGS
+	set AD_DEFENDER_HIGH_F, [hl]
 	ret
 
 .SingleHitRange

@@ -226,27 +226,14 @@ AIChooseMove:
 .choice_loop
 	ld a, [hli]
 	cp b
-	jr z, .choice_next
-	push bc
-	push hl
-	ld hl, wEnemyAIMoveScores
-	ld b, 0
-	add hl, bc
-	ld [hl], 80
-	pop hl
-	pop bc
-.choice_next
+	call nz, .BlockMoveC
 	inc c
 	ld a, c
 	cp NUM_MOVES
 	jr nz, .choice_loop
 
 .check_assault_vest
-	ld a, [wEnemyMonItem]
-	ld b, a
-	callfar GetItemHeldEffect
-	ld e, b
-	ld a, e
+	ld a, e ; the held effect fetched above
 	cp HELD_ASSAULT_VEST
 	ret nz
 	ld hl, wEnemyMonMoves
@@ -259,7 +246,15 @@ AIChooseMove:
 	callfar IsMoveBlockedByAssaultVestFromE_Far
 	pop hl
 	pop bc
-	jr nc, .assault_vest_next
+	call c, .BlockMoveC
+	inc c
+	ld a, c
+	cp NUM_MOVES
+	jr nz, .assault_vest_loop
+	ret
+
+.BlockMoveC:
+; Score move slot c as unusable (80). Preserves bc and hl.
 	push bc
 	push hl
 	ld hl, wEnemyAIMoveScores
@@ -268,11 +263,6 @@ AIChooseMove:
 	ld [hl], 80
 	pop hl
 	pop bc
-.assault_vest_next
-	inc c
-	ld a, c
-	cp NUM_MOVES
-	jr nz, .assault_vest_loop
 	ret
 
 AIScoringPointers:

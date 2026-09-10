@@ -102,9 +102,6 @@ BossAI_AppendObservationLog::
 	jr .store_count
 .inc_count
 	inc a
-	cp c
-	jr c, .store_count
-	ld a, c
 .store_count
 	ld [wBossAIObsCount], a
 
@@ -183,8 +180,6 @@ BossAI_CurrentObservationDamageBand:
 	ld a, [wLastPlayerMove]
 	call BossAI_GetRevealedMoveThreatTypeAndSeverity
 	jr nc, .light
-	and a
-	jr z, .light
 	cp 6
 	jr nc, .ko_pressure
 	cp 3

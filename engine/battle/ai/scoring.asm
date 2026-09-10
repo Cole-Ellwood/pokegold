@@ -1736,14 +1736,10 @@ AI_Smart_MeanLook:
 	call AICheckEnemyHalfHP
 	jr nc, .discourage
 
-	ld a, [wBossAITier]
-	and a
-	jr nz, .skip_last_mon_check
 	push hl
 	call AICheckLastPlayerMon
 	pop hl
 	jp z, AIDiscourageMove
-.skip_last_mon_check
 
 ; 80% chance to greatly encourage this move if the player is badly poisoned.
 	ld a, [wPlayerSubStatus5]
@@ -3004,10 +3000,6 @@ INCLUDE "data/battle/ai/constant_damage_effects.asm"
 
 AI_Cautious:
 ; 90% chance to discourage moves with residual effects after the first turn.
-	ld a, [wBossAITier]
-	cp AI_TIER_LATE
-	ret z
-
 	ld a, [wEnemyTurnsTaken]
 	and a
 	ret z

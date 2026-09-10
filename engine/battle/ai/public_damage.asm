@@ -342,7 +342,6 @@ BossAI_BuildPublicDamageContext::
 	ld a, [hl]
 	cp $ff
 	jr z, .transformed_player
-	ld hl, wEnemyMonSpecies
 	ld c, MON_SPECIES
 	call .OwnByte
 	cp DITTO
@@ -479,18 +478,7 @@ BossAI_BuildPublicDamageContext::
 	ld c, [hl]
 	sla c
 	rl b
-	ad_address AD_DEFENDER_MAXHP
-	ld a, [hli]
-	cp b
-	jr c, .above
-	ret nz
-	ld a, [hl]
-	cp c
-	ret nc
-.above
-	ad_address AD_FLAGS
-	set AD_DEFENDER_HIGH_F, [hl]
-	ret
+	jp BossAI_DamageKernel.SetDefenderHighFlag
 .ReadHPAndMax
 	ld a, [hli]
 	ld b, a
@@ -735,8 +723,9 @@ BossAI_BuildPublicDamageContext::
 	call .OwnSpeciesCanEvolve
 	ret nc
 .boost_defense
-	ld a, 3
-	ld h, 2
+	assert ASSAULT_VEST_SPD_NUM == EVOLITE_DEF_NUM && ASSAULT_VEST_SPD_DEN == EVOLITE_DEF_DEN
+	ld a, EVOLITE_DEF_NUM
+	ld h, EVOLITE_DEF_DEN
 	ad_scale_field AD_DEFENSE
 	ret
 
@@ -791,8 +780,9 @@ BossAI_BuildPublicDamageContext::
 	cp SPECIAL
 	ret c
 .eleven_tenths
-	ld b, 11
-	ld c, 10
+	assert MUSCLE_BAND_NUM == WISE_GLASSES_NUM && MUSCLE_BAND_DEN == WISE_GLASSES_DEN
+	ld b, MUSCLE_BAND_NUM
+	ld c, MUSCLE_BAND_DEN
 	jr .item_fraction
 .orb
 	ld b, LIFE_ORB_DAMAGE_NUM
