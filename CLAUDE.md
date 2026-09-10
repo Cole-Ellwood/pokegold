@@ -308,8 +308,12 @@ is greppable.
 
 The repo runs on a senior-dev / CEO contract. The user has gameplay taste
 and the playtest seat; he does not code. All technical decisions, git, and
-release execution are delegated to you. The Codex prompt-drafting workflow
-is **not** used here — you are the sole executor.
+release execution are delegated to you. You are the sole executor; GPT-6
+Astra is a build seat you may drive from the shell (`codex exec`, Cole's
+ChatGPT subscription, see `~/.claude/seat-ladder.md` "astra-builder"): it
+works from a written brief in its own worktree, and every gate and the diff
+review stay on your side. The old screen-driven Codex pairing workflow is
+retired.
 
 ### Branches & releases
 `master` is the canonical, always-buildable integration branch. Landing
