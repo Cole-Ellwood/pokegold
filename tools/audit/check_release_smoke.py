@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import re
 import subprocess
 import sys
@@ -1016,7 +1017,13 @@ def check_mart_inventory_tables(valid_items: set[str]) -> None:
         fail("mart inventory table audit failed: " + "; ".join(issues))
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--allow-skips", action="store_true",
+        help="allow incomplete checks on machines without ROM/PyBoy support",
+    )
+    args = parser.parse_args(argv)
     moves = parse_moves(ROOT / "data/moves/moves.asm")
     expected_moves = {
         "CUT": {"effect": "EFFECT_NORMAL_HIT", "power": "70", "accuracy": "100", "pp": "30"},
@@ -1532,27 +1539,31 @@ def main() -> int:
         )
     print("PASS: QoL script flow checks")
 
-    results = [
-        check_branch_currency(),
-        check_save_format_version(),
-        check_no_stale_shipped_claims(),
-        check_vram_request_contract(),
-        check_farcall_hl_clobber(),
-        check_farcall_a_clobber(),
-        check_cross_bank_call(),
-        check_fast_contact_flags(),
-        check_ld_a_zero(),
-        check_cp_zero(),
-        check_grass_regrowth_rom(),
-        check_type_passive_matrix(),
-        check_boss_ai_decision_paths(),
-        check_matchup_cli(),
-    ]
-    skipped = results.count(False)
+    results = {
+        audit.__name__: audit() for audit in (
+            check_branch_currency,
+            check_save_format_version,
+            check_no_stale_shipped_claims,
+            check_vram_request_contract,
+            check_farcall_hl_clobber,
+            check_farcall_a_clobber,
+            check_cross_bank_call,
+            check_fast_contact_flags,
+            check_ld_a_zero,
+            check_cp_zero,
+            check_boss_ai_memory_budget,
+            check_grass_regrowth_rom,
+            check_type_passive_matrix,
+            check_boss_ai_decision_paths,
+            check_matchup_cli,
+        )
+    }
+    skipped = [name + ".py" for name, passed in results.items() if not passed]
     if skipped:
-        print(f"RELEASE SMOKE CHECKS COMPLETED: {skipped} audits skipped")
-    else:
-        print("ALL RELEASE SMOKE CHECKS PASSED")
+        banner = "RELEASE SMOKE CHECKS INCOMPLETE" if args.allow_skips else "RELEASE SMOKE CHECKS FAILED"
+        print(f"{banner}: skipped audits: {', '.join(skipped)}")
+        return 0 if args.allow_skips else 1
+    print("ALL RELEASE SMOKE CHECKS PASSED")
     return 0
 
 
@@ -1617,6 +1628,10 @@ def check_fast_contact_flags() -> bool:
     # The reference build's moves mirror reads contact flags from a generated
     # include; this fails when data/moves/contact_flags.asm changed without it.
     return _run_subaudit("check_fast_contact_flags.py", "fast contact flags")
+
+
+def check_boss_ai_memory_budget() -> bool:
+    return _run_subaudit("check_boss_ai_memory_budget.py", "boss AI memory budget")
 
 
 def check_grass_regrowth_rom() -> bool:
