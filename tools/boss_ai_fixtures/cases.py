@@ -50,6 +50,8 @@ class Case:
     prescore: bool = False
     extra: dict = field(default_factory=dict)
     registers: dict = field(default_factory=dict)
+    stop_at: str | None = None
+    skip_calls: tuple[str, ...] = ()
     damage_check: dict | None = None
     action_check: dict | None = None
     exchange_check: dict | None = None
@@ -1629,3 +1631,24 @@ for name, levels, slot, ace in (("highest_mid_slot", (30, 50, 40), 1, True),
         pins="the Haki window's ace test is the same highest-level rule",
         boss=gengar(), player=magnemite(), entry=("BossAI_CurrentEnemyIsAce",),
         extra={**extra, "wCurOTMon": slot}, expect={"carry": ace}))
+
+
+# Drive the real effect through the Set-mode predetermined-index consumer.
+# Only rendering is bypassed; stop before loading/animating the incoming mon.
+for tier in (0, AI_TIER_LATE):
+    for threat, species, expected in [("WATER", "VAPOREON", 3), ("ELECTRIC", "AMPHAROS", 2)]:
+        extra = _bench(["ESPEON","GOLEM","LANTURN"], threat=threat)
+        extra.update({"wBattleMode":2,"wLinkMode":0,"wBattleHasJustStarted":0,
+                      "wEnemySwitchMonIndex":5})
+        for i, move in [(2,"EARTHQUAKE"),(3,"THUNDERBOLT")]:
+            for slot in range(4):
+                extra[(f"wOTPartyMon{i}Moves",slot)] = MOVES[move] if slot==0 else 0
+                extra[(f"wOTPartyMon{i}PP",slot)] = 10 if slot==0 else 0
+        CASES.append(Case(id=f"baton_picker_{threat}_tier{tier}",path="strategy/baton-pass",
+            pins="effect uses resolved active matchup; tier zero keeps vanilla routing; stale index cleared",
+            boss=Mon.of("ESPEON",62,["BATON_PASS"]), player=Mon.of(species,62,[]),tier=tier,
+            entry=("BattleCommand_BatonPass.Enemy",), extra=extra,
+            skip_calls=("AnimateCurrentMove","SlideBattlePicOut","EmptyBattleTextbox","LoadStandardMenuHeader"),stop_at="LoadEnemyMonToSwitchTo",
+            expect={"memory":{"wEnemySwitchMonIndex":expected if tier else 0},
+                    "calls":{"BossAI_FaintRepl_EvalCandidate":3 if tier else 0,
+                             "FindMonInOTPartyToSwitchIntoBattle":0 if tier else 1}}))
