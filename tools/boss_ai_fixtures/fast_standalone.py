@@ -97,10 +97,11 @@ def main():
                                 assert bytes(mem[0xc900:0xca44]) == bytes([0x5a] * 324)
                                 assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
                                 count += 1
-        # Actor import failures must not expose a partial table/actor pair.
+        # Actor import failures must not expose a partial table/actor pair,
+        # nor record the keep bit of the rejected call.
         for field, value, weight in ((27, 0, 128), (27, 2, 128), (27, 1, 0),
                                      (27, 1, 255), (49, 0, 128), (25, 0, 128),
-                                     (47, 1000, 128), (13, 1000, 128)):
+                                     (47, 1000, 128), (13, 1000, 128), (49, 0, 129)):
             invalid = bytearray(context)
             for at in (13, 47):
                 invalid[at:at + 2] = (1).to_bytes(2, "big")
@@ -112,10 +113,12 @@ def main():
                 invalid[field:field + 2] = value.to_bytes(2, "big")
             mem[0xc900:0xca44] = list(invalid)
             before = bytes(mem[0xa000:0xa600])
+            h.wr("wFastPlayerTable", 0x77, 3)
             assert h.invoke("BossAI_FastImportActorHP", {**regs, "C": weight})
             assert not h.outcome()["carry"]
             assert bytes(mem[0xa000:0xa600]) == before
             assert bytes(mem[0xc900:0xca44]) == invalid
+            assert h.rd("wFastPlayerTable", 3) == 0x77, (field, value, weight)
         for slot in (4, 255):
             before = bytes(mem[0xa000:0xa600])
             assert h.invoke("BossAI_FastBuildOwnedStandalone", {**regs, "C": slot})
@@ -127,7 +130,7 @@ def main():
         assert not h.outcome()["carry"]
         assert bytes(mem[0xa000:0xa600]) == before
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {count} actor imports and full standalone records/moments, 8 actor and 3 standalone no-write rejections")
+    print(f"PASS: {count} actor imports and full standalone records/moments, 9 actor and 3 standalone no-write rejections")
 
 
 if __name__ == "__main__":

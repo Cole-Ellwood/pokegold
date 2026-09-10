@@ -42,16 +42,17 @@ DEF FSN_SWITCH EQU FSN + 30 ; 1 when the defender is a switch candidate (Pursuit
 DEF FSN_FOCUS EQU FSN + 31 ; known own Focus Band parameter (survival chance), 0 none
 ASSERT FSN + 32 <= $a600
 ; Base+2 caches per category, indexed by power/5, zero = not computed.
-; Physical: 36 words split across the base-state and group areas; special:
-; 51 words in the dead outgoing/incoming template bytes (89..190), which the
-; direct fallback evaluator never reads or writes.
+; Physical: 24 contiguous words (powers of 120 and above compute each time);
+; special: 51 words in the dead outgoing/incoming template bytes of the
+; prepared context, which the direct fallback evaluator never reads or writes.
 DEF FSN_PHYS_CACHE_LOW EQU $a590 ; indices 0..23
 DEF FSN_SPEC_CACHE EQU AV_PREPARED_OUT ; context-relative, indices 0..50
 ; Per-defender chart rows by attacking type: two 2-bit codes in chart order
 ; (low field first; 1 double, 2 halve, 3 no effect), then whether the
 ; attacker carries Dragon (no-effect rows halve instead for ordinary effects).
-; Compact index: types below UNUSED_TYPES keep their value, later types drop
-; the unused gap (CURSE_TYPE..DARK become 10..18).
+; Compact index: types below UNUSED_TYPES_END keep their value, FIRE..DARK
+; drop the unused gap and become 10..17 (CURSE_TYPE has no damaging move and
+; is never looked up).
 DEF FSN_CHART EQU $a494 ; 19 bytes
 DEF FSN_CHART_ENTRIES EQU TYPES_END - (UNUSED_TYPES_END - UNUSED_TYPES)
 DEF FSN_MAJESTY EQU FSN_CHART + FSN_CHART_ENTRIES
@@ -208,6 +209,14 @@ BossAI_FastEffectClass:
 FOR fx, 256
 	db fast_effect_class_{d:fx}
 ENDR
+DEF fast_special_effect_count = 0
+FOR fx, 256
+	IF fast_effect_class_{d:fx} & 16
+		REDEF fast_special_effect_count = fast_special_effect_count + 1
+	ENDC
+ENDR
+ASSERT fast_special_effect_count == 11, "BossAI_FastCompileReplyNative.special_effect dispatches every bit-4 effect by name; extend its chain"
+PURGE fast_special_effect_count
 PURGE fast_effect_class
 PURGE fast_effect_priority
 
@@ -730,11 +739,11 @@ BossAI_FastCompileReplyNative::
 	jr z, .flying_attack
 	cp EFFECT_STOMP
 	jr z, .stomp
-	cp EFFECT_PURSUIT
-	jr z, .pursuit
-	bit 0, [hl]
-	ret nz
-	jr .unsupported
+; EFFECT_PURSUIT, the last of the eleven bit-4 effects (count asserted at the table)
+.pursuit
+	ld a, 2
+	ld [FSM_MAX_POSTROLL], a
+	ret
 .double
 	ld a, 2
 	ld [FSM_MIN_HITS], a
@@ -780,10 +789,6 @@ BossAI_FastCompileReplyNative::
 .double_postroll
 	ld a, 2
 	ld [FSM_POSTROLL], a
-	ld [FSM_MAX_POSTROLL], a
-	ret
-.pursuit
-	ld a, 2
 	ld [FSM_MAX_POSTROLL], a
 	ret
 .unsupported
@@ -1187,8 +1192,10 @@ BossAI_FastCompileReplyNative::
 
 .Amount
 ; One regime: RAW_MAX, plus the regime's range and support bits, from the
-; single-hit kernel path with a cached formula base. Carry=stored (BC=raw
-; maximum, FSM_MIN=raw minimum); clear when unsupported or without power.
+; single-hit kernel path with a cached formula base. Carry=stored to the
+; record (BC=raw maximum, FSM_MIN=raw minimum); clear when unsupported or
+; without power. With FSM_VARIANT set the word goes through .StoreVariant
+; instead, which leaves carry clear; its only caller (.Variant) ignores it.
 	ld a, [FSM_REGIME]
 	add a
 	and (1 << AD_ATTACKER_LOW_F) | (1 << AD_DEFENDER_HIGH_F)
@@ -1301,7 +1308,8 @@ BossAI_FastCompileReplyNative::
 	ld a, c
 	ld [FSM_MIN + 1], a
 .store
-; BC=raw maximum, FSM_MIN=raw minimum; both supported. BC preserved; carry set.
+; BC=raw maximum, FSM_MIN=raw minimum; both supported. BC preserved; carry set
+; on the record route, clear on the .StoreVariant route.
 	ld a, [FSM_VARIANT]
 	and a
 	jp nz, .StoreVariant
@@ -1434,19 +1442,17 @@ BossAI_FastCompileReplyNative::
 	jr nz, .special_slot
 	ld a, [FSM_TEMP + 2]
 	cp 24
-	jr nc, .physical_high
+	jr nc, .Formula ; powers of 120 and above: rare, computed each time
 	add a
 	ld l, a
 	ld h, 0
 	ld bc, FSN_PHYS_CACHE_LOW
 	add hl, bc
 	jr .cache_slot
-.physical_high
-	jr .uncached ; powers of 120 and above: rare, computed each time
 .special_slot
 	ld a, [FSM_TEMP + 2]
 	cp 51
-	jr nc, .uncached
+	jr nc, .Formula
 	add a
 	ld l, a
 	ld h, 0
@@ -1468,8 +1474,6 @@ BossAI_FastCompileReplyNative::
 	dec hl
 	ld [hl], b
 	ret
-.uncached
-	jr .Formula
 .Formula
 ; BC=cap997(floor(floor(floor((floor(2L/5)+2)*P*A)/D)/50))+2 with the
 ; category's truncated operands; known incoming item factors are identity.
@@ -1484,8 +1488,7 @@ BossAI_FastCompileReplyNative::
 	add 2 ; the kernel adds two to the low quotient byte only
 	ld c, a
 	ld a, [FSM_POWER]
-	call .Mul16By8 ; A:HL=product
-	ld b, 0 ; product < 2^16 (42*250)
+	call .Mul16By8 ; A:HL=product; A is zero (42*250 < 2^16) and dropped
 	push hl
 	call .AttackOperand
 	pop bc
@@ -1634,17 +1637,9 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	inc c
 	ret
 .chart_no_effect
-	ld a, [FSN_MAJESTY]
+	ld a, [FSM_CHART_MAJESTY] ; the amount facts already folded the effect test in
 	and a
-	jr z, .chart_immune
-	ld a, [FSM_EFFECT]
-	cp EFFECT_STATIC_DAMAGE
-	jr z, .chart_immune
-	cp EFFECT_LEVEL_DAMAGE
-	jr z, .chart_immune
-	cp EFFECT_SUPER_FANG
 	jr nz, .chart_halve
-.chart_immune
 	ld bc, 0
 	scf
 	ret
@@ -1961,8 +1956,7 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 	add l
 	ld c, a ; r1
 	ld a, h
-	adc 0 ; q1, carry when q1=256
-	jr c, .scale_255_wide
+	adc 0 ; q1 fits a byte: n < 255*2^16 (a 16-bit amount times an 8-bit factor), so q0 < $ff00
 	ld d, a
 	add c ; t=q1+r1
 	ld e, 0
@@ -1974,16 +1968,6 @@ ASSERT LOW(FSA_OWN_VARIANTS) + 6 <= $100
 .scale_255_wrapped
 	inc e
 	cp 254 ; t-256>=254 means t>=510
-	jr c, .scale_255_sum
-	inc e
-	jr .scale_255_sum
-.scale_255_wide
-	ld d, 0
-	inc h
-	jr z, .scale_255_saturate
-	ld e, 1
-	ld a, c
-	cp 254
 	jr c, .scale_255_sum
 	inc e
 .scale_255_sum
@@ -2401,11 +2385,9 @@ BossAI_FastPrepareReplyFacts::
 	ld a, c
 	ld [FSN_SPEC_DEFENSE], a
 ; base caches
-	push de
 	ld hl, FSN_PHYS_CACHE_LOW
 	ld b, 48
 	call .ClearBytes
-	pop de
 	ad_address FSN_SPEC_CACHE
 	ld b, 102
 	call .ClearBytes

@@ -528,8 +528,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld hl, FSA_PLAYER
 	call .OutgoingRegimeIndex
 	ld [wFastStartOutRegime], a
-	ld hl, FSA_START_HP
-	call .StateGated
+	call .StartGated
 	ld [wFastStartGated], a
 	ld a, [FSA_START_HP]
 	ld b, a
@@ -1275,11 +1274,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	ret c
 	call BossAI_FastBuildReplyStandalone
 	ret nc
-	ld a, [$a458] ; original-hit continuation flags
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS] ; original-hit continuation flags
 	ld hl, FSR_BASE + FSR_STANDALONE_HIT_FLAGS
 	add hl, de
 	ld [hli], a
-	ld a, [$a470] ; original-miss continuation flags
+	ld a, [FSE_CONT_MISS + FSE_CONT_FLAGS] ; original-miss continuation flags
 	ld [hl], a
 	scf
 	ret
@@ -1288,24 +1287,7 @@ BossAI_ComparePublicActionsFastPrototype::
 ; The flags follow the executor's gates at the start state: the check flags,
 ; plus the damage flags when the reply can act, plus unknown damage on the
 ; hit of a reply whose compiled regimes are unsupported (accuracy permitting).
-	ld hl, FSR_BASE + FSR_HIT_HP
-	add hl, de
-	ld b, 2
-.identity_successor
-	ld a, [FSA_START_HP]
-	ld [hli], a
-	ld a, [FSA_START_HP + 1]
-	ld [hli], a
-	ld a, [FSA_PLAYER]
-	ld [hli], a
-	ld a, [FSA_PLAYER + 1]
-	ld [hli], a
-	dec b
-	jr nz, .identity_successor
-	xor a
-	rept 7
-	ld [hli], a
-	endr
+	call .StartSuccessors
 ; a start state the defender does not survive (entry hazards) reaches no reply:
 ; no flags on either event, as .PlainStandalone gates
 	ld a, [wFastStartGated]
@@ -1783,7 +1765,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [FPK_INDEX]
 	ld c, a
 	xor a
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	call BossAI_FastExecuteOwnedPlan
 	xor a
 	ld [FSV_OVERRIDE], a
@@ -1810,7 +1792,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	or b
 	ld [FPK_FLAGS], a
 .boost_variant_flags
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 	ld hl, FPK_FLAGS
 	or [hl]
 	ld [hl], a
@@ -1959,7 +1941,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	jp nc, .own_boost_total ; the reply carries no amount for this boost
 ; the reply's hit at the variant, from the start state
 	call BossAI_FastNormalizedPair.InitialContinuation
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	xor a
 	call BossAI_FastExecuteReplyPlan
 	xor a
@@ -1988,7 +1970,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, b
 	ld [FPK_FLAGS], a
 .own_boost_variant_flags
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 	ld hl, FPK_FLAGS
 	or [hl]
 	ld [hl], a
@@ -2068,7 +2050,10 @@ BossAI_ComparePublicActionsFastPrototype::
 	ret
 .OwnBoostVariant
 ; FSV_OVERRIDE (active) from the reply's variant for this plan's boost. Carry
-; when the reply carries a valid variant for it.
+; when the reply carries a valid variant for it. Only the reply executor runs
+; while this override is live; it keeps its record's support bit (a valid
+; variant was stored by the same compile that set it), so the override's
+; supported bit is left clear.
 	ld a, [FPK_INDEX]
 	ld c, a
 	ld a, FSP_DEFENSE_AXIS
@@ -2101,7 +2086,6 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, b
 	rra ; the range bit into bit0
 	and 1
-	or 2 ; supported: the compile stored an amount
 	ld [FSV_OVERRIDE + 3], a
 	ld l, c
 	ld h, 0
@@ -2562,6 +2546,38 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld h, a
 	ret
 
+.StartSuccessors
+; Both successors of the reply record at DE become the start state; its
+; deltas and moment are zero. A/B/HL clobbered.
+	ld hl, FSR_BASE + FSR_HIT_HP
+	add hl, de
+	ld b, 2
+.start_successor
+	ld a, [FSA_START_HP]
+	ld [hli], a
+	ld a, [FSA_START_HP + 1]
+	ld [hli], a
+	ld a, [FSA_PLAYER]
+	ld [hli], a
+	ld a, [FSA_PLAYER + 1]
+	ld [hli], a
+	dec b
+	jr nz, .start_successor
+	xor a
+	rept 7
+	ld [hli], a
+	endr
+	ret
+
+.StartGated
+; A=1 when the start state has a fainted actor: the executors' entry gate at
+; (own start HP, player HP), whose words are not adjacent. BC/DE preserved.
+	ld hl, FSA_START_HP
+	ld a, [hli]
+	or [hl]
+	jr z, .state_gated
+	ld hl, FSA_PLAYER
+	jr .state_second
 .StateGated
 ; HL=state (own HP word, player HP word). A=1 when an actor is fainted.
 ; BC/DE preserved.
@@ -2569,6 +2585,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	or [hl]
 	jr z, .state_gated
 	inc hl
+.state_second
 	ld a, [hli]
 	or [hl]
 	jr z, .state_gated
@@ -2880,25 +2897,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld [FPK_CONTEXT], a
 	ld a, e
 	ld [FPK_CONTEXT + 1], a
-; both successors start as the start state, deltas and moment zero
-	ld hl, FSR_BASE + FSR_HIT_HP
-	add hl, de
-	ld b, 2
-.plain_successor
-	ld a, [FSA_START_HP]
-	ld [hli], a
-	ld a, [FSA_START_HP + 1]
-	ld [hli], a
-	ld a, [FSA_PLAYER]
-	ld [hli], a
-	ld a, [FSA_PLAYER + 1]
-	ld [hli], a
-	dec b
-	jr nz, .plain_successor
-	xor a
-	rept 7
-	ld [hli], a
-	endr
+	call .StartSuccessors
 ; the hit: from a living start state, a reply that can act and can hit takes
 ; its amount at the start regime off the own HP
 	ld a, [wFastStartGated]

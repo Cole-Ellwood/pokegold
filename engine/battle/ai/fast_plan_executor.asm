@@ -14,8 +14,19 @@ DEF FSE_MODE EQU $a54b ; 0execute,1flags only
 DEF FSE_OPCODE EQU $a53f
 ; Amount override for a defensive variant (the selector's boost pairs): the
 ; flag byte is exactly 1 while live (any other value is inactive, so poisoned
-; scratch cannot arm it), then the raw minimum and bit0 range / bit1 supported.
+; scratch cannot arm it), then the raw amount word and bit0 range / bit1
+; supported. Only the owned-plan executor reads bit1; the reply executor keeps
+; its record's support bit under an override (see .OwnBoostVariant).
 DEF FSV_OVERRIDE EQU $a4b4
+; The two 24-byte continuations: the standalones execute their original hit
+; at the first and their original miss at the second; the pairs and the
+; fallbacks run their sequence at the first. Own HP word, player HP word,
+; then the reached flags at byte 16.
+DEF FSE_CONT_HIT EQU $a448
+DEF FSE_CONT_MISS EQU $a460
+DEF FSE_CONT_FLAGS EQU 16
+ASSERT FSE_CONT_HIT + 24 == FSE_CONT_MISS
+ASSERT FSE_CONT_MISS + 24 == FSB_CAN_ACT
 ; Family scratch. It aliases the damage script's inputs and is consumed
 ; before .Script writes them.
 DEF FSX_A EQU $a530 ; working amount (transition endpoint)
@@ -28,7 +39,6 @@ DEF FSX_TOTAL2 EQU $a53a
 DEF FSX_REGIME EQU $a53c
 ASSERT FSX_REGIME < FSE_OPCODE
 ASSERT FSE_MASK < $a560
-ASSERT FST_ACTUAL_LOSS + 2 <= FSE_PLAN
 
 BossAI_FastExecuteOwnedPlan::
 ; C=plan index0..3, A=original event0hit/1miss, HL=24-byte continuation.
@@ -60,11 +70,13 @@ BossAI_FastExecuteOwnedPlan::
 	ld a, l
 	ld [FSE_CONT + 1], a
 	push de
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE
 	add hl, bc
 	ld a, h

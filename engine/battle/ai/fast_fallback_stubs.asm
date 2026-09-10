@@ -13,14 +13,14 @@ ASSERT FSC_FAULT < $a590
 ; standalone delta. Inputs come from the pair control bytes, not registers.
 BossAI_FastFallbackOwnAction::
 	call BossAI_FastNormalizedPair.Context
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FPK_INDEX]
 	ld c, a
 	ld a, [FPK_FIRST_EVENT]
 	jp BossAI_FastExecuteOwnedPlan
 BossAI_FastFallbackReplyAction::
 	call BossAI_FastNormalizedPair.Context
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FPK_SECOND_EVENT]
 	jp BossAI_FastExecuteReplyPlan
 BossAI_FastFallbackDelta::

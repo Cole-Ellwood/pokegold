@@ -226,7 +226,6 @@ BossAI_FastExecuteReplyPlan::
 	ld [FST_ITEM], a
 	ld a, FSR_ITEM_QUOTA
 	call .PlanWord
-.item_quota
 	ld a, b
 	ld [FST_ITEM_QUOTA], a
 	ld a, c

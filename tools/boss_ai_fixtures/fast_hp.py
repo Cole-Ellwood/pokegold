@@ -66,8 +66,21 @@ def main():
             assert bytes(mem[0xa000:0xa600]) == before
             assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xcafe
         assert h.invoke("CloseSRAM")
-    print(f"PASS: {len(configs)} HP builds, {entries} table bytes, {lookups} lookups and potentials; "
-          "mode/DE/SP/write boundaries and rejected inputs checked")
+        # The reference value's HP fraction: exact for HP up to max, zero for a
+        # zero max, and malformed HP above max saturates to the weight instead
+        # of dividing by repeated subtraction (HP $ffff over max 1 took 12.5M
+        # loop iterations before).
+        fractions = 0
+        for hp, maximum, weight in ((0xffff, 1, 192), (1000, 999, 128), (999, 999, 192), (500, 999, 128),
+                                    (0, 999, 128), (5, 0, 128), (65535, 65535, 192), (1, 65535, 192)):
+            expected = 0 if not maximum else min(weight, weight * hp // maximum)
+            assert h.invoke("BossAI_ValuePublicExchange.HPFraction", {
+                "A": weight, "B": hp >> 8, "C": hp & 255, "HL": maximum, "D": 0xca, "E": 0xfe})
+            assert h.outcome()["bc"] == expected, (hp, maximum, weight, h.outcome()["bc"], expected)
+            assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xcafe
+            fractions += 1
+    print(f"PASS: {len(configs)} HP builds, {entries} table bytes, {lookups} lookups and potentials, "
+          f"{fractions} reference HP fractions; mode/DE/SP/write boundaries and rejected inputs checked")
 
 
 if __name__ == "__main__":

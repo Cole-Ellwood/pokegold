@@ -16,11 +16,13 @@ BossAI_FastBuildOwnedStandalone::
 	cp 4
 	jp nc, .reject
 	push bc
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE + FSP_OPCODE
 	add hl, bc
 	ld a, [hl]
@@ -35,11 +37,11 @@ BossAI_FastBuildOwnedStandalone::
 	xor a
 	ld [FSO_EVENT], a
 .event
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FSO_EVENT]
 	and a
 	jr z, .continuation
-	ld hl, $a460
+	ld hl, FSE_CONT_MISS
 .continuation
 	push hl
 	ld b, 24

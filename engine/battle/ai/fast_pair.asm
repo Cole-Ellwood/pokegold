@@ -41,11 +41,13 @@ BossAI_FastNormalizedPair::
 	cp 4
 	jp nc, .reject_af
 	push bc
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 ; The factoring needs a miss to be identity: Selfdestruct pairs use
 ; BossAI_FastFullNativePair instead.
 	ld hl, FSP_BASE + FSP_OPCODE
@@ -178,7 +180,7 @@ BossAI_FastNormalizedPair::
 	ld [FPK_FIRST_EVENT], a
 	call .FirstHP
 	call .Context
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FPK_CURRENT]
 	and a
 	jr nz, .own_second
@@ -246,11 +248,11 @@ BossAI_FastNormalizedPair::
 	add FSP_STANDALONE_HIT_FLAGS
 	call .OwnAddress
 	ld a, [hl]
-	ld [$a458], a
+	ld [FSE_CONT_HIT + FSE_CONT_FLAGS], a
 	jr .first_flags_ready
 .first_reply_flags
 	call .Context
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FPK_FIRST_EVENT]
 	call BossAI_FastExecuteReplyPlan.FlagsOnly
 .first_flags_ready
@@ -267,7 +269,7 @@ BossAI_FastNormalizedPair::
 	or c
 	jr z, .next_second
 	call .Context
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld a, [FPK_CURRENT]
 	and a
 	jr nz, .second_own_flags
@@ -285,7 +287,7 @@ BossAI_FastNormalizedPair::
 	ld a, [hl]
 	cp 2
 	jr c, .second_event
-	ld a, [$a458]
+	ld a, [FSE_CONT_HIT + FSE_CONT_FLAGS]
 	ld hl, FPK_FLAGS
 	or [hl]
 	ld [hl], a
@@ -298,7 +300,7 @@ BossAI_FastNormalizedPair::
 	ret
 
 .InitialContinuation
-	ld hl, $a448
+	ld hl, FSE_CONT_HIT
 	ld b, 24
 	xor a
 .clear
@@ -306,13 +308,13 @@ BossAI_FastNormalizedPair::
 	dec b
 	jr nz, .clear
 	ld a, [FSA_START_HP]
-	ld [$a448], a
+	ld [FSE_CONT_HIT], a
 	ld a, [FSA_START_HP + 1]
-	ld [$a449], a
+	ld [FSE_CONT_HIT + 1], a
 	ld a, [FSA_PLAYER]
-	ld [$a44a], a
+	ld [FSE_CONT_HIT + 2], a
 	ld a, [FSA_PLAYER + 1]
-	ld [$a44b], a
+	ld [FSE_CONT_HIT + 3], a
 	ret
 .FirstHP
 	ld a, [FPK_FIRST_EVENT]
@@ -330,7 +332,7 @@ BossAI_FastNormalizedPair::
 	add FSR_HIT_HP
 	call .ReplyAddress
 .copy_first
-	ld de, $a448
+	ld de, FSE_CONT_HIT
 	ld b, 4
 .copy_hp
 	ld a, [hli]
@@ -372,13 +374,12 @@ BossAI_FastNormalizedPair::
 .OwnAddress
 	push af
 	ld a, [FPK_INDEX]
-	ld c, a
-	ld b, 0
+	ld l, a
+	ld h, 0
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
-	ld hl, FSP_BASE
+	ld bc, FSP_BASE
 	add hl, bc
 	pop af
 	ld c, a

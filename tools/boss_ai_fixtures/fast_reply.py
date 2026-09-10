@@ -132,6 +132,53 @@ def edge_cases(h, regs):
     assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": 0, "HL": 0xa448})
     assert not h.outcome()["carry"] and bytes(mem[0xa448:0xa478]) == before
     assert int(rf.SP) == initial_sp and (int(rf.D) << 8 | int(rf.E)) == 0xc900
+    override_probe(h, regs)
+
+
+def override_probe(h, regs):
+    """A live FSV_OVERRIDE replaces the amount, but support stays the record's:
+    the executor's outputs do not depend on the override's supported bit."""
+    mem = h.pb.memory
+    own, own_max, player, player_max = 999, 999, 703, 703
+    regime = int(3 * player < player_max) | int(2 * own > own_max) << 1
+    mem[0xc900:0xcad8] = [0] * 472
+    assert h.invoke("BossAI_BuildOwnedDamageContext", {**regs, "A": 0xff, "B": 0, "C": MOVES["TACKLE"]})
+    context = bytearray(324)
+    context[:51] = bytes(mem[0xc900:0xc933])
+    context[9:13] = bytes((TYPES["FIRE"], TYPES["STEEL"], TYPES["ICE"], TYPES["ICE"]))
+    context[25:27] = own_max.to_bytes(2, "big")
+    context[49:51] = player_max.to_bytes(2, "big")
+    context[51:55] = bytes((0, 0xff, MOVES["TACKLE"], MOVES["TACKLE"]))
+    context[59:61] = own_max.to_bytes(2, "big")
+    context[65:67] = player_max.to_bytes(2, "big")
+    context[140] = 2
+    context[141:192] = context[:51]
+    mem[0xc900:0xca44] = list(context)
+    assert h.invoke("BossAI_FastCompileReplyPlan", regs) and h.outcome()["carry"]
+    plan = bytearray(mem[0xca8f:0xcabf])
+    assert plan[1] == 1 and plan[11] & 1 << regime, plan.hex()
+    mem[0xa3fa:0xa3fc] = list(own_max.to_bytes(2, "big"))
+    mem[0xa422:0xa424] = list(player_max.to_bytes(2, "big"))
+    results = {}
+    for supported in (True, False):
+        for override_bits in (0, 2):
+            record = bytearray(plan)
+            if not supported:
+                record[11] &= ~(1 << regime)
+            mem[0xca8f:0xcabf] = list(record)
+            mem[0xa4b4:0xa4b8] = [1, 0, 100, override_bits]
+            state = bytearray(24)
+            state[:4] = own.to_bytes(2, "big") + player.to_bytes(2, "big")
+            state[16] = 0x40
+            mem[0xa448:0xa460] = list(state)
+            assert h.invoke("BossAI_FastExecuteReplyPlan", {**regs, "A": 0, "HL": 0xa448})
+            assert h.outcome()["carry"]
+            results[supported, override_bits] = (bytes(mem[0xa448:0xa44c]), mem[0xa458])
+    mem[0xa4b4] = 0
+    for supported in (True, False):
+        assert results[supported, 0] == results[supported, 2], results
+    assert results[True, 0][0] == (own - 100).to_bytes(2, "big") + player.to_bytes(2, "big"), results
+    assert results[True, 0] != results[False, 0], results
 
 
 def main():

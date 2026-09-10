@@ -141,7 +141,6 @@ BossAI_FastBuildHPTable::
 	ld a, [FHP_MODE]
 	cp FHP_THRESHOLDS
 	jr z, .threshold_table
-.direct_table
 	ld h, d
 	ld l, e
 	ld a, [FHP_MAX + 1]
@@ -331,7 +330,6 @@ endc
 	ld a, e
 	cp l
 	jr z, .event
-.advance_block
 	inc de
 	inc de
 	ld a, b

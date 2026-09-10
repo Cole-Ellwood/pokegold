@@ -30,7 +30,6 @@ DEF FSP_STANDALONE_HIT_FLAGS EQU 47
 DEF FSP_STANDALONE_MISS_FLAGS EQU 48
 DEF FSP_DEFENSE_AXIS EQU 49
 DEF FSP_DEFENSE_STAGE EQU 50
-DEF FSP_DEFENSE EQU 51
 DEF FSP_RECOVERY_QUOTA EQU 53
 DEF FSP_ITEM_QUOTA EQU 55
 DEF FSP_STEEL EQU 57
@@ -95,11 +94,13 @@ BossAI_FastCompileOwnedPlan::
 	jp nz, .invalid
 	ld a, c
 	ld [FSB_PLAN_INDEX], a
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE
 	add hl, bc
 	ld a, h

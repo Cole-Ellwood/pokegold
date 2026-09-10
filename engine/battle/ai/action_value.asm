@@ -221,22 +221,8 @@ BossAI_PreparePublicAction::
 	ad_address AV_PREPARED_DAMAGE
 	ld [hl], 1
 .save_template
-	push de
 	ad_address AV_PREPARED_OUT
-	ld b, h
-	ld c, l
-	ld h, d
-	ld l, e
-	ld d, b
-	ld e, c
-	ld b, AD_CONTEXT_SIZE
-.copy
-	ld a, [hli]
-	ld [de], a
-	inc de
-	dec b
-	jr nz, .copy
-	pop de
+	call BossAI_PrepareIncomingActor.save_context
 	jp BossAI_PrepareIncomingActor
 
 ; ai-layer: POLICY
@@ -287,6 +273,7 @@ BossAI_PrepareIncomingActor::
 	ld a, 4
 	jr .save
 .save_context
+; HL=destination of a copy of the AD prefix at DE. DE preserved.
 	ld b, h
 	ld c, l
 	ld h, d
@@ -514,49 +501,38 @@ BossAI_PrepareFirstActionStates::
 	ad_address AV_PREPARED_DAMAGE
 	set AV_PREPARED_FIRST_F, [hl]
 	ret
+.StateOffsets
+; The context words of a first-action state, in their order in the 13-byte
+; cache; the uncertainty byte follows them.
+	db AV_OWN_HP, AV_PLAYER_HP, AV_OWN_DEFENSE, AV_OWN_DEFENSE + 2, AV_RAW, AV_DAMAGE, 0
+ASSERT AV_FIRST_STATE_SIZE == 2 * 6 + 1
+ASSERT AV_DAMAGE < $100 && AV_OWN_DEFENSE + 2 < $100
 .save
+; HL=13-byte state cache. DE preserved.
+	ld bc, .StateOffsets
+.save_word
+	ld a, [bc]
+	inc bc
+	and a
+	jr z, .save_uncertain
+	push bc
+	ld c, a
+	ld b, 0
 	push hl
-	av_load_word AV_OWN_HP
+	ld h, d
+	ld l, e
+	add hl, bc
+	ld a, [hli]
+	ld b, a
+	ld c, [hl]
 	pop hl
 	ld [hl], b
 	inc hl
 	ld [hl], c
 	inc hl
-	push hl
-	av_load_word AV_PLAYER_HP
-	pop hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	inc hl
-	push hl
-	av_load_word AV_OWN_DEFENSE
-	pop hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	inc hl
-	push hl
-	av_load_word AV_OWN_DEFENSE + 2
-	pop hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	inc hl
-	push hl
-	av_load_word AV_RAW
-	pop hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	inc hl
-	push hl
-	av_load_word AV_DAMAGE
-	pop hl
-	ld [hl], b
-	inc hl
-	ld [hl], c
-	inc hl
+	pop bc
+	jr .save_word
+.save_uncertain
 	push hl
 	ad_address AV_UNCERTAIN
 	ld a, [hl]
@@ -564,48 +540,32 @@ BossAI_PrepareFirstActionStates::
 	ld [hl], a
 	ret
 .load
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
+; HL=13-byte state cache. DE preserved; the cached uncertainty is OR-ed in.
+	ld bc, .StateOffsets
+.load_word
+	ld a, [bc]
+	inc bc
+	and a
+	jr z, .load_uncertain
+	push bc
 	push hl
-	av_store_word AV_OWN_HP
-	pop hl
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
 	ld c, a
-	push hl
-	av_store_word AV_PLAYER_HP
-	pop hl
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
-	push hl
-	av_store_word AV_OWN_DEFENSE
-	pop hl
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
-	push hl
-	av_store_word AV_OWN_DEFENSE + 2
-	pop hl
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
-	push hl
-	av_store_word AV_RAW
-	pop hl
-	ld a, [hli]
-	ld b, a
-	ld a, [hli]
-	ld c, a
-	push hl
-	av_store_word AV_DAMAGE
-	pop hl
+	ld b, 0
+	ld h, d
+	ld l, e
+	add hl, bc
+	pop bc
+	ld a, [bc]
+	ld [hli], a
+	inc bc
+	ld a, [bc]
+	ld [hl], a
+	inc bc
+	ld h, b
+	ld l, c
+	pop bc
+	jr .load_word
+.load_uncertain
 	ld a, [hl]
 	ad_address AV_UNCERTAIN
 	or [hl]
@@ -736,22 +696,8 @@ BossAI_PreparePublicReply::
 	ad_address AV_PREPARED_IN_DAMAGE
 	ld [hl], 1
 .save
-	push de
 	ad_address AV_PREPARED_IN
-	ld b, h
-	ld c, l
-	ld h, d
-	ld l, e
-	ld d, b
-	ld e, c
-	ld b, AD_CONTEXT_SIZE
-.copy
-	ld a, [hli]
-	ld [de], a
-	inc de
-	dec b
-	jr nz, .copy
-	pop de
+	call BossAI_PrepareIncomingActor.save_context
 	ad_address AV_PREPARED_DAMAGE
 	set AV_PREPARED_IN_F, [hl]
 	ret
@@ -1890,6 +1836,10 @@ BossAI_ValuePublicExchange::
 	ret
 
 .score
+; The value is 1024 plus own HP fractions of at most the weight (192), player
+; fractions of at most 128, an own faint term of twice the weight and a player
+; faint term of 256, so it stays within 1024 - 192 - 128 - 384 .. AV_VALUE_MAX.
+DEF AV_VALUE_MAX EQU 1024 + 192 + 128 + 256
 	ld bc, 1024
 	av_store_word AV_VALUE
 ; Floor each state's HP fraction independently. Its delta telescopes across
@@ -2056,11 +2006,26 @@ BossAI_ValuePublicExchange::
 	pop af
 	jp .HPFraction
 .HPFraction
-; BC=HP, HL=max HP, A=weight; BC=floor(HP*weight/max), zero stays zero.
-; A 16-bit denominator is needed for real max HP above 255.
+; BC=HP, HL=max HP, A=weight; BC=floor(HP*weight/max), zero stays zero, and
+; malformed HP above max saturates to the weight. A 16-bit denominator is
+; needed for real max HP above 255.
 	push de
 	ld d, h
 	ld e, l
+	ld h, a ; the weight
+	ld a, d
+	or e
+	jr z, .fraction_zero
+	ld a, b
+	cp d
+	jr c, .fraction_multiply
+	jr nz, .fraction_saturate
+	ld a, c
+	cp e
+	jr z, .fraction_multiply
+	jr nc, .fraction_saturate
+.fraction_multiply
+	ld a, h
 	ldh [hMultiplier], a
 	xor a
 	ldh [hMultiplicand], a
@@ -2069,43 +2034,8 @@ BossAI_ValuePublicExchange::
 	ld a, c
 	ldh [hMultiplicand + 2], a
 	call BossAI_Multiply
-	ld a, d
-	or e
-	jr z, .fraction_zero
-; Legal HP is at most max HP, so the weighted quotient fits one byte.
-; Test eight quotient bits instead of subtracting max HP up to 192 times.
-; Retain the general path for malformed/diagnostic HP above max HP.
-	ld a, b
-	cp d
-	jr c, .fraction_binary
-	jr nz, .fraction_general
-	ld a, c
-	cp e
-	jr c, .fraction_binary
-	jr z, .fraction_binary
-.fraction_general
-	ldh a, [hProduct + 2]
-	ld h, a
-	ldh a, [hProduct + 3]
-	ld l, a
-	ld bc, 0
-	ld a, d
-	or e
-	jr z, .fraction_done
-.fraction_loop
-	ld a, l
-	sub e
-	ld l, a
-	ld a, h
-	sbc d
-	ld h, a
-	ldh a, [hProduct + 1]
-	sbc 0
-	jr c, .fraction_done
-	ldh [hProduct + 1], a
-	inc bc
-	jr .fraction_loop
-.fraction_binary
+; HP is at most max HP, so the weighted quotient fits one byte: test eight
+; quotient bits instead of subtracting max HP up to 192 times.
 ; Divisor B:DE = max HP * 128; numerator stays in hProduct+1..3.
 	ld b, 0
 	ld c, 7
@@ -2143,6 +2073,10 @@ BossAI_ValuePublicExchange::
 	ldh [hMultiplier], a
 	jr nz, .fraction_bit
 	ld b, 0
+	jr .fraction_done
+.fraction_saturate
+	ld b, 0
+	ld c, h
 	jr .fraction_done
 .fraction_zero
 	ld bc, 0
