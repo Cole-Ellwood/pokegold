@@ -24,6 +24,11 @@ DEF FS_REPLY_REGIMES EQU FS_CONTROL + 13 ; HP regimes a reply can reach for this
 DEF FS_REPLY_IDENTITY EQU FS_CONTROL + 18 ; 1 when the current reply never changes HP
 DEF FS_ORDER EQU FS_CONTROL + 19 ; order descriptor of the pair being evaluated
 DEF FS_PLAN_INDEX EQU FS_CONTROL + 14 ; four original result indices, $ff unused
+; Per-reply key survives compile/variants/standalone; arithmetic ends at +18
+; and finalizer scratch starts at +24. Only .RecordIdentityKey consumes it.
+DEF FS_IDENTITY_KEY EQU FS_MATH + 19 ; class ($ff excluded), mirror accuracy
+ASSERT FS_IDENTITY_KEY > FS_MATH_COUNT
+ASSERT FS_IDENTITY_KEY + 2 <= FS_RESULT_PTR
 DEF FSA_OWN_SPEED EQU FSA_OWN + 14
 DEF FSA_ITEM_CLASS EQU FSA_OWN + 32 ; 1=Quick Claw
 DEF FSA_SETUP_FLAGS EQU FSA_OWN + 35
@@ -1101,13 +1106,15 @@ BossAI_ComparePublicActionsFastPrototype::
 ; one of the five defense boosts; Whirlwind and Sleep Talk read their move id
 ; in the accuracy and can-act rules. Those moves are never skipped, so every
 ; skipped reply would have classified identity with the recorded one's flags.
-; Clear return: B=class, C=accuracy (B=$ff when the move is excluded).
+; A new zero-power key is retained in SRAM until .RecordIdentityKey; excluded
+; moves store class $ff. Nonzero-power replies never consume that scratch.
 ; DE preserved; A/BC/HL scratch.
 .identity_excluded
+	ld a, $ff
+	ld [FS_IDENTITY_KEY], a
 	and a
 	ret
 .IdentityDuplicate
-	ld b, $ff
 	ad_address FS_REPLY_ID
 	ld a, [hl]
 	cp WHIRLWIND
@@ -1135,7 +1142,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld c, a
 	ld a, [hli] ; power
 	and a
-	jr nz, .identity_excluded
+	ret nz
 	ld a, c
 	cp EFFECT_HEAL
 	jr z, .identity_excluded
@@ -1167,7 +1174,7 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld hl, wFastIdentityKeys
 	ld a, [hli]
 	and a
-	ret z ; nothing swept yet
+	jr z, .identity_key_new ; nothing swept yet
 	push de
 	ld e, a
 .identity_key
@@ -1182,6 +1189,11 @@ BossAI_ComparePublicActionsFastPrototype::
 	dec e
 	jr nz, .identity_key
 	pop de
+.identity_key_new
+	ld a, b
+	ld [FS_IDENTITY_KEY], a
+	ld a, c
+	ld [FS_IDENTITY_KEY + 1], a
 	and a
 	ret
 .identity_key_found
@@ -1204,11 +1216,13 @@ BossAI_ComparePublicActionsFastPrototype::
 	ld a, [wFastIdentityKeys]
 	cp 32
 	ret nc
-	call .IdentityDuplicate
-	ret c ; cannot happen: the reply compiled because no key matched
-	ld a, b
+	ld a, [FS_IDENTITY_KEY]
 	inc a
 	ret z ; an excluded move: not a key
+	dec a
+	ld b, a
+	ld a, [FS_IDENTITY_KEY + 1]
+	ld c, a
 	ld a, [wFastIdentityKeys]
 	add a
 	add LOW(wFastIdentityKeys + 1)

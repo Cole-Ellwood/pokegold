@@ -1,6 +1,9 @@
 """Complete restart vectors versus independent frozen-ROM aggregation."""
 import argparse
+import hashlib
+import json
 from dataclasses import replace
+from pathlib import Path
 from tools.boss_ai_fixtures.cases import CASES
 from tools.boss_ai_fixtures.fast_results import INVALID, packed
 from tools.boss_ai_fixtures.harness import Mon, MOVES, open_harness
@@ -8,7 +11,17 @@ from tools.boss_ai_fixtures.joint import ITEMS, seed_joint_case
 from tools.boss_ai_fixtures.runner import run_case, check
 
 
-ORACLE = ".local/ai-two-second/preflight-2026-09-08-replies/oracle"
+ORACLE = ".local/ai-two-second/preflight-2026-09-09-dreameater/oracle"
+
+
+def verify_oracle():
+    rom = Path(ORACLE + ".gbc")
+    manifest = json.loads(rom.with_name("source_manifest.json").read_text(encoding="utf-8"))
+    expected = manifest["oracle_sha256"]
+    actual = hashlib.sha256(rom.read_bytes()).hexdigest()
+    if actual.lower() != expected.lower():
+        raise SystemExit(f"oracle SHA256 mismatch: expected {expected}, found {actual}; "
+                         f"scope: {manifest['scope']}")
 
 
 def replacement_boundaries():
@@ -44,6 +57,7 @@ def main():
     parser.add_argument("--prototype", action="store_true")
     parser.add_argument("--replacement-boundaries", action="store_true")
     args = parser.parse_args()
+    verify_oracle()
     prototype = args.prototype or args.replacement_boundaries
     entry = ("BossAI_ComparePublicActionsFastPrototype" if prototype else
              "BossAI_ComparePublicActionsFastReferenceRestart")
