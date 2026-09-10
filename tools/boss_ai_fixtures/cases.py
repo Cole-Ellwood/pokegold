@@ -1846,3 +1846,37 @@ for name, roll, stop, expect in (
                "wEnemySwitchMonParam": 0x31},  # maximum chance, bench slot 2
         skip_calls=("AI_CheckAbleToSwitchPreserveCurSpecies",),  # vanilla scorer; the roll is the branch under test
         force_random=roll, stop_at=stop, expect=expect))
+
+# Dream Eater's target-sleep gate changes hit feasibility, not known damage.
+for direction in (0, 1):
+    for asleep in (False, True):
+        CASES.append(Case(id=f"dreameater_hit_{direction}_{'asleep' if asleep else 'awake'}",
+            path="strategy/damage-adapter",
+            pins="Dream Eater has known damage and combat-matched accuracy on both target sleep states",
+            boss=Mon.of("SNORLAX",50,["DREAM_EATER"]),
+            player=Mon.of("SNORLAX",50,["DREAM_EATER"]), entry=(), expect={},
+            extra={"wBattleMonStatus" if direction else "wEnemyMonStatus":2 if asleep else 0},
+            damage_check={"direction":direction,"move":"DREAM_EATER","adapter":True,
+                          "hit_facts":True,"supported":True}))
+for asleep in (False, True):
+    CASES.append(Case(id=f"dreameater_public_ko_{'asleep' if asleep else 'awake'}",
+        path="strategy/public-ko", pins="revealed Dream Eater threatens a lethal hit only against a sleeping boss",
+        boss=Mon.of("MAGIKARP",5,["TACKLE"]),player=Mon.of("GENGAR",100,["DREAM_EATER"]),
+        extra={"wEnemyMonStatus":2 if asleep else 0,"wPlayerUsedMoves":MOVES["DREAM_EATER"]},
+        entry=("BossAI_PublicDamageKO",),registers={"B":0,"C":MOVES["DREAM_EATER"]},
+        expect={"carry":asleep}))
+
+for template in [c for c in CASES if c.id.startswith("dreameater_hit_")]:
+    direction = template.damage_check["direction"]
+    for modifier in ("lock_on", "flying"):
+        extra = dict(template.extra)
+        boss, player = template.boss, template.player
+        if modifier == "lock_on":
+            extra["wPlayerSubStatus5" if direction else "wEnemySubStatus5"] = 32
+        elif direction:
+            boss = Mon.of("SNORLAX",50,["DREAM_EATER"],types=("FLYING","FLYING"))
+        else:
+            player = Mon.of("SNORLAX",50,["DREAM_EATER"],types=("FLYING","FLYING"))
+        CASES.append(replace(template,id=template.id+"_"+modifier,
+            pins="target sleep gates Dream Eater before Lock-On and Flying accuracy bonuses",
+            boss=boss,player=player,extra=extra))

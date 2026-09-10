@@ -859,13 +859,13 @@ BossAI_BuildPublicDamageContext::
 	cp EFFECT_SNORE
 	jr z, .snore
 	cp EFFECT_EARTHQUAKE
-	jr z, .grounded_attack
+	jp z, .grounded_attack
 	cp EFFECT_GUST
-	jr z, .flying_attack
+	jp z, .flying_attack
 	cp EFFECT_TWISTER
-	jr z, .flying_attack
+	jp z, .flying_attack
 	cp EFFECT_STOMP
-	jr z, .stomp
+	jp z, .stomp
 	cp EFFECT_PURSUIT
 	jp z, .pursuit
 	ld b, a
@@ -912,10 +912,17 @@ BossAI_BuildPublicDamageContext::
 	and a
 	jr nz, .player_sleeping
 	call .OwnStatus
-	jr .sleeping
+	jr .dream_sleeping
 .player_sleeping
 	ld a, [wBattleMonStatus]
-	jr .sleeping
+.dream_sleeping
+	and SLP_MASK
+	ret nz
+; Combat rejects an awake target before rolling accuracy; the amount is known.
+	ad_address AD_ACCURACY
+	ld [hl], 0
+	and a
+	ret
 .snore
 	ad_address AD_DIRECTION
 	ld a, [hl]
@@ -1412,6 +1419,10 @@ BossAI_IncomingAccuracy::
 	call BossAI_BuildPublicDamageContext.MoveAttr
 	ad_address AD_ACCURACY
 	ld [hl], a
+	ad_address AD_EFFECT
+	ld a, [hl]
+	cp EFFECT_DREAM_EATER
+	call z, BossAI_BuildPublicDamageContext.dream
 	call BossAI_PublicHitFacts.accuracy
 	ad_address AD_ACCURACY
 	ld c, [hl]
@@ -1437,6 +1448,10 @@ BossAI_PublicHitFacts::
 	ret nc
 	jp .ApplyAccuracyModifiers
 .BeforeStages
+	ad_address AD_ACCURACY
+	ld a, [hl]
+	and a
+	ret z ; an effect-gated miss cannot be rescued by Lock-On or Flying accuracy
 ; Foresight and Lock-On are public persistent effects. Protect/Endure's
 ; transient flags are deliberately not treated as next-turn promises here.
 	ad_address AD_DIRECTION
