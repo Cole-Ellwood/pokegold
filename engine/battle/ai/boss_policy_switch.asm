@@ -1507,6 +1507,7 @@ BossAI_ApplyPlausibleRiskToSwitchConfidence:
 .medium_penalty
 	ld a, [wBossAITemp3]
 	srl a
+	srl a
 	ld c, a
 	ld a, [wBossAITemp3]
 	sub c

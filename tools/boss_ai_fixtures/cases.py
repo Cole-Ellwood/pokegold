@@ -1846,3 +1846,50 @@ for name, roll, stop, expect in (
                "wEnemySwitchMonParam": 0x31},  # maximum chance, bench slot 2
         skip_calls=("AI_CheckAbleToSwitchPreserveCurSpecies",),  # vanilla scorer; the roll is the branch under test
         force_random=roll, stop_at=stop, expect=expect))
+
+
+# Risk >> 1 is odd at MID (7), even at LATE (10). The candidate's known
+# Electric weakness supplies the risk; public history independently selects
+# light, either medium path, or revenge. No predicate is bypassed.
+for tier, risk in ((AI_TIER_MID, 14), (AI_TIER_LATE, 20)):
+    for label, suspicious, revealed, revenge, penalty in (
+            ("light", False, False, False, risk // 4),
+            ("suspicious", True, False, False, (risk // 2) - (risk // 8)),
+            ("revealed", False, True, False, (risk // 2) - (risk // 8)),
+            ("both", True, True, False, (risk // 2) - (risk // 8)),
+            ("revenge", True, True, True, risk // 2)):
+        extra = {
+            "wEnemySwitchMonParam": 1,
+            ("wOTPartySpecies", 1): SPECIES["MANTINE"],
+            "wOTPartyMon2HP": 0, ("wOTPartyMon2HP", 1): 100,
+            "wOTPartyMon2MaxHP": 0, ("wOTPartyMon2MaxHP", 1): 100,
+            "wBossAIPrimaryThreatCache": 32,
+            "wBossAITurnsElapsed": 1,
+            "wPlayerTurnsTaken": 0 if suspicious else 1,
+            "wBossAISeenPlayerSpeciesCount": 3 if revenge else 1,
+            "wBossAISeenPlayerSpecies": SPECIES["SNORLAX"],
+            ("wBossAISeenPlayerSpecies", 1): SPECIES["UMBREON"],
+            ("wBossAISeenPlayerSpecies", 2): SPECIES["HOUNDOOM"],
+            "wBossAISeenPlayerAliveMask": 7 if revenge else 1,
+        }
+        for cache in ("wBossAILikelyTypeMaskCache", "wBossAIPlausibleTypeMaskCache",
+                      "wBossAIRevealedMovesBitmap"):
+            extra.update({(cache, i): 0 for i in range(4)})
+        electric, dark = TYPES["ELECTRIC"], TYPES["DARK"]
+        extra[("wBossAILikelyTypeMaskCache", electric // 8)] = 1 << (electric % 8)
+        if revealed:
+            extra[("wBossAIRevealedMovesBitmap", dark // 8)] = 1 << (dark % 8)
+        CASES.append(Case(
+            id=f"switch_confidence_risk_x{risk // 2}_{label}",
+            path="strategy/switch-risk",
+            pins="odd/even confidence deltas distinguish light, suspicious/revealed medium, "
+                 "and revenge; twins toggle each public suspicion predicate",
+            boss=Mon.of("GENGAR", 40, ["SHADOW_BALL"]),
+            player=Mon.of("SNORLAX", 40, ["TACKLE"]), tier=tier,
+            entry=("BossAI_ApplyPlausibleRiskToSwitchConfidence",),
+            registers={"B": 80}, extra=extra,
+            expect={"a": 80 - penalty,
+                    "memory": {"wBossAITemp2": risk, "wBossAITemp3": penalty,
+                               "wBossAISwitchConfidence": 80},
+                    "calls": {"BossAI_IsSuspiciousSwitchIn": 0 if revenge else 1,
+                              "BossAI_HasRevealedSuperEffectiveMove": 0 if revenge or suspicious else 1}}))
