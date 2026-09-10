@@ -54,6 +54,13 @@ BattleCommand_BatonPass:
 ; Passed enemy PartyMon entrance
 	xor a
 	ld [wEnemySwitchMonIndex], a
+	; The player's switch has resolved: choose against the public active mon.
+	; Ordinary trainers retain the vanilla picker.
+	ld a, [wBossAITier]
+	and a
+	jr z, .vanilla_picker
+	farcall BossAI_PickFaintReplacement
+.vanilla_picker
 	ld hl, EnemySwitch_SetMode
 	call CallBattleCore
 	ld hl, ResetBattleParticipants

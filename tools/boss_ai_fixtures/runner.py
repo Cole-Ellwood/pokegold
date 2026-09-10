@@ -86,6 +86,23 @@ def run_case(harness, case: Case) -> dict:
             counts[name] += 1
         harness.pb.hook_register(sym.bank, sym.address, _bump, None)
         hooked.append(sym)
+    # Bypass only explicitly named UI calls, returning through their real stack.
+    # A stop hook parks at HRAM before state can be changed by later animation.
+    for name in case.skip_calls:
+        sym = harness.syms[name]
+        def _return(_):
+            rf, mem = harness.pb.register_file, harness.pb.memory
+            sp = int(rf.SP)
+            rf.PC = mem[sp] | (mem[(sp + 1) & 0xffff] << 8)
+            rf.SP = (sp + 2) & 0xffff
+        harness.pb.hook_register(sym.bank, sym.address, _return, None)
+        hooked.append(sym)
+    if case.stop_at:
+        sym = harness.syms[case.stop_at]
+        def _stop(_):
+            harness.pb.register_file.PC = 0xfffd
+        harness.pb.hook_register(sym.bank, sym.address, _stop, None)
+        hooked.append(sym)
     try:
         registers = {
             key: harness.syms[value[0]].address + value[1]
