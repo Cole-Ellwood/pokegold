@@ -16,11 +16,13 @@ BossAI_FastBuildOwnedStandalone::
 	cp 4
 	jp nc, .reject
 	push bc
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE + FSP_OPCODE
 	add hl, bc
 	ld a, [hl]

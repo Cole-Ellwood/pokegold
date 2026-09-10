@@ -70,11 +70,13 @@ BossAI_FastExecuteOwnedPlan::
 	ld a, l
 	ld [FSE_CONT + 1], a
 	push de
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE
 	add hl, bc
 	ld a, h

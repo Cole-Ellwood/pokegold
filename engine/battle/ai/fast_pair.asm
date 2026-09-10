@@ -41,11 +41,13 @@ BossAI_FastNormalizedPair::
 	cp 4
 	jp nc, .reject_af
 	push bc
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 ; The factoring needs a miss to be identity: Selfdestruct pairs use
 ; BossAI_FastFullNativePair instead.
 	ld hl, FSP_BASE + FSP_OPCODE
@@ -372,13 +374,12 @@ BossAI_FastNormalizedPair::
 .OwnAddress
 	push af
 	ld a, [FPK_INDEX]
-	ld c, a
-	ld b, 0
+	ld l, a
+	ld h, 0
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
-	ld hl, FSP_BASE
+	ld bc, FSP_BASE
 	add hl, bc
 	pop af
 	ld c, a

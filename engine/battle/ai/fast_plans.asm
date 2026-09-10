@@ -94,11 +94,13 @@ BossAI_FastCompileOwnedPlan::
 	jp nz, .invalid
 	ld a, c
 	ld [FSB_PLAN_INDEX], a
-	ld b, 0
+	ld h, 0
+	ld l, c
 	rept 6
-	sla c
-	rl b
+	add hl, hl
 	endr
+	ld b, h
+	ld c, l
 	ld hl, FSP_BASE
 	add hl, bc
 	ld a, h
