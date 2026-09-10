@@ -5231,36 +5231,18 @@ BossAI_AddRevealedDamagingTypesToMask:
 
 ; ai-layer: POLICY
 BossAI_AddMoveIdToPlausibleMask:
-	and a
-	ret z
-	ld b, a
-	dec a
-	ld hl, Moves + MOVE_EFFECT
-	call BossAI_GetMoveAttr
-	cp EFFECT_HIDDEN_POWER
-	jr nz, .check_power
-	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
-	call BossAI_SetPlausibleMaskBit
-	ret
-
-.check_power
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_POWER
-	call BossAI_GetMoveAttr
-	and a
-	ret z
-	cp BOSS_AI_PLAUSIBLE_MIN_POWER
-	ret c
-	ld a, b
-	dec a
-	ld hl, Moves + MOVE_TYPE
-	call BossAI_GetMoveAttr
-	call BossAI_SetPlausibleMaskBit
-	ret
+	ld d, 0
+	jr BossAI_AddMoveIdToMaskD
 
 ; ai-layer: POLICY
 BossAI_AddMoveIdToLikelyMask:
+	ld d, 1
+; fallthrough
+BossAI_AddMoveIdToMaskD:
+; Input: a = move id, d = 0 for the plausible mask, 1 for the likely mask.
+; A damaging move at or above BOSS_AI_PLAUSIBLE_MIN_POWER sets its type bit;
+; Hidden Power sets the HP-risk bit instead. Clobbers a, b, d, e, hl (and c
+; through the mask setter).
 	and a
 	ret z
 	ld b, a
@@ -5270,8 +5252,7 @@ BossAI_AddMoveIdToLikelyMask:
 	cp EFFECT_HIDDEN_POWER
 	jr nz, .check_power
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
-	call BossAI_SetLikelyMaskBit
-	ret
+	jr .set
 
 .check_power
 	ld a, b
@@ -5286,8 +5267,10 @@ BossAI_AddMoveIdToLikelyMask:
 	dec a
 	ld hl, Moves + MOVE_TYPE
 	call BossAI_GetMoveAttr
-	call BossAI_SetLikelyMaskBit
-	ret
+.set
+	bit 0, d
+	jp nz, BossAI_SetLikelyMaskBit
+	jp BossAI_SetPlausibleMaskBit
 
 endc
 
@@ -5391,63 +5374,17 @@ BossAI_AddBaseTMHMMovesToMask:
 
 ; ai-layer: POLICY
 BossAI_AddSpeciesLevelUpMovesToMask:
-	and a
-	ret z
-	dec a
-	ld c, a
-	ld b, 0
-	ld hl, EvosAttacksPointers
-	add hl, bc
-	add hl, bc
-	ld a, BANK(EvosAttacksPointers)
-	call GetFarWord
-
-.skip_evos
-	ld a, BANK("Evolutions and Attacks")
-	call GetFarByte
-	and a
-	jr z, .moves
-	cp EVOLVE_STAT
-	jr z, .skip_stat_evo
-	inc hl
-	inc hl
-	inc hl
-	jr .skip_evos
-
-.skip_stat_evo
-	inc hl
-	inc hl
-	inc hl
-	inc hl
-	jr .skip_evos
-
-.moves
-	inc hl ; skip the no-more-evolutions marker
-.move_loop
-	ld a, BANK("Evolutions and Attacks")
-	call GetFarByte
-	and a
-	ret z
-	ld b, a
-	ld a, [wBattleMonLevel]
-	cp b
-	jr c, .skip_move
-	inc hl
-	ld a, BANK("Evolutions and Attacks")
-	call GetFarByte
-	push hl
-	call BossAI_AddMoveIdToPlausibleMask
-	pop hl
-	inc hl
-	jr .move_loop
-
-.skip_move
-	inc hl
-	inc hl
-	jr .move_loop
+	ld d, 0
+	jr BossAI_AddSpeciesLevelUpMovesToMaskD
 
 ; ai-layer: POLICY
 BossAI_AddSpeciesLevelUpMovesToLikelyMask:
+	ld d, 1
+; fallthrough
+BossAI_AddSpeciesLevelUpMovesToMaskD:
+; Input: a = species, d = mask selector as for BossAI_AddMoveIdToMaskD. Every
+; level-up move the player's active mon could know at its visible level goes
+; into the selected mask.
 	and a
 	ret z
 	dec a
@@ -5492,9 +5429,11 @@ BossAI_AddSpeciesLevelUpMovesToLikelyMask:
 	inc hl
 	ld a, BANK("Evolutions and Attacks")
 	call GetFarByte
+	push de
 	push hl
-	call BossAI_AddMoveIdToLikelyMask
+	call BossAI_AddMoveIdToMaskD
 	pop hl
+	pop de
 	inc hl
 	jr .move_loop
 

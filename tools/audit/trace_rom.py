@@ -267,7 +267,7 @@ def audit_lookahead_evaluator_preserves_candidate_move_id(boss: str) -> None:
 
 def audit_public_threat_scan_preserves_source_pointers(boss: str) -> None:
     level_moves = local_block(
-        top_block(boss, "BossAI_AddSpeciesLevelUpMovesToMask"),
+        top_block(boss, "BossAI_AddSpeciesLevelUpMovesToMaskD"),
         ".move_loop",
         ".skip_move",
     )
@@ -275,31 +275,15 @@ def audit_public_threat_scan_preserves_source_pointers(boss: str) -> None:
         level_moves,
         [
             "call GetFarByte",
+            "push de",
             "push hl",
-            "call BossAI_AddMoveIdToPlausibleMask",
+            "call BossAI_AddMoveIdToMaskD",
             "pop hl",
+            "pop de",
             "inc hl",
             "jr .move_loop",
         ],
-        "Boss AI level-up plausible move source pointer preservation",
-    )
-
-    likely_moves = local_block(
-        top_block(boss, "BossAI_AddSpeciesLevelUpMovesToLikelyMask"),
-        ".move_loop",
-        ".skip_move",
-    )
-    require_order(
-        likely_moves,
-        [
-            "call GetFarByte",
-            "push hl",
-            "call BossAI_AddMoveIdToLikelyMask",
-            "pop hl",
-            "inc hl",
-            "jr .move_loop",
-        ],
-        "Boss AI level-up likely move source pointer preservation",
+        "Boss AI level-up move source pointer and mask selector preservation",
     )
 
     egg_moves = top_block(boss, "BossAI_AddSpeciesEggMovesToMask")

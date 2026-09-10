@@ -1238,34 +1238,15 @@ BossAI_SetPlausibleAndLikelyMaskBit:
 
 ; ai-layer: PLATFORM
 BossAI_SetPlausibleMaskBit:
-	ld c, a
-	and %11111000
-	srl a
-	srl a
-	srl a
-	ld e, a
-	ld d, 0
 	ld hl, wBossAIPlausibleTypeMaskCache
-	add hl, de
-	ld a, c
-	and %00000111
-	ld e, a
-	ld d, 1
-.mask_loop
-	ld a, e
-	and a
-	jr z, .set
-	sla d
-	dec e
-	jr .mask_loop
-.set
-	ld a, [hl]
-	or d
-	ld [hl], a
-	ret
+	jr BossAI_SetMaskBitHL
 
 ; ai-layer: PLATFORM
 BossAI_SetLikelyMaskBit:
+	ld hl, wBossAILikelyTypeMaskCache
+; fallthrough
+BossAI_SetMaskBitHL:
+; Input: a = bit index (0..31 across the four mask bytes), hl = mask base.
 	ld c, a
 	and %11111000
 	srl a
@@ -1273,7 +1254,6 @@ BossAI_SetLikelyMaskBit:
 	srl a
 	ld e, a
 	ld d, 0
-	ld hl, wBossAILikelyTypeMaskCache
 	add hl, de
 	ld a, c
 	and %00000111
@@ -1296,38 +1276,15 @@ endc
 
 if DEF(BOSSAI_EMIT_PLATFORM_MASK_TEST_BITS)
 BossAI_TestPlausibleMaskBit:
-	ld c, a
-	and %11111000
-	srl a
-	srl a
-	srl a
-	ld e, a
-	ld d, 0
 	ld hl, wBossAIPlausibleTypeMaskCache
-	add hl, de
-	ld a, c
-	and %00000111
-	ld e, a
-	ld d, 1
-.test_loop
-	ld a, e
-	and a
-	jr z, .test
-	sla d
-	dec e
-	jr .test_loop
-.test
-	ld a, [hl]
-	and d
-	jr z, .not_set
-	scf
-	ret
-.not_set
-	and a
-	ret
+	jr BossAI_TestMaskBitHL
 
 ; ai-layer: PLATFORM
 BossAI_TestLikelyMaskBit:
+	ld hl, wBossAILikelyTypeMaskCache
+; fallthrough
+BossAI_TestMaskBitHL:
+; Input: a = bit index, hl = mask base. Carry when the bit is set.
 	ld c, a
 	and %11111000
 	srl a
@@ -1335,7 +1292,6 @@ BossAI_TestLikelyMaskBit:
 	srl a
 	ld e, a
 	ld d, 0
-	ld hl, wBossAILikelyTypeMaskCache
 	add hl, de
 	ld a, c
 	and %00000111
