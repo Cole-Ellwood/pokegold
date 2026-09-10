@@ -1235,7 +1235,7 @@ ENDC
 	jr z, .baton_prediction
 	call .BatonHasAvailableSetup
 	jr c, .baton_bad
-	ld c, 0 ; strongest tier weight: a free turn for the recipient
+	ld c, 2 ; tempo: a free turn for the recipient
 	jp .EncourageByTierWeight
 .baton_prediction
 	call BossAI_PredictPlayerSwitch
@@ -1261,20 +1261,18 @@ ENDC
 	ld c, 4 ; small status nudge; ordinary poison is not Toxic
 	jp .EncourageByTierWeight
 .baton_bad
-	call BossAI_LoadScorePointer
 	ld a, 6 ; retain the existing mild dry-pass discourage
 	jp BossAI_DiscourageScoreHL
 .baton_penalty
-	call BossAI_LoadScorePointer
 	ld a, 6
 	call BossAI_DiscourageScoreHL
 	ld c, 0
 	jp .DiscourageByTierWeight
 .baton_moderate
-	ld c, 2
+	ld c, 5
 	jp .EncourageByTierWeight
 .baton_good
-	ld c, 5
+	ld c, 0 ; strongest encouragement: real boosts or Substitute
 	jp .EncourageByTierWeight
 
 .BatonHasStayValue

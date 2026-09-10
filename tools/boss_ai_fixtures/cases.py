@@ -1647,9 +1647,11 @@ def _baton_case(name, verdict, *, status=0, setup=False, available=True,
                 bench=True, attack=False, disabled=False):
     for tier, row, weights in [(AI_TIER_EARLY, 0, (4, 1, 1, 1)),
                                (AI_TIER_LATE, 2, (7, 4, 2, 3))]:
-        strong, moderate, small, cargo = weights
-        score = {"strong":20-strong, "moderate":20-moderate, "small":20-small,
-                 "cargo":20-cargo, "penalty":26+strong, "mild":26}[verdict]
+        # BossAITierWeights columns: ko=0, tempo=2, status=4, role=5.
+        ko_weight, tempo_weight, status_weight, role_weight = weights
+        score = {"strong":20-tempo_weight, "moderate":20-role_weight,
+                 "small":20-status_weight, "cargo":20-ko_weight,
+                 "penalty":26+ko_weight, "mild":26}[verdict]
         passer = "LEDIAN" if tier == AI_TIER_EARLY else "ESPEON"
         extra = _bench([passer, "SNORLAX"] if bench else [passer], threat="NORMAL")
         extra.update(_baton_prediction(predicted))
