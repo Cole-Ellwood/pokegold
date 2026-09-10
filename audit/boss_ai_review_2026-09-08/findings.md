@@ -83,3 +83,19 @@ Game ROM SHA1 at `898e0ee5` = `6ee26f41…`; after `2354d48d` = `b0354564…`; a
 - `.local/review-lanes/*.md` (worktree scratch, not tracked) hold each lane's full table with the checks it ran; the SIMPLIFY rows above compress them.
 - The brief's architecture note was wrong in two places the lanes corrected: `switch.asm` is in the Effect Commands bank (0d), and `layout.py` mirrors only the `AD_`, `AV_` and `JC_` constants, not `FS*_`.
 - `cleanup_notes.md` claims refuted with receipts: `FSR_VALID` is no longer always 15; the player HP table is no longer rebuilt per bench import; the static audits other than cross-bank are source-textual and do scan reference-only files.
+
+## Follow-up, 2026-09-09
+
+Cole ruled on the open rows and set a standing rule that behaviour-preserving cleanup is always done. Landed on master:
+
+| Commit(s) | What |
+| --- | --- |
+| `94817d13` | Ace = highest level everywhere (`BossAI_FindAceSlot`, shared by the Haki window and the ace-timing hook); ordinary trainers may Growl into a Ghost (`AI_Types` blocks immune attacks only); the unreachable late-tier lookahead discount deleted |
+| `c268a9dd` `f30ad164` `55e2fe31` `5c8177c1` (GPT-6 Astra) | A boss Baton Pass now picks the incoming Pokémon with the boss's public matchup logic against the Pokémon on the field (vanilla picker kept for ordinary trainers); the dry-pass rule replaced the flat 18-point player-status bonus with tier-weighted cases (free turn on a sleeping/frozen target with no own setup, predicted switch, slow bulky passer under threat, own Toxic, KO-first, Substitute/Leech Seed/Perish cargo); 64 fixtures at both tiers, 38 red on the old ROM |
+| `994fb32b` `99c272b7` `ed7db83c` `a104a788` `1196124d` `a58c6a9a` `2a65021a` | Bank 0e cleanup: 343 bytes freed (164 to 507 free before the Baton Pass feature; 387 after it), the stale docs, dead code and duplicated helpers from the table, the unreachable-state hardening, and 51 fixtures (Haki ace window, untrapped escape, switch-rate band, weather, Dragon attacker, hardening) |
+| `b1338955` `7fd62920` `8156839e` `cfc482d1` `b4bb2f21` `578a0859` `b79066d3` | Reference-bank cleanup: hot bank 49 to 178 bytes free, one `GetPreEvolution` per hop, shared bit-address helper, real start-state gate (the player's HP can import as zero), dead override write removed, `.HPFraction` saturates HP above max; oracle exact, game ROM unchanged |
+| `3c8b1361` | Ordinary trainers no longer lose their attack on a "stay" switch roll (carry left set from the roll compare; core.asm read it as "switched"); found by the cleanup pass, pinned with a pinned-RNG fixture |
+
+Still open, listed for Cole: release smoke returning 0 on skipped sub-audits; the plausible-risk medium/light tier (taste); Dream Eater against an awake target on the reference path; the Foresight bench-candidate row; `BossAI_IsScarfSwingPossible` (four docs cite it); the `.Scale` table and identity-key scratch ideas in the reference bank.
+
+Final state: production suite 644/644, full reference suite 1026/1026 on the merged tree, frozen oracle exact (97 vectors), release smoke green, worst ordinary fixture 7,642,912 cycles against the 8,388,608 budget. Game ROM SHA1 `c28b4693…`.
