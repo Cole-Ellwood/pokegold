@@ -97,6 +97,18 @@ def run_case(harness, case: Case) -> dict:
             rf.SP = (sp + 2) & 0xffff
         harness.pb.hook_register(sym.bank, sym.address, _return, None)
         hooked.append(sym)
+    if case.force_random is not None:
+        # Pin the RNG: Random returns this byte, so a roll-gated branch is testable.
+        sym = harness.syms["Random"]
+
+        def _fixed(_):
+            rf, mem = harness.pb.register_file, harness.pb.memory
+            rf.A = case.force_random
+            sp = int(rf.SP)
+            rf.PC = mem[sp] | (mem[(sp + 1) & 0xffff] << 8)
+            rf.SP = (sp + 2) & 0xffff
+        harness.pb.hook_register(sym.bank, sym.address, _fixed, None)
+        hooked.append(sym)
     if case.stop_at:
         sym = harness.syms[case.stop_at]
         def _stop(_):

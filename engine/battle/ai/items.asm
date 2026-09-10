@@ -78,7 +78,9 @@ SwitchOften:
 	; $30
 	call Random
 	cp 4 percent
-	ret c
+	jr nc, .switch
+	and a ; stay with carry clear: core.asm reads carry as "switched"
+	ret
 
 .switch
 	ld a, [wEnemySwitchMonParam]
@@ -113,7 +115,9 @@ SwitchRarely:
 	; $30
 	call Random
 	cp 79 percent - 1
-	ret c
+	jr nc, .switch
+	and a ; stay with carry clear: core.asm reads carry as "switched"
+	ret
 
 .switch
 	ld a, [wEnemySwitchMonParam]
@@ -147,7 +151,9 @@ SwitchSometimes:
 	; $30
 	call Random
 	cp 20 percent - 1
-	ret c
+	jr nc, .switch
+	and a ; stay with carry clear: core.asm reads carry as "switched"
+	ret
 
 .switch
 	ld a, [wEnemySwitchMonParam]

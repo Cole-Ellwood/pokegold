@@ -52,6 +52,7 @@ class Case:
     registers: dict = field(default_factory=dict)
     stop_at: str | None = None
     skip_calls: tuple[str, ...] = ()
+    force_random: int | None = None
     damage_check: dict | None = None
     action_check: dict | None = None
     exchange_check: dict | None = None
@@ -1829,3 +1830,19 @@ for tier in (0, AI_TIER_LATE):
             expect={"memory":{"wEnemySwitchMonIndex":expected if tier else 0},
                     "calls":{"BossAI_FaintRepl_EvalCandidate":3 if tier else 0,
                              "FindMonInOTPartyToSwitchIntoBattle":0 if tier else 1}}))
+
+# Ordinary trainers: a "stay" roll on the maximum-chance switch param must
+# return with carry clear, or core.asm treats the turn as a switch and the
+# trainer never attacks (found 2026-09-09 by the bank 0e cleanup pass). The
+# vanilla scorer is bypassed and the maximum-chance param seeded; the RNG is pinned.
+for name, roll, stop, expect in (
+        ("stays", 0, None, {"carry": False, "memory": {"wEnemySwitchMonIndex": 0}}),
+        ("switches", 255, "AI_Switch", {"memory": {"wEnemySwitchMonIndex": 2}})):
+    CASES.append(Case(id=f"tier0_switch_sometimes_max_chance_{name}", path="normal/tier-zero",
+        pins="an ordinary trainer's stay roll keeps its attack; its switch roll commits the bench mon",
+        boss=gengar(), player=magnemite(), tier=0, entry=("SwitchSometimes",),
+        extra={**_bench(["GENGAR", "GENGAR"], threat="NORMAL"),
+               "wBattleMode": 2, "wLinkMode": 0, "wEnemySwitchMonIndex": 0,
+               "wEnemySwitchMonParam": 0x31},  # maximum chance, bench slot 2
+        skip_calls=("AI_CheckAbleToSwitchPreserveCurSpecies",),  # vanilla scorer; the roll is the branch under test
+        force_random=roll, stop_at=stop, expect=expect))
