@@ -1343,6 +1343,9 @@ BossAI_SetScoreHL:
 ; ai-layer: PLATFORM
 BossAI_EncourageScoreHL:
 	call BossAI_LoadScorePointer
+.by_a
+; a = amount, hl = score byte. Also entered here by the move model's
+; tier-weight helpers (see .EncourageScoreByA in boss_policy_move.asm).
 	and a
 	ret z
 	ld e, a
@@ -1360,6 +1363,10 @@ BossAI_EncourageScoreHL:
 ; ai-layer: PLATFORM
 BossAI_DiscourageScoreHL:
 	call BossAI_LoadScorePointer
+.by_a
+; Saturates at 79: scores 80+ mean "blocked" in the selector's first pass,
+; so an unsaturated chain could flip a candidate to blocked mid-chain or wrap
+; past 255 and look preferred. Entered here by the tier-weight helpers too.
 	and a
 	ret z
 	ld e, a

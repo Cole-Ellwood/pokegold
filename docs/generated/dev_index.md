@@ -28,7 +28,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 ### Boss AI and trainer difficulty
 - Intent: Human-like major fights, no hidden-information cheating outside authored Haki.
 - Start here: `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, `engine/battle/ai/move.asm`, `engine/battle/ai/scoring.asm`, `engine/battle/ai/items.asm`, `engine/battle/ai/switch.asm`, `engine/battle/core.asm`, `engine/battle/used_move_text.asm`, `engine/battle/read_trainer_attributes.asm`, `data/trainers/ai_tiers.asm`
-- Anchors: `BossAI_IncrementTurnsElapsed` (0e:417a, `engine/battle/ai/boss_platform.asm:24`); `BossAI_RecordPlayerSwitch` (0e:4225, `engine/battle/ai/boss_platform.asm:162`); `BossAI_SelectMove` (0e:5482, `engine/battle/ai/boss_policy_move.asm:2800`); `BossAI_TrySwitch` (0e:5655, `engine/battle/ai/boss_policy_switch.asm:17`); `BossAI_ComputeSwitchConfidence` (0e:63b4, `engine/battle/ai/boss_policy_switch.asm:1029`); `BossAI_PredictPlayerSwitch` (0e:6423, `engine/battle/ai/boss_policy_move.asm:4110`); `BossAI_RecordRevealedPlayerMove` (0e:4378, `engine/battle/ai/boss_platform.asm:312`); `BossAI_CurrentEnemyMoveHasKOPressure` (0e:5e2e, `engine/battle/ai/boss_policy_move.asm:3301`); `BossAI_CurrentEnemyMovePressureScore` (0e:5e3f, `engine/battle/ai/boss_policy_move.asm:3313`); `BossAI_PlayerHasPublicThreatVsEnemy` (0e:5c9c, `engine/battle/ai/boss_policy_move.asm:3164`); `BossAI_PublicEnemyFaster` (0e:6201, `engine/battle/ai/boss_policy_move.asm:4016`); `BossAI_CheckAbleToSwitchSafe` (0e:5925, `engine/battle/ai/boss_policy_switch.asm:554`); `BossAI_RefineSwitchCandidateForPlausibleRisk` (0e:728c, `engine/battle/ai/boss_policy_switch.asm:1105`); `BossAI_ApplyPlausibleRiskToSwitchConfidence` (0e:74b1, `engine/battle/ai/boss_policy_switch.asm:1477`)
+- Anchors: `BossAI_IncrementTurnsElapsed` (0e:417a, `engine/battle/ai/boss_platform.asm:24`); `BossAI_RecordPlayerSwitch` (0e:4225, `engine/battle/ai/boss_platform.asm:162`); `BossAI_SelectMove` (0e:5445, `engine/battle/ai/boss_policy_move.asm:2753`); `BossAI_TrySwitch` (0e:55f4, `engine/battle/ai/boss_policy_switch.asm:17`); `BossAI_ComputeSwitchConfidence` (0e:6357, `engine/battle/ai/boss_policy_switch.asm:1036`); `BossAI_PredictPlayerSwitch` (0e:63c6, `engine/battle/ai/boss_policy_move.asm:4035`); `BossAI_RecordRevealedPlayerMove` (0e:4378, `engine/battle/ai/boss_platform.asm:312`); `BossAI_CurrentEnemyMoveHasKOPressure` (0e:5dd1, `engine/battle/ai/boss_policy_move.asm:3226`); `BossAI_CurrentEnemyMovePressureScore` (0e:5de2, `engine/battle/ai/boss_policy_move.asm:3238`); `BossAI_PlayerHasPublicThreatVsEnemy` (0e:5c3f, `engine/battle/ai/boss_policy_move.asm:3089`); `BossAI_PublicEnemyFaster` (0e:61a4, `engine/battle/ai/boss_policy_move.asm:3941`); `BossAI_CheckAbleToSwitchSafe` (0e:58c8, `engine/battle/ai/boss_policy_switch.asm:561`); `BossAI_RefineSwitchCandidateForPlausibleRisk` (0e:722f, `engine/battle/ai/boss_policy_switch.asm:1112`); `BossAI_ApplyPlausibleRiskToSwitchConfidence` (0e:7454, `engine/battle/ai/boss_policy_switch.asm:1484`)
 
 ### Battle mechanics
 - Intent: Shared damage, status, switching, item, and turn-flow rules.
@@ -75,7 +75,7 @@ Read `docs/README.md` first for helper-doc routing, then `docs/project_context.m
 | Region | Used | Free | Banks |
 | --- | ---: | ---: | ---: |
 | ROM0 | 15721 | 663 |  |
-| ROMX | 1153713 | 927055 | 127 |
+| ROMX | 1153620 | 927148 | 127 |
 | SRAM | 31419 | 1349 | 4 |
 | WRAM0 | 4022 | 74 |  |
 | WRAMX | 3712 | 4480 | 2 |
@@ -152,7 +152,7 @@ Use these as candidates when moving optional code or data out of tight banks.
 | `Home` | ROM0 | 00:0150-3e40 | 15601 | ROM0 00 | `home.asm`, `home/array.asm`, `home/audio.asm`, `home/battle.asm`, +49 more |
 | `bankB` | ROMX | 0b:4000-4ac9 | 2762 | ROMX 0b | `engine/battle/ai/redundant.asm`, `engine/battle/trainer_huds.asm`, `engine/events/move_deleter.asm`, `engine/events/move_reminder.asm`, +5 more |
 | `Effect Commands` | ROMX | 0d:4000-7f82 | 16259 | ROMX 0d | `engine/battle/effect_commands.asm`, `engine/battle/used_move_text.asm`, `main.asm` |
-| `Enemy Trainers` | ROMX | 0e:4000-7e5a | 15963 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +6 more |
+| `Enemy Trainers` | ROMX | 0e:4000-7dfd | 15870 | ROMX 0e | `engine/battle/ai/boss_platform.asm`, `engine/battle/ai/boss_policy_move.asm`, `engine/battle/ai/boss_policy_switch.asm`, `engine/battle/ai/boss_thunks.asm`, +6 more |
 | `Battle Core` | ROMX | 0f:4000-7aff | 15104 | ROMX 0f | `engine/battle/core.asm`, `main.asm` |
 | `Evolutions and Attacks` | ROMX | 10:685c-7f99 | 5950 | ROMX 10 | `data/pokemon/evos_attacks.asm`, `data/pokemon/evos_attacks_pointers.asm` |
 | `Late Gen Held Items` | ROMX | 13:4000-4d68 | 3433 |  | `engine/battle/late_gen_held_items.asm`, `engine/battle/type_passive_damage_mods.asm`, `main.asm` |
@@ -206,19 +206,19 @@ Use these as candidates when moving optional code or data out of tight banks.
 | --- | --- | --- |
 | `BossAI_IncrementTurnsElapsed` | 0e:417a | `engine/battle/ai/boss_platform.asm:24` |
 | `BossAI_RecordPlayerSwitch` | 0e:4225 | `engine/battle/ai/boss_platform.asm:162` |
-| `BossAI_SelectMove` | 0e:5482 | `engine/battle/ai/boss_policy_move.asm:2800` |
-| `BossAI_TrySwitch` | 0e:5655 | `engine/battle/ai/boss_policy_switch.asm:17` |
-| `BossAI_ComputeSwitchConfidence` | 0e:63b4 | `engine/battle/ai/boss_policy_switch.asm:1029` |
-| `BossAI_PredictPlayerSwitch` | 0e:6423 | `engine/battle/ai/boss_policy_move.asm:4110` |
+| `BossAI_SelectMove` | 0e:5445 | `engine/battle/ai/boss_policy_move.asm:2753` |
+| `BossAI_TrySwitch` | 0e:55f4 | `engine/battle/ai/boss_policy_switch.asm:17` |
+| `BossAI_ComputeSwitchConfidence` | 0e:6357 | `engine/battle/ai/boss_policy_switch.asm:1036` |
+| `BossAI_PredictPlayerSwitch` | 0e:63c6 | `engine/battle/ai/boss_policy_move.asm:4035` |
 | `BossAI_RecordRevealedPlayerMove` | 0e:4378 | `engine/battle/ai/boss_platform.asm:312` |
-| `BossAI_CurrentEnemyMoveHasKOPressure` | 0e:5e2e | `engine/battle/ai/boss_policy_move.asm:3301` |
-| `BossAI_CurrentEnemyMovePressureScore` | 0e:5e3f | `engine/battle/ai/boss_policy_move.asm:3313` |
-| `BossAI_PlayerHasPublicThreatVsEnemy` | 0e:5c9c | `engine/battle/ai/boss_policy_move.asm:3164` |
-| `BossAI_PublicEnemyFaster` | 0e:6201 | `engine/battle/ai/boss_policy_move.asm:4016` |
-| `BossAI_CheckAbleToSwitchSafe` | 0e:5925 | `engine/battle/ai/boss_policy_switch.asm:554` |
-| `BossAI_RefineSwitchCandidateForPlausibleRisk` | 0e:728c | `engine/battle/ai/boss_policy_switch.asm:1105` |
-| `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:74b1 | `engine/battle/ai/boss_policy_switch.asm:1477` |
-| `BossAITierMap` | 0e:7d95 | `data/trainers/ai_tiers.asm:1` |
+| `BossAI_CurrentEnemyMoveHasKOPressure` | 0e:5dd1 | `engine/battle/ai/boss_policy_move.asm:3226` |
+| `BossAI_CurrentEnemyMovePressureScore` | 0e:5de2 | `engine/battle/ai/boss_policy_move.asm:3238` |
+| `BossAI_PlayerHasPublicThreatVsEnemy` | 0e:5c3f | `engine/battle/ai/boss_policy_move.asm:3089` |
+| `BossAI_PublicEnemyFaster` | 0e:61a4 | `engine/battle/ai/boss_policy_move.asm:3941` |
+| `BossAI_CheckAbleToSwitchSafe` | 0e:58c8 | `engine/battle/ai/boss_policy_switch.asm:561` |
+| `BossAI_RefineSwitchCandidateForPlausibleRisk` | 0e:722f | `engine/battle/ai/boss_policy_switch.asm:1112` |
+| `BossAI_ApplyPlausibleRiskToSwitchConfidence` | 0e:7454 | `engine/battle/ai/boss_policy_switch.asm:1484` |
+| `BossAITierMap` | 0e:7d38 | `data/trainers/ai_tiers.asm:1` |
 | `CheckPlayerMoveTypeMatchups` | 0d:49e5 | `engine/battle/ai/switch.asm:1` |
 | `AICompareSpeed` | 11:7312 | `engine/battle/ai/scoring.asm:2658` |
 | `AIDamageCalc` | 11:74c7 | `engine/battle/ai/scoring.asm:2986` |

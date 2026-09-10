@@ -418,33 +418,14 @@ ENDC
 	ret
 
 .AssaultVestBlocksCurrentMove
+; Carry when the Assault Vest forbids the current move: the combat rule
+; itself, asked about the move id in the struct (AIGetEnemyMove fills the
+; struct straight from the Moves table, so the power it reads is the same).
+	push hl
 	ld a, [wEnemyMoveStruct + MOVE_ANIM]
-	and a
-	jr z, .assault_vest_blocked
-	cp $ff
-	jr z, .assault_vest_blocked
-	cp SEISMIC_TOSS
-	jr z, .assault_vest_allowed
-	cp NIGHT_SHADE
-	jr z, .assault_vest_allowed
-	cp DRAGON_RAGE
-	jr z, .assault_vest_allowed
-	cp SONICBOOM
-	jr z, .assault_vest_allowed
-	cp PSYWAVE
-	jr z, .assault_vest_allowed
-	cp COUNTER
-	jr z, .assault_vest_allowed
-	cp BIDE
-	jr z, .assault_vest_allowed
-	ld a, [wEnemyMoveStruct + MOVE_POWER]
-	and a
-	jr z, .assault_vest_blocked
-.assault_vest_allowed
-	and a
-	ret
-.assault_vest_blocked
-	scf
+	ld e, a
+	farcall IsMoveBlockedByAssaultVestFromE_Far
+	pop hl
 	ret
 
 .StatusMoveWouldFailPublicly
@@ -2618,12 +2599,17 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 .EncourageByTierWeight
 	call .GetTierWeight
 	call BossAI_LoadScorePointer
-	jr .EncourageScoreByA
+; The two labels below are the contribution tracer's hooks (a = amount,
+; hl = score pointer); they enter the platform bodies past their entry
+; symbols so no platform hook fires a second time for the same contribution.
+.EncourageScoreByA
+	jp BossAI_EncourageScoreHL.by_a
 
 .DiscourageByTierWeight
 	call .GetTierWeight
 	call BossAI_LoadScorePointer
-	jr .DiscourageScoreByA
+.DiscourageScoreByA
+	jp BossAI_DiscourageScoreHL.by_a
 
 .GetTierWeight
 	ld hl, BossAITierWeights
@@ -2641,39 +2627,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ld d, 0
 	add hl, de
 	ld a, [hl]
-	ret
-
-.EncourageScoreByA
-	and a
-	ret z
-	ld e, a
-.encourage_loop
-	ld a, [hl]
-	cp 80
-	ret nc
-	cp 1
-	ret z
-	dec [hl]
-	dec e
-	jr nz, .encourage_loop
-	ret
-
-.DiscourageScoreByA
-; Saturate at 79 to mirror BossAI_DiscourageScoreHL: scores 80+ mean "blocked"
-; in BossAI_SelectMove (cp 80 in the first-pass scan), so an unsaturated
-; discourage chain on a high score could either flip a candidate from "scored"
-; to "blocked" mid-chain or wrap past 255 and look highly preferred.
-	and a
-	ret z
-	ld e, a
-.discourage_loop
-	ld a, [hl]
-	cp 79
-	jr nc, .discourage_done
-	inc [hl]
-.discourage_done
-	dec e
-	jr nz, .discourage_loop
 	ret
 
 .EnemyUnderPressure
@@ -2815,38 +2768,10 @@ IF DEF(BOSS_AI_TRACE)
 	farcall BossAI_TraceTopMoves
 ENDC
 
-	ld hl, wEnemyAIMoveScores
-	ld de, wEnemyMonMoves
-	ld b, $ff ; best score
-	ld c, $ff ; best index
-	xor a ; current index
+; .first_pass stays a named step: the debugger hooks it as selector_start and
+; patches the final score bytes there before the scan reads them.
 .first_pass
-	cp NUM_MOVES
-	jr nc, .first_done
-	push af
-	ld a, [de]
-	and a
-	jr z, .first_done_pop
-	ld a, [hl]
-	cp 80
-	jr nc, .first_next
-	cp b
-	jr nc, .first_next
-	ld b, a
-	pop af
-	ld c, a
-	push af
-.first_next
-	pop af
-	inc hl
-	inc de
-	inc a
-	jr .first_pass
-
-.first_done_pop
-	pop af
-
-.first_done
+	call BossAI_FindBestSelectableMove
 	ld a, c
 	cp $ff
 	ret z

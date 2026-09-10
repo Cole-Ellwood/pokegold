@@ -475,7 +475,10 @@ BossAI_HakiFindImmunitySwitch:
 	scf
 	ret
 
-BossAI_ChooseBestOracleMove:
+BossAI_FindBestSelectableMove:
+; The lowest score under the 80 block, an empty move slot ending the scan.
+; Output: c = that slot (0-based) or $ff when nothing is selectable, b = its
+; score; the first strict minimum wins a tie. Clobbers a, hl, de.
 	ld hl, wEnemyAIMoveScores
 	ld de, wEnemyMonMoves
 	ld b, $ff ; best score
@@ -508,6 +511,10 @@ BossAI_ChooseBestOracleMove:
 	pop af
 
 .best_done
+	ret
+
+BossAI_ChooseBestOracleMove:
+	call BossAI_FindBestSelectableMove
 	ld a, c
 	cp $ff
 	jr z, .no_best
