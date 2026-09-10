@@ -765,7 +765,11 @@ BossAI_FastCompileReplyNative::
 	jr .unsupported
 .dream
 	ld a, [FSN_OWN_STATUS]
-	jr .sleeping
+	and SLP_MASK
+	ret nz
+	xor a
+	ld [FSM_ACCURACY], a
+	ret
 .snore
 	ld a, [FSN_PLAYER_STATUS]
 .sleeping
@@ -812,6 +816,9 @@ BossAI_FastCompileReplyNative::
 
 .Accuracy
 ; PublicHitFacts.BeforeStages and ApplyAccuracyModifiers, incoming side.
+	ld a, [FSM_ACCURACY]
+	and a
+	ret z
 	ld a, [FSN_OWN_SS5]
 	bit SUBSTATUS_LOCK_ON, a
 	jr z, .fly_dig

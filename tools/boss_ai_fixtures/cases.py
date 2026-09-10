@@ -1880,3 +1880,11 @@ for template in [c for c in CASES if c.id.startswith("dreameater_hit_")]:
         CASES.append(replace(template,id=template.id+"_"+modifier,
             pins="target sleep gates Dream Eater before Lock-On and Flying accuracy bonuses",
             boss=boss,player=player,extra=extra))
+
+for asleep in (False, True):
+    CASES.append(Case(id=f"joint_dreameater_{'asleep' if asleep else 'awake'}",
+        path="strategy/joint-actions", pins="native and frozen selectors agree on Dream Eater target sleep gating",
+        boss=Mon.of("SNORLAX",50,["TACKLE"],hp_pct=25),
+        player=Mon.of("GENGAR",50,["DREAM_EATER","LICK","HYPNOSIS","SPITE"]),
+        extra={"wEnemyMonStatus":2 if asleep else 0},entry=(),expect={},
+        joint_check={"revealed":["DREAM_EATER","LICK","HYPNOSIS","SPITE"],"check_accuracy":True}))
