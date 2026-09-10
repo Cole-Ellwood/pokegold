@@ -31,9 +31,10 @@ ASSERT JC_CONTEXT_SIZE - JC_ACTIONS < 256 ; byte-counted metadata clear only
 ASSERT JC_CONTEXT_SIZE <= wBattle - wBattleAnimTileDict
 ; Conservative bound even if every reply received the revealed weight.
 ; Both tie branches together have the same doubled mass as a non-tied reply.
-; Multiplying the second bound by 65536 fits the five-byte event numerator.
+; Multiplying the second bound by 65536 fits the five-byte event numerator;
+; AV_VALUE_MAX is derived where the value is scored (action_value.asm).
 ASSERT 2 * NUM_ATTACKS * JC_REVEALED_WEIGHT < $10000
-ASSERT 2048 * 2 * NUM_ATTACKS * JC_REVEALED_WEIGHT < $1000000
+ASSERT AV_VALUE_MAX * 2 * NUM_ATTACKS * JC_REVEALED_WEIGHT < $1000000
 
 ; ai-layer: POLICY
 BossAI_ComparePublicActionsWithTables::
@@ -152,6 +153,8 @@ BossAI_ComparePublicActions::
 	scf
 	ret
 .no_candidate
+; carry clear: no candidate at this index, or (from .Candidate) an index that
+; carries no action
 	and a
 	ret
 
@@ -173,7 +176,8 @@ BossAI_ComparePublicActions::
 	jp .StoreAction
 .not_move
 	cp NUM_MOVES + PARTY_LENGTH
-	jr nc, .forced
+	jr z, .forced
+	jr nc, .wait
 	sub NUM_MOVES
 	ld c, a
 	ld a, 1
@@ -200,8 +204,6 @@ BossAI_ComparePublicActions::
 	ld c, STRUGGLE ; actor-fact carrier, never executed on entry
 	jp .StoreAction
 .forced
-	cp NUM_MOVES + PARTY_LENGTH
-	jr nz, .wait
 	ad_address JC_ACTIONS + AC_MODE
 	ld a, [hl]
 	cp AC_FORCED
@@ -647,27 +649,6 @@ BossAI_ComparePublicActions::
 
 .TestReplyBit
 ; A=move ID, BC=set offset in the joint context. Z means absent.
-	ld h, d
-	ld l, e
-	add hl, bc
-	ld c, a
-	srl a
-	srl a
-	srl a
-	ld b, 0
-	push bc
-	ld c, a
-	add hl, bc
-	pop bc
-	ld a, c
-	and 7
-	ld c, a
-	ld a, 1
-	jr z, .test_bit
-.bit_shift
-	add a
-	dec c
-	jr nz, .bit_shift
-.test_bit
+	call BossAI_ReplyBitAddress
 	and [hl]
 	ret

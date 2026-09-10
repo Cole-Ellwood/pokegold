@@ -67,10 +67,17 @@ BossAI_BuildPublicReplySet::
 	ad_address PR_HOPS
 	ld [hl], NUM_POKEMON
 .species
-	call .TMs
-	call .LevelMoves
-	call .EggMoves
 	call .PreEvolution
+	push af
+	ld b, $ff ; inherited level-up moves at the base of the evolution family
+	jr nc, .level_cap
+	ld a, [wBattleMonLevel]
+	ld b, a
+.level_cap
+	call .LevelMoves
+	call .TMs
+	call .EggMoves
+	pop af
 	jr nc, .done
 	ad_address PR_SPECIES
 	ld [hl], a
@@ -126,7 +133,9 @@ BossAI_BuildPublicReplySet::
 	pop bc
 	dec b
 	jr nz, .copied_move
-; the copied set is the whole moveset: as closed as four revealed moves
+; the copied set is the whole moveset: as closed as four revealed moves. The
+; revealed set may still hold moves seen before the transform, so the closed
+; flag covers that superset on purpose (replies.py pins it).
 	ad_address PR_FLAGS
 	set PR_FOUR_REVEALED_F, [hl]
 	jp .done
@@ -168,56 +177,14 @@ BossAI_BuildPublicReplySet::
 	ld bc, PR_POSSIBLE
 .SetBit
 ; A=move ID, BC=set offset. DE=context. Move IDs are direct bit indices.
-	ld h, d
-	ld l, e
-	add hl, bc
-	ld c, a
-	srl a
-	srl a
-	srl a
-	ld b, 0
-	push bc
-	ld c, a
-	add hl, bc
-	pop bc
-	ld a, c
-	and 7
-	ld c, a
-	ld a, 1
-	jr z, .set_bit
-.shift
-	add a
-	dec c
-	jr nz, .shift
-.set_bit
+	call BossAI_ReplyBitAddress
 	or [hl]
 	ld [hl], a
 	ret
 
 .ClearBit
 ; A=move ID, BC=set offset. DE=context. The bit's complement masks the byte.
-	ld h, d
-	ld l, e
-	add hl, bc
-	ld c, a
-	srl a
-	srl a
-	srl a
-	ld b, 0
-	push bc
-	ld c, a
-	add hl, bc
-	pop bc
-	ld a, c
-	and 7
-	ld c, a
-	ld a, 1
-	jr z, .clear_bit
-.clear_shift
-	add a
-	dec c
-	jr nz, .clear_shift
-.clear_bit
+	call BossAI_ReplyBitAddress
 	cpl
 	and [hl]
 	ld [hl], a
@@ -259,6 +226,8 @@ BossAI_BuildPublicReplySet::
 	jr .tm
 
 .LevelMoves
+; B=level cap: the player's level, or $ff at the base of the evolution family.
+	push bc
 	ad_address PR_SPECIES
 	ld a, [hl]
 	dec a
@@ -269,6 +238,7 @@ BossAI_BuildPublicReplySet::
 	add hl, bc
 	ld a, BANK(EvosAttacksPointers)
 	call GetFarWord
+	pop bc
 .skip_evos
 	ld a, BANK("Evolutions and Attacks")
 	call GetFarByte
@@ -284,14 +254,6 @@ BossAI_BuildPublicReplySet::
 	jr .skip_evos
 .learned
 	inc hl
-	push hl
-	call .PreEvolution
-	pop hl
-	ld a, [wBattleMonLevel]
-	jr c, .level_cap
-	ld a, $ff ; inherited level-up moves at the base of the evolution family
-.level_cap
-	ld b, a
 .level_move
 	ld a, BANK("Evolutions and Attacks")
 	call GetFarByte
@@ -353,4 +315,31 @@ BossAI_BuildPublicReplySet::
 	ld a, b
 	ld [wCurPartySpecies], a
 	ld a, h
+	ret
+
+BossAI_ReplyBitAddress::
+; A=move ID, BC=set offset in the context at DE. HL=the set byte holding the
+; move's bit, A=that bit's mask. BC clobbered, DE preserved. Shared by the
+; reply-set writers above and the joint evaluation's .TestReplyBit.
+	ld h, d
+	ld l, e
+	add hl, bc
+	ld c, a
+	srl a
+	srl a
+	srl a
+	ld b, 0
+	push bc
+	ld c, a
+	add hl, bc
+	pop bc
+	ld a, c
+	and 7
+	ld c, a
+	ld a, 1
+	ret z
+.shift
+	add a
+	dec c
+	jr nz, .shift
 	ret
