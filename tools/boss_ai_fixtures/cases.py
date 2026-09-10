@@ -1893,3 +1893,36 @@ for tier, risk in ((AI_TIER_MID, 14), (AI_TIER_LATE, 20)):
                                "wBossAISwitchConfidence": 80},
                     "calls": {"BossAI_IsSuspiciousSwitchIn": 0 if revenge else 1,
                               "BossAI_HasRevealedSuperEffectiveMove": 0 if revenge or suspicious else 1}}))
+
+
+# A bench mon cannot inherit the active defender's Foresight. Test both
+# immunities, both incoming battle turns, and a non-Ghost carry-clear control.
+for attack_type, player_species in (("NORMAL", "SNORLAX"), ("FIGHTING", "MACHAMP")):
+    for identified in (0, 1):
+        for turn in (0, 1):
+            substatus = 2 | (identified << 3)  # Keep the unrelated Curse bit.
+            extra = {"hBattleTurn": turn, "wEnemySubStatus1": substatus,
+                     "wPlayerSubStatus1": (1 - identified) << 3,
+                     "wEnemySwitchMonParam": 1}
+            restored = {"hBattleTurn": turn, "wEnemySubStatus1": substatus,
+                        "wPlayerSubStatus1": (1 - identified) << 3}
+            for candidate, immune in (("MISDREAVUS", True), ("SNORLAX", False)):
+                CASES.append(Case(
+                    id=f"foresight_bench_{attack_type}_{candidate}_id{identified}_turn{turn}",
+                    path="strategy/candidate-foresight",
+                    pins="only bench typing determines STAB immunity; active Foresight and turn are restored",
+                    boss=Mon.of("MISDREAVUS", 40, ["SHADOW_BALL"]),
+                    player=Mon.of(player_species, 40, []),
+                    entry=("BossAI_CandidateImmuneToPlayerSTAB",),
+                    registers={"B": 0x12, "C": 0x46},
+                    extra={**extra, "wOTPartyMon2Species": SPECIES[candidate]},
+                    expect={"carry": immune, "bc": 0x1246, "memory": restored}))
+            CASES.append(Case(
+                id=f"foresight_active_{attack_type}_id{identified}_turn{turn}",
+                path="strategy/candidate-foresight",
+                pins="active Ghost still loses Normal/Fighting immunity only when Identified",
+                boss=Mon.of("MISDREAVUS", 40, ["SHADOW_BALL"]),
+                player=Mon.of(player_species, 40, []),
+                entry=("BossAI_CheckPlayerMoveTypeMatchupVsEnemyNoItem",),
+                registers={"A": TYPES[attack_type], "B": 0x12, "C": 0x46}, extra=extra,
+                expect={"bc": 0x1246, "memory": {**restored, "wTypeMatchup": 10 if identified else 0}}))

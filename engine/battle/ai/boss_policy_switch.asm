@@ -2309,18 +2309,23 @@ BossAI_CheckTypeMatchupVsCandidateAsPlayer:
 ; In:  a = attacking type (one of the active player mon's types)
 ;      hl = defender type pair (candidate types, e.g. wBossAITemp4)
 ; Out: wTypeMatchup. Preserves bc, de, hl.
-; Forces hBattleTurn to the player for the scan so the Dragon's Majesty and
-; Foresight rows key off the actual attacker. These checks run from
-; AI_SwitchOrTryItem under SetEnemyTurn, so an unforced scan would treat the
-; boss's active mon as the attacker.
+; Force the player attacker for Dragon's Majesty under SetEnemyTurn.
+; A bench defender cannot be Identified; suppress the active mon's Foresight
+; only during this scan, then restore its full substatus.
 	push de
 	ld e, a
 	ldh a, [hBattleTurn]
 	ld d, a
 	xor a
 	ldh [hBattleTurn], a
+	ld a, [wEnemySubStatus1]
+	push af
+	res SUBSTATUS_IDENTIFIED, a
+	ld [wEnemySubStatus1], a
 	ld a, e
 	call BossAI_CheckTypeMatchupNoItem
+	pop af
+	ld [wEnemySubStatus1], a
 	ld a, d
 	ldh [hBattleTurn], a
 	pop de
