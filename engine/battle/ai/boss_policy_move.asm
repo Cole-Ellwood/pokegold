@@ -2113,8 +2113,10 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	and a
 	ret z
 	add a
+	jr c, .switch_pressure ; a saturated count doubles out of the byte
 	cp c
 	jr c, .no_switch_pressure
+.switch_pressure
 	scf
 	ret
 .no_switch_pressure
@@ -4048,8 +4050,10 @@ BossAI_PredictPlayerSwitch:
 	and a
 	jr z, .switch_rate_done
 	add a
+	jr c, .large_rate ; a saturated count doubles out of the byte
 	cp c
 	jr c, .small_rate
+.large_rate
 	ld a, [wBossAITemp]
 	add 20
 	ld [wBossAITemp], a

@@ -1710,3 +1710,26 @@ for direction in (0, 1):
             pins="a Dragon attacker into a chart-immune defender deals zero in the kernel as in combat; the neutral defender is the twin",
             boss=attacker if direction else target, player=target if direction else attacker,
             entry=(), expect={}, damage_check={"direction": direction, "move": move, "adapter": True}))
+
+# Saturation guards. A switch count at or past 128 doubles out of the byte and
+# must still read as a high switch rate, and the turn counter holds at 255
+# instead of wrapping to 0. These rows fail on the ROM before the guards.
+CASES.append(Case(id="predict_switch_rate_saturated", path="strategy/switch-risk",
+    pins="a saturated switch count still counts as a high switch rate (the doubling carries)",
+    boss=Mon.of("SNORLAX", 50, ["TACKLE"]), player=Mon.of("SNORLAX", 50, ["TACKLE"]),
+    entry=("BossAI_PredictPlayerSwitch",),
+    extra={"wBossAITurnsElapsed": 255, "wBossAIPlayerSwitchCount": 255, "wPlayerUsedMoves": 0},
+    expect={"a": 30}))
+for count, turns, carry in ((255, 255, True), (2, 10, False), (5, 10, True)):
+    CASES.append(Case(id=f"repeated_switch_pressure_{count}_{turns}", path="strategy/switch-risk",
+        pins="repeated switch pressure means at least half a switch per turn, the doubling carry included",
+        boss=Mon.of("SNORLAX", 50, ["TACKLE"]), player=Mon.of("SNORLAX", 50, ["TACKLE"]),
+        entry=("BossAI_ApplyMoveModel.PlayerHasRepeatedSwitchPressure",),
+        extra={"wBossAITurnsElapsed": turns, "wBossAIPlayerSwitchCount": count},
+        expect={"carry": carry}))
+for before, after in ((7, 8), (254, 255), (255, 255)):
+    CASES.append(Case(id=f"turns_elapsed_{before}", path="strategy/switch-risk",
+        pins="the turn counter counts up and saturates at 255 instead of wrapping",
+        boss=gengar(), player=magnemite(), entry=("BossAI_IncrementTurnsElapsed",), tier=AI_TIER_EARLY,
+        extra={"wBossAITurnsElapsed": before, "wBossAIPendingPlayerSwitchCount": 0, "wOTPartyCount": 1},
+        expect={"memory": {"wBossAITurnsElapsed": after}}))

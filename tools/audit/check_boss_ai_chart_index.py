@@ -28,6 +28,15 @@ def main() -> None:
                 continue
             rows[section].append(tuple(rom[at:at + 3]))
             at += 3
+        # The kernel's chart walk stops at the first row of another attacker,
+        # so every attacker's rows must form one contiguous run per section.
+        for part, section_rows in enumerate(rows):
+            seen, previous = set(), None
+            for attack, _, _ in section_rows:
+                if attack != previous:
+                    assert attack not in seen, ('attacker rows are not contiguous', part, attack)
+                    seen.add(attack)
+                    previous = attack
         local = offset('BossAI_TypeMatchups')
         end = offset('BossAI_TypeMatchupsEnd')
         assert rom[local:end] == rom[start:at + 1], 'local chart differs from combat rows'

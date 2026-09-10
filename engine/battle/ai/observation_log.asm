@@ -67,7 +67,7 @@ BossAI_AppendObservationLog::
 	jr c, .index_ok
 	xor a
 .index_ok
-	ld h, a
+	ld [wBossAIObsWriteIndex], a ; the increment below reads the clamped index
 	assert BOSS_AI_OBS_ENTRY_SIZE == 4 ; the two shifts below are the entry stride
 	add a
 	add a

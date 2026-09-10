@@ -210,11 +210,9 @@ BossAI_ApplyDamageDominanceBias::
 	; STAB" rule below needs the original to compare both moves' SE-ness.
 	ld a, [wTypeMatchup]
 	ld [wBossAITemp5], a
-	ld a, [wEnemyMoveStruct + MOVE_ANIM]
-	ld c, a
 	call .CurrentMoveDamageRank
 	and a
-	jr z, .ret_regs
+	jr z, .restore_matchup
 	ld [wBossAITemp2], a
 	ld a, [wEnemyMoveStruct + MOVE_ANIM]
 	ld [wBossAITemp3], a
@@ -231,7 +229,6 @@ BossAI_ApplyDamageDominanceBias::
 	ld a, [wBossAITemp3]
 	cp c
 	jr z, .next
-	ld a, c
 	push hl
 	push bc
 	farcall BossAI_MoveIsAvailableFromC
@@ -277,8 +274,10 @@ BossAI_ApplyDamageDominanceBias::
 	jr nz, .loop
 
 .done
-	jr .ret_regs
-
+.restore_matchup
+; Leave wTypeMatchup as the current move's, not the last comparison move's.
+	ld a, [wBossAITemp5]
+	ld [wTypeMatchup], a
 .ret_regs
 	pop hl
 	pop de
@@ -289,7 +288,7 @@ BossAI_ApplyDamageDominanceBias::
 	pop bc
 	pop hl
 	call .DiscourageCurrentScoreBy8
-	jr .ret_regs
+	jr .restore_matchup
 
 .CurrentMoveDamageRank
 	; Rich-model damage rank for the current move: stat-ratio scored power (base
@@ -407,10 +406,11 @@ BossAI_ApplyDamageDominanceBias::
 	jr .store_type
 
 .resisted
+	ld e, a
 	ld a, b
 	srl a
 	ld b, a
-	ld a, [wTypeMatchup]
+	ld a, e
 	cp EFFECTIVE / 2
 	ld a, b
 	jr nc, .store_type

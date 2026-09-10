@@ -60,15 +60,21 @@ AICheckEnemyMaxHP_HL:
 
 ; ai-layer: THUNK
 AICheckPlayerQuarterHP_HL:
+; The player-HP targets use the "hl" macro variant, which clobbers bc;
+; preserve it like the enemy-HP thunks so every thunk has the same contract.
 	push hl
+	push bc
 	farcall AICheckPlayerQuarterHP
+	pop bc
 	pop hl
 	ret
 
 ; ai-layer: THUNK
 AICheckPlayerHalfHP_HL:
 	push hl
+	push bc
 	farcall AICheckPlayerHalfHP
+	pop bc
 	pop hl
 	ret
 

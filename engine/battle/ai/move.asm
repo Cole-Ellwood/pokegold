@@ -30,13 +30,17 @@ AIChooseMove:
 	jr z, .CheckPP
 
 	ld hl, wEnemyMonMoves
+	ld b, a
 	ld c, 0
 .CheckDisabledMove:
-	cp [hl]
+	ld a, [hli]
+	cp b
 	jr z, .ScoreDisabledMove
 	inc c
-	inc hl
-	jr .CheckDisabledMove
+	ld a, c
+	cp NUM_MOVES
+	jr c, .CheckDisabledMove
+	jr .CheckPP ; a disabled move that is not in the moveset scores nothing
 .ScoreDisabledMove:
 	ld hl, wEnemyAIMoveScores
 	ld b, 0

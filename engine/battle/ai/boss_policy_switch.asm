@@ -675,7 +675,8 @@ BossAI_WorstLikelyThreatMatchupForSpecies:
 .restore
 	pop af
 	ld [wCurSpecies], a
-	call GetBaseData
+	and a
+	call nz, GetBaseData
 	ld a, b
 	ret
 

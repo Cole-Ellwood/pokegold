@@ -163,6 +163,7 @@ BossAI_PublicDamageRange::
 	ld [hli], a
 	ld [hl], 255
 	call BossAI_DamageKernel
+	jr nc, .second_unknown
 	push bc
 	ad_address AD_TOTAL
 	ld a, [hli]
@@ -183,6 +184,10 @@ BossAI_PublicDamageRange::
 	ld c, l
 	scf
 	ret
+.second_unknown
+	pop af
+	ad_address AD_POSTROLL
+	ld [hl], a
 .unknown
 	ad_address AD_RAW_MIN
 	xor a

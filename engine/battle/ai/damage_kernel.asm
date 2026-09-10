@@ -725,6 +725,16 @@ BossAI_DamageKernel::
 	jr z, .zero
 	cp EFFECT_SUPER_FANG
 	jr z, .zero
+	cp EFFECT_PSYWAVE
+	jr z, .zero
+	cp EFFECT_COUNTER
+	jr z, .zero
+	cp EFFECT_MIRROR_COAT
+	jr z, .zero
+	cp EFFECT_BIDE
+	jr z, .zero
+	cp EFFECT_FUTURE_SIGHT
+	jr z, .zero
 	ld a, DRAGON
 	call .AttackerContribution
 	and a

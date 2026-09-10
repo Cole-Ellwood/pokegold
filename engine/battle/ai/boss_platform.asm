@@ -28,6 +28,9 @@ BossAI_IncrementTurnsElapsed:
 	call BossAI_UpdateHakiAceWindow
 	ld hl, wBossAITurnsElapsed
 	inc [hl]
+	jr nz, .turns_counted
+	dec [hl] ; saturate at 255 like the switch count
+.turns_counted
 	ld hl, wBossAIPlanPhase
 	res 7, [hl]
 	inc [hl]
