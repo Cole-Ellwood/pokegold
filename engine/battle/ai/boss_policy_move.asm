@@ -1217,25 +1217,110 @@ ENDC
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
 	cp EFFECT_BATON_PASS
 	ret nz
-	push hl
 	call BossAI_FindFirstAliveSwitchCandidate
-	pop hl
 	jr nc, .baton_bad
+; Harmful cargo overrides boosts and dry-pass incentives.
+	ld a, [wEnemySubStatus4]
+	bit SUBSTATUS_LEECH_SEED, a
+	jr nz, .baton_penalty
+	call BossAI_EnemyPerishEscapeForced
+	jr c, .baton_penalty
 	call .EnemyHasBoostToPass
 	jr c, .baton_good
+; A dry pivot must not throw away a finish.
+	call BossAI_HasAnyKOMove
+	jr c, .baton_penalty
 	ld a, [wBattleMonStatus]
-	and a
-	jr nz, .baton_converter
+	and SLP_MASK | (1 << FRZ)
+	jr z, .baton_prediction
+	call .BatonHasAvailableSetup
+	jr c, .baton_bad
+	ld c, 0 ; strongest tier weight: a free turn for the recipient
+	jp .EncourageByTierWeight
+.baton_prediction
+	call BossAI_PredictPlayerSwitch
+	cp 40 ; same public prediction threshold as first-layer Spikes
+	jr c, .baton_threat
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr c, .baton_moderate
+; Conservatively retain any available setup or damaging attack as stay value.
+	call .BatonHasStayValue
+	jr nc, .baton_moderate
+.baton_threat
+	call BossAI_PlayerHasPublicThreatVsEnemy
+	jr nc, .baton_toxic
+	call BossAI_PublicEnemyFaster
+	jr c, .baton_bad
+	call AICheckEnemyHalfHP_HL
+	jr c, .baton_moderate
+	jr .baton_bad
+.baton_toxic
+	ld a, [wEnemySubStatus5]
+	bit SUBSTATUS_TOXIC, a
+	jr z, .baton_bad
+	ld c, 4 ; small status nudge; ordinary poison is not Toxic
+	jp .EncourageByTierWeight
 .baton_bad
+	call BossAI_LoadScorePointer
+	ld a, 6 ; retain the existing mild dry-pass discourage
+	jp BossAI_DiscourageScoreHL
+.baton_penalty
+	call BossAI_LoadScorePointer
 	ld a, 6
 	call BossAI_DiscourageScoreHL
-	ret
-.baton_converter
-	ld a, 18
-	jp BossAI_EncourageScoreHL
+	ld c, 0
+	jp .DiscourageByTierWeight
+.baton_moderate
+	ld c, 2
+	jp .EncourageByTierWeight
 .baton_good
 	ld c, 5
-	call .EncourageByTierWeight
+	jp .EncourageByTierWeight
+
+.BatonHasStayValue
+	ld b, 1 ; any available damaging move is a reason to stay
+	jr .baton_scan_setup
+.BatonHasAvailableSetup
+	ld b, 0
+.baton_scan_setup
+; Reuse the boost classifier, including Ghost Curse, and all legality gates.
+; Preserve the scored move structure while examining the passer's own moves.
+	call BossAI_SaveEnemyMoveStruct
+	ld de, wEnemyMonMoves
+	ld c, NUM_MOVES
+.baton_setup_loop
+	ld a, [de]
+	push bc
+	push de
+	call BossAI_MoveIsAvailable
+	jr nc, .baton_setup_next
+	call AIGetEnemyMove_HL
+	pop de
+	pop bc
+	push bc
+	push de
+	ld a, b
+	and a
+	jr z, .baton_classify_setup
+	ld a, [wEnemyMoveStruct + MOVE_POWER]
+	and a
+	jr z, .baton_classify_setup
+	scf
+	jr .baton_setup_next
+.baton_classify_setup
+	call .IsBoostSetupMove
+.baton_setup_next
+	pop de
+	pop bc
+	jr c, .baton_setup_done
+	inc de
+	dec c
+	jr nz, .baton_setup_loop
+	and a
+.baton_setup_done
+	push af
+	call BossAI_RestoreEnemyMoveStruct
+	pop af
 	ret
 
 .ApplyRevealedAntiSetupAvoidance
@@ -1253,23 +1338,9 @@ ENDC
 
 .IsBoostSetupMove
 	ld a, [wEnemyMoveStruct + MOVE_EFFECT]
-	cp EFFECT_DRAGON_DANCE
-	jr z, .boost_setup_yes
-	cp EFFECT_CALM_MIND
-	jr z, .boost_setup_yes
-	cp EFFECT_QUIVER_DANCE
-	jr z, .boost_setup_yes
 	cp EFFECT_CURSE
 	jr z, .check_curse_boost
-	cp EFFECT_ATTACK_UP
-	jr c, .boost_setup_no
-	cp EFFECT_EVASION_UP + 1
-	jr c, .boost_setup_yes
-	cp EFFECT_ATTACK_UP_2
-	jr c, .boost_setup_no
-	cp EFFECT_EVASION_UP_2 + 1
-	jr c, .boost_setup_yes
-	jr .boost_setup_no
+	jp BossAI_IsSetupEffect.stat_boost
 .check_curse_boost
 	call BossAI_EnemyIsGhostType
 	jr c, .boost_setup_no
@@ -2099,6 +2170,9 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ret
 
 .EnemyHasBoostToPass
+	ld a, [wEnemySubStatus4]
+	bit SUBSTATUS_SUBSTITUTE, a
+	jr nz, .boost_seen
 	ld hl, wEnemyStatLevels
 	ld b, NUM_LEVEL_STATS
 .boost_loop
@@ -4879,15 +4953,17 @@ if DEF(BOSSAI_EMIT_MOVE_EFFECT_CLASSIFIERS)
 ; ============================================================
 ; ai-layer: POLICY
 BossAI_IsSetupEffect:
+	cp EFFECT_RAIN_DANCE
+	jr z, .yes
+	cp EFFECT_SUNNY_DAY
+	jr z, .yes
+.stat_boost
+; Shared with the move model's boost-only classifier; weather is not a boost.
 	cp EFFECT_DRAGON_DANCE
 	jr z, .yes
 	cp EFFECT_CALM_MIND
 	jr z, .yes
 	cp EFFECT_QUIVER_DANCE
-	jr z, .yes
-	cp EFFECT_RAIN_DANCE
-	jr z, .yes
-	cp EFFECT_SUNNY_DAY
 	jr z, .yes
 	cp EFFECT_ATTACK_UP
 	jr c, .no

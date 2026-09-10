@@ -1633,6 +1633,78 @@ for name, levels, slot, ace in (("highest_mid_slot", (30, 50, 40), 1, True),
         extra={**extra, "wCurOTMon": slot}, expect={"carry": ace}))
 
 
+# Baton Pass: exact tier-scaled score deltas, with cached public facts isolated.
+# Prediction >=40: historic switching plus public quarter HP gives 50 points.
+def _baton_prediction(predicted):
+    return {"wBossAITurnsElapsed": 4, "wBossAIPlayerSwitchCount": 2 if predicted else 0,
+            "wBattleMonHP": 0, ("wBattleMonHP", 1): 10 if predicted else 100,
+            "wBattleMonMaxHP": 0, ("wBattleMonMaxHP", 1): 100}
+
+
+def _baton_case(name, verdict, *, status=0, setup=False, available=True,
+                threat=0, faster=1, hp=100, predicted=False, toxic=False,
+                poison=False, ko=0, sub=False, seed=False, perish=0, boost=7,
+                bench=True, attack=False, disabled=False):
+    for tier, row, weights in [(AI_TIER_EARLY, 0, (4, 1, 1, 1)),
+                               (AI_TIER_LATE, 2, (7, 4, 2, 3))]:
+        strong, moderate, small, cargo = weights
+        score = {"strong":20-strong, "moderate":20-moderate, "small":20-small,
+                 "cargo":20-cargo, "penalty":26+strong, "mild":26}[verdict]
+        passer = "LEDIAN" if tier == AI_TIER_EARLY else "ESPEON"
+        extra = _bench([passer, "SNORLAX"] if bench else [passer], threat="NORMAL")
+        extra.update(_baton_prediction(predicted))
+        extra.update({"wBossAITierWeightRow":row, "wBossAIPublicThreatCache":threat,
+                      "wBossAIPublicEnemyFasterCache":faster, "wBossAIHasKOMoveCache":ko,
+                      "wEnemyMonHP":0, ("wEnemyMonHP",1):hp,
+                      "wEnemyMonMaxHP":0, ("wEnemyMonMaxHP",1):100,
+                      "wEnemySubStatus4":(16 if sub else 0) | (128 if seed else 0),
+                      "wEnemySubStatus5":1 if toxic else 0,
+                      "wEnemySubStatus1":16 if perish else 0, "wEnemyPerishCount":perish,
+                      "wEnemyAtkLevel":boost,
+                      "wEnemyDisabledMove":MOVES["QUIVER_DANCE"] if disabled else 0})
+        moves = ["BATON_PASS"] + (["QUIVER_DANCE"] if setup else []) + (["STRENGTH"] if attack else [])
+        if setup and not available:
+            extra[("wEnemyMonPP",1)] = 0
+        CASES.append(Case(id=f"baton_{name}_tier{tier}", path="strategy/baton-pass",
+            pins=f"{name}: {verdict}; paired public-state and availability boundaries",
+            boss=Mon.of(passer,18 if tier == AI_TIER_EARLY else 62,moves,
+                        status=8 if toxic or poison else 0),
+            player=Mon.of("SNORLAX",62,[],status=status),
+            tier=tier, entry=("AIGetEnemyMove_HL","BossAI_ApplyMoveModel.ApplyBatonPassBias"),
+            registers={"A":MOVES["BATON_PASS"]}, scores=[20]*4, extra=extra,
+            expect={"memory":{"wEnemyAIMoveScores":score}}))
+
+_baton_case("neutral", "mild")
+_baton_case("sleep_no_setup", "strong", status=3)
+_baton_case("sleep_setup", "mild", status=3, setup=True)
+_baton_case("sleep_setup_no_pp", "strong", status=3, setup=True, available=False)
+_baton_case("sleep_setup_disabled", "strong", status=3, setup=True, disabled=True)
+_baton_case("freeze_no_setup", "strong", status=32)
+_baton_case("freeze_setup", "mild", status=32, setup=True)
+_baton_case("paralysis", "mild", status=64)
+_baton_case("player_poison", "mild", status=8)
+_baton_case("predict_threat", "moderate", predicted=True, threat=1, setup=True)
+_baton_case("no_predict_fast_threat", "mild", threat=1, setup=True)
+_baton_case("predict_no_stay_value", "moderate", predicted=True)
+_baton_case("predict_setup_value", "mild", predicted=True, setup=True)
+_baton_case("predict_attack_value", "mild", predicted=True, attack=True)
+_baton_case("slow_threat_above_half", "moderate", threat=1, faster=0, hp=51)
+_baton_case("fast_threat_above_half", "mild", threat=1, faster=1, hp=51)
+_baton_case("slow_threat_at_half", "mild", threat=1, faster=0, hp=50)
+_baton_case("slow_threat_below_half", "mild", threat=1, faster=0, hp=49)
+_baton_case("slow_no_threat", "mild", faster=0, hp=51)
+_baton_case("own_toxic", "small", toxic=True)
+_baton_case("own_plain_poison", "mild", poison=True)
+_baton_case("ko_over_sleep", "penalty", status=3, ko=1)
+_baton_case("ko_over_prediction", "penalty", predicted=True, ko=1)
+_baton_case("substitute", "cargo", sub=True)
+_baton_case("boost", "cargo", boost=8)
+_baton_case("seed_over_substitute", "penalty", sub=True, seed=True)
+_baton_case("seed_dry", "penalty", seed=True)
+_baton_case("perish_one", "penalty", perish=1)
+_baton_case("perish_two", "mild", perish=2)
+_baton_case("no_bench_sleep", "mild", status=3, bench=False)
+
 # Drive the real effect through the Set-mode predetermined-index consumer.
 # Only rendering is bypassed; stop before loading/animating the incoming mon.
 for tier in (0, AI_TIER_LATE):
