@@ -1073,7 +1073,6 @@ BossAI_ComputeSwitchConfidence:
 .no_perish_bonus
 
 	call BossAI_PredictPlayerSwitch
-	ld c, a ; player switch chance
 	srl a
 	srl a
 	ld d, a
@@ -1091,10 +1090,6 @@ BossAI_ComputeSwitchConfidence:
 	ld b, a
 	call BossAI_ApplyPreservationSwitchBias
 	ld b, a
-	ld a, b
-	cp 100
-	ret c
-	ld a, 99
 	ret
 
 endc
@@ -1265,11 +1260,9 @@ BossAI_ComputeSwitchCandidateRisk:
 	call BossAI_GetTierPlausibleRiskWeight
 	ld d, a
 	call .AddHiddenPowerTypeRisk
+	jr .immunity_tiebreak
 
 .possible_hp_risk
-	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
-	call BossAI_TestLikelyMaskBit
-	jr c, .immunity_tiebreak
 	ld a, BOSS_AI_PLAUSIBLE_HP_RISK_BIT
 	call BossAI_TestPlausibleMaskBit
 	jr nc, .immunity_tiebreak
@@ -1459,8 +1452,6 @@ BossAI_ComputeSwitchCandidateRisk:
 	jr nc, .quad
 	cp EFFECTIVE * 2
 	jr nc, .double
-	and a
-	jr z, .immune
 	xor a
 	ret
 
@@ -1471,10 +1462,6 @@ BossAI_ComputeSwitchCandidateRisk:
 
 .double
 	ld a, d
-	ret
-
-.immune
-	xor a
 	ret
 
 endc

@@ -1,6 +1,4 @@
 AI_SwitchOrTryItem:
-	and a
-
 	ld a, [wBattleMode]
 	dec a
 	ret z
@@ -22,11 +20,11 @@ AI_SwitchOrTryItem:
 
 	ld a, [wPlayerSubStatus5]
 	bit SUBSTATUS_CANT_RUN, a
-	jr nz, DontSwitch
+	ret nz
 
 	ld a, [wEnemyWrapCount]
 	and a
-	jr nz, DontSwitch
+	ret nz
 
 	ld a, [wTrainerClass]
 	dec a
@@ -40,12 +38,9 @@ AI_SwitchOrTryItem:
 	jp nz, SwitchRarely
 	bit SWITCH_SOMETIMES_F, [hl]
 	jp nz, SwitchSometimes
-	; fallthrough
-
-DontSwitch:
-; Trainers in this hack don't use bag items. The vanilla "try item on stay"
-; branch was deleted along with the AI item dispatcher in the boss-ai cleanup
-; pass; this label remains as the shared "stay" landing for the switch helpers.
+; Trainers in this hack don't use bag items: with no switch flag there is
+; nothing left to try. (The vanilla "try item on stay" branch went with the AI
+; item dispatcher in the boss-ai cleanup pass.)
 	ret
 
 AI_CheckAbleToSwitchPreserveCurSpecies:
@@ -62,14 +57,14 @@ SwitchOften:
 	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
-	jp z, DontSwitch
+	ret z
 
 	cp $10
 	jr nz, .not_10
 	call Random
 	cp 50 percent + 1
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_10
 
 	cp $20
@@ -77,13 +72,13 @@ SwitchOften:
 	call Random
 	cp 79 percent - 1
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_20
 
 	; $30
 	call Random
 	cp 4 percent
-	jp c, DontSwitch
+	ret c
 
 .switch
 	ld a, [wEnemySwitchMonParam]
@@ -97,14 +92,14 @@ SwitchRarely:
 	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
-	jp z, DontSwitch
+	ret z
 
 	cp $10
 	jr nz, .not_10
 	call Random
 	cp 8 percent
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_10
 
 	cp $20
@@ -112,13 +107,13 @@ SwitchRarely:
 	call Random
 	cp 12 percent
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_20
 
 	; $30
 	call Random
 	cp 79 percent - 1
-	jp c, DontSwitch
+	ret c
 
 .switch
 	ld a, [wEnemySwitchMonParam]
@@ -131,14 +126,14 @@ SwitchSometimes:
 	call AI_CheckAbleToSwitchPreserveCurSpecies
 	ld a, [wEnemySwitchMonParam]
 	and $f0
-	jp z, DontSwitch
+	ret z
 
 	cp $10
 	jr nz, .not_10
 	call Random
 	cp 20 percent - 1
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_10
 
 	cp $20
@@ -146,13 +141,13 @@ SwitchSometimes:
 	call Random
 	cp 50 percent + 1
 	jr c, .switch
-	jp DontSwitch
+	ret
 .not_20
 
 	; $30
 	call Random
 	cp 20 percent - 1
-	jp c, DontSwitch
+	ret c
 
 .switch
 	ld a, [wEnemySwitchMonParam]
@@ -190,7 +185,7 @@ AI_TrySwitch:
 	ret
 
 AI_Switch:
-	callfar BossAI_OnSwitchExecuted
+	call BossAI_OnSwitchExecuted ; same bank (Enemy Trainers)
 	ld a, $1
 	ld [wEnemyIsSwitching], a
 	ld [wEnemyGoesFirst], a

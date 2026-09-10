@@ -678,10 +678,6 @@ ENDC
 	and a
 	ret
 
-.check_primary_status
-	call .PrimaryStatusBlocked
-	ret
-
 .check_sleep
 	call .PrimaryStatusBlocked
 	ret c
@@ -1053,13 +1049,7 @@ ENDC
 	jr z, .hsmdm_skip
 	call BossAI_MoveIsAvailable
 	jr nc, .hsmdm_skip
-	push hl
-	push bc
-	push de
 	call .ScanMoveForStrongMatchup
-	pop de
-	pop bc
-	pop hl
 	jr c, .hsmdm_yes
 .hsmdm_skip
 	dec c
@@ -2157,7 +2147,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 
 	ld a, [wPlayerScreens]
 	and SCREENS_SPIKES_MASK
-	and a
 	jr z, .spikes_layer1
 	cp 1
 	jr z, .spikes_layer2
@@ -2312,8 +2301,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ld [wBossAITemp2], a
 	ld a, [wCurSpecies]
 	ld [wBossAITemp4], a
-	ld a, [wCurPartySpecies]
-	ld [wBossAITemp5], a
 	ld de, wOTPartySpecies
 	ld hl, wOTPartyMon1HP
 	ld c, 0
@@ -2371,8 +2358,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	ret
 
 .RestoreBossSpeciesBaseData
-	ld a, [wBossAITemp5]
-	ld [wCurPartySpecies], a
 	ld a, [wBossAITemp4]
 	ld [wCurSpecies], a
 	and a
@@ -2541,8 +2526,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	push af
 	ld a, [wCurPartySpecies]
 	push af
-	xor a
-	ld [wBossAITemp2], a
 	ld a, [wBossAITemp4]
 	ld [wCurPartySpecies], a
 .active_spin_source_loop
@@ -2554,8 +2537,6 @@ DEF BOSS_AI_REM_RULE_COUNTERCOAT_AVOIDANCE EQU 9
 	jr c, .active_spin_yes
 	callfar GetPreEvolution
 	jr nc, .active_spin_restore_no
-	ld a, 1
-	ld [wBossAITemp2], a
 	jr .active_spin_source_loop
 .active_spin_yes
 	pop af
@@ -3202,9 +3183,6 @@ BossAI_PlayerHasPublicThreatVsEnemyUncached:
 	jr c, .yes
 
 	ld hl, wPlayerUsedMoves
-	ld a, [hl]
-	and a
-	jr z, .public_type_fallback
 	ld d, NUM_MOVES
 
 .used_move_loop
@@ -4314,7 +4292,6 @@ BossAI_SeenBenchThreatScore:
 	add a
 	add b
 	add a
-	jr .restore_return
 
 .restore_return
 	ld b, a
@@ -4867,7 +4844,6 @@ BossAI_FindPartyMonByRole:
 
 .not_found
 	xor a
-	and a
 	ret
 
 endc
@@ -5319,12 +5295,12 @@ if DEF(BOSSAI_EMIT_MOVE_MASK_SPECIES_SOURCES)
 BossAI_AddSpeciesAndPreEvolutionMovesToMask:
 	and a
 	ret z
-	ld [wBossAITemp4], a
+	ld b, a
 	ld a, [wCurSpecies]
 	push af
 	ld a, [wCurPartySpecies]
 	ld [wBossAITemp5], a
-	ld a, [wBossAITemp4]
+	ld a, b
 	ld [wCurPartySpecies], a
 	xor a
 	ld [wBossAITemp2], a
@@ -5989,10 +5965,8 @@ BossAI_ApplyMultiTurnProjection:
 	call BossAI_GetTypeThreatSeverityVsEnemyMon
 	pop bc
 	ld d, a
-	ld a, d
 	and a
 	jr z, .check_switch
-	ld a, d
 	call .AddDownsideByA
 	call .GetProjectionDepth
 	cp 3
