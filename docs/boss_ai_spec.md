@@ -436,6 +436,7 @@ Forbidden prediction inputs:
 
 - Unseen party members.
 - Unrevealed moves/items/stats.
+- Inferring an unrevealed player Choice Scarf from private Speed values.
 - Future player button input.
 
 Prediction method:

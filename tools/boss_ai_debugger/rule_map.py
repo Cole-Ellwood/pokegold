@@ -38,9 +38,6 @@ EXPLICIT_RULE_LABELS = {
 PLATFORM_BOUNDARY_LABELS = {
     "MaybePickAdaptiveEnemyLead",
 }
-UNREACHABLE_STUB_LABELS = {
-    "BossAI_IsScarfSwingPossible",
-}
 
 REQUIRED_LABELS = {
     "MaybePickAdaptiveEnemyLead",
@@ -134,7 +131,7 @@ def parse_rule_labels(path: Path) -> list[RuleLabel]:
         rule_id = make_rule_id(subsystem, label, parent)
         public_reads = tuple(public_reads_for(label, parent))
         executable = is_executable_rule_label(label, parent)
-        dynamic_coverage_target = executable and not is_unreachable_stub_label(label, parent)
+        dynamic_coverage_target = executable
         score_trace_target = is_score_trace_rule(path, label, parent)
         rules.append(
             RuleLabel(
@@ -242,10 +239,6 @@ def is_executable_rule_label(label: str, parent: str | None) -> bool:
     if hook_label.startswith("BossAI") and not hook_label.startswith("BossAI_"):
         return False
     return True
-
-
-def is_unreachable_stub_label(label: str, parent: str | None) -> bool:
-    return full_symbol_for_label(label, parent) in UNREACHABLE_STUB_LABELS
 
 
 def full_symbol_for_label(label: str, parent: str | None) -> str:

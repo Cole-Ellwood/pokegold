@@ -57,15 +57,6 @@ class RuleMapTests(unittest.TestCase):
         self.assertFalse(table["dynamic_coverage_target"])
         self.assertEqual(table["coverage_mode"], "static_reference")
 
-    def test_unreachable_stub_is_not_dynamic_coverage_target(self) -> None:
-        data = build_rule_map()
-        by_label = {rule["source_label"]: rule for rule in data["rules"]}
-        rule = by_label["BossAI_IsScarfSwingPossible"]
-
-        self.assertTrue(rule["executable"])
-        self.assertFalse(rule["dynamic_coverage_target"])
-        self.assertEqual(rule["coverage_mode"], "static_reference")
-
     def test_cli_rule_map_build_writes_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "rule_map.json"

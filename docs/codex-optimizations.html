@@ -1634,24 +1634,13 @@ python -m tools.damage_debugger.clobber_smoke</pre>
 
 <article class="finding" id="C-2026-05-10-056" data-cat="size lines llm-read">
   <header>
-    <h3>C-2026-05-10-056 - The Scarf-swing no-cheat stub is indexed as a switch reason even though source has no caller</h3>
-    <p class="meta"><span class="cat">size</span><span class="cat">lines</span><span class="cat">llm-read</span><span>impact: 2-byte stub or clearer no-cheat documentation</span><span>risk: low</span><span class="confidence-med">confidence: medium-high</span></p>
-    <p class="ref">Stub and region banner: <code>engine/battle/ai/boss_policy_switch.asm:413-424</code>. Guarded include emits the region at <code>main.asm:221-223</code>. Docs list/recommend it at <code>docs/boss_ai_organization_plan.md:236</code>, <code>docs/boss_ai_organization_plan.md:728-738</code>, and <code>docs/agent_navigation/subsystems/boss_ai_logic.md:307-312</code>. Read-only source grep found no caller of <code>BossAI_IsScarfSwingPossible</code> outside its definition.</p>
+    <h3>C-2026-05-10-056 - Resolved: unused Scarf-swing marker removed</h3>
+    <p class="meta"><span class="cat">size</span><span class="cat">lines</span><span class="cat">llm-read</span><span>impact: 2 ROM bytes recovered</span><span>risk: low</span></p>
+    <p class="ref">The switch-in classifier region in <code>engine/battle/ai/boss_policy_switch.asm</code> now contains only live predicates. The debugger entry and obsolete stub test were removed.</p>
   </header>
   <details open>
-    <summary>What's Suboptimal</summary>
-    <p><code>BossAI_IsScarfSwingPossible</code> is a two-instruction routine that always returns no-carry, with a comment saying not to infer unrevealed player Choice Scarf from private speed values. That policy is good, but the symbol currently has no source caller. The documentation still indexes it like a switch-reason predicate and even says to keep it as a tripwire.</p>
-    <p>For an LLM-maintained codebase, the problem is not the two bytes by themselves. The problem is mixed reachability signals: source says dead, docs say deliberate predicate, and no invariant test appears to assert either choice.</p>
-  </details>
-  <details>
-    <summary>Suggested Change</summary>
-    <p>Pick one representation. If the no-cheat rule should be executable, add the intended caller and an invariant check that keeps the stub from becoming private-state inference. If it is only a policy note, delete the assembled stub and replace the docs index row with a "do not model unrevealed Choice Scarf" signpost near the public-speed predicate.</p>
-  </details>
-  <details>
-    <summary>Impact / Risk / Confidence</summary>
-    <p><strong>Impact:</strong> Either recovers the 2-byte stub or turns it into an enforced/readable design constraint instead of ambiguous dead code.</p>
-    <p><strong>Risk:</strong> Low. The no-cheat behavior should remain; the implementation choice is about where that rule lives.</p>
-    <p><strong>Confidence:</strong> High that there is no current source caller; medium on whether the preferred outcome is deletion versus keeping a deliberate tripwire.</p>
+    <summary>Resolution</summary>
+    <p>The unused two-instruction marker had no caller. Its no-cheat policy now lives in <a href="boss_ai_spec.md#prediction-logic">the spec's prediction inputs</a>: do not infer an unrevealed player Choice Scarf from private Speed values. The organization plan, source navigation and public-speed notes point to that contract.</p>
   </details>
 </article>
 

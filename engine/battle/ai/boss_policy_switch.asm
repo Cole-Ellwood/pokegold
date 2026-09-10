@@ -872,16 +872,10 @@ endc
 if DEF(BOSSAI_EMIT_SWITCH_IN_CLASSIFIERS)
 ; ============================================================
 ; Region: Switch-in classifiers
-; Concern: Scarf-swing stub, suspicious switch-in, immunity-pivot checks
+; Concern: Suspicious switch-in and immunity-pivot checks
 ; Layer: POLICY
 ; Original lines: 107
 ; ============================================================
-; ai-layer: POLICY
-BossAI_IsScarfSwingPossible:
-; Do not infer unrevealed player Choice Scarf from private speed values.
-	and a
-	ret
-
 ; ai-layer: POLICY
 BossAI_IsSuspiciousSwitchIn:
 ; Carry when the fresh switch-in looks like a coverage/pivot line instead of natural STAB pressure.

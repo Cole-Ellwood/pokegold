@@ -65,8 +65,8 @@ Current legal public model:
 - It may include the boss's own known Choice Scarf by checking the enemy held
   effect.
 - It does not infer unrevealed player Choice Scarf from private Speed.
-- `BossAI_IsScarfSwingPossible` currently returns false with the explicit note
-  not to infer unrevealed player Choice Scarf from private Speed values.
+- The no-cheat input contract lives in the
+  [Boss AI spec](../../boss_ai_spec.md#prediction-logic); the unused Scarf-swing marker was removed.
 
 Approved exception:
 

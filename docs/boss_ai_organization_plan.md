@@ -233,10 +233,9 @@ Things a reader meets cold and gets wrong:
    bitmasks in WRAM. The mask construction code (4948–5005) and the test
    code (5294–5354) come in twin pairs differing only by which mask
    pointer they target.
-4. **`BossAI_IsScarfSwingPossible` (3729) is a deliberate stub.** Body is
-   `and a; ret`. Comment: *"Do not infer unrevealed player Choice Scarf
-   from private speed values."* It returns no-carry intentionally — this
-   is a no-cheat assertion, not dead code.
+4. **Unrevealed Choice Scarf inference remains forbidden.** The unused
+   Scarf-swing marker was removed. Its no-cheat constraint now lives in
+   [the spec input contract](boss_ai_spec.md#prediction-logic).
 5. **`BossAITierWeights` has 5 rows for 3 tiers.** Rows 3 and 4 are sub-
    tier "ramp" rows (early +25%, early +50%) used by per-class overrides
    in `BossAITierRampMap` (`data/trainers/ai_tiers.asm:51`). See comment
@@ -725,23 +724,12 @@ Possible simplifications:
 This bias chain is also the obvious target for any future structural-
 prior table the rebuild brings — but that's the rebuild's problem.
 
-### 4.7 `BossAI_IsScarfSwingPossible` (3729)
+### 4.7 Removed Scarf-swing marker
 
-Body: `and a; ret`. Comment notes it's an intentional no-cheat assertion.
-Today it's a 2-byte function with one caller (only? let me check —
-it's referenced once: from `BossAI_NeedsLoopPenalty` indirectly? actually
-grep below). If it has no callers in mainline boss.asm, it's a stub-only
-no-cheat marker. Either:
-
-- Delete it and document the no-cheat assertion in
-  `docs/boss_ai_spec.md` instead.
-- Or keep, since the cost is 2 bytes and the symbol's existence is
-  itself the no-cheat tripwire (a future PR adding a Scarf-swing inference
-  bumps into the named stub and is forced to think about it).
-
-**Recommendation:** keep. Cost is trivially low; the symbol-as-tripwire
-is exactly the kind of friction that prevents future-Claude leaking
-private state.
+The unused two-byte stub and its debugger entry were removed. Do not restore
+an executable marker for a documentation-only constraint: the prohibition on
+inferring an unrevealed player Choice Scarf from private Speed is now in
+[the spec's no-cheat inputs](boss_ai_spec.md#prediction-logic).
 
 ### 4.8 The two-pass best/second-best loop in `BossAI_SelectMove`
 
